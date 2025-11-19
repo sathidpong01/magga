@@ -1,0 +1,41 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// สำหรับมังงะ
+model Manga {
+  id          String    @id @default(cuid())
+  title       String    @unique
+  description String?
+  coverImage  String
+  pages       String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // --- ความสัมพันธ์ ---
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
+  tags       Tag[]     @relation
+}
+
+// สำหรับหมวดหมู่
+model Category {
+  id     String  @id @default(cuid())
+  name   String  @unique
+  mangas Manga[]
+}
+
+// สำหรับแท็ก
+model Tag {
+  id     String  @id @default(cuid())
+  name   String  @unique
+  mangas Manga[] @relation
+}
