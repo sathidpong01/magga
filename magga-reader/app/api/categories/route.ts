@@ -28,7 +28,7 @@ export async function POST(request: Request) {
       data: { name },
     });
     return NextResponse.json(newCategory, { status: 201 });
-  } catch (error) {
+  } catch {
     // Handle potential errors, e.g., unique constraint violation
     return NextResponse.json({ error: 'Category already exists' }, { status: 409 });
   }

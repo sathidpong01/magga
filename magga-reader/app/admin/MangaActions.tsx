@@ -50,8 +50,8 @@ export default function MangaActions({ mangaId }: MangaActionsProps) {
       }
       handleClose();
       router.refresh();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setIsDeleting(false);
     }

@@ -28,7 +28,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
       data: { name },
     });
     return NextResponse.json(updatedCategory);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to update category' }, { status: 500 });
   }
 }
@@ -47,7 +47,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
       where: { id },
     });
     return new NextResponse(null, { status: 204 }); // No Content
-  } catch (error) {
+  } catch {
     // Handle cases where the category is still in use
     return NextResponse.json({ error: 'Failed to delete category. It might be in use.' }, { status: 500 });
   }

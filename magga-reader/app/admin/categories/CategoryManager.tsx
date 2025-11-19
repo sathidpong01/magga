@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { Category } from "@prisma/client";
 import {
-  Box,
   Button,
   TextField,
   Typography,
@@ -70,8 +69,8 @@ export default function CategoryManager({ initialCategories }: CategoryManagerPr
       setName("");
       setEditingCategory(null);
       router.refresh();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setIsLoading(false);
     }
@@ -96,7 +95,7 @@ export default function CategoryManager({ initialCategories }: CategoryManagerPr
       setDeleteDialogOpen(false);
       setCategoryToDelete(null);
       router.refresh();
-    } catch (err) {
+    } catch {
       alert("Error deleting category.");
       setDeleteDialogOpen(false);
     }
@@ -167,7 +166,7 @@ export default function CategoryManager({ initialCategories }: CategoryManagerPr
         <DialogTitle>Delete Category?</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete the category "{categoryToDelete?.name}"? This may affect mangas associated with it.
+            Are you sure you want to delete the category &quot;{categoryToDelete?.name}&quot;? This may affect mangas associated with it.
           </DialogContentText>
         </DialogContent>
         <DialogActions>

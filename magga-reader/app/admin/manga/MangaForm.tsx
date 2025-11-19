@@ -12,7 +12,6 @@ import {
   FormControl,
   InputLabel,
   Autocomplete,
-  Chip,
   Stack,
   Typography,
   Alert,
@@ -140,8 +139,8 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
           const json = await res.json();
           uploadedPageUrls = json.urls || [];
         }
-      } catch (err: any) {
-        setError(err.message || "Upload failed");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Upload failed");
         setIsSubmitting(false);
         return;
       }
@@ -174,8 +173,8 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
 
         router.push("/admin");
         router.refresh();
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
         setIsSubmitting(false);
       }

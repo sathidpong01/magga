@@ -55,7 +55,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
     if (Array.isArray(manga.pages)) return manga.pages;
     try {
       return JSON.parse(manga.pages as unknown as string) as string[];
-    } catch (e) {
+    } catch {
       return [];
     }
   })();

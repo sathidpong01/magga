@@ -21,7 +21,7 @@ export async function resolveLocalImage(src?: string) {
     }
     // Not a local uploads URL — return original
     return src;
-  } catch (e) {
+  } catch {
     // Not an absolute URL. If it starts with /uploads/, check existence
     if (src.startsWith('/uploads/')) {
       const filePath = path.join(process.cwd(), 'public', src);

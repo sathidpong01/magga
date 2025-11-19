@@ -28,7 +28,7 @@ export async function POST(request: Request) {
       data: { name },
     });
     return NextResponse.json(newTag, { status: 201 });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Tag already exists' }, { status: 409 });
   }
 }

@@ -28,26 +28,7 @@ export default async function AdminPage() {
       createdAt: "desc",
     },
   });
-  const normalizeSrc = (s?: string) => {
-    if (!s) return s || '';
-    try {
-      const u = new URL(s);
-      // If the image is served from localhost, strip origin so it's a relative path
-      if (u.hostname === 'localhost' || u.hostname === '127.0.0.1') {
-        return u.pathname + u.search;
-      }
-      // If path includes uploads, return relative uploads path
-      if (u.pathname && u.pathname.includes('/uploads/')) {
-        return u.pathname + u.search;
-      }
-    } catch (e) {
-      // not an absolute URL
-    }
-    // Fallback: if string contains /uploads/ return substring
-    const idx = s.indexOf('/uploads/');
-    if (idx !== -1) return s.substring(idx);
-    return s;
-  };
+
 
   // resolve cover URLs to safe paths (check for local files)
   const resolved = await Promise.all(

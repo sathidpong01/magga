@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { Tag } from "@prisma/client";
 import {
-  Box,
   Button,
   TextField,
   Typography,
@@ -70,8 +69,8 @@ export default function TagManager({ initialTags }: TagManagerProps) {
       setName("");
       setEditingTag(null);
       router.refresh();
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setIsLoading(false);
     }
@@ -96,7 +95,7 @@ export default function TagManager({ initialTags }: TagManagerProps) {
       setDeleteDialogOpen(false);
       setTagToDelete(null);
       router.refresh();
-    } catch (err) {
+    } catch {
       alert("Error deleting tag.");
       setDeleteDialogOpen(false);
     }
@@ -167,7 +166,7 @@ export default function TagManager({ initialTags }: TagManagerProps) {
         <DialogTitle>Delete Tag?</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to delete the tag "{tagToDelete?.name}"? This will remove it from all associated mangas.
+            Are you sure you want to delete the tag &quot;{tagToDelete?.name}&quot;? This will remove it from all associated mangas.
           </DialogContentText>
         </DialogContent>
         <DialogActions>

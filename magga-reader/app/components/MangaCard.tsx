@@ -6,7 +6,6 @@ import {
   CardContent,
   CardMedia,
   Typography,
-  Box,
 } from "@mui/material";
 import Link from "next/link";
 import { Manga } from "@prisma/client";
