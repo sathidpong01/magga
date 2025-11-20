@@ -10,20 +10,26 @@ import {
   Button,
   Typography,
   Paper,
-  Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from "@mui/material";
 
 export default function SignIn() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalType, setModalType] = useState<"success" | "error">("success");
+  const [modalMessage, setModalMessage] = useState("");
+  
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/admin";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
 
     const result = await signIn("credentials", {
       redirect: false,
@@ -32,10 +38,20 @@ export default function SignIn() {
     });
 
     if (result?.error) {
-      setError("Invalid username or password");
+      setModalType("error");
+      setModalMessage("Invalid username or password"); // Or result.error if you want specific details
+      setModalOpen(true);
     } else if (result?.ok) {
+      setModalType("success");
+      setModalMessage("Login Successful!");
+      setModalOpen(true);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    if (modalType === "success") {
       router.replace(callbackUrl);
-      // Refresh the current route so Server Components revalidate session-aware data
       router.refresh();
     }
   };
@@ -56,11 +72,6 @@ export default function SignIn() {
           Admin Sign In
         </Typography>
         <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1 }}>
-          {error && (
-            <Alert severity="error" sx={{ width: "100%", mb: 2 }}>
-              {error}
-            </Alert>
-          )}
           <TextField
             margin="normal"
             required
@@ -95,6 +106,28 @@ export default function SignIn() {
           </Button>
         </Box>
       </Paper>
+
+      {/* Success/Failure Modal */}
+      <Dialog
+        open={modalOpen}
+        onClose={handleCloseModal}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          {modalType === "success" ? "Success" : "Login Failed"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            {modalMessage}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseModal} autoFocus>
+            OK
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }

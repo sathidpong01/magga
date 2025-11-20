@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Kanit } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./components/Providers";
-import { AppBar, Box, Container, Toolbar, Typography } from "@mui/material";
-import Link from "next/link";
+import { Box, Container } from "@mui/material";
 import Footer from "./components/Footer";
+import Header from "./components/Header";
 
-const inter = Inter({ subsets: ["latin"] });
+const kanit = Kanit({
+  weight: ["300", "400", "500", "700"],
+  subsets: ["latin", "thai"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Magga Reader",
@@ -20,21 +24,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className={kanit.className}>
         <Providers>
           <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
-            <AppBar position="static">
-              <Toolbar>
-                <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                  <Link href="/" style={{ textDecoration: "none", color: "inherit" }}>
-                    Magga Reader
-                  </Link>
-                </Typography>
-                <Link href="/admin" style={{ textDecoration: "none", color: "inherit" }}>
-                  <Typography>Admin</Typography>
-                </Link>
-              </Toolbar>
-            </AppBar>
+            <Header />
             <Container component="main" sx={{ flexGrow: 1, py: 3 }}>
               {children}
             </Container>

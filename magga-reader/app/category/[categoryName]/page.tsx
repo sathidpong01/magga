@@ -4,20 +4,22 @@ import { Grid, Typography, Box } from "@mui/material";
 import MangaCard from "@/app/components/MangaCard";
 
 type CategoryPageProps = {
-  params: {
+  params: Promise<{
     categoryName: string;
-  };
+  }>;
 };
 
 export async function generateMetadata({ params }: CategoryPageProps) {
-  const categoryName = decodeURIComponent(params.categoryName);
+  const { categoryName: encodedCategoryName } = await params;
+  const categoryName = decodeURIComponent(encodedCategoryName);
   return {
     title: `Category: ${categoryName}`,
   };
 }
 
 export default async function CategoryPage({ params }: CategoryPageProps) {
-  const categoryName = decodeURIComponent(params.categoryName);
+  const { categoryName: encodedCategoryName } = await params;
+  const categoryName = decodeURIComponent(encodedCategoryName);
 
   const category = await prisma.category.findUnique({
     where: { name: categoryName },

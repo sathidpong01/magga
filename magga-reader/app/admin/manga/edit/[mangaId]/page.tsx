@@ -3,16 +3,17 @@ import MangaForm from "../../MangaForm";
 import { notFound } from "next/navigation";
 
 type EditMangaPageProps = {
-  params: {
+  params: Promise<{
     mangaId: string;
-  };
+  }>;
 };
 
 // This is a server component that fetches the necessary data
 // and passes it to the client component form.
 export default async function EditMangaPage({ params }: EditMangaPageProps) {
+  const { mangaId } = await params;
   const mangaPromise = prisma.manga.findUnique({
-    where: { id: params.mangaId },
+    where: { id: mangaId },
     include: { tags: true },
   });
 

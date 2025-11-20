@@ -11,15 +11,16 @@ import {
 } from "@mui/material";
 
 type MangaPageProps = {
-  params: {
+  params: Promise<{
     mangaId: string;
-  };
+  }>;
 };
 
 export async function generateMetadata({ params }: MangaPageProps) {
+  const { mangaId } = await params;
   const manga = await prisma.manga.findUnique({
     where: {
-      id: params.mangaId,
+      id: mangaId,
     },
   });
 
@@ -36,9 +37,10 @@ export async function generateMetadata({ params }: MangaPageProps) {
 }
 
 export default async function MangaPage({ params }: MangaPageProps) {
+  const { mangaId } = await params;
   const manga = await prisma.manga.findUnique({
     where: {
-      id: params.mangaId,
+      id: mangaId,
     },
     include: {
       category: true,
@@ -62,27 +64,55 @@ export default async function MangaPage({ params }: MangaPageProps) {
 
   return (
     <Container maxWidth="md">
-      <Paper elevation={3} sx={{ p: { xs: 2, md: 4 }, my: 4 }}>
-        <Grid container spacing={3}>
+      <Paper 
+        elevation={0} 
+        sx={{ 
+          p: { xs: 2, md: 4 }, 
+          my: 4,
+          backgroundColor: "background.paper",
+          border: "1px solid",
+          borderColor: "divider",
+          borderRadius: 4,
+        }}
+      >
+        <Grid container spacing={4}>
           {/* Cover Image */}
           <Grid item xs={12} sm={4}>
             <Box
-              component="img"
-              src={manga.coverImage}
-              alt={`Cover of ${manga.title}`}
-              sx={{ width: "100%", height: "auto", borderRadius: 2 }}
-            />
+              sx={{
+                position: "relative",
+                width: "100%",
+                paddingTop: "140%", // Aspect ratio for cover
+                borderRadius: 2,
+                overflow: "hidden",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+              }}
+            >
+              <Box
+                component="img"
+                src={manga.coverImage}
+                alt={`Cover of ${manga.title}`}
+                sx={{ 
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%", 
+                  height: "100%", 
+                  objectFit: "cover" 
+                }}
+              />
+            </Box>
           </Grid>
 
           {/* Details */}
           <Grid item xs={12} sm={8}>
-            <Typography variant="h3" component="h1" gutterBottom>
+            <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 800, background: "linear-gradient(45deg, #8b5cf6, #ec4899)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
               {manga.title}
             </Typography>
-            <Typography variant="body1" paragraph color="text.secondary">
+            <Typography variant="body1" paragraph color="text.secondary" sx={{ fontSize: "1.1rem", lineHeight: 1.7 }}>
               {manga.description}
             </Typography>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 2 }}>
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 3 }}>
               {manga.category && (
                 <Chip
                   label={manga.category.name}
@@ -90,6 +120,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
                   href={`/category/${encodeURIComponent(manga.category.name)}`}
                   clickable
                   color="primary"
+                  sx={{ fontWeight: 600 }}
                 />
               )}
               {manga.tags.map((tag) => (
@@ -100,6 +131,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
                   href={`/tag/${encodeURIComponent(tag.name)}`}
                   clickable
                   variant="outlined"
+                  sx={{ borderColor: "rgba(255,255,255,0.2)" }}
                 />
               ))}
             </Box>
@@ -126,4 +158,3 @@ export default async function MangaPage({ params }: MangaPageProps) {
     </Container>
   );
 }
-

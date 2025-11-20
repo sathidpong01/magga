@@ -4,20 +4,22 @@ import { Grid, Typography, Box } from "@mui/material";
 import MangaCard from "@/app/components/MangaCard";
 
 type TagPageProps = {
-  params: {
+  params: Promise<{
     tagName: string;
-  };
+  }>;
 };
 
 export async function generateMetadata({ params }: TagPageProps) {
-  const tagName = decodeURIComponent(params.tagName);
+  const { tagName: encodedTagName } = await params;
+  const tagName = decodeURIComponent(encodedTagName);
   return {
     title: `Tag: ${tagName}`,
   };
 }
 
 export default async function TagPage({ params }: TagPageProps) {
-  const tagName = decodeURIComponent(params.tagName);
+  const { tagName: encodedTagName } = await params;
+  const tagName = decodeURIComponent(encodedTagName);
 
   const tag = await prisma.tag.findUnique({
     where: { name: tagName },

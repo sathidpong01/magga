@@ -14,7 +14,6 @@ import {
 } from "@mui/material";
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import CategoryIcon from '@mui/icons-material/Category';
-import TagIcon from '@mui/icons-material/Tag';
 
 const drawerWidth = 240;
 
@@ -26,8 +25,7 @@ export default function AdminLayout({
 
   const menuItems = [
     { text: 'Dashboard', href: '/admin', icon: <DashboardIcon /> },
-    { text: 'Categories', href: '/admin/categories', icon: <CategoryIcon /> },
-    { text: 'Tags', href: '/admin/tags', icon: <TagIcon /> },
+    { text: 'Classifications', href: '/admin/metadata', icon: <CategoryIcon /> },
   ];
 
   return (

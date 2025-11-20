@@ -3,9 +3,9 @@ import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 
 type RouteParams = {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 };
 
 export async function PUT(request: Request, { params }: RouteParams) {
@@ -15,7 +15,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
   }
   const data = await request.json();
   const { title, description, categoryId, selectedTags, coverImage, pages } = data;
-  const { id } = params;
+  const { id } = await params;
 
   if (!title) {
     return NextResponse.json({ error: 'Title is required' }, { status: 400 });
@@ -48,7 +48,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { id } = params;
+  const { id } = await params;
 
   try {
     await prisma.manga.delete({
