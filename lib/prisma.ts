@@ -1,17 +1,27 @@
 import { PrismaClient } from '@prisma/client';
+import { PrismaLibSQL } from '@prisma/adapter-libsql';
+import { createClient } from '@libsql/client';
 
-declare global {
-  // allow global `var` declarations
-  // eslint-disable-next-line no-var
-  var prisma: PrismaClient | undefined;
-}
+// สร้าง global variable เพื่อป้องกันการสร้าง connection ซ้ำตอน dev (เหมือนเดิม)
+const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
-const prisma =
-  global.prisma ||
+// ตั้งค่า connection ไปที่ Turso
+const libsql = createClient({
+  url: process.env.TURSO_DATABASE_URL!,
+  authToken: process.env.TURSO_AUTH_TOKEN!,
+});
+
+// สร้าง adapter
+const adapter = new PrismaLibSQL(libsql);
+
+// สร้าง Prisma Client ผ่าน adapter
+export const prisma =
+  globalForPrisma.prisma ||
   new PrismaClient({
-    log: ['query'],
+    adapter,
+    log: ['query'], // ถ้าอยากดู log query ก็เปิดไว้
   });
 
-if (process.env.NODE_ENV !== 'production') global.prisma = prisma;
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 export default prisma;
