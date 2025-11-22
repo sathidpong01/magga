@@ -9,10 +9,10 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: '#0B0F19',
-        paper: '#111827',
-        primary: '#8b5cf6',
-        secondary: '#10b981',
+        background: '#0f172a', // Slate-900
+        paper: '#1e293b', // Slate-800
+        primary: '#fbbf24', // Amber-400
+        secondary: '#38bdf8', // Sky-400 (Secondary accent)
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',

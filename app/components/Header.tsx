@@ -8,7 +8,7 @@ export default function Header() {
   const { data: session } = useSession();
 
   return (
-    <AppBar position="static" sx={{ backdropFilter: "blur(12px)", backgroundColor: "rgba(11, 15, 25, 0.8)" }}>
+    <AppBar position="sticky" sx={{ backdropFilter: "blur(12px)", backgroundColor: "rgba(15, 23, 42, 0.8)", top: 0, zIndex: 1100 }}>
       <Toolbar>
         <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 700 }}>
           <Link href="/" style={{ textDecoration: "none", color: "inherit" }}>

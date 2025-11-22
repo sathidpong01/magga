@@ -66,6 +66,8 @@ export default function SignIn() {
           flexDirection: "column",
           alignItems: "center",
           padding: 4,
+          backgroundColor: "#1e293b", // Slate-800
+          color: "#f3f4f6",
         }}
       >
         <Typography component="h1" variant="h5">
@@ -83,6 +85,15 @@ export default function SignIn() {
             autoFocus
             value={username}
             onChange={(e) => setUsername(e.target.value)}
+            sx={{
+              "& .MuiInputLabel-root": { color: "#94a3b8" }, // Slate-400
+              "& .MuiOutlinedInput-root": {
+                color: "#f3f4f6",
+                "& fieldset": { borderColor: "#475569" }, // Slate-600
+                "&:hover fieldset": { borderColor: "#fbbf24" }, // Amber-400
+                "&.Mui-focused fieldset": { borderColor: "#fbbf24" }, // Amber-400
+              },
+            }}
           />
           <TextField
             margin="normal"
@@ -95,12 +106,21 @@ export default function SignIn() {
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            sx={{
+              "& .MuiInputLabel-root": { color: "#94a3b8" }, // Slate-400
+              "& .MuiOutlinedInput-root": {
+                color: "#f3f4f6",
+                "& fieldset": { borderColor: "#475569" }, // Slate-600
+                "&:hover fieldset": { borderColor: "#fbbf24" }, // Amber-400
+                "&.Mui-focused fieldset": { borderColor: "#fbbf24" }, // Amber-400
+              },
+            }}
           />
           <Button
             type="submit"
             fullWidth
             variant="contained"
-            sx={{ mt: 3, mb: 2 }}
+            sx={{ mt: 3, mb: 2, bgcolor: "#fbbf24", color: "#000", "&:hover": { bgcolor: "#f59e0b" } }}
           >
             Sign In
           </Button>

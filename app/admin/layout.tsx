@@ -37,6 +37,9 @@ export default function AdminLayout({
           "& .MuiDrawer-paper": {
             width: drawerWidth,
             boxSizing: "border-box",
+            backgroundColor: "#1e293b", // Slate-800
+            color: "#f3f4f6",
+            borderRight: "1px solid #334155", // Slate-700
           },
         }}
         variant="permanent"
@@ -65,7 +68,7 @@ export default function AdminLayout({
       </Drawer>
       <Box
         component="main"
-        sx={{ flexGrow: 1, bgcolor: "background.default", p: 3 }}
+        sx={{ flexGrow: 1, p: 3 }}
       >
         {/* The Toolbar is used as a spacer to push content below the main app bar, which we don't have here, but it's good practice if we add one later */}
         {/* <Toolbar /> */}
