@@ -15,7 +15,13 @@ const kanit = Kanit({
 export const metadata: Metadata = {
   title: "Magga Reader",
   description: "A one-shot manga reader.",
+  other: {
+    rating: "mature",
+    adult: "true",
+  },
 };
+
+import AgeVerificationModal from "./components/AgeVerificationModal";
 
 export default function RootLayout({
   children,
@@ -26,6 +32,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={kanit.className}>
         <Providers>
+          <AgeVerificationModal />
           <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
             <Header />
             <Container component="main" sx={{ flexGrow: 1, py: 3 }}>

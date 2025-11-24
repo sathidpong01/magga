@@ -17,6 +17,8 @@ const S3 = new S3Client({
   },
 });
 
+import sharp from "sharp";
+
 export async function POST(request: Request) {
   const session = await getServerSession();
   if (!session) {
@@ -35,8 +37,26 @@ export async function POST(request: Request) {
 
     for (const file of files) {
       const arrayBuffer = await file.arrayBuffer();
-      const buffer = Buffer.from(arrayBuffer);
-      const safeName = `${Date.now()}-${file.name.replace(
+      let buffer = Buffer.from(arrayBuffer);
+      let contentType = file.type;
+      let fileName = file.name;
+
+      // Compress image if it's an image type
+      if (file.type.startsWith("image/")) {
+        try {
+          buffer = await sharp(buffer)
+            .resize(1920, 1920, { fit: "inside", withoutEnlargement: true }) // Resize to max 1920px
+            .webp({ quality: 80 }) // Convert to WebP with 80% quality
+            .toBuffer();
+          
+          contentType = "image/webp";
+          fileName = fileName.replace(/\.[^/.]+$/, "") + ".webp";
+        } catch (error) {
+          console.error("Image compression failed, uploading original", error);
+        }
+      }
+
+      const safeName = `${Date.now()}-${fileName.replace(
         /[^a-zA-Z0-9.-]/g,
         "_"
       )}`;
@@ -46,7 +66,7 @@ export async function POST(request: Request) {
           Bucket: R2_BUCKET_NAME,
           Key: safeName,
           Body: buffer,
-          ContentType: file.type,
+          ContentType: contentType,
         })
       );
 

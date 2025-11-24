@@ -18,7 +18,12 @@ import {
   CircularProgress,
   Paper,
   Grid,
+  IconButton,
+  InputAdornment,
+  Tooltip,
 } from "@mui/material";
+import DeleteIcon from "@mui/icons-material/Delete";
+import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 
 type MangaFormProps = {
   manga?: Manga & { tags: Tag[] };
@@ -57,7 +62,57 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
     const [pageFilePreviews, setPageFilePreviews] = useState<string[]>([]);
     const [coverUrlPreview, setCoverUrlPreview] = useState<string | null>(null);
     const [categoryId, setCategoryId] = useState(manga?.categoryId || "");
+
     const [selectedTags, setSelectedTags] = useState<Tag[]>(manga?.tags || []);
+
+    // Author Credits State
+    type AuthorCredit = { url: string; label: string; icon: string };
+    const [credits, setCredits] = useState<AuthorCredit[]>(() => {
+      if (!manga?.authorCredits) return [];
+      try {
+        return JSON.parse(manga.authorCredits);
+      } catch {
+        return [];
+      }
+    });
+
+    const handleAddCredit = () => {
+      setCredits([...credits, { url: "", label: "", icon: "" }]);
+    };
+
+    const handleRemoveCredit = (index: number) => {
+      const newCredits = [...credits];
+      newCredits.splice(index, 1);
+      setCredits(newCredits);
+    };
+
+    const handleCreditChange = (index: number, field: keyof AuthorCredit, value: string) => {
+      const newCredits = [...credits];
+      newCredits[index] = { ...newCredits[index], [field]: value };
+      setCredits(newCredits);
+    };
+
+    const handleFetchCreditInfo = async (index: number) => {
+      const url = credits[index].url;
+      if (!url) return;
+
+      try {
+        const res = await fetch(`/api/metadata?url=${encodeURIComponent(url)}`);
+        if (!res.ok) throw new Error("Failed to fetch metadata");
+        const data = await res.json();
+        
+        const newCredits = [...credits];
+        newCredits[index] = {
+          ...newCredits[index],
+          label: data.title || newCredits[index].label,
+          icon: data.icon || newCredits[index].icon,
+        };
+        setCredits(newCredits);
+      } catch (error) {
+        console.error("Error fetching credit info:", error);
+        // Optional: Show error toast
+      }
+    };
 
     // Generate object URL previews for selected files
     useEffect(() => {
@@ -107,10 +162,10 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
       };
     }, [coverImage, coverPreview]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmitWithDraft = async (e: React.FormEvent, saveAsDraft: boolean) => {
       e.preventDefault();
-      if (!title || !coverImage) {
-        setError("Title and Cover Image URL are required.");
+      if (!title || (!coverImage && !coverFile)) {
+        setError("Title and either Cover Image URL or Cover File are required.");
         return;
       }
       setIsSubmitting(true);
@@ -154,7 +209,10 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
         coverImage: uploadedCoverUrl || coverImage,
         pages: finalPages,
         categoryId: categoryId || null,
+        isHidden: saveAsDraft,
+
         selectedTags: selectedTagIds,
+        authorCredits: JSON.stringify(credits),
       };
       const url = manga ? `/api/manga/${manga.id}` : "/api/manga";
       const method = manga ? "PUT" : "POST";
@@ -185,7 +243,7 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
         <Typography variant="h5" component="h2" gutterBottom>
           {manga ? "Edit Manga" : "Create New Manga"}
         </Typography>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={(e) => handleSubmitWithDraft(e, false)}>
           <Grid container spacing={3}>
             {error && (
               <Grid item xs={12}>
@@ -217,7 +275,7 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                 value={coverImage}
                 onChange={(e) => setCoverImage(e.target.value)}
                 fullWidth
-                required
+                required={!coverFile}
                 type="text"
                 helperText="Absolute URL or relative path (e.g. /uploads/xxxx.jpg)"
               />
@@ -343,6 +401,84 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                 )}
               />
             </Grid>
+
+            {/* Author Credits Section */}
+            <Grid item xs={12}>
+              <Typography variant="h6" gutterBottom>
+                Author Credits
+              </Typography>
+              <Stack spacing={2}>
+                {credits.map((credit, index) => (
+                  <Paper key={index} variant="outlined" sx={{ p: 2 }}>
+                    <Grid container spacing={2} alignItems="center">
+                      <Grid item xs={12} sm={5}>
+                        <TextField
+                          label="URL"
+                          value={credit.url}
+                          onChange={(e) => handleCreditChange(index, "url", e.target.value)}
+                          fullWidth
+                          size="small"
+                          InputProps={{
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <Tooltip title="Auto-fetch Title & Icon">
+                                  <IconButton
+                                    onClick={() => handleFetchCreditInfo(index)}
+                                    edge="end"
+                                    disabled={!credit.url}
+                                  >
+                                    <AutoFixHighIcon />
+                                  </IconButton>
+                                </Tooltip>
+                              </InputAdornment>
+                            ),
+                          }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={3}>
+                        <TextField
+                          label="Label (Name)"
+                          value={credit.label}
+                          onChange={(e) => handleCreditChange(index, "label", e.target.value)}
+                          fullWidth
+                          size="small"
+                        />
+                      </Grid>
+                      <Grid item xs={10} sm={3}>
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <TextField
+                            label="Icon URL"
+                            value={credit.icon}
+                            onChange={(e) => handleCreditChange(index, "icon", e.target.value)}
+                            fullWidth
+                            size="small"
+                          />
+                          {credit.icon && (
+                            <Box
+                              component="img"
+                              src={credit.icon}
+                              alt="icon"
+                              sx={{ width: 32, height: 32, borderRadius: "50%" }}
+                            />
+                          )}
+                        </Stack>
+                      </Grid>
+                      <Grid item xs={2} sm={1}>
+                        <IconButton
+                          color="error"
+                          onClick={() => handleRemoveCredit(index)}
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </Grid>
+                    </Grid>
+                  </Paper>
+                ))}
+                <Button variant="outlined" onClick={handleAddCredit} sx={{ alignSelf: "flex-start" }}>
+                  Add Author Credit
+                </Button>
+              </Stack>
+            </Grid>
             <Grid item xs={12}>
               <Stack direction="row" justifyContent="flex-end" spacing={2} sx={{ mt: 3 }}>
                 <Button
@@ -353,6 +489,18 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                 >
                   Cancel
                 </Button>
+                {!manga && (
+                  <Button
+                    variant="outlined"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleSubmitWithDraft(e, true);
+                    }}
+                    disabled={isSubmitting}
+                  >
+                    Save as Draft
+                  </Button>
+                )}
                 <Button
                   type="submit"
                   variant="contained"

@@ -11,13 +11,15 @@ datasource db {
 
 // สำหรับมังงะ
 model Manga {
-  id          String   @id @default(cuid())
-  title       String   @unique
-  description String?
-  coverImage  String
-  pages       String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String   @id @default(cuid())
+  title         String   @unique
+  description   String?
+  coverImage    String
+  pages         String
+  authorCredits String? // JSON string: { url: string, label: string, icon: string }[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  isHidden      Boolean  @default(false)
 
   // --- ความสัมพันธ์ ---
   categoryId String?

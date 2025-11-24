@@ -4,11 +4,11 @@ import {
   Card,
   CardActionArea,
   CardContent,
-  CardMedia,
   Typography,
   Box,
   Chip,
 } from "@mui/material";
+import Image from "next/image";
 import Link from "next/link";
 import { Manga, Tag } from "@prisma/client";
 
@@ -34,18 +34,15 @@ export default function MangaCard({ manga }: MangaCardProps) {
       },
     }}>
       <CardActionArea component={Link} href={`/${manga.id}`} sx={{ height: "100%", display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
-        <Box sx={{ overflow: "hidden", height: 300, width: "100%" }}>
-          <CardMedia
-            component="img"
-            sx={{
-              height: "100%",
-              width: "100%",
-              objectFit: "cover",
-              transition: "transform 0.3s ease-in-out",
-            }}
-            image={manga.coverImage}
-            alt={`Cover of ${manga.title}`}
-          />
+          <Box sx={{ position: "relative", height: 300, width: "100%", overflow: "hidden" }}>
+            <Image
+              src={manga.coverImage}
+              alt={`Cover of ${manga.title}`}
+              fill
+              sizes="(max-width: 600px) 100vw, (max-width: 960px) 50vw, 33vw"
+              style={{ objectFit: "cover" }}
+              priority={false}
+            />
         </Box>
         <CardContent sx={{ flexGrow: 1, width: "100%" }}>
           <Typography gutterBottom variant="h6" component="div" noWrap sx={{ fontWeight: 600, mb: 1 }}>

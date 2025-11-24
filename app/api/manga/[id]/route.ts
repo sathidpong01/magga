@@ -14,7 +14,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const data = await request.json();
-  const { title, description, categoryId, selectedTags, coverImage, pages } = data;
+  const { title, description, categoryId, selectedTags, coverImage, pages, isHidden } = data;
   const { id } = await params;
 
   if (!title) {
@@ -33,6 +33,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
         },
         coverImage: coverImage || undefined,
         pages: pages ? JSON.stringify(pages) : undefined,
+        isHidden: isHidden,
       },
     });
     return NextResponse.json(updatedManga);

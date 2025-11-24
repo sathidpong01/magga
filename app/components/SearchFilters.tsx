@@ -12,6 +12,7 @@ import {
   Collapse,
   IconButton,
   Autocomplete,
+  Button,
 } from "@mui/material";
 import { Category, Tag } from "@prisma/client";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -38,10 +39,22 @@ export default function SearchFilters({ categories, tags }: Props) {
   // Initialize selected tags from URL
   useEffect(() => {
     const tagIds = searchParams.getAll("tagIds");
+    
+    // Deep compare to avoid infinite loop
+    const currentTagIds = selectedTags.map(t => t.id).sort();
+    const newTagIds = [...tagIds].sort();
+    const isSame = currentTagIds.length === newTagIds.length && 
+                   currentTagIds.every((id, index) => id === newTagIds[index]);
+
+    if (isSame) return;
+
     if (tagIds.length > 0) {
       const foundTags = tags.filter((tag) => tagIds.includes(tag.id));
       setSelectedTags(foundTags);
+    } else {
+      setSelectedTags([]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, tags]);
 
   const applyFilters = useCallback(() => {
@@ -61,6 +74,14 @@ export default function SearchFilters({ categories, tags }: Props) {
     }, 500);
     return () => clearTimeout(timer);
   }, [applyFilters]);
+
+  const handleClearFilters = () => {
+    setSearch("");
+    setCategoryId("all");
+    setSort("updated");
+    setSelectedTags([]);
+    router.push("/");
+  };
 
   const handleExpandClick = () => {
     setExpanded(!expanded);
@@ -221,6 +242,12 @@ export default function SearchFilters({ categories, tags }: Props) {
               />
             </Grid>
 
+            {/* Action Buttons */}
+            <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
+              <Button variant="outlined" onClick={handleClearFilters}>
+                Clear
+              </Button>
+            </Grid>
 
           </Grid>
         </Box>

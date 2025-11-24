@@ -22,7 +22,9 @@ export default async function Home({ searchParams }: Props) {
   const tags = await prisma.tag.findMany({ orderBy: { name: "asc" } });
 
   // Build Where Clause
-  const where: Prisma.MangaWhereInput = {};
+  const where: Prisma.MangaWhereInput = {
+    isHidden: false,
+  };
 
   if (search) {
     where.title = { contains: search }; // SQLite doesn't support mode: 'insensitive' easily without raw query, but 'contains' is often case-insensitive in default SQLite config or we accept it.

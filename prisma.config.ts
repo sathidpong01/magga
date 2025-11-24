@@ -4,6 +4,7 @@ import { defineConfig } from 'prisma/config';
 if (process.env.NODE_ENV !== 'production') {
   try {
     process.loadEnvFile('.env.local');
+    console.log('Loaded .env.local successfully');
   } catch {
     // ignore if file doesn't exist
   }
@@ -11,10 +12,8 @@ if (process.env.NODE_ENV !== 'production') {
 
 export default defineConfig({
   datasource: {
-    url: process.env.TURSO_DATABASE_URL!,
-  },
-  // @ts-expect-error - seed is not yet in the type definition for Prisma 7
-  seed: {
-    command: 'tsx prisma/seed.ts',
+    // For CLI commands (like migrate diff), we need a valid file URL because provider is sqlite.
+    // The actual app uses the driver adapter in lib/prisma.ts with the Turso URL.
+    url: 'file:./dev.db',
   },
 });

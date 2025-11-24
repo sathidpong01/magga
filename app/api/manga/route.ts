@@ -9,7 +9,7 @@ export async function POST(request: Request) {
   }
 
   const data = await request.json();
-  const { title, description, categoryId, selectedTags, coverImage, pages } = data;
+  const { title, description, categoryId, selectedTags, coverImage, pages, isHidden } = data;
 
   if (!title) {
     return NextResponse.json({ error: 'Title is required' }, { status: 400 });
@@ -26,6 +26,7 @@ export async function POST(request: Request) {
         },
         coverImage: coverImage || 'https://via.placeholder.com/300x400.png?text=Cover',
         pages: JSON.stringify(pages || []),
+        isHidden: isHidden || false,
       },
     });
     return NextResponse.json(newManga, { status: 201 });

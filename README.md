@@ -31,6 +31,7 @@ _พัฒนาด้วย Next.js 15 (App Router) และระบบจั
   - [Tailwind CSS](https://tailwindcss.com/)
   - [Material UI (MUI)](https://mui.com/) (สำหรับ Component ต่างๆ)
 - **Authentication:** [NextAuth.js](https://next-auth.js.org/) (Credentials Provider)
+- **Image Processing:** [Sharp](https://sharp.pixelplumbing.com/) (Server-side compression & WebP conversion)
 
 ---
 
@@ -40,8 +41,10 @@ _พัฒนาด้วย Next.js 15 (App Router) และระบบจั
 
 - **Home Page:** แสดงรายการมังงะทั้งหมด พร้อมระบบค้นหา (Search)
 - **Filters & Sort:** กรองมังงะตาม หมวดหมู่ (Category), แท็ก (Tag) และเรียงลำดับตามวันที่อัปเดต/วันที่เพิ่ม/ชื่อเรื่อง
-- **Reader:** หน้าอ่านการ์ตูนแบบเลื่อนลง (Vertical Scroll) รองรับการแสดงผลรูปภาพคุณภาพสูง
-- **Responsive Design:** รองรับการใช้งานทั้งบนมือถือ แท็บเล็ต และเดสก์ท็อป
+  - _New!_ **Smart Auto-Filter:** ระบบกรองอัตโนมัติที่ฉลาดขึ้น ป้องกันการโหลดซ้ำซ้อน (Infinite Loop) และลดภาระ Server
+- **Reader:** หน้าอ่านการ์ตูนแบบเลื่อนลง (Vertical Scroll)
+  - _New!_ **Lazy Loading:** โหลดรูปภาพเมื่อเลื่อนลงมาถึง ช่วยให้หน้าเว็บโหลดเร็วขึ้นมาก
+  - **Responsive Design:** รองรับการใช้งานทั้งบนมือถือ แท็บเล็ต และเดสก์ท็อป
 
 ### ⚙️ ระบบหลังบ้าน (Admin Panel)
 
@@ -49,6 +52,7 @@ _พัฒนาด้วย Next.js 15 (App Router) และระบบจั
 - **Manga Management:**
   - สร้าง (Create), แก้ไข (Edit), และลบ (Delete) มังงะ
   - อัปโหลดรูปภาพหน้าปก (Cover) และเนื้อหา (Pages) ได้โดยตรง (บันทึกลง Cloudflare R2)
+  - _New!_ **Auto Compression:** ระบบย่อขนาดรูปภาพ (Max 1920px) และแปลงเป็น WebP อัตโนมัติ ช่วยประหยัดพื้นที่จัดเก็บได้ถึง 80%
 - **Classification Management:** จัดการเพิ่ม/ลบ/แก้ไข หมวดหมู่ และ แท็ก ได้อย่างอิสระ
 - **Authentication:** ระบบ Login สำหรับผู้ดูแลระบบเพื่อความปลอดภัย
 
@@ -84,6 +88,13 @@ NEXTAUTH_SECRET="your-super-secret-key-change-me"
 # Admin Credentials (กำหนด Username/Password สำหรับเข้าหลังบ้าน)
 ADMIN_USERNAME="admin"
 ADMIN_PASSWORD="password123"
+
+# Cloudflare R2 Storage
+R2_ACCOUNT_ID="your-account-id"
+R2_ACCESS_KEY_ID="your-access-key-id"
+R2_SECRET_ACCESS_KEY="your-secret-access-key"
+R2_BUCKET_NAME="your-bucket-name"
+R2_PUBLIC_URL="https://pub-xxxxxxxx.r2.dev"
 ```
 
 ### 4. เตรียมฐานข้อมูล
@@ -112,6 +123,7 @@ npm run dev
 
 - [x] **เปลี่ยนฐานข้อมูล:** ย้ายจาก SQLite ไปใช้ Turso (LibSQL) เรียบร้อยแล้ว
 - [x] **ระบบจัดการรูปภาพ:** เปลี่ยนการเก็บรูปจาก Local ไปใช้ Cloudflare R2 เรียบร้อยแล้ว
+- [x] **Image Optimization:** เพิ่มระบบบีบอัดรูปภาพ (WebP) และ Lazy Loading
 - [ ] **ระบบสมาชิก:** เพิ่มระบบสมัครสมาชิกสำหรับผู้อ่าน เพื่อให้สามารถเก็บประวัติการอ่าน (History) หรือกดบันทึกเรื่องที่ชอบ (Bookmarks)
 - [ ] **คอมเมนต์:** เพิ่มฟีเจอร์ให้ผู้อ่านสามารถแสดงความคิดเห็นในแต่ละเรื่องได้
 - [ ] **Theme Customization:** เพิ่มตัวเลือก Dark/Light mode หรือปรับแต่งธีมสีของเว็บไซต์ได้จากหน้า Admin

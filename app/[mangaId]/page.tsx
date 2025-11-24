@@ -8,7 +8,9 @@ import {
   Container,
   Grid,
   Paper,
+  Avatar,
 } from "@mui/material";
+import Image from "next/image";
 
 type MangaPageProps = {
   params: Promise<{
@@ -30,9 +32,29 @@ export async function generateMetadata({ params }: MangaPageProps) {
     };
   }
 
+  // Safe Metadata for Social Sharing (Masking)
   return {
-    title: manga.title,
+    title: manga.title, // Browser tab still shows real title
     description: manga.description,
+    openGraph: {
+      title: "Magga Reader - Read Manga Online", // Safe Title for Facebook/Line
+      description: "Read your favorite manga online for free. High quality images and fast loading.", // Safe Description
+      images: [
+        {
+          url: "https://placehold.co/1200x630/png?text=Magga+Reader", // Safe Placeholder Image
+          width: 1200,
+          height: 630,
+          alt: "Magga Reader",
+        },
+      ],
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: "Magga Reader - Read Manga Online",
+      description: "Read your favorite manga online for free.",
+      images: ["https://placehold.co/1200x630/png?text=Magga+Reader"],
+    },
   };
 }
 
@@ -78,29 +100,24 @@ export default async function MangaPage({ params }: MangaPageProps) {
         <Grid container spacing={4}>
           {/* Cover Image */}
           <Grid item xs={12} sm={4}>
-            <Box
-              sx={{
-                position: "relative",
-                width: "100%",
-                paddingTop: "140%", // Aspect ratio for cover
-                borderRadius: 2,
-                overflow: "hidden",
-                boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
-              }}
-            >
               <Box
-                component="img"
-                src={manga.coverImage}
-                alt={`Cover of ${manga.title}`}
-                sx={{ 
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%", 
-                  height: "100%", 
-                  objectFit: "cover" 
+                sx={{
+                  position: "relative",
+                  width: "100%",
+                  paddingTop: "140%", // Aspect ratio for cover
+                  borderRadius: 2,
+                  overflow: "hidden",
+                  boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
                 }}
-              />
+              >
+                <Image
+                  src={manga.coverImage}
+                  alt={`Cover of ${manga.title}`}
+                  fill
+                  sizes="(max-width: 600px) 100vw, 33vw"
+                  style={{ objectFit: "cover" }}
+                  priority
+                />
             </Box>
           </Grid>
 
@@ -135,6 +152,52 @@ export default async function MangaPage({ params }: MangaPageProps) {
                 />
               ))}
             </Box>
+
+            {/* Author Credits */}
+            {manga.authorCredits && (
+              <Box sx={{ mt: 3 }}>
+                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                  Author / Credits:
+                </Typography>
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                  {(() => {
+                    try {
+                      const credits = JSON.parse(manga.authorCredits) as {
+                        url: string;
+                        label: string;
+                        icon: string;
+                      }[];
+                      return credits.map((credit, index) => (
+                        <Chip
+                          key={index}
+                          avatar={
+                            credit.icon ? (
+                              <Avatar src={credit.icon} alt={credit.label} />
+                            ) : undefined
+                          }
+                          label={credit.label}
+                          component="a"
+                          href={credit.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          clickable
+                          variant="outlined"
+                          sx={{
+                            borderColor: "rgba(255,255,255,0.2)",
+                            "& .MuiChip-avatar": {
+                              width: 24,
+                              height: 24,
+                            },
+                          }}
+                        />
+                      ));
+                    } catch {
+                      return null;
+                    }
+                  })()}
+                </Box>
+              </Box>
+            )}
           </Grid>
         </Grid>
       </Paper>
@@ -144,15 +207,22 @@ export default async function MangaPage({ params }: MangaPageProps) {
         {pages.map((pageUrl, index) => (
           <Box
             key={index}
-            component="img"
-            src={pageUrl}
-            alt={`Page ${index + 1} of ${manga.title}`}
             sx={{
-              maxWidth: "100%",
-              height: "auto",
-              mb: 1, // Margin between pages
+              position: "relative",
+              width: "100%",
+              mb: 1,
             }}
-          />
+          >
+            <Image
+              src={pageUrl}
+              alt={`Page ${index + 1} of ${manga.title}`}
+              width={0}
+              height={0}
+              sizes="100vw"
+              style={{ width: "100%", height: "auto" }}
+              loading="lazy"
+            />
+          </Box>
         ))}
       </Box>
     </Container>

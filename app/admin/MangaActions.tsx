@@ -17,16 +17,21 @@ import {
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 
 type MangaActionsProps = {
   mangaId: string;
+  isHidden: boolean;
 };
 
-export default function MangaActions({ mangaId }: MangaActionsProps) {
+export default function MangaActions({ mangaId, isHidden }: MangaActionsProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isToggling, setIsToggling] = useState(false);
+  const [currentlyHidden, setCurrentlyHidden] = useState(isHidden);
 
   const handleClickOpen = () => {
     setOpen(true);
@@ -57,20 +62,54 @@ export default function MangaActions({ mangaId }: MangaActionsProps) {
     }
   };
 
+  const handleToggleVisibility = async () => {
+    setIsToggling(true);
+    try {
+      const response = await fetch(`/api/manga/${mangaId}/toggle-visibility`, {
+        method: "PATCH",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to toggle visibility");
+      }
+      const updatedManga = await response.json();
+      setCurrentlyHidden(updatedManga.isHidden);
+      router.refresh();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsToggling(false);
+    }
+  };
+
   return (
     <>
       <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+        <Tooltip title={currentlyHidden ? "Show Manga" : "Hide Manga"}>
+          <IconButton
+            aria-label="toggle visibility"
+            onClick={handleToggleVisibility}
+            disabled={isToggling}
+            sx={{ color: currentlyHidden ? "#94a3b8" : "#60a5fa" }}
+          >
+            {currentlyHidden ? <VisibilityOffIcon /> : <VisibilityIcon />}
+          </IconButton>
+        </Tooltip>
         <Tooltip title="Edit Manga">
           <IconButton
             component={Link}
             href={`/admin/manga/edit/${mangaId}`}
             aria-label="edit"
+            sx={{ color: "#94a3b8" }}
           >
             <EditIcon />
           </IconButton>
         </Tooltip>
         <Tooltip title="Delete Manga">
-          <IconButton aria-label="delete" color="error" onClick={handleClickOpen}>
+          <IconButton 
+            aria-label="delete" 
+            onClick={handleClickOpen}
+            sx={{ color: "#ef4444" }}
+          >
             <DeleteIcon />
           </IconButton>
         </Tooltip>

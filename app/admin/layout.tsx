@@ -29,7 +29,7 @@ export default function AdminLayout({
   ];
 
   return (
-    <Box sx={{ display: "flex" }}>
+    <Box sx={{ display: "flex", bgcolor: "#0f172a", minHeight: "100vh", color: "#f8fafc" }}>
       <Drawer
         sx={{
           width: drawerWidth,
@@ -37,41 +37,58 @@ export default function AdminLayout({
           "& .MuiDrawer-paper": {
             width: drawerWidth,
             boxSizing: "border-box",
-            backgroundColor: "#1e293b", // Slate-800
-            color: "#f3f4f6",
-            borderRight: "1px solid #334155", // Slate-700
+            backgroundColor: "#0f172a", // Unified background color
+            color: "#f8fafc",
+            borderRight: "1px solid #1e293b",
           },
         }}
+        PaperProps={{
+          sx: {
+            backgroundColor: "#0f172a !important",
+            backgroundImage: "none !important",
+            borderRight: "1px solid #1e293b",
+            color: "#f8fafc",
+          }
+        }}
         variant="permanent"
+        elevation={0}
         anchor="left"
       >
         <Toolbar>
-          <Typography variant="h6" noWrap component="div">
-            Admin Panel
+          <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 700, color: '#6366f1' }}>
+            Magga Admin
           </Typography>
         </Toolbar>
-        <Divider />
-        <List>
+        <Divider sx={{ borderColor: '#1e293b' }} />
+        <List sx={{ px: 2, mt: 2, gap: 0.5, display: 'flex', flexDirection: 'column' }}>
           {menuItems.map((item) => (
             <ListItem key={item.text} disablePadding>
-              <ListItemButton component={Link} href={item.href}>
-                <ListItemIcon>{item.icon}</ListItemIcon>
-                <ListItemText primary={item.text} />
+              <ListItemButton
+                component={Link}
+                href={item.href}
+                sx={{
+                  borderRadius: 1,
+                  "&:hover": { bgcolor: "rgba(255, 255, 255, 0.05)" },
+                }}
+              >
+                <ListItemIcon sx={{ color: "#94a3b8", minWidth: 40 }}>{item.icon}</ListItemIcon>
+                <ListItemText 
+                  primary={item.text} 
+                  primaryTypographyProps={{ fontWeight: 500 }}
+                />
               </ListItemButton>
             </ListItem>
           ))}
         </List>
-        <Divider sx={{ mt: 'auto' }} />
+        <Divider sx={{ mt: 'auto', borderColor: '#1e293b' }} />
         <Box sx={{ p: 2 }}>
           <SignOutButton />
         </Box>
       </Drawer>
       <Box
         component="main"
-        sx={{ flexGrow: 1, p: 3 }}
+        sx={{ flexGrow: 1, p: 3, bgcolor: "#0f172a" }}
       >
-        {/* The Toolbar is used as a spacer to push content below the main app bar, which we don't have here, but it's good practice if we add one later */}
-        {/* <Toolbar /> */}
         {children}
       </Box>
     </Box>
