@@ -44,6 +44,13 @@ export default function AgeVerificationModal() {
           maxWidth: "400px",
         },
       }}
+      slotProps={{
+        backdrop: {
+          sx: {
+            backdropFilter: "blur(10px)",
+          },
+        },
+      }}
     >
       <Box sx={{ display: "flex", justifyContent: "center", mt: 2, mb: 1 }}>
         <WarningAmberIcon color="warning" sx={{ fontSize: 60 }} />
