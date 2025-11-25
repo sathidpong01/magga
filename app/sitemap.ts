@@ -4,16 +4,16 @@ import { prisma } from "@/lib/prisma";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
 
-  // Get all manga IDs
+  // Get all manga slugs
   const mangas = await prisma.manga.findMany({
     select: {
-      id: true,
+      slug: true,
       updatedAt: true,
     },
   });
 
   const mangaUrls = mangas.map((manga) => ({
-    url: `${baseUrl}/${manga.id}`,
+    url: `${baseUrl}/${manga.slug}`,
     lastModified: manga.updatedAt,
     changeFrequency: "weekly" as const,
     priority: 0.8,
