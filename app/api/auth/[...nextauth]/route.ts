@@ -78,10 +78,11 @@ const handler = NextAuth({
       },
     }),
   ],
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: process.env.NEXTAUTH_SECRET || "secret",
   pages: {
     signIn: '/auth/signin',
   },
 });
 
+export const runtime = "nodejs";
 export { handler as GET, handler as POST };
