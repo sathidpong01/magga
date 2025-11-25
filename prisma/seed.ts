@@ -26,6 +26,7 @@ async function main() {
   await prisma.manga.create({
     data: {
       title: 'My First Manga',
+      slug: 'my-first-manga',
       description: 'This is a short story about learning to code.',
       coverImage: 'https://via.placeholder.com/300x400.png?text=Cover',
       pages: JSON.stringify([
