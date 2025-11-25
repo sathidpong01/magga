@@ -52,9 +52,14 @@ _พัฒนาด้วย Next.js 15 (App Router) และระบบจั
 - **Manga Management:**
   - สร้าง (Create), แก้ไข (Edit), และลบ (Delete) มังงะ
   - อัปโหลดรูปภาพหน้าปก (Cover) และเนื้อหา (Pages) ได้โดยตรง (บันทึกลง Cloudflare R2)
-  - _New!_ **Auto Compression:** ระบบย่อขนาดรูปภาพ (Max 1920px) และแปลงเป็น WebP อัตโนมัติ ช่วยประหยัดพื้นที่จัดเก็บได้ถึง 80%
+  - **New!** **Friendly URLs (Slug):** รองรับ URL แบบชื่อเรื่อง (เช่น `/manga/one-piece`) เพื่อผลลัพธ์ SEO ที่ดีขึ้น
+  - **New!** **Author Credits:** ระบบให้เครดิตผู้แต่ง/ผู้แปล พร้อมฟีเจอร์ **Auto-fetch Metadata** ดึงชื่อและไอคอนจากลิงก์ (Facebook/Twitter) อัตโนมัติ
+  - **Auto Compression:** ระบบย่อขนาดรูปภาพ (Max 1920px) และแปลงเป็น WebP อัตโนมัติ ช่วยประหยัดพื้นที่จัดเก็บได้ถึง 80%
 - **Classification Management:** จัดการเพิ่ม/ลบ/แก้ไข หมวดหมู่ และ แท็ก ได้อย่างอิสระ
-- **Authentication:** ระบบ Login สำหรับผู้ดูแลระบบเพื่อความปลอดภัย
+- **Authentication:** ระบบ Login สำหรับผู้ดูแลระบบ (Database-backed) ปลอดภัยด้วยการเข้ารหัสรหัสผ่าน (Bcrypt)
+- **Security Hardening:**
+  - Strict MIME Type Validation สำหรับการอัปโหลดไฟล์
+  - Security Headers (X-Content-Type-Options, X-Frame-Options, etc.) ปกป้องเว็บจากการโจมตีพื้นฐาน
 
 ---
 
@@ -106,6 +111,14 @@ npx prisma db push
 # (Optional) เพิ่มข้อมูลตัวอย่าง
 npm run db:seed
 ```
+
+> **Important:** หากคุณอัปเดตมาจากเวอร์ชันเก่า ต้องรัน SQL Migration เพื่อเพิ่มคอลัมน์ `slug` ด้วย:
+>
+> ```sql
+> ALTER TABLE "Manga" ADD COLUMN "slug" TEXT;
+> UPDATE "Manga" SET "slug" = "id";
+> CREATE UNIQUE INDEX "Manga_slug_key" ON "Manga"("slug");
+> ```
 
 > **Note:** การตั้งค่า Prisma อยู่ในไฟล์ `prisma.config.ts` (Prisma 7)
 
