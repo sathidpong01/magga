@@ -42,7 +42,21 @@ async function main() {
     },
   });
 
-  console.log('Database has been seeded.');
+  // Create default admin user
+  const bcrypt = await import('bcryptjs');
+  const hashedPassword = await bcrypt.hash('admin123', 10);
+  
+  await prisma.user.upsert({
+    where: { username: 'admin' },
+    update: {},
+    create: {
+      username: 'admin',
+      password: hashedPassword,
+      role: 'admin',
+    },
+  });
+
+  console.log('Database has been seeded. Default admin: admin / admin123');
 }
 
 main()

@@ -33,11 +33,28 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No files uploaded" }, { status: 400 });
     }
 
+    const ALLOWED_MIME_TYPES = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/gif",
+      "image/avif"
+    ];
+
+    for (const file of files) {
+      if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+        return NextResponse.json(
+          { error: `File type ${file.type} is not allowed. Only images are permitted.` },
+          { status: 400 }
+        );
+      }
+    }
+
     const saved: string[] = [];
 
     for (const file of files) {
       const arrayBuffer = await file.arrayBuffer();
-      let buffer = Buffer.from(arrayBuffer);
+      let buffer = Buffer.from(new Uint8Array(arrayBuffer));
       let contentType = file.type;
       let fileName = file.name;
 
@@ -65,7 +82,7 @@ export async function POST(request: Request) {
         new PutObjectCommand({
           Bucket: R2_BUCKET_NAME,
           Key: safeName,
-          Body: buffer,
+          Body: new Uint8Array(buffer),
           ContentType: contentType,
         })
       );

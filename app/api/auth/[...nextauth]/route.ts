@@ -1,5 +1,7 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import prisma from '@/lib/prisma';
+import bcrypt from 'bcryptjs';
 
 const handler = NextAuth({
   providers: [
@@ -10,16 +12,25 @@ const handler = NextAuth({
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        // This is a simple, non-production-ready authorization.
-        // You should replace this with a real user authentication system.
-        if (
-          credentials?.username === process.env.ADMIN_USERNAME &&
-          credentials?.password === process.env.ADMIN_PASSWORD
-        ) {
-          return { id: '1', name: 'Admin', email: 'admin@example.com' };
+        if (!credentials?.username || !credentials?.password) {
+          return null;
         }
-        // Return null if user data could not be retrieved
-        return null;
+
+        const user = await prisma.user.findUnique({
+          where: { username: credentials.username },
+        });
+
+        if (!user) {
+          return null;
+        }
+
+        const isValid = await bcrypt.compare(credentials.password, user.password);
+
+        if (!isValid) {
+          return null;
+        }
+
+        return { id: user.id, name: user.username, email: `${user.username}@example.com` };
       },
     }),
   ],

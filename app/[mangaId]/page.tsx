@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: MangaPageProps) {
   const { mangaId } = await params;
   const manga = await prisma.manga.findUnique({
     where: {
-      id: mangaId,
+      slug: mangaId,
     },
   });
 
@@ -60,9 +60,10 @@ export async function generateMetadata({ params }: MangaPageProps) {
 
 export default async function MangaPage({ params }: MangaPageProps) {
   const { mangaId } = await params;
+  // Try to find by slug
   const manga = await prisma.manga.findUnique({
     where: {
-      id: mangaId,
+      slug: mangaId,
     },
     include: {
       category: true,

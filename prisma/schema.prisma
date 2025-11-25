@@ -12,6 +12,7 @@ datasource db {
 // สำหรับมังงะ
 model Manga {
   id            String   @id @default(cuid())
+  slug          String   @unique
   title         String   @unique
   description   String?
   coverImage    String
@@ -39,4 +40,13 @@ model Tag {
   id     String  @id @default(cuid())
   name   String  @unique
   mangas Manga[] @relation
+}
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  role      String   @default("user")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

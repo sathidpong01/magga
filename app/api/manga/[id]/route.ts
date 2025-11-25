@@ -14,7 +14,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const data = await request.json();
-  const { title, description, categoryId, selectedTags, coverImage, pages, isHidden } = data;
+  const { title, description, categoryId, selectedTags, coverImage, pages, isHidden, authorCredits, slug } = data;
   const { id } = await params;
 
   if (!title) {
@@ -22,10 +22,24 @@ export async function PUT(request: Request, { params }: RouteParams) {
   }
 
   try {
+    // Check if slug exists and belongs to another manga
+    if (slug) {
+      const existingSlug = await prisma.manga.findFirst({
+        where: {
+          slug,
+          NOT: { id },
+        },
+      });
+      if (existingSlug) {
+        return NextResponse.json({ error: 'Slug already exists' }, { status: 400 });
+      }
+    }
+
     const updatedManga = await prisma.manga.update({
       where: { id },
       data: {
         title,
+        slug,
         description,
         categoryId,
         tags: {
@@ -34,6 +48,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
         coverImage: coverImage || undefined,
         pages: pages ? JSON.stringify(pages) : undefined,
         isHidden: isHidden,
+        authorCredits,
       },
     });
     return NextResponse.json(updatedManga);

@@ -38,6 +38,8 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
 
     // Form State
     const [title, setTitle] = useState(manga?.title || "");
+    // @ts-ignore - slug might not exist on type yet until regen
+    const [slug, setSlug] = useState(manga?.slug || "");
     const [description, setDescription] = useState(manga?.description || "");
     const [coverImage, setCoverImage] = useState(manga?.coverImage || "");
     const parsePagesToString = (p: unknown) => {
@@ -168,6 +170,10 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
         setError("Title and either Cover Image URL or Cover File are required.");
         return;
       }
+      if (!slug) {
+        setError("Slug is required.");
+        return;
+      }
       setIsSubmitting(true);
       setError("");
       const pagesArray = pages.split("\n").filter((p) => p.trim() !== "");
@@ -205,6 +211,7 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
 
       const body = {
         title,
+        slug,
         description,
         coverImage: uploadedCoverUrl || coverImage,
         pages: finalPages,
@@ -257,6 +264,38 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                 onChange={(e) => setTitle(e.target.value)}
                 fullWidth
                 required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                label="Slug (URL)"
+                value={slug}
+                onChange={(e) => setSlug(e.target.value)}
+                fullWidth
+                required
+                helperText={`Preview: /manga/${slug}`}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <Tooltip title="Generate from Title">
+                        <IconButton
+                          onClick={() => {
+                            const newSlug = title
+                              .toLowerCase()
+                              .trim()
+                              .replace(/[\s]+/g, "-")
+                              .replace(/[^\w\-\u0E00-\u0E7F]+/g, "") // Keep Thai chars
+                              .replace(/\-\-+/g, "-");
+                            setSlug(newSlug);
+                          }}
+                          edge="end"
+                        >
+                          <AutoFixHighIcon />
+                        </IconButton>
+                      </Tooltip>
+                    </InputAdornment>
+                  ),
+                }}
               />
             </Grid>
             <Grid item xs={12}>
@@ -422,13 +461,15 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                             endAdornment: (
                               <InputAdornment position="end">
                                 <Tooltip title="Auto-fetch Title & Icon">
-                                  <IconButton
-                                    onClick={() => handleFetchCreditInfo(index)}
-                                    edge="end"
-                                    disabled={!credit.url}
-                                  >
-                                    <AutoFixHighIcon />
-                                  </IconButton>
+                                  <span>
+                                    <IconButton
+                                      onClick={() => handleFetchCreditInfo(index)}
+                                      edge="end"
+                                      disabled={!credit.url}
+                                    >
+                                      <AutoFixHighIcon />
+                                    </IconButton>
+                                  </span>
                                 </Tooltip>
                               </InputAdornment>
                             ),

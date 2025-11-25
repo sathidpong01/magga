@@ -33,7 +33,7 @@ export default function MangaCard({ manga }: MangaCardProps) {
         },
       },
     }}>
-      <CardActionArea component={Link} href={`/${manga.id}`} sx={{ height: "100%", display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+      <CardActionArea component={Link} href={`/${manga.slug}`} sx={{ height: "100%", display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
           <Box sx={{ position: "relative", height: 300, width: "100%", overflow: "hidden" }}>
             <Image
               src={manga.coverImage}
