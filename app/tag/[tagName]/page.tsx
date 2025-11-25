@@ -25,6 +25,10 @@ export default async function TagPage({ params }: TagPageProps) {
     where: { name: tagName },
     include: {
       mangas: {
+        include: {
+          tags: true,
+          category: true,
+        },
         orderBy: {
           createdAt: "desc",
         },
