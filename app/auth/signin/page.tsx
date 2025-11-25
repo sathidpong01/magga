@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -15,9 +15,10 @@ import {
   DialogContent,
   DialogContentText,
   DialogActions,
+  CircularProgress,
 } from "@mui/material";
 
-export default function SignIn() {
+function SignInForm() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
@@ -150,6 +151,20 @@ export default function SignIn() {
         </DialogActions>
       </Dialog>
     </Container>
+  );
+}
+
+export default function SignIn() {
+  return (
+    <Suspense 
+      fallback={
+        <Container component="main" maxWidth="xs" sx={{ mt: 8, display: 'flex', justifyContent: 'center' }}>
+          <CircularProgress sx={{ color: "#fbbf24" }} />
+        </Container>
+      }
+    >
+      <SignInForm />
+    </Suspense>
   );
 }
 

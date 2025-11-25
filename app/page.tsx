@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
 import { Grid, Typography, Box, Container } from "@mui/material";
+import { Suspense } from "react";
 import MangaCard from "./components/MangaCard";
 import SearchFilters from "./components/SearchFilters";
 import { Prisma } from "@prisma/client";
@@ -65,7 +66,9 @@ export default async function Home({ searchParams }: Props) {
   return (
     <Container maxWidth="xl">
       <Box sx={{ my: 4 }}>
-        <SearchFilters categories={categories} tags={tags} />
+        <Suspense fallback={<Box sx={{ height: 100 }} />}>
+          <SearchFilters categories={categories} tags={tags} />
+        </Suspense>
 
         <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 700, mb: 3 }}>
           {search ? `Search Results for "${search}"` : "All Mangas"}
