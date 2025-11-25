@@ -54,18 +54,19 @@ export async function POST(request: Request) {
 
     for (const file of files) {
       const arrayBuffer = await file.arrayBuffer();
-      let buffer = Buffer.from(new Uint8Array(arrayBuffer));
+      let imageData: Uint8Array = new Uint8Array(arrayBuffer);
       let contentType = file.type;
       let fileName = file.name;
 
       // Compress image if it's an image type
       if (file.type.startsWith("image/")) {
         try {
-          buffer = await sharp(buffer)
+          const compressedBuffer = await sharp(Buffer.from(imageData))
             .resize(1920, 1920, { fit: "inside", withoutEnlargement: true }) // Resize to max 1920px
             .webp({ quality: 80 }) // Convert to WebP with 80% quality
             .toBuffer();
           
+          imageData = new Uint8Array(compressedBuffer);
           contentType = "image/webp";
           fileName = fileName.replace(/\.[^/.]+$/, "") + ".webp";
         } catch (error) {
@@ -82,7 +83,7 @@ export async function POST(request: Request) {
         new PutObjectCommand({
           Bucket: R2_BUCKET_NAME,
           Key: safeName,
-          Body: new Uint8Array(buffer),
+          Body: imageData,
           ContentType: contentType,
         })
       );

@@ -1,12 +1,63 @@
 import { NextResponse } from "next/server";
 import * as cheerio from "cheerio";
 
+// SSRF Protection: Block internal/private IPs and localhost
+const BLOCKED_HOSTS = [
+  'localhost',
+  '127.0.0.1',
+  '0.0.0.0',
+  '::1',
+  '169.254.169.254', // AWS metadata
+  'metadata.google.internal', // GCP metadata
+];
+
+const PRIVATE_IP_RANGES = [
+  /^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/, // 10.0.0.0/8
+  /^172\.(1[6-9]|2[0-9]|3[0-1])\.\d{1,3}\.\d{1,3}$/, // 172.16.0.0/12
+  /^192\.168\.\d{1,3}\.\d{1,3}$/, // 192.168.0.0/16
+  /^127\.\d{1,3}\.\d{1,3}\.\d{1,3}$/, // 127.0.0.0/8 (loopback)
+];
+
+function isValidUrl(urlString: string): { valid: boolean; error?: string } {
+  try {
+    const parsedUrl = new URL(urlString);
+    
+    // Only allow HTTP and HTTPS
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+      return { valid: false, error: 'Only HTTP(S) protocols are allowed' };
+    }
+    
+    // Check blocked hosts
+    const hostname = parsedUrl.hostname.toLowerCase();
+    if (BLOCKED_HOSTS.includes(hostname)) {
+      return { valid: false, error: 'Access to this host is not allowed' };
+    }
+    
+    // Check private IP ranges
+    for (const pattern of PRIVATE_IP_RANGES) {
+      if (pattern.test(hostname)) {
+        return { valid: false, error: 'Access to private IP ranges is not allowed' };
+      }
+    }
+    
+    return { valid: true };
+  } catch {
+    return { valid: false, error: 'Invalid URL format' };
+  }
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const url = searchParams.get("url");
 
   if (!url) {
     return NextResponse.json({ error: "URL is required" }, { status: 400 });
+  }
+
+  // SSRF Protection
+  const validation = isValidUrl(url);
+  if (!validation.valid) {
+    return NextResponse.json({ error: validation.error }, { status: 400 });
   }
 
   try {

@@ -39,7 +39,8 @@ export default function SignIn() {
 
     if (result?.error) {
       setModalType("error");
-      setModalMessage("Invalid username or password"); // Or result.error if you want specific details
+      // Display the actual error message with remaining attempts
+      setModalMessage(result.error);
       setModalOpen(true);
     } else if (result?.ok) {
       setModalType("success");

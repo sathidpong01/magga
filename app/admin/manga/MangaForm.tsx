@@ -38,7 +38,7 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
 
     // Form State
     const [title, setTitle] = useState(manga?.title || "");
-    // @ts-ignore - slug might not exist on type yet until regen
+
     const [slug, setSlug] = useState(manga?.slug || "");
     const [description, setDescription] = useState(manga?.description || "");
     const [coverImage, setCoverImage] = useState(manga?.coverImage || "");
