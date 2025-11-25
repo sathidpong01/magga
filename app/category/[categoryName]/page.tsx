@@ -25,6 +25,10 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
     where: { name: categoryName },
     include: {
       mangas: {
+        include: {
+          tags: true,
+          category: true,
+        },
         orderBy: {
           createdAt: "desc",
         },
