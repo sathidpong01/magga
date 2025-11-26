@@ -87,7 +87,12 @@ export default function AdminLayout({
       </Drawer>
       <Box
         component="main"
-        sx={{ flexGrow: 1, p: 3, bgcolor: "#0f172a" }}
+        sx={{ 
+          flexGrow: 1, 
+          p: 3, 
+          bgcolor: "#0f172a",
+          backgroundImage: "none" // Remove MUI gradient overlay
+        }}
       >
         {children}
       </Box>
