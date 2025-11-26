@@ -74,10 +74,33 @@ const handler = NextAuth({
         // Clear attempts on successful login
         clearAttempt(identifier);
 
-        return { id: user.id, name: user.username, email: `${user.username}@example.com` };
+        return { 
+          id: user.id, 
+          name: user.username, 
+          email: `${user.username}@example.com`,
+          role: user.role // Pass role to JWT
+        };
       },
     }),
   ],
+  callbacks: {
+    async jwt({ token, user }) {
+      // On initial sign in, add role to token
+      if (user) {
+        token.role = user.role;
+        token.id = user.id;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      // Add role and id to session
+      if (session.user) {
+        session.user.role = token.role as string;
+        session.user.id = token.id as string;
+      }
+      return session;
+    },
+  },
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: '/auth/signin',
