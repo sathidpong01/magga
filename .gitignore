@@ -40,6 +40,17 @@ next-env.d.ts
 # Prisma
 *.sqlite
 *.sqlite-journal
+*.db
+*.db-journal
+
+# Database dumps and migrations (manual SQL files)
+*.sql
+!prisma/migrations/**/*.sql
+
+# Debug/test scripts
+scripts/test-*.ts
+scripts/verify-*.ts
+scripts/check-*.ts
 
 # OS
 Thumbs.db
@@ -49,3 +60,8 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Security - prevent sensitive files
+.env.backup
+*.pem
+*.key
