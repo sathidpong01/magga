@@ -9,6 +9,9 @@ type CategoryPageProps = {
   }>;
 };
 
+// ISR: Revalidate every 5 minutes
+export const revalidate = 300;
+
 export async function generateMetadata({ params }: CategoryPageProps) {
   const { categoryName: encodedCategoryName } = await params;
   const categoryName = decodeURIComponent(encodedCategoryName);

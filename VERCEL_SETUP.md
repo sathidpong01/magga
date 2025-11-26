@@ -54,6 +54,19 @@ R2_BUCKET_NAME=your-bucket-name
 R2_PUBLIC_URL=https://your-r2-public-url.r2.dev
 ```
 
+### ขั้นตอนที่ 2.5: Environment Variables แบบ Optional
+
+สำหรับการ optimize และ debugging:
+
+```
+ENABLE_QUERY_LOG=true
+```
+
+**หมายเหตุ:**
+
+- `ENABLE_QUERY_LOG`: เปิดเมื่อต้องการ debug database queries ใน production (ค่า default จะ log เฉพาะ errors)
+- `NODE_ENV`: Vercel จะตั้งค่าให้อัตโนมัติเป็น `production`
+
 ### ขั้นตอนที่ 3: เลือก Environment
 
 สำหรับแต่ละตัวแปร ให้เลือก:

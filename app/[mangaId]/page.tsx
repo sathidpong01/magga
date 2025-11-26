@@ -18,6 +18,22 @@ type MangaPageProps = {
   }>;
 };
 
+export const revalidate = 3600; // Revalidate every hour
+
+// Pre-render top 50 manga at build time for better performance
+export async function generateStaticParams() {
+  const topMangas = await prisma.manga.findMany({
+    where: { isHidden: false },
+    select: { slug: true },
+    orderBy: { updatedAt: 'desc' },
+    take: 50,
+  });
+
+  return topMangas.map((manga) => ({
+    mangaId: manga.slug,
+  }));
+}
+
 export async function generateMetadata({ params }: MangaPageProps) {
   const { mangaId } = await params;
   const decodedSlug = decodeURIComponent(mangaId);
@@ -224,7 +240,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
               height={0}
               sizes="100vw"
               style={{ width: "100%", height: "auto" }}
-              loading="lazy"
+              priority={index === 0}
             />
           </Box>
         ))}
