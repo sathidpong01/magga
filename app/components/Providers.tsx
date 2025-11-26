@@ -16,8 +16,8 @@ const darkTheme = createTheme({
   palette: {
     mode: "dark",
     background: {
-      default: "#0B0F19", // Deep dark blue/black
-      paper: "#111827",   // Rich dark grey
+      default: "#0a0a0a", // Neutral Black
+      paper: "#171717",   // Neutral 900
     },
     primary: {
       main: "#8b5cf6",    // Violet 500
@@ -26,8 +26,8 @@ const darkTheme = createTheme({
       main: "#10b981",    // Emerald 500
     },
     text: {
-      primary: "#F3F4F6", // Gray 100
-      secondary: "#9CA3AF", // Gray 400
+      primary: "#fafafa", // Neutral 50
+      secondary: "#a3a3a3", // Neutral 400
     },
   },
   typography: {
@@ -46,19 +46,19 @@ const darkTheme = createTheme({
     MuiAppBar: {
       styleOverrides: {
         root: {
-          backgroundColor: "rgba(11, 15, 25, 0.8)", // Semi-transparent background
-          backdropFilter: "blur(12px)",            // Glass effect
+          backgroundColor: "rgba(10, 10, 10, 0.8)", // Neutral Black with opacity
+          backdropFilter: "blur(12px)",
           boxShadow: "none",
-          borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
+          borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
         },
       },
     },
     MuiCard: {
       styleOverrides: {
         root: {
-          backgroundImage: "none", // Disable default MUI gradient overlay
-          backgroundColor: "#111827",
-          border: "1px solid rgba(255, 255, 255, 0.05)",
+          backgroundImage: "none",
+          backgroundColor: "#171717", // Neutral 900
+          border: "1px solid rgba(255, 255, 255, 0.1)",
           boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
         },
       },
@@ -66,11 +66,11 @@ const darkTheme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          textTransform: "none", // Modern buttons usually don't use uppercase
+          textTransform: "none",
           fontWeight: 500,
         },
         containedPrimary: {
-          boxShadow: "0 4px 14px 0 rgba(139, 92, 246, 0.39)", // Violet glow
+          boxShadow: "0 4px 14px 0 rgba(139, 92, 246, 0.39)",
           "&:hover": {
             boxShadow: "0 6px 20px rgba(139, 92, 246, 0.23)",
           },
@@ -80,25 +80,25 @@ const darkTheme = createTheme({
     MuiCssBaseline: {
       styleOverrides: {
         body: {
-          scrollbarColor: "#374151 #0B0F19",
+          scrollbarColor: "#262626 #0a0a0a", // Neutral 800 / Neutral Black
           "&::-webkit-scrollbar, & *::-webkit-scrollbar": {
-            backgroundColor: "#0B0F19",
+            backgroundColor: "#0a0a0a",
             width: "8px",
           },
           "&::-webkit-scrollbar-thumb, & *::-webkit-scrollbar-thumb": {
             borderRadius: 8,
-            backgroundColor: "#374151",
+            backgroundColor: "#262626", // Neutral 800
             minHeight: 24,
-            border: "2px solid #0B0F19",
+            border: "2px solid #0a0a0a",
           },
           "&::-webkit-scrollbar-thumb:focus, & *::-webkit-scrollbar-thumb:focus": {
-            backgroundColor: "#6B7280",
+            backgroundColor: "#525252", // Neutral 600
           },
           "&::-webkit-scrollbar-thumb:active, & *::-webkit-scrollbar-thumb:active": {
-            backgroundColor: "#6B7280",
+            backgroundColor: "#525252",
           },
           "&::-webkit-scrollbar-thumb:hover, & *::-webkit-scrollbar-thumb:hover": {
-            backgroundColor: "#6B7280",
+            backgroundColor: "#525252",
           },
         },
       },

@@ -12,8 +12,8 @@ export default function NotFound() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: "#0f172a", // Slate-900
-        color: "#f3f4f6", // Slate-100
+        backgroundColor: "#0a0a0a", // Neutral Black
+        color: "#fafafa", // Neutral 50
         textAlign: "center",
         overflow: "hidden",
         position: "relative",
@@ -27,7 +27,7 @@ export default function NotFound() {
           left: "5%",
           width: "300px",
           height: "300px",
-          background: "radial-gradient(circle, rgba(251, 191, 36, 0.1) 0%, rgba(15, 23, 42, 0) 70%)",
+          background: "radial-gradient(circle, rgba(251, 191, 36, 0.1) 0%, rgba(10, 10, 10, 0) 70%)",
           borderRadius: "50%",
           filter: "blur(40px)",
           zIndex: 0,
@@ -40,7 +40,7 @@ export default function NotFound() {
           right: "5%",
           width: "400px",
           height: "400px",
-          background: "radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, rgba(15, 23, 42, 0) 70%)",
+          background: "radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, rgba(10, 10, 10, 0) 70%)",
           borderRadius: "50%",
           filter: "blur(60px)",
           zIndex: 0,
@@ -79,7 +79,7 @@ export default function NotFound() {
           sx={{
             fontWeight: 700,
             mb: 2,
-            background: "linear-gradient(to right, #e2e8f0, #94a3b8)",
+            background: "linear-gradient(to right, #e5e5e5, #a3a3a3)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
           }}
@@ -90,7 +90,7 @@ export default function NotFound() {
         <Typography
           variant="body1"
           sx={{
-            color: "#94a3b8",
+            color: "#a3a3a3",
             fontSize: "1.1rem",
             mb: 6,
             maxWidth: "600px",
@@ -107,7 +107,7 @@ export default function NotFound() {
             startIcon={<HomeIcon />}
             sx={{
               bgcolor: "#fbbf24",
-              color: "#0f172a",
+              color: "#0a0a0a",
               fontWeight: "bold",
               px: 4,
               py: 1.5,

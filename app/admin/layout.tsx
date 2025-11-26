@@ -29,7 +29,7 @@ export default function AdminLayout({
   ];
 
   return (
-    <Box sx={{ display: "flex", bgcolor: "#0f172a", minHeight: "100vh", color: "#f8fafc" }}>
+    <Box sx={{ display: "flex", bgcolor: "#0a0a0a", minHeight: "100vh", color: "#fafafa" }}>
       <Drawer
         sx={{
           width: drawerWidth,
@@ -37,17 +37,17 @@ export default function AdminLayout({
           "& .MuiDrawer-paper": {
             width: drawerWidth,
             boxSizing: "border-box",
-            backgroundColor: "#0f172a", // Unified background color
-            color: "#f8fafc",
-            borderRight: "1px solid #1e293b",
+            backgroundColor: "#171717", // Neutral 900
+            color: "#fafafa",
+            borderRight: "1px solid rgba(255, 255, 255, 0.1)",
           },
         }}
         PaperProps={{
           sx: {
-            backgroundColor: "#0f172a !important",
+            backgroundColor: "#171717 !important",
             backgroundImage: "none !important",
-            borderRight: "1px solid #1e293b",
-            color: "#f8fafc",
+            borderRight: "1px solid rgba(255, 255, 255, 0.1)",
+            color: "#fafafa",
           }
         }}
         variant="permanent"
@@ -55,11 +55,11 @@ export default function AdminLayout({
         anchor="left"
       >
         <Toolbar>
-          <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 700, color: '#6366f1' }}>
+          <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 700, color: '#8b5cf6' }}>
             Magga Admin
           </Typography>
         </Toolbar>
-        <Divider sx={{ borderColor: '#1e293b' }} />
+        <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)' }} />
         <List sx={{ px: 2, mt: 2, gap: 0.5, display: 'flex', flexDirection: 'column' }}>
           {menuItems.map((item) => (
             <ListItem key={item.text} disablePadding>
@@ -71,7 +71,7 @@ export default function AdminLayout({
                   "&:hover": { bgcolor: "rgba(255, 255, 255, 0.05)" },
                 }}
               >
-                <ListItemIcon sx={{ color: "#94a3b8", minWidth: 40 }}>{item.icon}</ListItemIcon>
+                <ListItemIcon sx={{ color: "#a3a3a3", minWidth: 40 }}>{item.icon}</ListItemIcon>
                 <ListItemText 
                   primary={item.text} 
                   primaryTypographyProps={{ fontWeight: 500 }}
@@ -80,7 +80,7 @@ export default function AdminLayout({
             </ListItem>
           ))}
         </List>
-        <Divider sx={{ mt: 'auto', borderColor: '#1e293b' }} />
+        <Divider sx={{ mt: 'auto', borderColor: 'rgba(255, 255, 255, 0.1)' }} />
         <Box sx={{ p: 2 }}>
           <SignOutButton />
         </Box>
@@ -90,7 +90,7 @@ export default function AdminLayout({
         sx={{ 
           flexGrow: 1, 
           p: 3, 
-          bgcolor: "#0f172a",
+          bgcolor: "#0a0a0a", // Neutral Black
           backgroundImage: "none" // Remove MUI gradient overlay
         }}
       >

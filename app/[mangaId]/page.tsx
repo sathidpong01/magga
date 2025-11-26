@@ -127,7 +127,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
 
           {/* Details */}
           <Grid item xs={12} sm={8}>
-            <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 800, background: "linear-gradient(45deg, #8b5cf6, #ec4899)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+            <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 800, background: "linear-gradient(45deg, #8b5cf6, #fbbf24)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
               {manga.title}
             </Typography>
             <Typography variant="body1" paragraph color="text.secondary" sx={{ fontSize: "1.1rem", lineHeight: 1.7 }}>
