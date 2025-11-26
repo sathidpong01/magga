@@ -68,8 +68,8 @@ function SignInForm() {
           flexDirection: "column",
           alignItems: "center",
           padding: 4,
-          backgroundColor: "#1e293b", // Slate-800
-          color: "#f3f4f6",
+          backgroundColor: "#171717", // Neutral 900
+          color: "#fafafa",
         }}
       >
         <Typography component="h1" variant="h5">
@@ -88,10 +88,10 @@ function SignInForm() {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             sx={{
-              "& .MuiInputLabel-root": { color: "#94a3b8" }, // Slate-400
+              "& .MuiInputLabel-root": { color: "#a3a3a3" }, // Neutral 400
               "& .MuiOutlinedInput-root": {
-                color: "#f3f4f6",
-                "& fieldset": { borderColor: "#475569" }, // Slate-600
+                color: "#fafafa",
+                "& fieldset": { borderColor: "#404040" }, // Neutral 700
                 "&:hover fieldset": { borderColor: "#fbbf24" }, // Amber-400
                 "&.Mui-focused fieldset": { borderColor: "#fbbf24" }, // Amber-400
               },
@@ -109,10 +109,10 @@ function SignInForm() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             sx={{
-              "& .MuiInputLabel-root": { color: "#94a3b8" }, // Slate-400
+              "& .MuiInputLabel-root": { color: "#a3a3a3" }, // Neutral 400
               "& .MuiOutlinedInput-root": {
-                color: "#f3f4f6",
-                "& fieldset": { borderColor: "#475569" }, // Slate-600
+                color: "#fafafa",
+                "& fieldset": { borderColor: "#404040" }, // Neutral 700
                 "&:hover fieldset": { borderColor: "#fbbf24" }, // Amber-400
                 "&.Mui-focused fieldset": { borderColor: "#fbbf24" }, // Amber-400
               },

@@ -102,7 +102,7 @@ export default function MangaActions({ mangaId, isHidden, slug }: MangaActionsPr
             aria-label="toggle visibility"
             onClick={handleToggleVisibility}
             disabled={isToggling}
-            sx={{ color: currentlyHidden ? "#94a3b8" : "#60a5fa" }}
+            sx={{ color: currentlyHidden ? "#a3a3a3" : "#22c55e" }} // Neutral 400 / Green 500
           >
             {currentlyHidden ? <VisibilityOffIcon /> : <VisibilityIcon />}
           </IconButton>
@@ -112,7 +112,7 @@ export default function MangaActions({ mangaId, isHidden, slug }: MangaActionsPr
             component={Link}
             href={`/admin/manga/edit/${mangaId}`}
             aria-label="edit"
-            sx={{ color: "#94a3b8" }}
+            sx={{ color: "#a3a3a3" }} // Neutral 400
           >
             <EditIcon />
           </IconButton>

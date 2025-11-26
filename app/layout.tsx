@@ -7,6 +7,7 @@ import Footer from "./components/Footer";
 import Header from "./components/Header";
 import AgeVerificationModal from "./components/AgeVerificationModal";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/react";
 import ErrorBoundary from "./components/ErrorBoundary";
 
 const kanit = Kanit({
@@ -45,6 +46,7 @@ export default function RootLayout({
           </Providers>
         </ErrorBoundary>
         <SpeedInsights />
+        <Analytics />
       </body>
     </html>
   );
