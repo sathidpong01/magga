@@ -19,13 +19,15 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import LaunchIcon from "@mui/icons-material/Launch";
 
 type MangaActionsProps = {
   mangaId: string;
   isHidden: boolean;
+  slug: string;
 };
 
-export default function MangaActions({ mangaId, isHidden }: MangaActionsProps) {
+export default function MangaActions({ mangaId, isHidden, slug }: MangaActionsProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -84,6 +86,17 @@ export default function MangaActions({ mangaId, isHidden }: MangaActionsProps) {
   return (
     <>
       <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+        <Tooltip title="View Page">
+          <IconButton
+            component={Link}
+            href={`/${slug}`}
+            target="_blank"
+            aria-label="view"
+            sx={{ color: "#a855f7" }} // Purple for view
+          >
+            <LaunchIcon />
+          </IconButton>
+        </Tooltip>
         <Tooltip title={currentlyHidden ? "Show Manga" : "Hide Manga"}>
           <IconButton
             aria-label="toggle visibility"

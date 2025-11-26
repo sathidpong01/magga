@@ -193,7 +193,7 @@ export default async function AdminPage() {
                     )}
                   </TableCell>
                   <TableCell align="right" sx={{ borderBottom: "1px solid #334155" }}>
-                    <MangaActions mangaId={manga.id} isHidden={manga.isHidden} />
+                    <MangaActions mangaId={manga.id} isHidden={manga.isHidden} slug={manga.slug} />
                   </TableCell>
                 </TableRow>
               ))}
