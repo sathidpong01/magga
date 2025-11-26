@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Container, Typography } from "@mui/material";
+import { Box, Container, Typography, Link } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 
 export default function Footer() {
@@ -24,8 +24,18 @@ export default function Footer() {
       <Container maxWidth="sm">
         <Typography variant="body2" color="text.secondary" align="center">
           {"Copyright © "}
-          Magga Reader {new Date().getFullYear()}
-          {"."}
+          {new Date().getFullYear()}
+          {" | "}
+          <Link 
+            href="https://www.facebook.com/nightsu9/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            color="inherit"
+            underline="hover"
+            sx={{ fontWeight: 'medium' }}
+          >
+            Create by Nightsu ❤️
+          </Link>
         </Typography>
       </Container>
     </Box>
