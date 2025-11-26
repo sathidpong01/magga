@@ -20,9 +20,10 @@ type MangaPageProps = {
 
 export async function generateMetadata({ params }: MangaPageProps) {
   const { mangaId } = await params;
+  const decodedSlug = decodeURIComponent(mangaId);
   const manga = await prisma.manga.findUnique({
     where: {
-      slug: mangaId,
+      slug: decodedSlug,
     },
   });
 
@@ -60,10 +61,12 @@ export async function generateMetadata({ params }: MangaPageProps) {
 
 export default async function MangaPage({ params }: MangaPageProps) {
   const { mangaId } = await params;
+  const decodedSlug = decodeURIComponent(mangaId);
+  
   // Try to find by slug
   const manga = await prisma.manga.findUnique({
     where: {
-      slug: mangaId,
+      slug: decodedSlug,
     },
     include: {
       category: true,
