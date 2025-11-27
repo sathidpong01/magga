@@ -1,6 +1,6 @@
 "use client";
 
-import { Skeleton, Card, CardContent, Box, Grid } from "@mui/material";
+import { Skeleton, Card, CardContent, Box } from "@mui/material";
 
 export default function MangaCardSkeleton() {
   return (

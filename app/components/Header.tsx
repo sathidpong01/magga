@@ -2,6 +2,7 @@
 
 import { AppBar, Toolbar, Typography } from "@mui/material";
 import Link from "next/link";
+import Image from "next/image";
 import { useSession } from "next-auth/react";
 
 export default function Header() {
@@ -22,9 +23,11 @@ export default function Header() {
       <Toolbar>
         <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 700 }}>
           <Link href="/" style={{ textDecoration: "none", color: "inherit", display: "flex", alignItems: "center", gap: 1 }}>
-            <img 
+            <Image 
               src="/logo.svg" 
               alt="Logo" 
+              width={100}
+              height={32}
               style={{ 
                 height: "32px", 
                 width: "auto",
@@ -65,13 +68,18 @@ export default function Header() {
               }}
               onError={(e) => {
                 // Fallback to text if logo.svg not found
-                const target = e.target as HTMLImageElement;
+                const target = e.currentTarget;
                 target.style.display = 'none';
-                const textFallback = target.nextElementSibling as HTMLElement;
-                if (textFallback) textFallback.style.display = 'inline';
+                const parent = target.parentElement;
+                if (parent) {
+                  const span = document.createElement('span');
+                  span.textContent = 'Magga Reader';
+                  span.style.fontWeight = '700';
+                  span.style.fontSize = '1.25rem';
+                  parent.appendChild(span);
+                }
               }}
             />
-            <span style={{ display: "none" }}>Magga Reader</span>
           </Link>
         </Typography>
         {session && (
