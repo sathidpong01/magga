@@ -14,6 +14,10 @@ type Props = {
   }>;
 };
 
+// ISR: Revalidate every 60 seconds for frequently changing content
+export const revalidate = 60;
+export const dynamic = 'force-static';
+
 export default async function Home({ searchParams }: Props) {
   const params = await searchParams;
   const { search, categoryId, tagIds, sort } = params;

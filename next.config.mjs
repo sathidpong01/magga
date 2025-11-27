@@ -24,10 +24,20 @@ const nextConfig = {
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    minimumCacheTTL: 31536000,
+    dangerouslyAllowSVG: false,
+    contentDispositionType: 'attachment',
+    unoptimized: false,
   },
   compress: true,
   poweredByHeader: false,
   serverExternalPackages: ['@libsql/client', '@prisma/adapter-libsql', 'libsql'],
+  experimental: {
+    optimizePackageImports: ['@mui/material', '@mui/icons-material'],
+    scrollRestoration: true,
+  },
+  reactStrictMode: true,
+  productionBrowserSourceMaps: false,
   webpack: (config) => {
     config.module.rules.push({
       test: /\.md$|LICENSE$|\.d\.ts$/,
