@@ -11,6 +11,7 @@ import {
   Avatar,
 } from "@mui/material";
 import Image from "next/image";
+import MangaViewRating from "@/app/components/MangaViewRating";
 
 type MangaPageProps = {
   params: Promise<{
@@ -84,9 +85,19 @@ export default async function MangaPage({ params }: MangaPageProps) {
     where: {
       slug: decodedSlug,
     },
-    include: {
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      description: true,
+      coverImage: true,
+      pages: true,
+      authorCredits: true,
       category: true,
       tags: true,
+      viewCount: true,
+      averageRating: true,
+      ratingCount: true,
     },
   });
 
@@ -111,10 +122,10 @@ export default async function MangaPage({ params }: MangaPageProps) {
         sx={{ 
           p: { xs: 2, md: 4 }, 
           my: 4,
-          backgroundColor: "background.paper",
-          border: "1px solid",
-          borderColor: "divider",
-          borderRadius: 4,
+          backgroundColor: "#171717",
+          border: "1px solid rgba(255, 255, 255, 0.08)",
+          borderRadius: 3,
+          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.4)",
         }}
       >
         <Grid container spacing={4}>
@@ -156,8 +167,18 @@ export default async function MangaPage({ params }: MangaPageProps) {
                   component={Link}
                   href={`/category/${encodeURIComponent(manga.category.name)}`}
                   clickable
-                  color="primary"
-                  sx={{ fontWeight: 600 }}
+                  sx={{ 
+                    fontWeight: 600,
+                    backgroundColor: "rgba(251, 191, 36, 0.15)",
+                    color: "#fbbf24",
+                    border: "1px solid rgba(251, 191, 36, 0.3)",
+                    '&:hover': {
+                      backgroundColor: "rgba(251, 191, 36, 0.25)",
+                      transform: "translateY(-1px)",
+                      boxShadow: "0 2px 8px rgba(251, 191, 36, 0.3)"
+                    },
+                    transition: "all 0.2s ease"
+                  }}
                 />
               )}
               {manga.tags.map((tag) => (
@@ -167,8 +188,17 @@ export default async function MangaPage({ params }: MangaPageProps) {
                   component={Link}
                   href={`/tag/${encodeURIComponent(tag.name)}`}
                   clickable
-                  variant="outlined"
-                  sx={{ borderColor: "rgba(255,255,255,0.2)" }}
+                  sx={{ 
+                    backgroundColor: "rgba(56, 189, 248, 0.1)",
+                    color: "#38bdf8",
+                    border: "1px solid rgba(56, 189, 248, 0.3)",
+                    '&:hover': {
+                      backgroundColor: "rgba(56, 189, 248, 0.2)",
+                      transform: "translateY(-1px)",
+                      boxShadow: "0 2px 8px rgba(56, 189, 248, 0.25)"
+                    },
+                    transition: "all 0.2s ease"
+                  }}
                 />
               ))}
             </Box>
@@ -201,13 +231,19 @@ export default async function MangaPage({ params }: MangaPageProps) {
                           target="_blank"
                           rel="noopener noreferrer"
                           clickable
-                          variant="outlined"
                           sx={{
-                            borderColor: "rgba(255,255,255,0.2)",
+                            backgroundColor: "rgba(139, 92, 246, 0.1)",
+                            color: "#a78bfa",
+                            border: "1px solid rgba(139, 92, 246, 0.3)",
                             "& .MuiChip-avatar": {
                               width: 24,
                               height: 24,
                             },
+                            '&:hover': {
+                              backgroundColor: "rgba(139, 92, 246, 0.2)",
+                              transform: "translateY(-1px)",
+                            },
+                            transition: "all 0.2s ease"
                           }}
                         />
                       ));
@@ -220,6 +256,14 @@ export default async function MangaPage({ params }: MangaPageProps) {
             )}
           </Grid>
         </Grid>
+
+        {/* View Count & Rating Component */}
+        <MangaViewRating
+          mangaId={manga.id}
+          initialViewCount={manga.viewCount}
+          initialAverageRating={manga.averageRating}
+          initialRatingCount={manga.ratingCount}
+        />
       </Paper>
 
       {/* Manga Pages Reader */}

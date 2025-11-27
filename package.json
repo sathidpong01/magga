@@ -13,6 +13,7 @@
     "@aws-sdk/client-s3": "^3.937.0",
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
+    "@fingerprintjs/fingerprintjs": "^5.0.1",
     "@libsql/client": "^0.15.15",
     "@mui/icons-material": "^5.15.18",
     "@mui/material": "^5.15.18",

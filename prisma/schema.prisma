@@ -22,10 +22,17 @@ model Manga {
   updatedAt     DateTime @updatedAt
   isHidden      Boolean  @default(false)
 
+  // --- View Count & Rating ---
+  viewCount     Int     @default(0)
+  ratingSum     Int     @default(0)
+  ratingCount   Int     @default(0)
+  averageRating Float   @default(0)
+
   // --- ความสัมพันธ์ ---
   categoryId String?
   category   Category? @relation(fields: [categoryId], references: [id])
   tags       Tag[]     @relation
+  ratings    MangaRating[]
 }
 
 // สำหรับหมวดหมู่
@@ -49,4 +56,21 @@ model User {
   role      String   @default("user")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// สำหรับเก็บคะแนนของผู้ใช้ (ใช้ Hybrid Approach)
+model MangaRating {
+  id          String   @id @default(cuid())
+  mangaId     String
+  fingerprint String   // Browser fingerprint (hashed)
+  ipAddress   String?  // IP Address สำรอง (hashed)
+  rating      Int      // คะแนน 1-5
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  manga Manga @relation(fields: [mangaId], references: [id], onDelete: Cascade)
+
+  @@unique([mangaId, fingerprint])
+  @@index([mangaId])
+  @@index([fingerprint])
 }

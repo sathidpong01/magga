@@ -25,6 +25,8 @@ import BookIcon from "@mui/icons-material/Book";
 import CategoryIcon from "@mui/icons-material/Category";
 import TagIcon from "@mui/icons-material/LocalOffer";
 import EditIcon from "@mui/icons-material/Edit";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import StarIcon from "@mui/icons-material/Star";
 import { resolveLocalImage } from "@/lib/image";
 
 export default async function AdminPage() {
@@ -48,7 +50,64 @@ export default async function AdminPage() {
   const totalTags = await prisma.tag.count();
   const draftManga = await prisma.manga.count({ where: { isHidden: true } });
 
-  // Placeholder for query, assuming it might come from search params in a real app
+  // View Count & Rating Statistics
+  const totalViewsResult = await prisma.manga.aggregate({
+    _sum: {
+      viewCount: true,
+    },
+  });
+  const totalViews = totalViewsResult._sum.viewCount || 0;
+
+  const avgRatingResult = await prisma.manga.aggregate({
+    _avg: {
+      averageRating: true,
+    },
+    where: {
+      ratingCount: {
+        gt: 0,
+      },
+    },
+  });
+  const averageRating = avgRatingResult._avg.averageRating || 0;
+
+  // Top 10 Manga by Views
+  const topMangaByViews = await prisma.manga.findMany({
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      viewCount: true,
+      averageRating: true,
+      ratingCount: true,
+    },
+    orderBy: {
+      viewCount: "desc",
+    },
+    take: 10,
+  });
+
+  // Top 10 Manga by Rating  
+  const topMangaByRating = await prisma.manga.findMany({
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      viewCount: true,
+      averageRating: true,
+      ratingCount: true,
+    },
+    where: {
+      ratingCount: {
+        gte: 1, // Changed from 5 to 1
+      },
+    },
+    orderBy: {
+      averageRating: "desc",
+    },
+    take: 10,
+  });
+
+  // Placeholder for query
   const query = "";
 
   return (
@@ -64,7 +123,7 @@ export default async function AdminPage() {
             width: 400,
             borderRadius: 1,
             boxShadow: "none",
-            bgcolor: "#171717", // Neutral 900
+            bgcolor: "#171717",
             border: "1px solid rgba(255, 255, 255, 0.1)",
           }}
         >
@@ -83,14 +142,14 @@ export default async function AdminPage() {
 
       {/* Quick Stats */}
       <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, color: "#fafafa" }}>
-        Quick Access
+        Quick Stats
       </Typography>
       <Grid container spacing={3} sx={{ mb: 4 }}>
         {[
           { title: "Total Manga", value: totalManga, color: "#60a5fa", icon: <BookIcon /> },
+          { title: "Total Views", value: totalViews.toLocaleString(), color: "#38bdf8", icon: <VisibilityIcon /> },
+          { title: "Avg Rating", value: averageRating > 0 ? averageRating.toFixed(2) : "N/A", color: "#fbbf24", icon: <StarIcon /> },
           { title: "Categories", value: totalCategories, color: "#a78bfa", icon: <CategoryIcon /> },
-          { title: "Total Tags", value: totalTags, color: "#f472b6", icon: <TagIcon /> },
-          { title: "Drafts", value: draftManga, color: "#fbbf24", icon: <EditIcon /> },
         ].map((stat) => (
           <Grid item xs={12} sm={6} md={3} key={stat.title}>
             <Card sx={{ borderRadius: 1, boxShadow: "none", border: "1px solid rgba(255, 255, 255, 0.1)", bgcolor: "#171717" }}>
@@ -110,6 +169,150 @@ export default async function AdminPage() {
             </Card>
           </Grid>
         ))}
+      </Grid>
+
+      {/* Top Manga Statistics */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        {/* Top by Views */}
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ borderRadius: 1, boxShadow: "none", border: "1px solid rgba(255, 255, 255, 0.1)", bgcolor: "#171717", overflow: "hidden" }}>
+            <Box sx={{ p: 3, borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                <VisibilityIcon sx={{ color: "#38bdf8" }} />
+                <Typography variant="h6" fontWeight="bold" sx={{ color: "#fafafa" }}>
+                  Top 10 by Views
+                </Typography>
+              </Box>
+              <Typography variant="body2" sx={{ color: "#a3a3a3" }}>
+                Most viewed manga
+              </Typography>
+            </Box>
+            <Box sx={{ p: 2 }}>
+              {topMangaByViews.map((manga, index) => (
+                <Box
+                  key={manga.id}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    p: 2,
+                    mb: 1,
+                    borderRadius: 1,
+                    bgcolor: index < 3 ? 'rgba(56, 189, 248, 0.05)' : 'transparent',
+                    border: index < 3 ? '1px solid rgba(56, 189, 248, 0.1)' : '1px solid transparent',
+                    '&:hover': {
+                      bgcolor: 'rgba(255, 255, 255, 0.02)',
+                    },
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
+                    <Typography
+                      sx={{
+                        width: 24,
+                        height: 24,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: '50%',
+                        bgcolor: index < 3 ? '#38bdf8' : '#404040',
+                        color: '#fff',
+                        fontSize: '0.75rem',
+                        fontWeight: 'bold',
+                      }}
+                    >
+                      {index + 1}
+                    </Typography>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="body2" sx={{ color: "#fafafa", fontWeight: 500 }} noWrap>
+                        {manga.title}
+                      </Typography>
+                      {manga.averageRating > 0 && (
+                        <Typography variant="caption" sx={{ color: "#a3a3a3" }}>
+                          ⭐ {manga.averageRating.toFixed(1)} ({manga.ratingCount} ratings)
+                        </Typography>
+                      )}
+                    </Box>
+                  </Box>
+                  <Typography variant="body2" fontWeight="bold" sx={{ color: "#38bdf8" }}>
+                    {manga.viewCount.toLocaleString()}
+                  </Typography>
+                </Box>
+              ))}
+            </Box>
+          </Paper>
+        </Grid>
+
+        {/* Top by Rating */}
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ borderRadius: 1, boxShadow: "none", border: "1px solid rgba(255, 255, 255, 0.1)", bgcolor: "#171717", overflow: "hidden" }}>
+            <Box sx={{ p: 3, borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                <StarIcon sx={{ color: "#fbbf24" }} />
+                <Typography variant="h6" fontWeight="bold" sx={{ color: "#fafafa" }}>
+                  Top 10 by Rating
+                </Typography>
+              </Box>
+              <Typography variant="body2" sx={{ color: "#a3a3a3" }}>
+                Highest rated manga (min 1 rating)
+              </Typography>
+            </Box>
+            <Box sx={{ p: 2 }}>
+              {topMangaByRating.map((manga, index) => (
+                <Box
+                  key={manga.id}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    p: 2,
+                    mb: 1,
+                    borderRadius: 1,
+                    bgcolor: index < 3 ? 'rgba(251, 191, 36, 0.05)' : 'transparent',
+                    border: index < 3 ? '1px solid rgba(251, 191, 36, 0.1)' : '1px solid transparent',
+                    '&:hover': {
+                      bgcolor: 'rgba(255, 255, 255, 0.02)',
+                    },
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
+                    <Typography
+                      sx={{
+                        width: 24,
+                        height: 24,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: '50%',
+                        bgcolor: index < 3 ? '#fbbf24' : '#404040',
+                        color: '#000',
+                        fontSize: '0.75rem',
+                        fontWeight: 'bold',
+                      }}
+                    >
+                      {index + 1}
+                    </Typography>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="body2" sx={{ color: "#fafafa", fontWeight: 500 }} noWrap>
+                        {manga.title}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: "#a3a3a3" }}>
+                        👁️ {manga.viewCount.toLocaleString()} views
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Box sx={{ textAlign: 'right' }}>
+                    <Typography variant="body2" fontWeight="bold" sx={{ color: "#fbbf24" }}>
+                      ⭐ {manga.averageRating.toFixed(2)}
+                    </Typography>
+                    <Typography variant="caption" sx={{ color: "#a3a3a3" }}>
+                      {manga.ratingCount} ratings
+                    </Typography>
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+          </Paper>
+        </Grid>
       </Grid>
 
       {/* Manga List Table */}

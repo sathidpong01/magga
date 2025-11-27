@@ -74,12 +74,29 @@ export default async function Home({ searchParams }: Props) {
           <SearchFilters categories={categories} tags={tags} />
         </Suspense>
 
-        <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 700, mb: 3 }}>
-          {search ? `Search Results for "${search}"` : "All Mangas"}
+        <Typography 
+          variant="h3" 
+          component="h1" 
+          gutterBottom 
+          sx={{ 
+            fontWeight: 800, 
+            mb: 4,
+            background: "linear-gradient(135deg, #fbbf24 0%, #38bdf8 100%)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            letterSpacing: "-0.02em"
+          }}
+        >
+          {search ? `Search Results for "${search}"` : "Discover Manga"}
         </Typography>
         
         {mangas.length === 0 ? (
-          <Typography variant="body1" color="text.secondary" align="center" sx={{ mt: 4 }}>
+          <Typography 
+            variant="h6" 
+            color="text.secondary" 
+            align="center" 
+            sx={{ mt: 8, fontWeight: 400 }}
+          >
             No mangas found matching your criteria.
           </Typography>
         ) : (
