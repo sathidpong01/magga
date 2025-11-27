@@ -26,7 +26,7 @@
     "@vercel/speed-insights": "^1.2.0",
     "bcryptjs": "^3.0.3",
     "cheerio": "^1.1.2",
-    "next": "^15.0.0",
+    "next": "^16.0.5",
     "next-auth": "^4.24.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
