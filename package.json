@@ -17,8 +17,9 @@
     "@libsql/client": "^0.15.15",
     "@mui/icons-material": "^5.15.18",
     "@mui/material": "^5.15.18",
+    "@mui/material-nextjs": "^7.3.5",
     "@prisma/adapter-libsql": "7.0.0",
-    "@prisma/client": "7.0.0",
+    "@prisma/client": "^7.0.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/cheerio": "^0.22.35",
     "@vercel/analytics": "^1.5.0",
@@ -50,7 +51,8 @@
     "glob": "^10.3.10",
     "rimraf": "^5.0.5",
     "inflight": "^1.0.6",
-    "node-fetch": "^2.7.0"
+    "node-fetch": "^2.7.0",
+    "valibot": "^1.2.0"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
