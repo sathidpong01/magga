@@ -1,4 +1,4 @@
-import Link from "next/link";
+import LinkListItemButton from "@/app/components/LinkListItemButton";
 import SignOutButton from "./SignOutButton";
 import {
   Box,
@@ -63,8 +63,7 @@ export default function AdminLayout({
         <List sx={{ px: 2, mt: 2, gap: 0.5, display: 'flex', flexDirection: 'column' }}>
           {menuItems.map((item) => (
             <ListItem key={item.text} disablePadding>
-              <ListItemButton
-                component={Link}
+              <LinkListItemButton
                 href={item.href}
                 sx={{
                   borderRadius: 1,
@@ -76,7 +75,7 @@ export default function AdminLayout({
                   primary={item.text} 
                   primaryTypographyProps={{ fontWeight: 500 }}
                 />
-              </ListItemButton>
+              </LinkListItemButton>
             </ListItem>
           ))}
         </List>

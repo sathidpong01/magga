@@ -38,6 +38,7 @@ const nextConfig = {
   },
   reactStrictMode: true,
   productionBrowserSourceMaps: false,
+  turbopack: {}, // Acknowledge Turbopack as default bundler in Next.js 16
   webpack: (config) => {
     config.module.rules.push({
       test: /\.md$|LICENSE$|\.d\.ts$/,

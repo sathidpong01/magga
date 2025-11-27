@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
-import Link from "next/link";
+import LinkChip from "@/app/components/LinkChip";
 import {
   Box,
   Typography,
@@ -162,11 +162,9 @@ export default async function MangaPage({ params }: MangaPageProps) {
             </Typography>
             <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 3 }}>
               {manga.category && (
-                <Chip
+                <LinkChip
                   label={manga.category.name}
-                  component={Link}
                   href={`/category/${encodeURIComponent(manga.category.name)}`}
-                  clickable
                   sx={{ 
                     fontWeight: 600,
                     backgroundColor: "rgba(251, 191, 36, 0.15)",
@@ -182,12 +180,10 @@ export default async function MangaPage({ params }: MangaPageProps) {
                 />
               )}
               {manga.tags.map((tag) => (
-                <Chip
+                <LinkChip
                   key={tag.id}
                   label={tag.name}
-                  component={Link}
                   href={`/tag/${encodeURIComponent(tag.name)}`}
-                  clickable
                   sx={{ 
                     backgroundColor: "rgba(56, 189, 248, 0.1)",
                     color: "#38bdf8",

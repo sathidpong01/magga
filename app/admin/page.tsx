@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import Link from "next/link";
+import LinkButton from "@/app/components/LinkButton";
 import MangaActions from "./MangaActions";
 import {
   Box,
@@ -126,15 +126,14 @@ export default async function AdminPage() {
               Manage your manga library
             </Typography>
           </Box>
-          <Button
-            component={Link}
+          <LinkButton
             href="/admin/manga/new"
             variant="contained"
             startIcon={<AddIcon />}
             sx={{ borderRadius: 1, textTransform: 'none', bgcolor: '#8b5cf6' }}
           >
             Add New
-          </Button>
+          </LinkButton>
         </Box>
 
         <TableContainer>
