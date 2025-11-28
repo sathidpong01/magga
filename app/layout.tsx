@@ -17,8 +17,8 @@ const kanit = Kanit({
 });
 
 export const metadata: Metadata = {
-  title: "Magga Reader",
-  description: "A one-shot manga reader.",
+  title: "MAGGA - รวมการ์ตูนแนว Furry แปลไทย",
+  description: "MAGGA - เว็บอ่านโดจินแปลไทย 18+ แนว Furry ที่ครบเครื่องที่สุด รวบรวมมังงะและโดจินชิ Furry สายหมี สายเคโมะ หลากหลายแนว แปลไทยคุณภาพ อ่านฟรีออนไลน์",
   other: {
     rating: "mature",
     adult: "true",

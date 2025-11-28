@@ -36,6 +36,15 @@ export default function Footer() {
           >
             Create by Nightsu ❤️
           </Link>
+          {" | "}
+          <Link 
+            href="/changelog" 
+            color="inherit"
+            underline="hover"
+            sx={{ fontWeight: 'medium' }}
+          >
+            Changelog
+          </Link>
         </Typography>
       </Container>
     </Box>

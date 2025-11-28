@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 
@@ -51,6 +52,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
         authorCredits,
       },
     });
+    revalidatePath('/admin');
     return NextResponse.json(updatedManga);
   } catch (error) {
     console.error('Failed to update manga:', error);
@@ -70,6 +72,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     await prisma.manga.delete({
       where: { id },
     });
+    revalidatePath('/admin');
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     console.error('Failed to delete manga:', error);

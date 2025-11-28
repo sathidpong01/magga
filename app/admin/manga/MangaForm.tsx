@@ -24,6 +24,7 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
+import NotificationModal from "../components/NotificationModal";
 
 type MangaFormProps = {
   manga?: Manga & { tags: Tag[] };
@@ -35,6 +36,13 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  
+  // Modal State
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalType, setModalType] = useState<'success' | 'error'>('success');
+  const [modalTitle, setModalTitle] = useState("");
+  const [modalMessage, setModalMessage] = useState("");
+  const [createdMangaId, setCreatedMangaId] = useState<string | null>(null);
 
     // Form State
     const [title, setTitle] = useState(manga?.title || "");
@@ -200,361 +208,427 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
           const json = await res.json();
           uploadedPageUrls = json.urls || [];
         }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Upload failed");
-        setIsSubmitting(false);
-        return;
-      }
-      const selectedTagIds = selectedTags.map((t) => t.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload failed");
+      setIsSubmitting(false);
+      
+      // Show error modal
+      setModalType('error');
+      setModalTitle('Upload Failed');
+      setModalMessage(err instanceof Error ? err.message : "Failed to upload files.");
+      setModalOpen(true);
+      return;
+    }
+    const selectedTagIds = selectedTags.map((t) => t.id);
 
-      const finalPages = [...pagesArray, ...uploadedPageUrls];
+    const finalPages = [...pagesArray, ...uploadedPageUrls];
 
-      const body = {
-        title,
-        slug,
-        description,
-        coverImage: uploadedCoverUrl || coverImage,
-        pages: finalPages,
-        categoryId: categoryId || null,
-        isHidden: saveAsDraft,
+    const body = {
+      title,
+      slug,
+      description,
+      coverImage: uploadedCoverUrl || coverImage,
+      pages: finalPages,
+      categoryId: categoryId || null,
+      isHidden: saveAsDraft,
 
-        selectedTags: selectedTagIds,
-        authorCredits: JSON.stringify(credits),
-      };
-      const url = manga ? `/api/manga/${manga.id}` : "/api/manga";
-      const method = manga ? "PUT" : "POST";
-
-      try {
-        const response = await fetch(url, {
-          method,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-
-        if (!response.ok) {
-          const res = await response.json();
-          throw new Error(res.error || "Failed to save manga");
-        }
-
-        router.push("/admin");
-        router.refresh();
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred");
-      } finally {
-        setIsSubmitting(false);
-      }
+      selectedTags: selectedTagIds,
+      authorCredits: JSON.stringify(credits),
     };
+    const url = manga ? `/api/manga/${manga.id}` : "/api/manga";
+    const method = manga ? "PUT" : "POST";
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        const res = await response.json();
+        throw new Error(res.error || "Failed to save manga");
+      }
+      
+      // Success
+      const data = await response.json();
+      setCreatedMangaId(data.id);
+      
+      setModalType('success');
+      setModalTitle(manga ? 'Manga Updated' : 'Manga Created');
+      setModalMessage(manga 
+        ? `Successfully updated "${title}".` 
+        : `Successfully created "${title}". It is now available in the library.`);
+      setModalOpen(true);
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred");
+      
+      setModalType('error');
+      setModalTitle('Error');
+      setModalMessage(err instanceof Error ? err.message : "An unexpected error occurred while saving.");
+      setModalOpen(true);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setModalOpen(false);
+    if (modalType === 'success') {
+       // If it was a success, we might want to redirect or reset, but user can choose via buttons
+       // Default behavior if they just click outside: do nothing or redirect?
+       // Let's keep it open or let them choose. 
+       // Actually, usually clicking outside closes it. 
+       // If success, let's redirect to admin list if they close it without choosing?
+       // Or maybe just stay there. Let's stay there.
+    }
+  };
+
+  const handleGoToList = () => {
+    setModalOpen(false);
+    router.push("/admin");
+    router.refresh();
+  };
+
+  const handleAddAnother = () => {
+    setModalOpen(false);
+    // Reset form if needed, or just keep it open. 
+    // If we want to reset, we need to clear all states.
+    // For now, let's just reload the page to clear everything for a fresh start
+    window.location.reload(); 
+  };
 
     return (
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="h5" component="h2" gutterBottom>
-          {manga ? "Edit Manga" : "Create New Manga"}
-        </Typography>
-        <form onSubmit={(e) => handleSubmitWithDraft(e, false)}>
-          <Grid container spacing={3}>
-            {error && (
+      <>
+        <Paper sx={{ p: 3 }}>
+          <Typography variant="h5" component="h2" gutterBottom>
+            {manga ? "Edit Manga" : "Create New Manga"}
+          </Typography>
+          <form onSubmit={(e) => handleSubmitWithDraft(e, false)}>
+            <Grid container spacing={3}>
+              {error && (
+                <Grid item xs={12}>
+                  <Alert severity="error">{error}</Alert>
+                </Grid>
+              )}
               <Grid item xs={12}>
-                <Alert severity="error">{error}</Alert>
+                <TextField
+                  label="Title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  fullWidth
+                  required
+                />
               </Grid>
-            )}
-            <Grid item xs={12}>
-              <TextField
-                label="Title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                fullWidth
-                required
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Slug (URL)"
-                value={slug}
-                onChange={(e) => setSlug(e.target.value)}
-                fullWidth
-                required
-                helperText={`Preview: /manga/${slug}`}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <Tooltip title="Generate from Title">
-                        <IconButton
-                          onClick={() => {
-                            const newSlug = title
-                              .toLowerCase()
-                              .trim()
-                              .replace(/[\s]+/g, "-")
-                              .replace(/[^\w\-\u0E00-\u0E7F]+/g, "") // Keep Thai chars
-                              .replace(/\-\-+/g, "-");
-                            setSlug(newSlug);
-                          }}
-                          edge="end"
-                        >
-                          <AutoFixHighIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </InputAdornment>
-                  ),
-                }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Description"
-                value={description ?? ""}
-                onChange={(e) => setDescription(e.target.value)}
-                fullWidth
-                multiline
-                rows={4}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Cover Image URL"
-                value={coverImage}
-                onChange={(e) => setCoverImage(e.target.value)}
-                fullWidth
-                required={!coverFile}
-                type="text"
-                helperText="Absolute URL or relative path (e.g. /uploads/xxxx.jpg)"
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <input
-                id="cover-file"
-                type="file"
-                accept="image/*"
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCoverFile(e.target.files ? e.target.files[0] : null)}
-              />
-              <Typography variant="caption" display="block">
-                Optional: upload a cover image file (selected file overrides Cover Image URL on submit).
-              </Typography>
-              {coverPreview ? (
-                <Box sx={{ mt: 1 }}>
-                  <Typography variant="caption">Cover preview (selected):</Typography>
-                  <Box component="img" src={coverPreview} alt="cover preview" sx={{ display: 'block', width: 120, height: 160, objectFit: 'cover', mt: 1 }} />
-                  <Button size="small" onClick={() => setCoverFile(null)} sx={{ mt: 1 }}>Remove</Button>
-                </Box>
-              ) : coverUrlPreview ? (
-                <Box sx={{ mt: 1 }}>
-                  <Typography variant="caption">Current cover:</Typography>
-                  <Box component="img" src={coverUrlPreview} alt="current cover" sx={{ display: 'block', width: 120, height: 160, objectFit: 'cover', mt: 1 }} />
-                </Box>
-              ) : null}
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Page Image URLs (one per line)"
-                value={pages}
-                onChange={(e) => setPages(e.target.value)}
-                fullWidth
-                multiline
-                rows={8}
-                placeholder="https://example.com/page1.jpg&#10;https://example.com/page2.jpg&#10;..."
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <input
-                id="page-files"
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPageFiles(e.target.files ? Array.from(e.target.files) : [])}
-              />
-              <Typography variant="caption" display="block">
-                Optional: select multiple page image files to upload. They will be appended to the pages list.
-              </Typography>
-              {pageFilePreviews.length > 0 && (
-                <Box sx={{ mt: 1 }}>
-                  <Typography variant="caption">Selected page files preview:</Typography>
-                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}>
-                    {pageFilePreviews.map((src, i) => (
-                      <Box key={i} sx={{ position: 'relative' }}>
-                        <Box component="img" src={src} alt={`page ${i + 1}`} sx={{ width: 120, height: 160, objectFit: 'cover', display: 'block' }} />
-                        <Button size="small" onClick={() => {
-                          const newFiles = [...pageFiles];
-                          newFiles.splice(i, 1);
-                          setPageFiles(newFiles);
-                        }}>
-                          Remove
-                        </Button>
-                      </Box>
-                    ))}
+              <Grid item xs={12}>
+                <TextField
+                  label="Slug (URL)"
+                  value={slug}
+                  onChange={(e) => setSlug(e.target.value)}
+                  fullWidth
+                  required
+                  helperText={`Preview: /manga/${slug}`}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <Tooltip title="Generate from Title">
+                          <IconButton
+                            onClick={() => {
+                              const newSlug = title
+                                .toLowerCase()
+                                .trim()
+                                .replace(/[\s]+/g, "-")
+                                .replace(/[^\w\-\u0E00-\u0E7F]+/g, "") // Keep Thai chars
+                                .replace(/\-\-+/g, "-");
+                              setSlug(newSlug);
+                            }}
+                            edge="end"
+                          >
+                            <AutoFixHighIcon />
+                          </IconButton>
+                        </Tooltip>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  label="Description"
+                  value={description ?? ""}
+                  onChange={(e) => setDescription(e.target.value)}
+                  fullWidth
+                  multiline
+                  rows={4}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  label="Cover Image URL"
+                  value={coverImage}
+                  onChange={(e) => setCoverImage(e.target.value)}
+                  fullWidth
+                  required={!coverFile}
+                  type="text"
+                  helperText="Absolute URL or relative path (e.g. /uploads/xxxx.jpg)"
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <input
+                  id="cover-file"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCoverFile(e.target.files ? e.target.files[0] : null)}
+                />
+                <Typography variant="caption" display="block">
+                  Optional: upload a cover image file (selected file overrides Cover Image URL on submit).
+                </Typography>
+                {coverPreview ? (
+                  <Box sx={{ mt: 1 }}>
+                    <Typography variant="caption">Cover preview (selected):</Typography>
+                    <Box component="img" src={coverPreview} alt="cover preview" sx={{ display: 'block', width: 120, height: 160, objectFit: 'cover', mt: 1 }} />
+                    <Button size="small" onClick={() => setCoverFile(null)} sx={{ mt: 1 }}>Remove</Button>
                   </Box>
-                </Box>
-              )}
-
-              {/* Show preview for URLs entered in the textarea (pages as URLs) */}
-              {pages && pages.split('\n').filter(Boolean).length > 0 && (
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="caption">Pages from URLs preview:</Typography>
-                  <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}>
-                    {pages.split('\n').filter(Boolean).map((p, i) => (
-                      <Box key={i}>
-                        <Box component="img" src={p} alt={`page url ${i + 1}`} sx={{ width: 120, height: 160, objectFit: 'cover', display: 'block' }} />
-                      </Box>
-                    ))}
+                ) : coverUrlPreview ? (
+                  <Box sx={{ mt: 1 }}>
+                    <Typography variant="caption">Current cover:</Typography>
+                    <Box component="img" src={coverUrlPreview} alt="current cover" sx={{ display: 'block', width: 120, height: 160, objectFit: 'cover', mt: 1 }} />
                   </Box>
-                </Box>
-              )}
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <FormControl fullWidth>
-                <InputLabel id="category-select-label">Category</InputLabel>
-                <Select
-                  labelId="category-select-label"
-                  id="category"
-                  value={categoryId ?? ""}
-                  label="Category"
-                  onChange={(e) => setCategoryId(e.target.value)}
-                >
-                  <MenuItem value="">
-                    <em>None</em>
-                  </MenuItem>
-                  {categories.map((cat) => (
-                    <MenuItem key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Autocomplete
-                multiple
-                id="tags-autocomplete"
-                options={tags}
-                getOptionLabel={(option) => option.name}
-                value={selectedTags}
-                onChange={(event, newValue) => {
-                  setSelectedTags(newValue);
-                }}
-                isOptionEqualToValue={(option, value) => option.id === value.id}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    variant="outlined"
-                    label="Tags"
-                    placeholder="Select tags"
-                  />
+                ) : null}
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  label="Page Image URLs (one per line)"
+                  value={pages}
+                  onChange={(e) => setPages(e.target.value)}
+                  fullWidth
+                  multiline
+                  rows={8}
+                  placeholder="https://example.com/page1.jpg&#10;https://example.com/page2.jpg&#10;..."
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <input
+                  id="page-files"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPageFiles(e.target.files ? Array.from(e.target.files) : [])}
+                />
+                <Typography variant="caption" display="block">
+                  Optional: select multiple page image files to upload. They will be appended to the pages list.
+                </Typography>
+                {pageFilePreviews.length > 0 && (
+                  <Box sx={{ mt: 1 }}>
+                    <Typography variant="caption">Selected page files preview:</Typography>
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}>
+                      {pageFilePreviews.map((src, i) => (
+                        <Box key={i} sx={{ position: 'relative' }}>
+                          <Box component="img" src={src} alt={`page ${i + 1}`} sx={{ width: 120, height: 160, objectFit: 'cover', display: 'block' }} />
+                          <Button size="small" onClick={() => {
+                            const newFiles = [...pageFiles];
+                            newFiles.splice(i, 1);
+                            setPageFiles(newFiles);
+                          }}>
+                            Remove
+                          </Button>
+                        </Box>
+                      ))}
+                    </Box>
+                  </Box>
                 )}
-              />
-            </Grid>
 
-            {/* Author Credits Section */}
-            <Grid item xs={12}>
-              <Typography variant="h6" gutterBottom>
-                Author Credits
-              </Typography>
-              <Stack spacing={2}>
-                {credits.map((credit, index) => (
-                  <Paper key={index} variant="outlined" sx={{ p: 2 }}>
-                    <Grid container spacing={2} alignItems="center">
-                      <Grid item xs={12} sm={5}>
-                        <TextField
-                          label="URL"
-                          value={credit.url}
-                          onChange={(e) => handleCreditChange(index, "url", e.target.value)}
-                          fullWidth
-                          size="small"
-                          InputProps={{
-                            endAdornment: (
-                              <InputAdornment position="end">
-                                <Tooltip title="Auto-fetch Title & Icon">
-                                  <span>
-                                    <IconButton
-                                      onClick={() => handleFetchCreditInfo(index)}
-                                      edge="end"
-                                      disabled={!credit.url}
-                                    >
-                                      <AutoFixHighIcon />
-                                    </IconButton>
-                                  </span>
-                                </Tooltip>
-                              </InputAdornment>
-                            ),
-                          }}
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={3}>
-                        <TextField
-                          label="Label (Name)"
-                          value={credit.label}
-                          onChange={(e) => handleCreditChange(index, "label", e.target.value)}
-                          fullWidth
-                          size="small"
-                        />
-                      </Grid>
-                      <Grid item xs={10} sm={3}>
-                        <Stack direction="row" spacing={1} alignItems="center">
+                {/* Show preview for URLs entered in the textarea (pages as URLs) */}
+                {pages && pages.split('\n').filter(Boolean).length > 0 && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="caption">Pages from URLs preview:</Typography>
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}>
+                      {pages.split('\n').filter(Boolean).map((p, i) => (
+                        <Box key={i}>
+                          <Box component="img" src={p} alt={`page url ${i + 1}`} sx={{ width: 120, height: 160, objectFit: 'cover', display: 'block' }} />
+                        </Box>
+                      ))}
+                    </Box>
+                  </Box>
+                )}
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth>
+                  <InputLabel id="category-select-label">Category</InputLabel>
+                  <Select
+                    labelId="category-select-label"
+                    id="category"
+                    value={categoryId ?? ""}
+                    label="Category"
+                    onChange={(e) => setCategoryId(e.target.value)}
+                  >
+                    <MenuItem value="">
+                      <em>None</em>
+                    </MenuItem>
+                    {categories.map((cat) => (
+                      <MenuItem key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Autocomplete
+                  multiple
+                  id="tags-autocomplete"
+                  options={tags}
+                  getOptionLabel={(option) => option.name}
+                  value={selectedTags}
+                  onChange={(event, newValue) => {
+                    setSelectedTags(newValue);
+                  }}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      variant="outlined"
+                      label="Tags"
+                      placeholder="Select tags"
+                    />
+                  )}
+                />
+              </Grid>
+
+              {/* Author Credits Section */}
+              <Grid item xs={12}>
+                <Typography variant="h6" gutterBottom>
+                  Author Credits
+                </Typography>
+                <Stack spacing={2}>
+                  {credits.map((credit, index) => (
+                    <Paper key={index} variant="outlined" sx={{ p: 2 }}>
+                      <Grid container spacing={2} alignItems="center">
+                        <Grid item xs={12} sm={5}>
                           <TextField
-                            label="Icon URL"
-                            value={credit.icon}
-                            onChange={(e) => handleCreditChange(index, "icon", e.target.value)}
+                            label="URL"
+                            value={credit.url}
+                            onChange={(e) => handleCreditChange(index, "url", e.target.value)}
+                            fullWidth
+                            size="small"
+                            InputProps={{
+                              endAdornment: (
+                                <InputAdornment position="end">
+                                  <Tooltip title="Auto-fetch Title & Icon">
+                                    <span>
+                                      <IconButton
+                                        onClick={() => handleFetchCreditInfo(index)}
+                                        edge="end"
+                                        disabled={!credit.url}
+                                      >
+                                        <AutoFixHighIcon />
+                                      </IconButton>
+                                    </span>
+                                  </Tooltip>
+                                </InputAdornment>
+                              ),
+                            }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} sm={3}>
+                          <TextField
+                            label="Label (Name)"
+                            value={credit.label}
+                            onChange={(e) => handleCreditChange(index, "label", e.target.value)}
                             fullWidth
                             size="small"
                           />
-                          {credit.icon && (
-                            <Box
-                              component="img"
-                              src={credit.icon}
-                              alt="icon"
-                              sx={{ width: 32, height: 32, borderRadius: "50%" }}
+                        </Grid>
+                        <Grid item xs={10} sm={3}>
+                          <Stack direction="row" spacing={1} alignItems="center">
+                            <TextField
+                              label="Icon URL"
+                              value={credit.icon}
+                              onChange={(e) => handleCreditChange(index, "icon", e.target.value)}
+                              fullWidth
+                              size="small"
                             />
-                          )}
-                        </Stack>
+                            {credit.icon && (
+                              <Box
+                                component="img"
+                                src={credit.icon}
+                                alt="icon"
+                                sx={{ width: 32, height: 32, borderRadius: "50%" }}
+                              />
+                            )}
+                          </Stack>
+                        </Grid>
+                        <Grid item xs={2} sm={1}>
+                          <IconButton
+                            color="error"
+                            onClick={() => handleRemoveCredit(index)}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Grid>
                       </Grid>
-                      <Grid item xs={2} sm={1}>
-                        <IconButton
-                          color="error"
-                          onClick={() => handleRemoveCredit(index)}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Grid>
-                    </Grid>
-                  </Paper>
-                ))}
-                <Button variant="outlined" onClick={handleAddCredit} sx={{ alignSelf: "flex-start" }}>
-                  Add Author Credit
-                </Button>
-              </Stack>
-            </Grid>
-            <Grid item xs={12}>
-              <Stack direction="row" justifyContent="flex-end" spacing={2} sx={{ mt: 3 }}>
-                <Button
-                  variant="outlined"
-                  color="inherit"
-                  onClick={() => router.push("/admin")}
-                  disabled={isSubmitting}
-                >
-                  Cancel
-                </Button>
-                {!manga && (
+                    </Paper>
+                  ))}
+                  <Button variant="outlined" onClick={handleAddCredit} sx={{ alignSelf: "flex-start" }}>
+                    Add Author Credit
+                  </Button>
+                </Stack>
+              </Grid>
+              <Grid item xs={12}>
+                <Stack direction="row" justifyContent="flex-end" spacing={2} sx={{ mt: 3 }}>
                   <Button
                     variant="outlined"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleSubmitWithDraft(e, true);
-                    }}
+                    color="inherit"
+                    onClick={() => router.push("/admin")}
                     disabled={isSubmitting}
                   >
-                    Save as Draft
+                    Cancel
                   </Button>
-                )}
-                <Button
-                  type="submit"
-                  variant="contained"
-                  disabled={isSubmitting}
-                  startIcon={isSubmitting ? <CircularProgress size={20} /> : null}
-                >
-                  {isSubmitting ? "Saving..." : manga ? "Update Manga" : "Create Manga"}
-                </Button>
-              </Stack>
+                  {!manga && (
+                    <Button
+                      variant="outlined"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleSubmitWithDraft(e, true);
+                      }}
+                      disabled={isSubmitting}
+                    >
+                      Save as Draft
+                    </Button>
+                  )}
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    disabled={isSubmitting}
+                    startIcon={isSubmitting ? <CircularProgress size={20} /> : null}
+                  >
+                    {isSubmitting ? "Saving..." : manga ? "Update Manga" : "Create Manga"}
+                  </Button>
+                </Stack>
+              </Grid>
             </Grid>
-          </Grid>
-        </form>
-      </Paper>
+          </form>
+        </Paper>
+        <NotificationModal
+          open={modalOpen}
+          onClose={handleCloseModal}
+          type={modalType}
+          title={modalTitle}
+          message={modalMessage}
+          primaryAction={modalType === 'success' ? {
+            label: "Go to List",
+            onClick: handleGoToList
+          } : {
+            label: "Close",
+            onClick: handleCloseModal
+          }}
+          secondaryAction={modalType === 'success' && !manga ? {
+            label: "Add Another",
+            onClick: handleAddAnother
+          } : undefined}
+        />
+      </>
     );
   }
 

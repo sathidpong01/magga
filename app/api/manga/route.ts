@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { z } from 'zod';
@@ -52,6 +53,7 @@ export async function POST(request: Request) {
         authorCredits,
       },
     });
+    revalidatePath('/admin');
     return NextResponse.json(newManga, { status: 201 });
   } catch (error) {
     console.error('Failed to create manga:', error);
