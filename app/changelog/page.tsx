@@ -54,111 +54,68 @@ export default function ChangelogPage() {
         <Typography variant="h3" component="h1" fontWeight="bold" gutterBottom sx={{ color: '#fafafa' }}>
           บันทึกการอัพเดท
         </Typography>
-        <Typography variant="h6" sx={{ color: '#a3a3a3' }}>
+        <Typography variant="subtitle1" sx={{ color: '#a3a3a3' }}>
           ประวัติการปรับปรุงและพัฒนาเว็บไซต์ล่าสุด
         </Typography>
       </Box>
 
-      <Box sx={{ position: 'relative' }}>
-        {/* Vertical line */}
-        <Box 
-          sx={{ 
-            position: 'absolute', 
-            left: { xs: 20, md: '50%' }, 
-            top: 0, 
-            bottom: 0, 
-            width: 2, 
-            bgcolor: 'rgba(255, 255, 255, 0.1)',
-            transform: { md: 'translateX(-50%)' }
-          }} 
-        />
-
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         {changelogData.map((item, index) => (
-          <Box 
-            key={index} 
+          <Paper 
+            key={index}
             sx={{ 
-              display: 'flex', 
-              flexDirection: { xs: 'column', md: index % 2 === 0 ? 'row' : 'row-reverse' },
-              alignItems: 'center',
-              mb: 6,
-              position: 'relative'
+              p: 4, 
+              bgcolor: '#171717', 
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: 2,
+              transition: 'transform 0.2s, border-color 0.2s',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                borderColor: 'rgba(139, 92, 246, 0.5)'
+              }
             }}
           >
-            {/* Date/Version Bubble */}
-            <Box 
-              sx={{ 
-                width: { xs: 'auto', md: '50%' }, 
-                px: { xs: 0, md: 4 }, 
-                pl: { xs: 6, md: index % 2 === 0 ? 0 : 4 },
-                pr: { xs: 0, md: index % 2 === 0 ? 4 : 0 },
-                textAlign: { xs: 'left', md: index % 2 === 0 ? 'right' : 'left' },
-                mb: { xs: 2, md: 0 }
-              }}
-            >
-              <Typography variant="h6" sx={{ color: '#8b5cf6', fontWeight: 'bold' }}>
-                {item.date}
-              </Typography>
-              <Chip 
-                label={item.version} 
-                size="small" 
-                sx={{ 
-                  bgcolor: 'rgba(139, 92, 246, 0.1)', 
-                  color: '#a78bfa', 
-                  fontWeight: 600,
-                  mt: 0.5
-                }} 
-              />
-            </Box>
-
-            {/* Center Icon */}
-            <Box 
-              sx={{ 
-                position: 'absolute', 
-                left: { xs: 20, md: '50%' }, 
-                width: 40, 
-                height: 40, 
-                borderRadius: '50%', 
-                bgcolor: '#171717', 
-                border: '2px solid #8b5cf6',
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                zIndex: 1,
-                transform: { xs: 'translateX(-50%)', md: 'translateX(-50%)' }
-              }}
-            >
-              <UpdateIcon sx={{ color: '#8b5cf6', fontSize: 20 }} />
-            </Box>
-
-            {/* Content Card */}
-            <Box sx={{ width: { xs: '100%', md: '50%' }, pl: { xs: 6, md: index % 2 === 0 ? 4 : 0 }, pr: { xs: 0, md: index % 2 === 0 ? 0 : 4 } }}>
-              <Paper 
-                sx={{ 
-                  p: 3, 
-                  bgcolor: '#171717', 
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: 2,
-                  transition: 'transform 0.2s',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    borderColor: 'rgba(139, 92, 246, 0.3)'
-                  }
-                }}
-              >
-                <Typography variant="h6" fontWeight="bold" gutterBottom sx={{ color: '#fafafa' }}>
+            <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', mb: 2, gap: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Typography variant="h5" component="h2" fontWeight="bold" sx={{ color: '#fafafa' }}>
                   {item.title}
                 </Typography>
-                <List dense disablePadding>
-                  {item.changes.map((change, i) => (
-                    <ListItem key={i} disablePadding sx={{ mb: 0.5 }}>
-                      <Box component="span" sx={{ color: '#a3a3a3', mr: 1 }}>•</Box>
-                      <ListItemText primary={change} primaryTypographyProps={{ variant: 'body2', color: '#d4d4d4' }} />
-                    </ListItem>
-                  ))}
-                </List>
-              </Paper>
+                <Chip 
+                  label={item.version} 
+                  size="small" 
+                  sx={{ 
+                    bgcolor: 'rgba(139, 92, 246, 0.1)', 
+                    color: '#a78bfa', 
+                    fontWeight: 600,
+                  }} 
+                />
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: '#a3a3a3' }}>
+                <UpdateIcon sx={{ fontSize: 18 }} />
+                <Typography variant="body2" component="span">
+                  {item.date}
+                </Typography>
+              </Box>
             </Box>
-          </Box>
+            
+            <Divider sx={{ my: 2, borderColor: 'rgba(255, 255, 255, 0.05)' }} />
+
+            <List disablePadding>
+              {item.changes.map((change, i) => (
+                <ListItem key={i} disablePadding sx={{ mb: 1, alignItems: 'flex-start' }}>
+                  <Box component="span" sx={{ color: '#8b5cf6', mr: 1.5, mt: 0.5 }}>•</Box>
+                  <ListItemText 
+                    primary={change} 
+                    primaryTypographyProps={{ 
+                      variant: 'body1', 
+                      color: '#d4d4d4',
+                      component: 'h3' // Semantic heading for accessibility if needed, or just keep as body text
+                    }} 
+                  />
+                </ListItem>
+              ))}
+            </List>
+          </Paper>
         ))}
       </Box>
     </Container>

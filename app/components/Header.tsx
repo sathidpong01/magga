@@ -11,13 +11,26 @@ export default function Header() {
   return (
     <AppBar 
       position="sticky" 
+      elevation={0}
+
       sx={{ 
-        backdropFilter: "blur(12px)", 
-        backgroundColor: "rgba(10, 10, 10, 0.95)", // Match body background
-        borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
-        boxShadow: "0 1px 3px rgba(0, 0, 0, 0.3)",
+        backgroundColor: "transparent",
+        boxShadow: "none",
+        borderBottom: "none",
         top: 0, 
-        zIndex: 1100 
+        zIndex: 1100,
+        "&::before": {
+          content: '""',
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: -1,
+          backgroundColor: "rgba(10, 10, 10, 0.5)", 
+          maskImage: "linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 100%)",
+          WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 100%)",
+        }
       }}
     >
       <Toolbar>

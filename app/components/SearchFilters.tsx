@@ -129,7 +129,10 @@ export default function SearchFilters({ categories, tags }: Props) {
             </Box>
           )}
         </Box>
-        <IconButton onClick={(e) => { e.stopPropagation(); handleExpandClick(); }}>
+        <IconButton 
+          onClick={(e) => { e.stopPropagation(); handleExpandClick(); }}
+          aria-label={expanded ? "Collapse filters" : "Expand filters"}
+        >
           {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
         </IconButton>
       </Box>
