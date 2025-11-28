@@ -301,210 +301,350 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
 
     return (
       <>
-        <Paper sx={{ p: 3 }}>
-          <Typography variant="h5" component="h2" gutterBottom>
-            {manga ? "Edit Manga" : "Create New Manga"}
-          </Typography>
-          <form onSubmit={(e) => handleSubmitWithDraft(e, false)}>
-            <Grid container spacing={3}>
-              {error && (
-                <Grid item xs={12}>
-                  <Alert severity="error">{error}</Alert>
-                </Grid>
-              )}
-              <Grid item xs={12}>
-                <TextField
-                  label="Title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  fullWidth
-                  required
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  label="Slug (URL)"
-                  value={slug}
-                  onChange={(e) => setSlug(e.target.value)}
-                  fullWidth
-                  required
-                  helperText={`Preview: /manga/${slug}`}
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <Tooltip title="Generate from Title">
-                          <IconButton
-                            onClick={() => {
-                              const newSlug = title
-                                .toLowerCase()
-                                .trim()
-                                .replace(/[\s]+/g, "-")
-                                .replace(/[^\w\-\u0E00-\u0E7F]+/g, "") // Keep Thai chars
-                                .replace(/\-\-+/g, "-");
-                              setSlug(newSlug);
-                            }}
-                            edge="end"
-                          >
-                            <AutoFixHighIcon />
-                          </IconButton>
-                        </Tooltip>
-                      </InputAdornment>
-                    ),
+        <Box component="form" onSubmit={(e) => handleSubmitWithDraft(e, false)}>
+          <Grid container spacing={3}>
+            {/* Header / Actions */}
+            <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h5" component="h2" sx={{ fontWeight: 700 }}>
+                {manga ? "Edit Manga" : "Create New Manga"}
+              </Typography>
+              <Stack direction="row" spacing={2}>
+                <Button
+                  variant="text"
+                  color="inherit"
+                  onClick={() => router.push("/admin")}
+                  disabled={isSubmitting}
+                  sx={{ borderRadius: 1 }}
+                >
+                  Cancel
+                </Button>
+                {!manga && (
+                  <Button
+                    variant="outlined"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleSubmitWithDraft(e, true);
+                    }}
+                    disabled={isSubmitting}
+                    sx={{ borderRadius: 1, borderColor: 'rgba(255,255,255,0.1)', color: 'text.secondary' }}
+                  >
+                    Save Draft
+                  </Button>
+                )}
+                <Button
+                  type="submit"
+                  variant="contained"
+                  disabled={isSubmitting}
+                  startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : null}
+                  sx={{ 
+                    borderRadius: 1, 
+                    bgcolor: '#fbbf24', 
+                    color: '#000',
+                    '&:hover': { bgcolor: '#f59e0b' }
                   }}
-                />
-              </Grid>
+                >
+                  {isSubmitting ? "Saving..." : manga ? "Update Manga" : "Create Manga"}
+                </Button>
+              </Stack>
+            </Grid>
+
+            {error && (
               <Grid item xs={12}>
-                <TextField
-                  label="Description"
-                  value={description ?? ""}
-                  onChange={(e) => setDescription(e.target.value)}
-                  fullWidth
-                  multiline
-                  rows={4}
-                />
+                <Alert severity="error" sx={{ borderRadius: 1 }}>{error}</Alert>
               </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  label="Cover Image URL"
-                  value={coverImage}
-                  onChange={(e) => setCoverImage(e.target.value)}
-                  fullWidth
-                  required={!coverFile}
-                  type="text"
-                  helperText="Absolute URL or relative path (e.g. /uploads/xxxx.jpg)"
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <input
-                  id="cover-file"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCoverFile(e.target.files ? e.target.files[0] : null)}
-                />
-                <Typography variant="caption" display="block">
-                  Optional: upload a cover image file (selected file overrides Cover Image URL on submit).
+            )}
+
+            {/* Left Column: General Info */}
+            <Grid item xs={12} md={7}>
+              <Paper elevation={0} sx={{ p: 3, borderRadius: 1, bgcolor: '#171717' }}>
+                <Typography variant="h6" gutterBottom sx={{ mb: 3, fontSize: '1rem', color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 1 }}>
+                  General Information
                 </Typography>
-                {coverPreview ? (
-                  <Box sx={{ mt: 1 }}>
-                    <Typography variant="caption">Cover preview (selected):</Typography>
-                    <Box component="img" src={coverPreview} alt="cover preview" sx={{ display: 'block', width: 120, height: 160, objectFit: 'cover', mt: 1 }} />
-                    <Button size="small" onClick={() => setCoverFile(null)} sx={{ mt: 1 }}>Remove</Button>
-                  </Box>
-                ) : coverUrlPreview ? (
-                  <Box sx={{ mt: 1 }}>
-                    <Typography variant="caption">Current cover:</Typography>
-                    <Box component="img" src={coverUrlPreview} alt="current cover" sx={{ display: 'block', width: 120, height: 160, objectFit: 'cover', mt: 1 }} />
-                  </Box>
-                ) : null}
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  label="Page Image URLs (one per line)"
-                  value={pages}
-                  onChange={(e) => setPages(e.target.value)}
-                  fullWidth
-                  multiline
-                  rows={8}
-                  placeholder="https://example.com/page1.jpg&#10;https://example.com/page2.jpg&#10;..."
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <input
-                  id="page-files"
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPageFiles(e.target.files ? Array.from(e.target.files) : [])}
-                />
-                <Typography variant="caption" display="block">
-                  Optional: select multiple page image files to upload. They will be appended to the pages list.
+                <Grid container spacing={3}>
+                  <Grid item xs={12}>
+                    <TextField
+                      label="Title"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      fullWidth
+                      required
+                      variant="filled"
+                      InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      label="Slug"
+                      value={slug}
+                      onChange={(e) => setSlug(e.target.value)}
+                      fullWidth
+                      required
+                      variant="filled"
+                      helperText={`Preview: /manga/${slug}`}
+                      InputProps={{
+                        disableUnderline: true,
+                        sx: { borderRadius: 1 },
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <Tooltip title="Generate from Title">
+                              <IconButton
+                                onClick={() => {
+                                  const newSlug = title
+                                    .toLowerCase()
+                                    .trim()
+                                    .replace(/[\s]+/g, "-")
+                                    .replace(/[^\w\-\u0E00-\u0E7F]+/g, "")
+                                    .replace(/\-\-+/g, "-");
+                                  setSlug(newSlug);
+                                }}
+                                edge="end"
+                              >
+                                <AutoFixHighIcon />
+                              </IconButton>
+                            </Tooltip>
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      label="Description"
+                      value={description ?? ""}
+                      onChange={(e) => setDescription(e.target.value)}
+                      fullWidth
+                      multiline
+                      rows={4}
+                      variant="filled"
+                      InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <FormControl fullWidth variant="filled">
+                      <InputLabel id="category-select-label">Category</InputLabel>
+                      <Select
+                        labelId="category-select-label"
+                        id="category"
+                        value={categoryId ?? ""}
+                        onChange={(e) => setCategoryId(e.target.value)}
+                        disableUnderline
+                        sx={{ borderRadius: 1 }}
+                      >
+                        <MenuItem value="">
+                          <em>None</em>
+                        </MenuItem>
+                        {categories.map((cat) => (
+                          <MenuItem key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <Autocomplete
+                      multiple
+                      id="tags-autocomplete"
+                      options={tags}
+                      getOptionLabel={(option) => option.name}
+                      value={selectedTags}
+                      onChange={(event, newValue) => {
+                        setSelectedTags(newValue);
+                      }}
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          variant="filled"
+                          label="Tags"
+                          placeholder="Select tags"
+                          InputProps={{ ...params.InputProps, disableUnderline: true, sx: { borderRadius: 1 } }}
+                        />
+                      )}
+                    />
+                  </Grid>
+                </Grid>
+              </Paper>
+
+              {/* Author Credits Section (Moved here or keep at bottom? User mockup said bottom section. Let's put it below General Info in the left column or full width below. Mockup said "Bottom Section". Let's put it full width below columns) */}
+            </Grid>
+
+            {/* Right Column: Media Assets */}
+            <Grid item xs={12} md={5}>
+              <Paper elevation={0} sx={{ p: 3, borderRadius: 1, bgcolor: '#171717', height: '100%' }}>
+                <Typography variant="h6" gutterBottom sx={{ mb: 3, fontSize: '1rem', color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 1 }}>
+                  Media Assets
                 </Typography>
-                {pageFilePreviews.length > 0 && (
-                  <Box sx={{ mt: 1 }}>
-                    <Typography variant="caption">Selected page files preview:</Typography>
-                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}>
-                      {pageFilePreviews.map((src, i) => (
-                        <Box key={i} sx={{ position: 'relative' }}>
-                          <Box component="img" src={src} alt={`page ${i + 1}`} sx={{ width: 120, height: 160, objectFit: 'cover', display: 'block' }} />
-                          <Button size="small" onClick={() => {
+                
+                {/* Cover Image */}
+                <Box sx={{ mb: 4 }}>
+                  <Typography variant="subtitle2" gutterBottom>Cover Image</Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12}>
+                      <TextField
+                        label="Cover Image URL"
+                        value={coverImage}
+                        onChange={(e) => setCoverImage(e.target.value)}
+                        fullWidth
+                        size="small"
+                        variant="filled"
+                        InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
+                      />
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Button
+                        variant="outlined"
+                        component="label"
+                        fullWidth
+                        sx={{ 
+                          height: 100, 
+                          borderStyle: 'dashed', 
+                          borderColor: 'rgba(255,255,255,0.2)',
+                          borderRadius: 1,
+                          color: 'text.secondary',
+                          flexDirection: 'column',
+                          gap: 1
+                        }}
+                      >
+                        {coverFile ? coverFile.name : "Upload Cover File"}
+                        <Typography variant="caption" sx={{ opacity: 0.7 }}>(Click to browse)</Typography>
+                        <input
+                          type="file"
+                          hidden
+                          accept="image/*"
+                          onChange={(e) => setCoverFile(e.target.files ? e.target.files[0] : null)}
+                        />
+                      </Button>
+                    </Grid>
+                    <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center' }}>
+                      {(coverPreview || coverUrlPreview) && (
+                        <Box sx={{ position: 'relative', width: 140, borderRadius: 1, overflow: 'hidden', boxShadow: 3 }}>
+                          <Box 
+                            component="img" 
+                            src={coverPreview || coverUrlPreview || ''} 
+                            alt="Cover preview" 
+                            sx={{ width: '100%', height: 'auto', display: 'block' }} 
+                          />
+                          {coverFile && (
+                            <IconButton 
+                              size="small" 
+                              onClick={() => setCoverFile(null)}
+                              sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(0,0,0,0.6)', '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' } }}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          )}
+                        </Box>
+                      )}
+                    </Grid>
+                  </Grid>
+                </Box>
+
+                {/* Pages */}
+                <Box>
+                  <Typography variant="subtitle2" gutterBottom>Pages</Typography>
+                  <TextField
+                    label="Page Image URLs (one per line)"
+                    value={pages}
+                    onChange={(e) => setPages(e.target.value)}
+                    fullWidth
+                    multiline
+                    rows={4}
+                    variant="filled"
+                    size="small"
+                    InputProps={{ disableUnderline: true, sx: { borderRadius: 1, mb: 2 } }}
+                    placeholder="https://..."
+                  />
+                  
+                  <Button
+                    variant="outlined"
+                    component="label"
+                    fullWidth
+                    sx={{ 
+                      height: 80, 
+                      borderStyle: 'dashed', 
+                      borderColor: 'rgba(255,255,255,0.2)',
+                      borderRadius: 1,
+                      color: 'text.secondary',
+                      mb: 2
+                    }}
+                  >
+                    Upload Page Files
+                    <input
+                      type="file"
+                      hidden
+                      accept="image/*"
+                      multiple
+                      onChange={(e) => setPageFiles(e.target.files ? Array.from(e.target.files) : [])}
+                    />
+                  </Button>
+
+                  {/* Previews Grid */}
+                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: 1 }}>
+                    {/* File Previews */}
+                    {pageFilePreviews.map((src, i) => (
+                      <Box key={`file-${i}`} sx={{ position: 'relative', aspectRatio: '2/3', borderRadius: 1, overflow: 'hidden', bgcolor: '#000' }}>
+                        <Box component="img" src={src} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <Box sx={{ 
+                          position: 'absolute', 
+                          bottom: 0, 
+                          left: 0, 
+                          right: 0, 
+                          bgcolor: 'rgba(0,0,0,0.6)', 
+                          color: '#fff', 
+                          fontSize: '0.75rem', 
+                          textAlign: 'center',
+                          py: 0.5
+                        }}>
+                          {i + 1}
+                        </Box>
+                        <IconButton
+                          size="small"
+                          onClick={() => {
                             const newFiles = [...pageFiles];
                             newFiles.splice(i, 1);
                             setPageFiles(newFiles);
-                          }}>
-                            Remove
-                          </Button>
-                        </Box>
-                      ))}
-                    </Box>
-                  </Box>
-                )}
-
-                {/* Show preview for URLs entered in the textarea (pages as URLs) */}
-                {pages && pages.split('\n').filter(Boolean).length > 0 && (
-                  <Box sx={{ mt: 2 }}>
-                    <Typography variant="caption">Pages from URLs preview:</Typography>
-                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1 }}>
-                      {pages.split('\n').filter(Boolean).map((p, i) => (
-                        <Box key={i}>
-                          <Box component="img" src={p} alt={`page url ${i + 1}`} sx={{ width: 120, height: 160, objectFit: 'cover', display: 'block' }} />
-                        </Box>
-                      ))}
-                    </Box>
-                  </Box>
-                )}
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel id="category-select-label">Category</InputLabel>
-                  <Select
-                    labelId="category-select-label"
-                    id="category"
-                    value={categoryId ?? ""}
-                    label="Category"
-                    onChange={(e) => setCategoryId(e.target.value)}
-                  >
-                    <MenuItem value="">
-                      <em>None</em>
-                    </MenuItem>
-                    {categories.map((cat) => (
-                      <MenuItem key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </MenuItem>
+                          }}
+                          sx={{ position: 'absolute', top: 2, right: 2, p: 0.5, bgcolor: 'rgba(0,0,0,0.5)', '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' } }}
+                        >
+                          <DeleteIcon sx={{ fontSize: 14 }} />
+                        </IconButton>
+                      </Box>
                     ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <Autocomplete
-                  multiple
-                  id="tags-autocomplete"
-                  options={tags}
-                  getOptionLabel={(option) => option.name}
-                  value={selectedTags}
-                  onChange={(event, newValue) => {
-                    setSelectedTags(newValue);
-                  }}
-                  isOptionEqualToValue={(option, value) => option.id === value.id}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      variant="outlined"
-                      label="Tags"
-                      placeholder="Select tags"
-                    />
-                  )}
-                />
-              </Grid>
+                    {/* URL Previews */}
+                    {pages.split('\n').filter(Boolean).map((p, i) => (
+                      <Box key={`url-${i}`} sx={{ position: 'relative', aspectRatio: '2/3', borderRadius: 1, overflow: 'hidden', bgcolor: '#000' }}>
+                        <Box component="img" src={p} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <Box sx={{ 
+                          position: 'absolute', 
+                          bottom: 0, 
+                          left: 0, 
+                          right: 0, 
+                          bgcolor: 'rgba(0,0,0,0.6)', 
+                          color: '#fff', 
+                          fontSize: '0.75rem', 
+                          textAlign: 'center',
+                          py: 0.5
+                        }}>
+                          {pageFilePreviews.length + i + 1}
+                        </Box>
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+              </Paper>
+            </Grid>
 
-              {/* Author Credits Section */}
-              <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom>
+            {/* Bottom: Author Credits */}
+            <Grid item xs={12}>
+              <Paper elevation={0} sx={{ p: 3, borderRadius: 1, bgcolor: '#171717' }}>
+                <Typography variant="h6" gutterBottom sx={{ mb: 3, fontSize: '1rem', color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 1 }}>
                   Author Credits
                 </Typography>
                 <Stack spacing={2}>
                   {credits.map((credit, index) => (
-                    <Paper key={index} variant="outlined" sx={{ p: 2 }}>
-                      <Grid container spacing={2} alignItems="center">
+                    <Box key={index} sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+                      <Grid container spacing={2}>
                         <Grid item xs={12} sm={5}>
                           <TextField
                             label="URL"
@@ -512,32 +652,31 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                             onChange={(e) => handleCreditChange(index, "url", e.target.value)}
                             fullWidth
                             size="small"
-                            InputProps={{
+                            variant="filled"
+                            InputProps={{ 
+                              disableUnderline: true, 
+                              sx: { borderRadius: 1 },
                               endAdornment: (
                                 <InputAdornment position="end">
                                   <Tooltip title="Auto-fetch Title & Icon">
-                                    <span>
-                                      <IconButton
-                                        onClick={() => handleFetchCreditInfo(index)}
-                                        edge="end"
-                                        disabled={!credit.url}
-                                      >
-                                        <AutoFixHighIcon />
-                                      </IconButton>
-                                    </span>
+                                    <IconButton onClick={() => handleFetchCreditInfo(index)} edge="end" disabled={!credit.url}>
+                                      <AutoFixHighIcon />
+                                    </IconButton>
                                   </Tooltip>
                                 </InputAdornment>
-                              ),
+                              )
                             }}
                           />
                         </Grid>
                         <Grid item xs={12} sm={3}>
                           <TextField
-                            label="Label (Name)"
+                            label="Label"
                             value={credit.label}
                             onChange={(e) => handleCreditChange(index, "label", e.target.value)}
                             fullWidth
                             size="small"
+                            variant="filled"
+                            InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
                           />
                         </Grid>
                         <Grid item xs={10} sm={3}>
@@ -548,68 +687,34 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                               onChange={(e) => handleCreditChange(index, "icon", e.target.value)}
                               fullWidth
                               size="small"
+                              variant="filled"
+                              InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
                             />
                             {credit.icon && (
-                              <Box
-                                component="img"
-                                src={credit.icon}
-                                alt="icon"
-                                sx={{ width: 32, height: 32, borderRadius: "50%" }}
-                              />
+                              <Box component="img" src={credit.icon} sx={{ width: 32, height: 32, borderRadius: "50%" }} />
                             )}
                           </Stack>
                         </Grid>
-                        <Grid item xs={2} sm={1}>
-                          <IconButton
-                            color="error"
-                            onClick={() => handleRemoveCredit(index)}
-                          >
+                        <Grid item xs={2} sm={1} sx={{ display: 'flex', alignItems: 'center' }}>
+                          <IconButton color="error" onClick={() => handleRemoveCredit(index)}>
                             <DeleteIcon />
                           </IconButton>
                         </Grid>
                       </Grid>
-                    </Paper>
+                    </Box>
                   ))}
-                  <Button variant="outlined" onClick={handleAddCredit} sx={{ alignSelf: "flex-start" }}>
+                  <Button 
+                    variant="outlined" 
+                    onClick={handleAddCredit} 
+                    sx={{ alignSelf: "flex-start", borderRadius: 1, borderColor: 'rgba(255,255,255,0.2)', color: 'text.secondary' }}
+                  >
                     Add Author Credit
                   </Button>
                 </Stack>
-              </Grid>
-              <Grid item xs={12}>
-                <Stack direction="row" justifyContent="flex-end" spacing={2} sx={{ mt: 3 }}>
-                  <Button
-                    variant="outlined"
-                    color="inherit"
-                    onClick={() => router.push("/admin")}
-                    disabled={isSubmitting}
-                  >
-                    Cancel
-                  </Button>
-                  {!manga && (
-                    <Button
-                      variant="outlined"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleSubmitWithDraft(e, true);
-                      }}
-                      disabled={isSubmitting}
-                    >
-                      Save as Draft
-                    </Button>
-                  )}
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    disabled={isSubmitting}
-                    startIcon={isSubmitting ? <CircularProgress size={20} /> : null}
-                  >
-                    {isSubmitting ? "Saving..." : manga ? "Update Manga" : "Create Manga"}
-                  </Button>
-                </Stack>
-              </Grid>
+              </Paper>
             </Grid>
-          </form>
-        </Paper>
+          </Grid>
+        </Box>
         <NotificationModal
           open={modalOpen}
           onClose={handleCloseModal}
