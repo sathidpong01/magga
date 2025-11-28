@@ -1,6 +1,7 @@
 "use client";
 
 import { Box, Container, Typography, Link, Button } from "@mui/material";
+import NextLink from "next/link";
 import { useTheme } from "@mui/material/styles";
 
 export default function Footer() {
@@ -39,25 +40,21 @@ export default function Footer() {
             </Link>
           </Typography>
           
-          <Button
+          <Link
+            component={NextLink}
             href="/changelog"
-            variant="contained"
-            size="small"
+            underline="hover"
             sx={{ 
-              background: 'linear-gradient(45deg, #8b5cf6 30%, #ec4899 90%)',
-              color: 'white',
-              fontWeight: 'bold',
-              boxShadow: '0 3px 5px 2px rgba(139, 92, 246, .3)',
-              textTransform: 'none',
-              px: 3,
-              borderRadius: 50,
+              color: '#fbbf24',
+              fontWeight: 600,
+              fontSize: '0.875rem',
               '&:hover': {
-                background: 'linear-gradient(45deg, #7c3aed 30%, #db2777 90%)',
+                color: '#fcd34d',
               }
             }}
           >
-            บันทึกการอัพเดท
-          </Button>
+            Changelog
+          </Link>
         </Box>
       </Container>
     </Box>
