@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -49,6 +49,18 @@ function SignInForm() {
       setModalOpen(true);
     }
   };
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (modalOpen && modalType === "success") {
+      timer = setTimeout(() => {
+        handleCloseModal();
+      }, 5000);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [modalOpen, modalType]);
 
   const handleCloseModal = () => {
     setModalOpen(false);

@@ -80,14 +80,16 @@ export default function UploadModal({ open, onClose, onAdd, title = "Add Pages",
     <Dialog 
       open={open} 
       onClose={handleClose} 
-      maxWidth="sm" 
+      maxWidth={false}
       fullWidth
       PaperProps={{
         sx: { 
+          width: '100%',
+          maxWidth: 700,
           bgcolor: '#171717', 
           backgroundImage: 'none',
           border: '1px solid rgba(255,255,255,0.1)',
-          borderRadius: 2
+          borderRadius: 1
         }
       }}
     >
@@ -133,12 +135,17 @@ export default function UploadModal({ open, onClose, onAdd, title = "Add Pages",
             sx={{
               border: '2px dashed',
               borderColor: dragActive ? '#fbbf24' : 'rgba(255,255,255,0.2)',
-              borderRadius: 2,
+              borderRadius: 1,
               p: 4,
               textAlign: 'center',
               bgcolor: dragActive ? 'rgba(251, 191, 36, 0.05)' : 'transparent',
               transition: 'all 0.2s ease',
-              cursor: 'pointer'
+              cursor: 'pointer',
+              minHeight: 300,
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center'
             }}
             component="label"
           >
