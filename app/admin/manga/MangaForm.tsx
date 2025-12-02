@@ -24,12 +24,39 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
+import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import NotificationModal from "../components/NotificationModal";
+import UploadModal from "../components/UploadModal";
+import { SortableItem } from "../components/SortableItem";
+
+// DnD Kit Imports
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable';
 
 type MangaFormProps = {
   manga?: Manga & { tags: Tag[] };
   categories: Category[];
   tags: Tag[];
+};
+
+type PageItem = {
+  id: string;
+  type: 'url' | 'file';
+  content: string | File;
+  preview: string;
 };
 
 export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
@@ -38,207 +65,238 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
   const [error, setError] = useState("");
   
   // Modal State
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalType, setModalType] = useState<'success' | 'error'>('success');
-  const [modalTitle, setModalTitle] = useState("");
-  const [modalMessage, setModalMessage] = useState("");
-  const [createdMangaId, setCreatedMangaId] = useState<string | null>(null);
+  const [notificationOpen, setNotificationOpen] = useState(false);
+  const [notificationType, setNotificationType] = useState<'success' | 'error'>('success');
+  const [notificationTitle, setNotificationTitle] = useState("");
+  const [notificationMessage, setNotificationMessage] = useState("");
+  
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+  const [uploadTarget, setUploadTarget] = useState<'cover' | 'pages'>('pages');
 
-    // Form State
-    const [title, setTitle] = useState(manga?.title || "");
+  // Form State
+  const [title, setTitle] = useState(manga?.title || "");
+  const [slug, setSlug] = useState(manga?.slug || "");
+  const [description, setDescription] = useState(manga?.description || "");
+  const [categoryId, setCategoryId] = useState(manga?.categoryId || "");
+  const [selectedTags, setSelectedTags] = useState<Tag[]>(manga?.tags || []);
 
-    const [slug, setSlug] = useState(manga?.slug || "");
-    const [description, setDescription] = useState(manga?.description || "");
-    const [coverImage, setCoverImage] = useState(manga?.coverImage || "");
-    const parsePagesToString = (p: unknown) => {
-      if (!p) return "";
-      if (Array.isArray(p)) return (p as string[]).join("\n");
-      if (typeof p === "string") {
-        try {
-          const parsed = JSON.parse(p);
-          if (Array.isArray(parsed)) return parsed.join("\n");
-          return p;
-        } catch {
-          return p;
-        }
-      }
-      return "";
-    };
-
-    const [pages, setPages] = useState(parsePagesToString(manga?.pages));
-    const [coverFile, setCoverFile] = useState<File | null>(null);
-    const [pageFiles, setPageFiles] = useState<File[]>([]);
-    const [coverPreview, setCoverPreview] = useState<string | null>(null);
-    const [pageFilePreviews, setPageFilePreviews] = useState<string[]>([]);
-    const [coverUrlPreview, setCoverUrlPreview] = useState<string | null>(null);
-    const [categoryId, setCategoryId] = useState(manga?.categoryId || "");
-
-    const [selectedTags, setSelectedTags] = useState<Tag[]>(manga?.tags || []);
-
-    // Author Credits State
-    type AuthorCredit = { url: string; label: string; icon: string };
-    const [credits, setCredits] = useState<AuthorCredit[]>(() => {
-      if (!manga?.authorCredits) return [];
+  // Unified Page State
+  const [pageItems, setPageItems] = useState<PageItem[]>(() => {
+    if (!manga?.pages) return [];
+    let initialPages: string[] = [];
+    if (Array.isArray(manga.pages)) initialPages = manga.pages as string[];
+    else if (typeof manga.pages === 'string') {
       try {
-        return JSON.parse(manga.authorCredits);
+        const parsed = JSON.parse(manga.pages);
+        if (Array.isArray(parsed)) initialPages = parsed;
       } catch {
-        return [];
+        initialPages = [];
       }
+    }
+    
+    return initialPages.map((url, index) => ({
+      id: `existing-${index}-${Date.now()}`,
+      type: 'url',
+      content: url,
+      preview: url
+    }));
+  });
+
+  // Cover State
+  const [coverItem, setCoverItem] = useState<PageItem | null>(() => {
+    if (manga?.coverImage) {
+      return {
+        id: 'cover-existing',
+        type: 'url',
+        content: manga.coverImage,
+        preview: manga.coverImage
+      };
+    }
+    return null;
+  });
+
+  // Author Credits State
+  type AuthorCredit = { url: string; label: string; icon: string };
+  const [credits, setCredits] = useState<AuthorCredit[]>(() => {
+    if (!manga?.authorCredits) return [];
+    try {
+      return JSON.parse(manga.authorCredits);
+    } catch {
+      return [];
+    }
+  });
+
+  // DnD Sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setPageItems((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  };
+
+  const handleAddItems = (newItems: { type: 'url' | 'file'; content: string | File }[]) => {
+    const processedItems: PageItem[] = newItems.map((item, index) => ({
+      id: `new-${Date.now()}-${index}`,
+      type: item.type,
+      content: item.content,
+      preview: item.type === 'file' 
+        ? URL.createObjectURL(item.content as File)
+        : item.content as string
+    }));
+
+    if (uploadTarget === 'cover') {
+      // Replace existing cover
+      if (coverItem?.type === 'file') {
+        URL.revokeObjectURL(coverItem.preview);
+      }
+      setCoverItem(processedItems[0]); // Take only the first one for cover
+    } else {
+      // Append to pages
+      setPageItems(prev => [...prev, ...processedItems]);
+    }
+  };
+
+  const handleRemovePage = (id: string) => {
+    setPageItems(prev => {
+      const item = prev.find(p => p.id === id);
+      if (item?.type === 'file') {
+        URL.revokeObjectURL(item.preview);
+      }
+      return prev.filter(p => p.id !== id);
     });
+  };
 
-    const handleAddCredit = () => {
-      setCredits([...credits, { url: "", label: "", icon: "" }]);
+  const handleRemoveCover = () => {
+    if (coverItem?.type === 'file') {
+      URL.revokeObjectURL(coverItem.preview);
+    }
+    setCoverItem(null);
+  };
+
+  // Cleanup object URLs on unmount
+  useEffect(() => {
+    return () => {
+      pageItems.forEach(item => {
+        if (item.type === 'file') URL.revokeObjectURL(item.preview);
+      });
+      if (coverItem?.type === 'file') URL.revokeObjectURL(coverItem.preview);
     };
+  }, []);
 
-    const handleRemoveCredit = (index: number) => {
+  // Credit Handlers
+  const handleAddCredit = () => setCredits([...credits, { url: "", label: "", icon: "" }]);
+  const handleRemoveCredit = (index: number) => {
+    const newCredits = [...credits];
+    newCredits.splice(index, 1);
+    setCredits(newCredits);
+  };
+  const handleCreditChange = (index: number, field: keyof AuthorCredit, value: string) => {
+    const newCredits = [...credits];
+    newCredits[index] = { ...newCredits[index], [field]: value };
+    setCredits(newCredits);
+  };
+  const handleFetchCreditInfo = async (index: number) => {
+    const url = credits[index].url;
+    if (!url) return;
+    try {
+      const res = await fetch(`/api/metadata?url=${encodeURIComponent(url)}`);
+      if (!res.ok) throw new Error("Failed to fetch metadata");
+      const data = await res.json();
       const newCredits = [...credits];
-      newCredits.splice(index, 1);
+      newCredits[index] = {
+        ...newCredits[index],
+        label: data.title || newCredits[index].label,
+        icon: data.icon || newCredits[index].icon,
+      };
       setCredits(newCredits);
-    };
+    } catch (error) {
+      console.error("Error fetching credit info:", error);
+    }
+  };
 
-    const handleCreditChange = (index: number, field: keyof AuthorCredit, value: string) => {
-      const newCredits = [...credits];
-      newCredits[index] = { ...newCredits[index], [field]: value };
-      setCredits(newCredits);
-    };
-
-    const handleFetchCreditInfo = async (index: number) => {
-      const url = credits[index].url;
-      if (!url) return;
-
-      try {
-        const res = await fetch(`/api/metadata?url=${encodeURIComponent(url)}`);
-        if (!res.ok) throw new Error("Failed to fetch metadata");
-        const data = await res.json();
-        
-        const newCredits = [...credits];
-        newCredits[index] = {
-          ...newCredits[index],
-          label: data.title || newCredits[index].label,
-          icon: data.icon || newCredits[index].icon,
-        };
-        setCredits(newCredits);
-      } catch (error) {
-        console.error("Error fetching credit info:", error);
-        // Optional: Show error toast
-      }
-    };
-
-    // Generate object URL previews for selected files
-    useEffect(() => {
-      if (coverFile) {
-        const url = URL.createObjectURL(coverFile);
-        setCoverPreview(url);
-        return () => URL.revokeObjectURL(url);
-      } else {
-        setCoverPreview(null);
-      }
-    }, [coverFile]);
-
-    useEffect(() => {
-      // revoke previous
-      pageFilePreviews.forEach((p) => URL.revokeObjectURL(p));
-      if (pageFiles && pageFiles.length > 0) {
-        const urls = pageFiles.map((f) => URL.createObjectURL(f));
-        setPageFilePreviews(urls);
-        return () => urls.forEach((u) => URL.revokeObjectURL(u));
-      } else {
-        setPageFilePreviews([]);
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [pageFiles]);
-
-    // try to preload coverImage URL (for relative /uploads or absolute URLs)
-    useEffect(() => {
-      if (coverPreview) {
-        setCoverUrlPreview(null);
-        return;
-      }
-      if (!coverImage) {
-        setCoverUrlPreview(null);
-        return;
-      }
-      let cancelled = false;
-      const img = new Image();
-      img.onload = () => {
-        if (!cancelled) setCoverUrlPreview(coverImage);
-      };
-      img.onerror = () => {
-        if (!cancelled) setCoverUrlPreview(null);
-      };
-      img.src = coverImage;
-      return () => {
-        cancelled = true;
-      };
-    }, [coverImage, coverPreview]);
-
-    const handleSubmitWithDraft = async (e: React.FormEvent, saveAsDraft: boolean) => {
-      e.preventDefault();
-      if (!title || (!coverImage && !coverFile)) {
-        setError("Title and either Cover Image URL or Cover File are required.");
-        return;
-      }
-      if (!slug) {
-        setError("Slug is required.");
-        return;
-      }
-      setIsSubmitting(true);
-      setError("");
-      const pagesArray = pages.split("\n").filter((p) => p.trim() !== "");
-      let uploadedPageUrls: string[] = [];
-      let uploadedCoverUrl: string | undefined;
-
-      try {
-        // Upload cover file if provided
-        if (coverFile) {
-          const fd = new FormData();
-          fd.append("files", coverFile);
-          const res = await fetch("/api/upload", { method: "POST", body: fd });
-          if (!res.ok) throw new Error("Failed to upload cover image");
-          const json = await res.json();
-          uploadedCoverUrl = json.urls && json.urls[0];
-        }
-
-        // Upload page files if any
-        if (pageFiles && pageFiles.length > 0) {
-          const fd = new FormData();
-          for (const f of pageFiles) fd.append("files", f);
-          const res = await fetch("/api/upload", { method: "POST", body: fd });
-          if (!res.ok) throw new Error("Failed to upload page files");
-          const json = await res.json();
-          uploadedPageUrls = json.urls || [];
-        }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed");
-      setIsSubmitting(false);
-      
-      // Show error modal
-      setModalType('error');
-      setModalTitle('Upload Failed');
-      setModalMessage(err instanceof Error ? err.message : "Failed to upload files.");
-      setModalOpen(true);
+  const handleSubmitWithDraft = async (e: React.FormEvent, saveAsDraft: boolean) => {
+    e.preventDefault();
+    if (!title || !coverItem) {
+      setError("Title and Cover Image are required.");
       return;
     }
-    const selectedTagIds = selectedTags.map((t) => t.id);
+    if (!slug) {
+      setError("Slug is required.");
+      return;
+    }
 
-    const finalPages = [...pagesArray, ...uploadedPageUrls];
-
-    const body = {
-      title,
-      slug,
-      description,
-      coverImage: uploadedCoverUrl || coverImage,
-      pages: finalPages,
-      categoryId: categoryId || null,
-      isHidden: saveAsDraft,
-
-      selectedTags: selectedTagIds,
-      authorCredits: JSON.stringify(credits),
-    };
-    const url = manga ? `/api/manga/${manga.id}` : "/api/manga";
-    const method = manga ? "PUT" : "POST";
+    setIsSubmitting(true);
+    setError("");
 
     try {
+      // 1. Upload Cover if it's a file
+      let finalCoverUrl = "";
+      if (coverItem.type === 'file') {
+        const fd = new FormData();
+        fd.append("files", coverItem.content as File);
+        const res = await fetch("/api/upload", { method: "POST", body: fd });
+        if (!res.ok) throw new Error("Failed to upload cover image");
+        const json = await res.json();
+        finalCoverUrl = json.urls[0];
+      } else {
+        finalCoverUrl = coverItem.content as string;
+      }
+
+      // 2. Upload Page Files
+      // We need to preserve order. We'll upload all files first, then reconstruct the array.
+      // Optimization: Upload files in parallel or batch? 
+      // Current API supports batch upload. Let's filter files, upload them, then map back.
+      
+      const fileItems = pageItems.filter(p => p.type === 'file');
+      let uploadedFileUrls: string[] = [];
+      
+      if (fileItems.length > 0) {
+        const fd = new FormData();
+        fileItems.forEach(item => fd.append("files", item.content as File));
+        const res = await fetch("/api/upload", { method: "POST", body: fd });
+        if (!res.ok) throw new Error("Failed to upload page files");
+        const json = await res.json();
+        uploadedFileUrls = json.urls;
+      }
+
+      // Reconstruct pages array in order
+      let fileIndex = 0;
+      const finalPages = pageItems.map(item => {
+        if (item.type === 'url') return item.content as string;
+        const url = uploadedFileUrls[fileIndex];
+        fileIndex++;
+        return url;
+      });
+
+      const selectedTagIds = selectedTags.map((t) => t.id);
+
+      const body = {
+        title,
+        slug,
+        description,
+        coverImage: finalCoverUrl,
+        pages: finalPages,
+        categoryId: categoryId || null,
+        isHidden: saveAsDraft,
+        selectedTags: selectedTagIds,
+        authorCredits: JSON.stringify(credits),
+      };
+
+      const url = manga ? `/api/manga/${manga.id}` : "/api/manga";
+      const method = manga ? "PUT" : "POST";
+
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
@@ -250,490 +308,416 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
         throw new Error(res.error || "Failed to save manga");
       }
       
-      // Success
       const data = await response.json();
-      setCreatedMangaId(data.id);
       
-      setModalType('success');
-      setModalTitle(manga ? 'Manga Updated' : 'Manga Created');
-      setModalMessage(manga 
+      setNotificationType('success');
+      setNotificationTitle(manga ? 'Manga Updated' : 'Manga Created');
+      setNotificationMessage(manga 
         ? `Successfully updated "${title}".` 
-        : `Successfully created "${title}". It is now available in the library.`);
-      setModalOpen(true);
+        : `Successfully created "${title}".`);
+      setNotificationOpen(true);
 
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
-      
-      setModalType('error');
-      setModalTitle('Error');
-      setModalMessage(err instanceof Error ? err.message : "An unexpected error occurred while saving.");
-      setModalOpen(true);
+      setNotificationType('error');
+      setNotificationTitle('Error');
+      setNotificationMessage(err instanceof Error ? err.message : "An unexpected error occurred.");
+      setNotificationOpen(true);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleCloseModal = () => {
-    setModalOpen(false);
-    if (modalType === 'success') {
-       // If it was a success, we might want to redirect or reset, but user can choose via buttons
-       // Default behavior if they just click outside: do nothing or redirect?
-       // Let's keep it open or let them choose. 
-       // Actually, usually clicking outside closes it. 
-       // If success, let's redirect to admin list if they close it without choosing?
-       // Or maybe just stay there. Let's stay there.
-    }
+  const handleCloseNotification = () => {
+    setNotificationOpen(false);
   };
 
   const handleGoToList = () => {
-    setModalOpen(false);
+    setNotificationOpen(false);
     router.push("/admin");
     router.refresh();
   };
 
-  const handleAddAnother = () => {
-    setModalOpen(false);
-    // Reset form if needed, or just keep it open. 
-    // If we want to reset, we need to clear all states.
-    // For now, let's just reload the page to clear everything for a fresh start
-    window.location.reload(); 
-  };
-
-    return (
-      <>
-        <Box component="form" onSubmit={(e) => handleSubmitWithDraft(e, false)}>
-          <Grid container spacing={3}>
-            {/* Header / Actions */}
-            <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h5" component="h2" sx={{ fontWeight: 700 }}>
-                {manga ? "Edit Manga" : "Create New Manga"}
-              </Typography>
-              <Stack direction="row" spacing={2}>
+  return (
+    <>
+      <Box component="form" onSubmit={(e) => handleSubmitWithDraft(e, false)}>
+        <Grid container spacing={3}>
+          {/* Header / Actions */}
+          <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h5" component="h2" sx={{ fontWeight: 700 }}>
+              {manga ? "Edit Manga" : "Create New Manga"}
+            </Typography>
+            <Stack direction="row" spacing={2}>
+              <Button
+                variant="text"
+                color="inherit"
+                onClick={() => router.push("/admin")}
+                disabled={isSubmitting}
+                sx={{ borderRadius: 1 }}
+              >
+                Cancel
+              </Button>
+              {!manga && (
                 <Button
-                  variant="text"
-                  color="inherit"
-                  onClick={() => router.push("/admin")}
-                  disabled={isSubmitting}
-                  sx={{ borderRadius: 1 }}
-                >
-                  Cancel
-                </Button>
-                {!manga && (
-                  <Button
-                    variant="outlined"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleSubmitWithDraft(e, true);
-                    }}
-                    disabled={isSubmitting}
-                    sx={{ borderRadius: 1, borderColor: 'rgba(255,255,255,0.1)', color: 'text.secondary' }}
-                  >
-                    Save Draft
-                  </Button>
-                )}
-                <Button
-                  type="submit"
-                  variant="contained"
-                  disabled={isSubmitting}
-                  startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : null}
-                  sx={{ 
-                    borderRadius: 1, 
-                    bgcolor: '#fbbf24', 
-                    color: '#000',
-                    '&:hover': { bgcolor: '#f59e0b' }
+                  variant="outlined"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleSubmitWithDraft(e, true);
                   }}
+                  disabled={isSubmitting}
+                  sx={{ borderRadius: 1, borderColor: 'rgba(255,255,255,0.1)', color: 'text.secondary' }}
                 >
-                  {isSubmitting ? "Saving..." : manga ? "Update Manga" : "Create Manga"}
+                  Save Draft
                 </Button>
-              </Stack>
+              )}
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={isSubmitting}
+                startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : null}
+                sx={{ 
+                  borderRadius: 1, 
+                  bgcolor: '#fbbf24', 
+                  color: '#000',
+                  '&:hover': { bgcolor: '#f59e0b' }
+                }}
+              >
+                {isSubmitting ? "Saving..." : manga ? "Update Manga" : "Create Manga"}
+              </Button>
+            </Stack>
+          </Grid>
+
+          {error && (
+            <Grid item xs={12}>
+              <Alert severity="error" sx={{ borderRadius: 1 }}>{error}</Alert>
             </Grid>
+          )}
 
-            {error && (
-              <Grid item xs={12}>
-                <Alert severity="error" sx={{ borderRadius: 1 }}>{error}</Alert>
-              </Grid>
-            )}
-
-            {/* Left Column: General Info */}
-            <Grid item xs={12} md={7}>
-              <Paper elevation={0} sx={{ p: 3, borderRadius: 1, bgcolor: '#171717' }}>
-                <Typography variant="h6" gutterBottom sx={{ mb: 3, fontSize: '1rem', color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 1 }}>
-                  General Information
-                </Typography>
-                <Grid container spacing={3}>
-                  <Grid item xs={12}>
-                    <TextField
-                      label="Title"
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      fullWidth
-                      required
-                      variant="filled"
-                      InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <TextField
-                      label="Slug"
-                      value={slug}
-                      onChange={(e) => setSlug(e.target.value)}
-                      fullWidth
-                      required
-                      variant="filled"
-                      helperText={`Preview: /manga/${slug}`}
-                      InputProps={{
-                        disableUnderline: true,
-                        sx: { borderRadius: 1 },
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <Tooltip title="Generate from Title">
-                              <IconButton
-                                onClick={() => {
-                                  const newSlug = title
-                                    .toLowerCase()
-                                    .trim()
-                                    .replace(/[\s]+/g, "-")
-                                    .replace(/[^\w\-\u0E00-\u0E7F]+/g, "")
-                                    .replace(/\-\-+/g, "-");
-                                  setSlug(newSlug);
-                                }}
-                                edge="end"
-                              >
-                                <AutoFixHighIcon />
-                              </IconButton>
-                            </Tooltip>
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <TextField
-                      label="Description"
-                      value={description ?? ""}
-                      onChange={(e) => setDescription(e.target.value)}
-                      fullWidth
-                      multiline
-                      rows={4}
-                      variant="filled"
-                      InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <FormControl fullWidth variant="filled">
-                      <InputLabel id="category-select-label">Category</InputLabel>
-                      <Select
-                        labelId="category-select-label"
-                        id="category"
-                        value={categoryId ?? ""}
-                        onChange={(e) => setCategoryId(e.target.value)}
-                        disableUnderline
-                        sx={{ borderRadius: 1 }}
-                      >
-                        <MenuItem value="">
-                          <em>None</em>
-                        </MenuItem>
-                        {categories.map((cat) => (
-                          <MenuItem key={cat.id} value={cat.id}>
-                            {cat.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <Autocomplete
-                      multiple
-                      id="tags-autocomplete"
-                      options={tags}
-                      getOptionLabel={(option) => option.name}
-                      value={selectedTags}
-                      onChange={(event, newValue) => {
-                        setSelectedTags(newValue);
-                      }}
-                      isOptionEqualToValue={(option, value) => option.id === value.id}
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          variant="filled"
-                          label="Tags"
-                          placeholder="Select tags"
-                          InputProps={{ ...params.InputProps, disableUnderline: true, sx: { borderRadius: 1 } }}
-                        />
-                      )}
-                    />
-                  </Grid>
-                </Grid>
-              </Paper>
-
-              {/* Author Credits Section (Moved here or keep at bottom? User mockup said bottom section. Let's put it below General Info in the left column or full width below. Mockup said "Bottom Section". Let's put it full width below columns) */}
-            </Grid>
-
-            {/* Right Column: Media Assets */}
-            <Grid item xs={12} md={5}>
-              <Paper elevation={0} sx={{ p: 3, borderRadius: 1, bgcolor: '#171717', height: '100%' }}>
-                <Typography variant="h6" gutterBottom sx={{ mb: 3, fontSize: '1rem', color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 1 }}>
-                  Media Assets
-                </Typography>
-                
-                {/* Cover Image */}
-                <Box sx={{ mb: 4 }}>
-                  <Typography variant="subtitle2" gutterBottom>Cover Image</Typography>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12}>
-                      <TextField
-                        label="Cover Image URL"
-                        value={coverImage}
-                        onChange={(e) => setCoverImage(e.target.value)}
-                        fullWidth
-                        size="small"
-                        variant="filled"
-                        InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
-                      />
-                    </Grid>
-                    <Grid item xs={12}>
-                      <Button
-                        variant="outlined"
-                        component="label"
-                        fullWidth
-                        sx={{ 
-                          height: 100, 
-                          borderStyle: 'dashed', 
-                          borderColor: 'rgba(255,255,255,0.2)',
-                          borderRadius: 1,
-                          color: 'text.secondary',
-                          flexDirection: 'column',
-                          gap: 1
-                        }}
-                      >
-                        {coverFile ? coverFile.name : "Upload Cover File"}
-                        <Typography variant="caption" sx={{ opacity: 0.7 }}>(Click to browse)</Typography>
-                        <input
-                          type="file"
-                          hidden
-                          accept="image/*"
-                          onChange={(e) => setCoverFile(e.target.files ? e.target.files[0] : null)}
-                        />
-                      </Button>
-                    </Grid>
-                    <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'center' }}>
-                      {(coverPreview || coverUrlPreview) && (
-                        <Box sx={{ position: 'relative', width: 140, borderRadius: 1, overflow: 'hidden', boxShadow: 3 }}>
-                          <Box 
-                            component="img" 
-                            src={coverPreview || coverUrlPreview || ''} 
-                            alt="Cover preview" 
-                            sx={{ width: '100%', height: 'auto', display: 'block' }} 
-                          />
-                          {coverFile && (
-                            <IconButton 
-                              size="small" 
-                              onClick={() => setCoverFile(null)}
-                              sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(0,0,0,0.6)', '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' } }}
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          )}
-                        </Box>
-                      )}
-                    </Grid>
-                  </Grid>
-                </Box>
-
-                {/* Pages */}
-                <Box>
-                  <Typography variant="subtitle2" gutterBottom>Pages</Typography>
+          {/* Left Column: General Info */}
+          <Grid item xs={12} md={7}>
+            <Paper elevation={0} sx={{ p: 3, borderRadius: 1, bgcolor: '#171717' }}>
+              <Typography variant="h6" gutterBottom sx={{ mb: 3, fontSize: '1rem', color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 1 }}>
+                General Information
+              </Typography>
+              <Grid container spacing={3}>
+                <Grid item xs={12}>
                   <TextField
-                    label="Page Image URLs (one per line)"
-                    value={pages}
-                    onChange={(e) => setPages(e.target.value)}
+                    label="Title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    fullWidth
+                    required
+                    variant="filled"
+                    InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    label="Slug"
+                    value={slug}
+                    onChange={(e) => setSlug(e.target.value)}
+                    fullWidth
+                    required
+                    variant="filled"
+                    helperText={`Preview: /manga/${slug}`}
+                    InputProps={{
+                      disableUnderline: true,
+                      sx: { borderRadius: 1 },
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <Tooltip title="Generate from Title">
+                            <IconButton
+                              onClick={() => {
+                                const newSlug = title
+                                  .toLowerCase()
+                                  .trim()
+                                  .replace(/[\s]+/g, "-")
+                                  .replace(/[^\w\-\u0E00-\u0E7F]+/g, "")
+                                  .replace(/\-\-+/g, "-");
+                                setSlug(newSlug);
+                              }}
+                              edge="end"
+                            >
+                              <AutoFixHighIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    label="Description"
+                    value={description ?? ""}
+                    onChange={(e) => setDescription(e.target.value)}
                     fullWidth
                     multiline
                     rows={4}
                     variant="filled"
-                    size="small"
-                    InputProps={{ disableUnderline: true, sx: { borderRadius: 1, mb: 2 } }}
-                    placeholder="https://..."
+                    InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
                   />
-                  
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <FormControl fullWidth variant="filled">
+                    <InputLabel id="category-select-label">Category</InputLabel>
+                    <Select
+                      labelId="category-select-label"
+                      id="category"
+                      value={categoryId ?? ""}
+                      onChange={(e) => setCategoryId(e.target.value)}
+                      disableUnderline
+                      sx={{ borderRadius: 1 }}
+                    >
+                      <MenuItem value="">
+                        <em>None</em>
+                      </MenuItem>
+                      {categories.map((cat) => (
+                        <MenuItem key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <Autocomplete
+                    multiple
+                    id="tags-autocomplete"
+                    options={tags}
+                    getOptionLabel={(option) => option.name}
+                    value={selectedTags}
+                    onChange={(event, newValue) => {
+                      setSelectedTags(newValue);
+                    }}
+                    isOptionEqualToValue={(option, value) => option.id === value.id}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        variant="filled"
+                        label="Tags"
+                        placeholder="Select tags"
+                        InputProps={{ ...params.InputProps, disableUnderline: true, sx: { borderRadius: 1 } }}
+                      />
+                    )}
+                  />
+                </Grid>
+              </Grid>
+            </Paper>
+          </Grid>
+
+          {/* Right Column: Media Assets */}
+          <Grid item xs={12} md={5}>
+            <Paper elevation={0} sx={{ p: 3, borderRadius: 1, bgcolor: '#171717', height: '100%' }}>
+              <Typography variant="h6" gutterBottom sx={{ mb: 3, fontSize: '1rem', color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 1 }}>
+                Media Assets
+              </Typography>
+              
+              {/* Cover Image */}
+              <Box sx={{ mb: 4 }}>
+                <Typography variant="subtitle2" gutterBottom>Cover Image</Typography>
+                
+                {!coverItem ? (
                   <Button
                     variant="outlined"
-                    component="label"
                     fullWidth
+                    onClick={() => {
+                      setUploadTarget('cover');
+                      setUploadModalOpen(true);
+                    }}
                     sx={{ 
-                      height: 80, 
+                      height: 120, 
                       borderStyle: 'dashed', 
                       borderColor: 'rgba(255,255,255,0.2)',
                       borderRadius: 1,
                       color: 'text.secondary',
-                      mb: 2
+                      flexDirection: 'column',
+                      gap: 1
                     }}
                   >
-                    Upload Page Files
-                    <input
-                      type="file"
-                      hidden
-                      accept="image/*"
-                      multiple
-                      onChange={(e) => setPageFiles(e.target.files ? Array.from(e.target.files) : [])}
-                    />
+                    <AddPhotoAlternateIcon sx={{ fontSize: 40, opacity: 0.5 }} />
+                    Add Cover Image
                   </Button>
-
-                  {/* Previews Grid */}
-                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: 1 }}>
-                    {/* File Previews */}
-                    {pageFilePreviews.map((src, i) => (
-                      <Box key={`file-${i}`} sx={{ position: 'relative', aspectRatio: '2/3', borderRadius: 1, overflow: 'hidden', bgcolor: '#000' }}>
-                        <Box component="img" src={src} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        <Box sx={{ 
-                          position: 'absolute', 
-                          bottom: 0, 
-                          left: 0, 
-                          right: 0, 
-                          bgcolor: 'rgba(0,0,0,0.6)', 
-                          color: '#fff', 
-                          fontSize: '0.75rem', 
-                          textAlign: 'center',
-                          py: 0.5
-                        }}>
-                          {i + 1}
-                        </Box>
-                        <IconButton
-                          size="small"
-                          onClick={() => {
-                            const newFiles = [...pageFiles];
-                            newFiles.splice(i, 1);
-                            setPageFiles(newFiles);
-                          }}
-                          sx={{ position: 'absolute', top: 2, right: 2, p: 0.5, bgcolor: 'rgba(0,0,0,0.5)', '&:hover': { bgcolor: 'rgba(0,0,0,0.8)' } }}
-                        >
-                          <DeleteIcon sx={{ fontSize: 14 }} />
-                        </IconButton>
-                      </Box>
-                    ))}
-                    {/* URL Previews */}
-                    {pages.split('\n').filter(Boolean).map((p, i) => (
-                      <Box key={`url-${i}`} sx={{ position: 'relative', aspectRatio: '2/3', borderRadius: 1, overflow: 'hidden', bgcolor: '#000' }}>
-                        <Box component="img" src={p} sx={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                        <Box sx={{ 
-                          position: 'absolute', 
-                          bottom: 0, 
-                          left: 0, 
-                          right: 0, 
-                          bgcolor: 'rgba(0,0,0,0.6)', 
-                          color: '#fff', 
-                          fontSize: '0.75rem', 
-                          textAlign: 'center',
-                          py: 0.5
-                        }}>
-                          {pageFilePreviews.length + i + 1}
-                        </Box>
-                      </Box>
-                    ))}
+                ) : (
+                  <Box sx={{ position: 'relative', width: '100%', maxWidth: 200, margin: '0 auto', borderRadius: 1, overflow: 'hidden', boxShadow: 3 }}>
+                    <Box 
+                      component="img" 
+                      src={coverItem.preview} 
+                      alt="Cover preview" 
+                      sx={{ width: '100%', height: 'auto', display: 'block' }} 
+                    />
+                    <IconButton 
+                      size="small" 
+                      onClick={handleRemoveCover}
+                      sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(0,0,0,0.6)', '&:hover': { bgcolor: 'rgba(220, 38, 38, 0.8)' } }}
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
                   </Box>
-                </Box>
-              </Paper>
-            </Grid>
+                )}
+              </Box>
 
-            {/* Bottom: Author Credits */}
-            <Grid item xs={12}>
-              <Paper elevation={0} sx={{ p: 3, borderRadius: 1, bgcolor: '#171717' }}>
-                <Typography variant="h6" gutterBottom sx={{ mb: 3, fontSize: '1rem', color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 1 }}>
-                  Author Credits
-                </Typography>
-                <Stack spacing={2}>
-                  {credits.map((credit, index) => (
-                    <Box key={index} sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-                      <Grid container spacing={2}>
-                        <Grid item xs={12} sm={5}>
+              {/* Pages */}
+              <Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="subtitle2">Pages ({pageItems.length})</Typography>
+                  <Button 
+                    size="small" 
+                    startIcon={<AddPhotoAlternateIcon />}
+                    onClick={() => {
+                      setUploadTarget('pages');
+                      setUploadModalOpen(true);
+                    }}
+                    sx={{ color: '#fbbf24' }}
+                  >
+                    Add Pages
+                  </Button>
+                </Box>
+
+                <DndContext 
+                  sensors={sensors} 
+                  collisionDetection={closestCenter} 
+                  onDragEnd={handleDragEnd}
+                >
+                  <SortableContext 
+                    items={pageItems.map(p => p.id)} 
+                    strategy={rectSortingStrategy}
+                  >
+                    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: 1 }}>
+                      {pageItems.map((item, index) => (
+                        <SortableItem 
+                          key={item.id} 
+                          id={item.id} 
+                          src={item.preview} 
+                          index={index}
+                          onRemove={() => handleRemovePage(item.id)}
+                        />
+                      ))}
+                    </Box>
+                  </SortableContext>
+                </DndContext>
+
+                {pageItems.length === 0 && (
+                  <Box sx={{ 
+                    p: 4, 
+                    border: '1px dashed rgba(255,255,255,0.1)', 
+                    borderRadius: 1, 
+                    textAlign: 'center',
+                    color: 'text.secondary'
+                  }}>
+                    <Typography variant="body2">No pages added yet.</Typography>
+                  </Box>
+                )}
+              </Box>
+            </Paper>
+          </Grid>
+
+          {/* Bottom: Author Credits */}
+          <Grid item xs={12}>
+            <Paper elevation={0} sx={{ p: 3, borderRadius: 1, bgcolor: '#171717' }}>
+              <Typography variant="h6" gutterBottom sx={{ mb: 3, fontSize: '1rem', color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 1 }}>
+                Author Credits
+              </Typography>
+              <Stack spacing={2}>
+                {credits.map((credit, index) => (
+                  <Box key={index} sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} sm={5}>
+                        <TextField
+                          label="URL"
+                          value={credit.url}
+                          onChange={(e) => handleCreditChange(index, "url", e.target.value)}
+                          fullWidth
+                          size="small"
+                          variant="filled"
+                          InputProps={{ 
+                            disableUnderline: true, 
+                            sx: { borderRadius: 1 },
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <Tooltip title="Auto-fetch Title & Icon">
+                                  <IconButton onClick={() => handleFetchCreditInfo(index)} edge="end" disabled={!credit.url}>
+                                    <AutoFixHighIcon />
+                                  </IconButton>
+                                </Tooltip>
+                              </InputAdornment>
+                            )
+                          }}
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={3}>
+                        <TextField
+                          label="Label"
+                          value={credit.label}
+                          onChange={(e) => handleCreditChange(index, "label", e.target.value)}
+                          fullWidth
+                          size="small"
+                          variant="filled"
+                          InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
+                        />
+                      </Grid>
+                      <Grid item xs={10} sm={3}>
+                        <Stack direction="row" spacing={1} alignItems="center">
                           <TextField
-                            label="URL"
-                            value={credit.url}
-                            onChange={(e) => handleCreditChange(index, "url", e.target.value)}
-                            fullWidth
-                            size="small"
-                            variant="filled"
-                            InputProps={{ 
-                              disableUnderline: true, 
-                              sx: { borderRadius: 1 },
-                              endAdornment: (
-                                <InputAdornment position="end">
-                                  <Tooltip title="Auto-fetch Title & Icon">
-                                    <IconButton onClick={() => handleFetchCreditInfo(index)} edge="end" disabled={!credit.url}>
-                                      <AutoFixHighIcon />
-                                    </IconButton>
-                                  </Tooltip>
-                                </InputAdornment>
-                              )
-                            }}
-                          />
-                        </Grid>
-                        <Grid item xs={12} sm={3}>
-                          <TextField
-                            label="Label"
-                            value={credit.label}
-                            onChange={(e) => handleCreditChange(index, "label", e.target.value)}
+                            label="Icon URL"
+                            value={credit.icon}
+                            onChange={(e) => handleCreditChange(index, "icon", e.target.value)}
                             fullWidth
                             size="small"
                             variant="filled"
                             InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
                           />
-                        </Grid>
-                        <Grid item xs={10} sm={3}>
-                          <Stack direction="row" spacing={1} alignItems="center">
-                            <TextField
-                              label="Icon URL"
-                              value={credit.icon}
-                              onChange={(e) => handleCreditChange(index, "icon", e.target.value)}
-                              fullWidth
-                              size="small"
-                              variant="filled"
-                              InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
-                            />
-                            {credit.icon && (
-                              <Box component="img" src={credit.icon} sx={{ width: 32, height: 32, borderRadius: "50%" }} />
-                            )}
-                          </Stack>
-                        </Grid>
-                        <Grid item xs={2} sm={1} sx={{ display: 'flex', alignItems: 'center' }}>
-                          <IconButton color="error" onClick={() => handleRemoveCredit(index)}>
-                            <DeleteIcon />
-                          </IconButton>
-                        </Grid>
+                          {credit.icon && (
+                            <Box component="img" src={credit.icon} sx={{ width: 32, height: 32, borderRadius: "50%" }} />
+                          )}
+                        </Stack>
                       </Grid>
-                    </Box>
-                  ))}
-                  <Button 
-                    variant="outlined" 
-                    onClick={handleAddCredit} 
-                    sx={{ alignSelf: "flex-start", borderRadius: 1, borderColor: 'rgba(255,255,255,0.2)', color: 'text.secondary' }}
-                  >
-                    Add Author Credit
-                  </Button>
-                </Stack>
-              </Paper>
-            </Grid>
+                      <Grid item xs={2} sm={1} sx={{ display: 'flex', alignItems: 'center' }}>
+                        <IconButton color="error" onClick={() => handleRemoveCredit(index)}>
+                          <DeleteIcon />
+                        </IconButton>
+                      </Grid>
+                    </Grid>
+                  </Box>
+                ))}
+                <Button 
+                  variant="outlined" 
+                  onClick={handleAddCredit} 
+                  sx={{ alignSelf: "flex-start", borderRadius: 1, borderColor: 'rgba(255,255,255,0.2)', color: 'text.secondary' }}
+                >
+                  Add Author Credit
+                </Button>
+              </Stack>
+            </Paper>
           </Grid>
-        </Box>
-        <NotificationModal
-          open={modalOpen}
-          onClose={handleCloseModal}
-          type={modalType}
-          title={modalTitle}
-          message={modalMessage}
-          primaryAction={modalType === 'success' ? {
-            label: "Go to List",
-            onClick: handleGoToList
-          } : {
-            label: "Close",
-            onClick: handleCloseModal
-          }}
-          secondaryAction={modalType === 'success' && !manga ? {
-            label: "Add Another",
-            onClick: handleAddAnother
-          } : undefined}
-        />
-      </>
-    );
-  }
+        </Grid>
+      </Box>
+
+      {/* Upload Modal */}
+      <UploadModal
+        open={uploadModalOpen}
+        onClose={() => setUploadModalOpen(false)}
+        onAdd={handleAddItems}
+        title={uploadTarget === 'cover' ? "Set Cover Image" : "Add Pages"}
+        multiple={uploadTarget === 'pages'}
+      />
+
+      {/* Notification Modal */}
+      <NotificationModal
+        open={notificationOpen}
+        onClose={handleCloseNotification}
+        type={notificationType}
+        title={notificationTitle}
+        message={notificationMessage}
+        primaryAction={notificationType === 'success' ? {
+          label: "Go to List",
+          onClick: handleGoToList
+        } : {
+          label: "Close",
+          onClick: handleCloseNotification
+        }}
+      />
+    </>
+  );
+}
 
