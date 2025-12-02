@@ -1,44 +1,74 @@
 "use client";
 
-import { AppBar, Toolbar, Typography } from "@mui/material";
+import { useState, useEffect } from "react";
+import { 
+  AppBar, 
+  Toolbar, 
+  Typography, 
+  Button, 
+  Box, 
+  Container, 
+  IconButton, 
+  Menu, 
+  MenuItem, 
+  Avatar,
+  Divider,
+  ListItemIcon
+} from "@mui/material";
 import Link from "next/link";
 import Image from "next/image";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
+import MenuIcon from "@mui/icons-material/Menu";
+import DashboardIcon from "@mui/icons-material/Dashboard";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import LogoutIcon from "@mui/icons-material/Logout";
+import PersonIcon from "@mui/icons-material/Person";
 
 export default function Header() {
   const { data: session } = useSession();
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
+  // Handle Scroll Effect
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const isAdmin = session?.user?.role?.toUpperCase() === "ADMIN";
 
   return (
     <AppBar 
       position="sticky" 
-      elevation={0}
-
+      elevation={isScrolled ? 4 : 0}
       sx={{ 
-        backgroundColor: "transparent",
-        boxShadow: "none",
-        borderBottom: "none",
+        backgroundColor: isScrolled ? "#00000000" : "transparent",
+        backgroundImage: "none",
+        borderBottom: isScrolled ? "0px solid rgba(255,255,255,0.05)" : "none",
+        transition: "all 0.3s ease-in-out",
         top: 0, 
         zIndex: 1100,
-        "&::before": {
-          content: '""',
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: -1,
-          backgroundColor: "rgba(10, 10, 10, 0.5)", 
-          maskImage: "linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 100%)",
-          WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0) 100%)",
-        }
-      }}
+        backdropFilter: "none", // Explicitly ensure no blur
+      }} 
     >
-      <Toolbar>
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 700 }}>
-          <Link href="/" style={{ textDecoration: "none", color: "inherit", display: "flex", alignItems: "center", gap: 1 }}>
+      <Container maxWidth="xl">
+        <Toolbar disableGutters sx={{ height: 70 }}>
+          {/* Logo Section */}
+          <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center" }}>
             <Image 
               src="/logo.svg" 
-              alt="Logo" 
+              alt="Magga Logo" 
               width={100}
               height={32}
               style={{ 
@@ -79,28 +109,151 @@ export default function Header() {
                 target.style.filter = "drop-shadow(0 0 0 rgba(255, 255, 255, 0))";
                 target.style.transform = "translateX(0) translateY(0) scale(1)";
               }}
+              priority
               onError={(e) => {
-                // Fallback to text if logo.svg not found
                 const target = e.currentTarget;
                 target.style.display = 'none';
                 const parent = target.parentElement;
                 if (parent) {
-                  const span = document.createElement('span');
-                  span.textContent = 'Magga Reader';
-                  span.style.fontWeight = '700';
-                  span.style.fontSize = '1.25rem';
-                  parent.appendChild(span);
+                  parent.innerHTML = '<span style="color:#fbbf24;font-weight:800;font-size:1.5rem;letter-spacing:-1px;">MAGGA</span>';
                 }
               }}
             />
           </Link>
-        </Typography>
-        {session && (
-          <Link href="/admin" style={{ textDecoration: "none", color: "inherit" }}>
-            <Typography variant="button" sx={{ fontWeight: 600 }}>Admin</Typography>
-          </Link>
-        )}
-      </Toolbar>
+
+          <Box sx={{ flexGrow: 1 }} />
+
+          {/* Desktop Navigation */}
+          <Box sx={{ display: { xs: "none", md: "flex" }, alignItems: "center", gap: 2 }}>
+            {/* Submit Manga Button - Always Visible */}
+            <Button
+              component={Link}
+              href={session ? "/submit" : "/api/auth/signin"}
+              variant="contained"
+              startIcon={<CloudUploadIcon />}
+              sx={{ 
+                bgcolor: "#fbbf24", 
+                color: "black",
+                fontWeight: 700,
+                "&:hover": { bgcolor: "#f59e0b" }
+              }}
+            >
+              ฝากลงมังงะ
+            </Button>
+
+            {/* Admin Dashboard (Only for Admin) */}
+            {isAdmin && (
+              <Button
+                component={Link}
+                href="/admin"
+                variant="contained"
+                startIcon={<DashboardIcon />}
+                sx={{ 
+                  bgcolor: "#ef4444", 
+                  color: "white",
+                  fontWeight: 600,
+                  "&:hover": { bgcolor: "#dc2626" }
+                }}
+              >
+                Admin
+              </Button>
+            )}
+
+            {/* Profile / Menu (Only if logged in) */}
+            {session && (
+              <IconButton 
+                onClick={handleMenuOpen}
+                sx={{ 
+                  ml: 1,
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  p: 0.5
+                }}
+              >
+                <Avatar 
+                  src={session.user?.image || undefined} 
+                  alt={session.user?.name || "User"}
+                  sx={{ width: 32, height: 32, bgcolor: "#262626" }}
+                >
+                  {session.user?.name?.charAt(0) || <PersonIcon />}
+                </Avatar>
+              </IconButton>
+            )}
+          </Box>
+
+          {/* Mobile Menu Icon */}
+          <Box sx={{ display: { xs: "flex", md: "none" } }}>
+            <IconButton
+              size="large"
+              onClick={handleMenuOpen}
+              color="inherit"
+            >
+              <MenuIcon />
+            </IconButton>
+          </Box>
+
+          {/* Dropdown Menu */}
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleMenuClose}
+            PaperProps={{
+              sx: {
+                mt: 1.5,
+                bgcolor: "#171717",
+                border: "1px solid rgba(255,255,255,0.1)",
+                color: "#fafafa",
+                minWidth: 200
+              }
+            }}
+            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+          >
+            {session ? (
+              <Box>
+                <Box sx={{ px: 2, py: 1.5 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                    {session.user?.name}
+                  </Typography>
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                    {isAdmin ? "Administrator" : "Member"}
+                  </Typography>
+                </Box>
+                <Divider sx={{ borderColor: "rgba(255,255,255,0.1)" }} />
+                
+                <MenuItem onClick={handleMenuClose} component={Link} href="/submit">
+                  <ListItemIcon><CloudUploadIcon sx={{ color: "#fbbf24" }} /></ListItemIcon>
+                  ฝากลงมังงะ
+                </MenuItem>
+
+                {isAdmin && (
+                  <MenuItem onClick={handleMenuClose} component={Link} href="/admin">
+                    <ListItemIcon><DashboardIcon sx={{ color: "#ef4444" }} /></ListItemIcon>
+                    Admin Dashboard
+                  </MenuItem>
+                )}
+
+                <MenuItem onClick={() => signOut()}>
+                  <ListItemIcon><LogoutIcon sx={{ color: "#a3a3a3" }} /></ListItemIcon>
+                  Sign Out
+                </MenuItem>
+              </Box>
+            ) : (
+              <Box>
+                 <MenuItem onClick={handleMenuClose} component={Link} href="/submit">
+                  <ListItemIcon><CloudUploadIcon sx={{ color: "#fbbf24" }} /></ListItemIcon>
+                  ฝากลงมังงะ
+                </MenuItem>
+                <Divider sx={{ borderColor: "rgba(255,255,255,0.1)" }} />
+                <MenuItem onClick={handleMenuClose} component={Link} href="/api/auth/signin">
+                  <ListItemIcon><PersonIcon sx={{ color: "#fbbf24" }} /></ListItemIcon>
+                  Sign In
+                </MenuItem>
+              </Box>
+            )}
+          </Menu>
+
+        </Toolbar>
+      </Container>
     </AppBar>
   );
 }

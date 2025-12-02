@@ -13,12 +13,7 @@ async function main() {
     orderBy: { updatedAt: 'desc' }
   });
 
-  const nullSlugs = await prisma.manga.count({
-    where: { slug: null }
-  });
-
   console.log("Mangas:", JSON.stringify(mangas, null, 2));
-  console.log("Count of mangas with NULL slug:", nullSlugs);
 }
 
 main()

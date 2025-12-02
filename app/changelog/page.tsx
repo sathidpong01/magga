@@ -5,6 +5,19 @@ import UpdateIcon from '@mui/icons-material/Update';
 // Static data for changelog
 const changelogData = [
   {
+    date: '2025-12-02',
+    version: 'v1.3.0',
+    title: 'ปรับปรุง UI/UX และระบบ Admin',
+    changes: [
+      'เพิ่มปุ่ม "ฝากลงมังงะ" ใน Header สำหรับผู้ใช้ทั่วไป (Redirect ไปหน้า Login หากยังไม่เข้าสู่ระบบ)',
+      'ปรับปรุง Header ให้เป็นแบบ Sticky และโปร่งใสเมื่ออยู่ด้านบน พร้อมเอฟเฟกต์ 3D Logo',
+      'ปรับปรุง Footer ให้เรียบง่ายและดูเป็นมืออาชีพมากขึ้น พร้อมปุ่ม Sign In สำหรับ Guest',
+      'ปรับดีไซน์การ์ดมังงะใหม่แบบ Immersive Overlay',
+      'แก้ไขปัญหา Layout ในหน้า Admin Dashboard และเพิ่มปุ่ม "Back to Home"',
+      'เพิ่มสคริปต์สำหรับตั้งค่า Admin Role และปรับปรุงการตรวจสอบสิทธิ์'
+    ]
+  },
+  {
     date: '2025-11-28',
     version: 'v1.2.0',
     title: 'ปรับปรุงประสิทธิภาพและประสบการณ์ผู้ใช้',

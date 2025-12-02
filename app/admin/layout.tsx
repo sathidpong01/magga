@@ -5,7 +5,6 @@ import {
   Drawer,
   List,
   ListItem,
-  ListItemButton,
   ListItemIcon,
   ListItemText,
   Toolbar,
@@ -14,6 +13,7 @@ import {
 } from "@mui/material";
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import CategoryIcon from '@mui/icons-material/Category';
+import HomeIcon from '@mui/icons-material/Home';
 
 const drawerWidth = 240;
 
@@ -79,7 +79,25 @@ export default function AdminLayout({
             </ListItem>
           ))}
         </List>
-        <Divider sx={{ mt: 'auto', borderColor: 'rgba(255, 255, 255, 0.1)' }} />
+        
+        <Box sx={{ mt: 'auto', px: 2, pb: 1 }}>
+          <LinkListItemButton 
+            href="/"
+            sx={{
+              borderRadius: 1,
+              color: "#fbbf24", 
+              "&:hover": { bgcolor: "rgba(251, 191, 36, 0.1)" },
+            }}
+          >
+            <ListItemIcon sx={{ color: "inherit", minWidth: 40 }}><HomeIcon /></ListItemIcon>
+            <ListItemText 
+              primary="Back to Home" 
+              primaryTypographyProps={{ fontWeight: 600 }}
+            />
+          </LinkListItemButton>
+        </Box>
+
+        <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)' }} />
         <Box sx={{ p: 2 }}>
           <SignOutButton />
         </Box>

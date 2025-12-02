@@ -3,7 +3,6 @@
 import {
   Card,
   CardActionArea,
-  CardContent,
   Typography,
   Box,
   Chip,
@@ -24,93 +23,91 @@ interface MangaCardProps {
 export default function MangaCard({ manga }: MangaCardProps) {
   return (
     <Card sx={{ 
-      height: "100%",
-      backgroundColor: "#171717",
-      border: "1px solid rgba(255, 255, 255, 0.06)",
-      borderRadius: 2,
-      transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease, border-color 0.3s ease",
-      "&:hover": {
-        transform: "translateY(-4px)",
-        boxShadow: "0 16px 32px -8px rgba(0, 0, 0, 0.5)",
-        borderColor: "rgba(251, 191, 36, 0.3)",
-      },
+      height: 400, 
+      position: "relative", 
+      borderRadius: 0.8, // Reduced from 4 to 0.8 (20%)
+      overflow: "hidden",
+      boxShadow: "0 10px 30px -10px rgba(0,0,0,0.5)",
+      transition: "transform 0.3s ease",
+      "&:hover": { transform: "scale(1.02)" },
+      bgcolor: "#171717"
     }}>
-      <CardActionArea component={Link} href={`/${manga.slug}`} sx={{ height: "100%", display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+      <CardActionArea 
+        component={Link} 
+        href={`/${manga.slug}`} 
+        sx={{ height: "100%" }}
+      >
+        <Box sx={{ position: "absolute", inset: 0 }}>
+          <Image 
+            src={manga.coverImage} 
+            alt={`Cover of ${manga.title}`}
+            fill 
+            sizes="(max-width: 600px) 100vw, (max-width: 960px) 50vw, 33vw"
+            style={{ objectFit: "cover" }}
+            priority={false}
+          />
           <Box sx={{ 
-            position: "relative", 
-            height: 300, 
-            width: "100%", 
-            overflow: "hidden",
-            "&::after": {
-              content: '""',
-              position: "absolute",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: "40%",
-              background: "linear-gradient(to top, rgba(10, 10, 10, 0.9) 0%, transparent 100%)",
-              pointerEvents: "none"
-            }
-          }}>
-            <Image
-              src={manga.coverImage}
-              alt={`Cover of ${manga.title}`}
-              fill
-              sizes="(max-width: 600px) 100vw, (max-width: 960px) 50vw, 33vw"
-              style={{ objectFit: "cover" }}
-              priority={false}
-            />
+            position: "absolute", 
+            inset: 0, 
+            background: "linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, transparent 100%)" 
+          }} />
         </Box>
-        <CardContent sx={{ flexGrow: 1, width: "100%" }}>
-          <Typography gutterBottom variant="h6" component="div" noWrap sx={{ fontWeight: 600, mb: 1 }}>
-            {manga.title}
-          </Typography>
-          {/* Description removed as requested */}
-          
-          {/* Stats: View Count & Rating */}
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, mb: 1 }}>
-            {/* View Count */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              <Typography variant="caption" sx={{ color: "#38bdf8", fontSize: "0.7rem" }}>
-                👁️
-              </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem" }}>
-                {manga.viewCount.toLocaleString()}
-              </Typography>
-            </Box>
-
-            {/* Rating */}
-            {manga.averageRating > 0 && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                <Typography variant="caption" sx={{ color: "#fbbf24", fontSize: "0.7rem" }}>
-                  ⭐
-                </Typography>
-                <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem" }}>
-                  {manga.averageRating.toFixed(1)}
-                </Typography>
-              </Box>
-            )}
-          </Box>
-          
-          {/* Category Display */}
+        <Box sx={{ 
+          position: "absolute", 
+          bottom: 0, 
+          left: 0, 
+          right: 0, 
+          p: 3,
+          color: "white"
+        }}>
           {manga.category && (
             <Chip 
               label={manga.category.name} 
               size="small" 
               sx={{ 
-                fontSize: "0.7rem", 
-                height: 22,
-                backgroundColor: "rgba(251, 191, 36, 0.12)",
-                color: "#fbbf24",
-                border: "1px solid rgba(251, 191, 36, 0.25)",
-                fontWeight: 600,
-                '&:hover': {
-                  backgroundColor: "rgba(251, 191, 36, 0.18)",
-                }
+                bgcolor: "#fbbf24", 
+                color: "black", 
+                fontWeight: "bold", 
+                mb: 1,
+                height: 20,
+                fontSize: "0.7rem"
               }} 
             />
           )}
-        </CardContent>
+          <Typography 
+            variant="h5" 
+            fontWeight={800} 
+            sx={{ 
+              mb: 0.5, 
+              textShadow: "0 2px 4px rgba(0,0,0,0.5)",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              lineHeight: 1.2
+            }}
+          >
+            {manga.title}
+          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, opacity: 0.9 }}>
+            {manga.averageRating > 0 && (
+              <>
+                <Typography variant="body2" sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <span style={{ color: "#fbbf24" }}>⭐</span> {manga.averageRating.toFixed(1)}
+                </Typography>
+                <Typography variant="body2">•</Typography>
+              </>
+            )}
+            <Typography variant="body2">
+              {manga.viewCount >= 1000000 
+                ? `${(manga.viewCount / 1000000).toFixed(1)}M` 
+                : manga.viewCount >= 1000 
+                  ? `${(manga.viewCount / 1000).toFixed(1)}K` 
+                  : manga.viewCount} Views
+            </Typography>
+          </Box>
+        </Box>
       </CardActionArea>
     </Card>
   );
