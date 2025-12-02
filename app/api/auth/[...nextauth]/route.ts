@@ -42,10 +42,7 @@ export const authOptions: NextAuthOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        console.log('🔐 [AUTH] Login attempt:', { username: credentials?.username });
-        
         if (!credentials?.username || !credentials?.password) {
-          console.log('❌ [AUTH] Missing credentials');
           return null;
         }
 
@@ -55,7 +52,6 @@ export const authOptions: NextAuthOptions = {
         
         if (!rateCheck.allowed) {
           const minutesLeft = Math.ceil((rateCheck.resetTime! - Date.now()) / 60000);
-          console.log('❌ [AUTH] Rate limit exceeded');
           throw new Error(`Too many login attempts. Please try again in ${minutesLeft} minute${minutesLeft > 1 ? 's' : ''}.`);
         }
 
@@ -69,30 +65,20 @@ export const authOptions: NextAuthOptions = {
           },
         });
 
-        console.log('🔍 [AUTH] User lookup:', { 
-          found: !!user, 
-          username: user?.username,
-          role: user?.role 
-        });
-
         if (!user) {
-          console.log('❌ [AUTH] User not found');
           // Show remaining attempts
           throw new Error(`Invalid username or password. ${rateCheck.remaining} attempt${rateCheck.remaining !== 1 ? 's' : ''} remaining.`);
         }
 
         const isValid = await bcrypt.compare(credentials.password, user.password);
-        console.log('🔑 [AUTH] Password check:', { isValid });
 
         if (!isValid) {
-          console.log('❌ [AUTH] Invalid password');
           // Show remaining attempts
           throw new Error(`Invalid username or password. ${rateCheck.remaining} attempt${rateCheck.remaining !== 1 ? 's' : ''} remaining.`);
         }
 
         // Clear attempts on successful login
         clearAttempt(identifier);
-        console.log('✅ [AUTH] Login successful');
 
         return { 
           id: user.id, 

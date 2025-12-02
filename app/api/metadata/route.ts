@@ -100,7 +100,7 @@ export async function GET(request: Request) {
     };
 
     if (!response.ok) {
-      console.warn(`Failed to fetch metadata for ${url}: ${response.status} ${response.statusText}`);
+
       return NextResponse.json({
         title: getTitleFromUrl(url),
         icon: getFaviconUrl(url),
@@ -147,7 +147,7 @@ export async function GET(request: Request) {
       icon: icon,
     });
   } catch (error) {
-    console.error("Error fetching metadata:", error);
+
     
     // Fallback using Google Favicon service
     let fallbackIcon = "/favicon.ico";

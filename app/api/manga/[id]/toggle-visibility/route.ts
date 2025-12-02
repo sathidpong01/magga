@@ -32,7 +32,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     return NextResponse.json(updatedManga);
   } catch (error) {
-    console.error('Failed to toggle manga visibility:', error);
+
     return NextResponse.json({ error: 'Failed to toggle visibility' }, { status: 500 });
   }
 }

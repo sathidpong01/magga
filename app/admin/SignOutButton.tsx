@@ -11,6 +11,7 @@ export default function SignOutButton() {
       color="error"
       fullWidth
       startIcon={<LogoutIcon />}
+      aria-label="Sign out"
       onClick={() => signOut({ callbackUrl: "/" })}
     >
       Sign Out

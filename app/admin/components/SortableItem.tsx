@@ -77,7 +77,7 @@ export function SortableItem({ id, src, index, onRemove }: SortableItemProps) {
 
       {/* Remove Button */}
       <IconButton
-        size="small"
+        aria-label="Remove page"
         onClick={(e) => {
           e.stopPropagation(); // Prevent drag start
           onRemove();
@@ -87,13 +87,13 @@ export function SortableItem({ id, src, index, onRemove }: SortableItemProps) {
           position: 'absolute',
           top: 2,
           right: 2,
-          p: 0.5,
+          p: 1,
           bgcolor: 'rgba(0,0,0,0.5)',
           color: '#fff',
           '&:hover': { bgcolor: 'rgba(220, 38, 38, 0.8)' },
         }}
       >
-        <DeleteIcon sx={{ fontSize: 14 }} />
+        <DeleteIcon sx={{ fontSize: 20 }} />
       </IconButton>
     </Box>
   );

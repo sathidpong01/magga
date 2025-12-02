@@ -157,7 +157,7 @@ export default function UploadModal({ open, onClose, onAdd, title = "Add Pages",
               onChange={(e) => handleFiles(e.target.files)}
             />
             <CloudUploadIcon sx={{ fontSize: 48, color: dragActive ? '#fbbf24' : 'text.secondary', mb: 2 }} />
-            <Typography variant="h6" gutterBottom color={dragActive ? '#fbbf24' : 'text.primary'}>
+            <Typography variant="h6" component="h3" gutterBottom color={dragActive ? '#fbbf24' : 'text.primary'}>
               {dragActive ? "Drop files here" : "Drag & Drop files here"}
             </Typography>
             <Typography variant="body2" color="text.secondary">

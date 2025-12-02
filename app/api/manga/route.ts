@@ -55,9 +55,10 @@ export async function POST(request: Request) {
       },
     });
     revalidatePath('/admin');
+    revalidatePath('/');
     return NextResponse.json(newManga, { status: 201 });
   } catch (error) {
-    console.error('Failed to create manga:', error);
+
     return NextResponse.json({ error: 'Failed to create manga' }, { status: 500 });
   }
 }

@@ -11,6 +11,7 @@ interface MangaViewRatingProps {
   initialViewCount: number;
   initialAverageRating: number;
   initialRatingCount: number;
+  hideViewCount?: boolean;
 }
 
 export default function MangaViewRating({
@@ -18,6 +19,7 @@ export default function MangaViewRating({
   initialViewCount,
   initialAverageRating,
   initialRatingCount,
+  hideViewCount = false,
 }: MangaViewRatingProps) {
   const [viewCount, setViewCount] = useState(initialViewCount);
   const [averageRating, setAverageRating] = useState(initialAverageRating);
@@ -89,11 +91,11 @@ export default function MangaViewRating({
                 setViewCount(data.viewCount);
               }
             })
-            .catch((err) => console.error("Failed to increment view count:", err));
+
         }
 
       } catch (error) {
-        console.error("Failed to initialize fingerprint:", error);
+
         setSnackbar({
           open: true,
           message: "ไม่สามารถโหลดระบบให้คะแนนได้",
@@ -152,7 +154,7 @@ export default function MangaViewRating({
         severity: "success",
       });
     } catch (error) {
-      console.error("Failed to submit rating:", error);
+
       setSnackbar({
         open: true,
         message: "ไม่สามารถให้คะแนนได้ กรุณาลองใหม่อีกครั้ง",
@@ -170,12 +172,14 @@ export default function MangaViewRating({
   return (
     <Box sx={{ mt: 3 }}>
       {/* View Count */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-        <VisibilityIcon sx={{ color: "#38bdf8", fontSize: 20 }} />
-        <Typography variant="body2" color="text.secondary">
-          {viewCount.toLocaleString()} views
-        </Typography>
-      </Box>
+      {!hideViewCount && (
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
+          <VisibilityIcon sx={{ color: "#38bdf8", fontSize: 20 }} />
+          <Typography variant="body2" color="text.secondary">
+            {viewCount.toLocaleString()} views
+          </Typography>
+        </Box>
+      )}
 
       {/* Rating Section */}
       <Box>

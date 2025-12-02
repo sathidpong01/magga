@@ -60,7 +60,7 @@ export default function AdminLayout({
           </Typography>
         </Toolbar>
         <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)' }} />
-        <List sx={{ px: 2, mt: 2, gap: 0.5, display: 'flex', flexDirection: 'column' }}>
+        <List component="nav" aria-label="Admin navigation" sx={{ px: 2, mt: 2, gap: 0.5, display: 'flex', flexDirection: 'column' }}>
           {menuItems.map((item) => (
             <ListItem key={item.text} disablePadding>
               <LinkListItemButton

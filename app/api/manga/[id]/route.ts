@@ -55,7 +55,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     }
     return NextResponse.json(updatedManga);
   } catch (error) {
-    console.error('Failed to update manga:', error);
+
     return NextResponse.json({ error: 'Failed to update manga' }, { status: 500 });
   }
 }
@@ -75,7 +75,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     revalidatePath('/admin');
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    console.error('Failed to delete manga:', error);
+
     return NextResponse.json({ error: 'Failed to delete manga' }, { status: 500 });
   }
 }

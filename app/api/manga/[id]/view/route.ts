@@ -48,7 +48,7 @@ export async function POST(
       viewCount: updatedManga.viewCount,
     });
   } catch (error) {
-    console.error('Failed to increment view count:', error);
+
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

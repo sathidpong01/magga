@@ -9,9 +9,12 @@ import {
   Grid,
   Paper,
   Avatar,
+  Stack,
 } from "@mui/material";
 import Image from "next/image";
 import MangaViewRating from "@/app/components/MangaViewRating";
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import StarIcon from '@mui/icons-material/Star';
 
 type MangaPageProps = {
   params: Promise<{
@@ -19,7 +22,7 @@ type MangaPageProps = {
   }>;
 };
 
-export const revalidate = 3600; // Revalidate every hour
+export const revalidate = 60; // Revalidate every minute
 
 // Pre-render top 50 manga at build time for better performance
 export async function generateStaticParams() {
@@ -50,16 +53,15 @@ export async function generateMetadata({ params }: MangaPageProps) {
     };
   }
 
-  // Safe Metadata for Social Sharing (Masking)
   return {
-    title: manga.title, // Browser tab still shows real title
+    title: manga.title,
     description: manga.description,
     openGraph: {
-      title: "Magga Reader - Read Manga Online", // Safe Title for Facebook/Line
-      description: "Read your favorite manga online for free. High quality images and fast loading.", // Safe Description
+      title: "Magga Reader - Read Manga Online",
+      description: "Read your favorite manga online for free. High quality images and fast loading.",
       images: [
         {
-          url: "https://placehold.co/1200x630/png?text=Magga+Reader", // Safe Placeholder Image
+          url: "https://placehold.co/1200x630/png?text=Magga+Reader",
           width: 1200,
           height: 630,
           alt: "Magga Reader",
@@ -78,9 +80,15 @@ export async function generateMetadata({ params }: MangaPageProps) {
 
 export default async function MangaPage({ params }: MangaPageProps) {
   const { mangaId } = await params;
-  const decodedSlug = decodeURIComponent(mangaId);
   
-  // Try to find by slug
+  // Safely decode URI, handle malformed URIs
+  let decodedSlug: string;
+  try {
+    decodedSlug = decodeURIComponent(mangaId);
+  } catch {
+    notFound();
+  }
+  
   const manga = await prisma.manga.findUnique({
     where: {
       slug: decodedSlug,
@@ -116,29 +124,46 @@ export default async function MangaPage({ params }: MangaPageProps) {
   })();
 
   return (
-    <Container maxWidth="md">
-      <Paper 
-        elevation={0} 
-        sx={{ 
-          p: { xs: 2, md: 4 }, 
-          my: 4,
-          backgroundColor: "#171717",
-          border: "1px solid rgba(255, 255, 255, 0.08)",
-          borderRadius: 3,
-          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.4)",
-        }}
-      >
-        <Grid container spacing={4}>
-          {/* Cover Image */}
-          <Grid item xs={12} sm={4}>
+    <Box sx={{ minHeight: '100vh', bgcolor: '#0a0a0a', pb: 8 }}>
+      {/* Hero / Header Section with Blurred Background */}
+      <Box sx={{ position: 'relative', overflow: 'hidden', mb: -4 }}>
+        {/* Background Image Layer */}
+        <Box sx={{ 
+          position: 'absolute', 
+          inset: 0, 
+          zIndex: 0,
+          opacity: 0.3,
+          filter: 'blur(40px)',
+          transform: 'scale(1.1)', // Prevent blur edges
+        }}>
+          <Image
+            src={manga.coverImage}
+            alt=""
+            fill
+            style={{ objectFit: 'cover' }}
+            priority
+          />
+          <Box sx={{ 
+            position: 'absolute', 
+            inset: 0, 
+            background: 'linear-gradient(to bottom, rgba(10,10,10,0.2) 0%, #0a0a0a 100%)' 
+          }} />
+        </Box>
+
+        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, pt: { xs: 4, md: 6 }, pb: { xs: 4, md: 4 } }}>
+          <Grid container spacing={4}>
+            {/* Left: Cover Image */}
+            <Grid item xs={12} md={4} lg={3} sx={{ display: 'flex', justifyContent: { xs: 'center', md: 'flex-start' } }}>
               <Box
                 sx={{
                   position: "relative",
                   width: "100%",
-                  paddingTop: "140%", // Aspect ratio for cover
+                  maxWidth: { xs: "240px", md: "100%" },
+                  aspectRatio: "2/3",
                   borderRadius: 2,
                   overflow: "hidden",
-                  boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+                  boxShadow: "0 20px 40px -10px rgba(0,0,0,0.7)",
+                  border: "1px solid rgba(255,255,255,0.1)"
                 }}
               >
                 <Image
@@ -149,142 +174,190 @@ export default async function MangaPage({ params }: MangaPageProps) {
                   style={{ objectFit: "cover" }}
                   priority
                 />
-            </Box>
-          </Grid>
-
-          {/* Details */}
-          <Grid item xs={12} sm={8}>
-            <Typography variant="h3" component="h1" gutterBottom sx={{ fontWeight: 800, background: "linear-gradient(45deg, #8b5cf6, #fbbf24)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              {manga.title}
-            </Typography>
-            <Typography variant="body1" paragraph color="text.secondary" sx={{ fontSize: "1.1rem", lineHeight: 1.7 }}>
-              {manga.description}
-            </Typography>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 3 }}>
-              {manga.category && (
-                <LinkChip
-                  label={manga.category.name}
-                  href={`/category/${encodeURIComponent(manga.category.name)}`}
-                  sx={{ 
-                    fontWeight: 600,
-                    backgroundColor: "rgba(251, 191, 36, 0.15)",
-                    color: "#fbbf24",
-                    border: "1px solid rgba(251, 191, 36, 0.3)",
-                    '&:hover': {
-                      backgroundColor: "rgba(251, 191, 36, 0.25)",
-                      transform: "translateY(-1px)",
-                      boxShadow: "0 2px 8px rgba(251, 191, 36, 0.3)"
-                    },
-                    transition: "all 0.2s ease"
-                  }}
-                />
-              )}
-              {manga.tags.map((tag) => (
-                <LinkChip
-                  key={tag.id}
-                  label={tag.name}
-                  href={`/tag/${encodeURIComponent(tag.name)}`}
-                  sx={{ 
-                    backgroundColor: "rgba(56, 189, 248, 0.1)",
-                    color: "#38bdf8",
-                    border: "1px solid rgba(56, 189, 248, 0.3)",
-                    '&:hover': {
-                      backgroundColor: "rgba(56, 189, 248, 0.2)",
-                      transform: "translateY(-1px)",
-                      boxShadow: "0 2px 8px rgba(56, 189, 248, 0.25)"
-                    },
-                    transition: "all 0.2s ease"
-                  }}
-                />
-              ))}
-            </Box>
-
-            {/* Author Credits */}
-            {manga.authorCredits && (
-              <Box sx={{ mt: 3 }}>
-                <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                  Author / Credits:
-                </Typography>
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                  {(() => {
-                    try {
-                      const credits = JSON.parse(manga.authorCredits) as {
-                        url: string;
-                        label: string;
-                        icon: string;
-                      }[];
-                      return credits.map((credit, index) => (
-                        <Chip
-                          key={index}
-                          avatar={
-                            credit.icon ? (
-                              <Avatar src={credit.icon} alt={credit.label} />
-                            ) : undefined
-                          }
-                          label={credit.label}
-                          component="a"
-                          href={credit.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          clickable
-                          sx={{
-                            backgroundColor: "rgba(139, 92, 246, 0.1)",
-                            color: "#a78bfa",
-                            border: "1px solid rgba(139, 92, 246, 0.3)",
-                            "& .MuiChip-avatar": {
-                              width: 24,
-                              height: 24,
-                            },
-                            '&:hover': {
-                              backgroundColor: "rgba(139, 92, 246, 0.2)",
-                              transform: "translateY(-1px)",
-                            },
-                            transition: "all 0.2s ease"
-                          }}
-                        />
-                      ));
-                    } catch {
-                      return null;
-                    }
-                  })()}
-                </Box>
               </Box>
-            )}
+            </Grid>
+
+            {/* Right: Details */}
+            <Grid item xs={12} md={8} lg={9} sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+              <Box>
+                {/* Category Chip */}
+                {manga.category && (
+                  <Chip 
+                    label={manga.category.name} 
+                    component="a"
+                    href={`/category/${encodeURIComponent(manga.category.name)}`}
+                    clickable
+                    sx={{ 
+                      bgcolor: "#fbbf24", 
+                      color: "black", 
+                      fontWeight: "bold", 
+                      mb: 2,
+                      fontSize: "0.85rem",
+                      height: 28,
+                      "&:hover": { bgcolor: "#f59e0b" }
+                    }} 
+                  />
+                )}
+
+                {/* Title */}
+                <Typography 
+                  variant="h2" 
+                  component="h1" 
+                  sx={{ 
+                    fontWeight: 800, 
+                    mb: 1,
+                    fontSize: { xs: "2.5rem", md: "3.5rem" },
+                    lineHeight: 1.1,
+                    background: "linear-gradient(135deg, #fbbf24 0%, #38bdf8 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    filter: "drop-shadow(0 2px 10px rgba(0,0,0,0.3))"
+                  }}
+                >
+                  {manga.title}
+                </Typography>
+
+                {/* Author Credits */}
+                {(() => {
+                  if (!manga.authorCredits) return null;
+
+                  try {
+                    const credits = JSON.parse(manga.authorCredits) as {
+                      url: string;
+                      label: string;
+                      icon: string;
+                    }[];
+                    
+                    if (credits.length === 0) return null;
+                    
+                    return (
+                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 2 }}>
+                        {credits.map((credit, index) => (
+                          <Chip
+                            key={index}
+                            avatar={credit.icon ? <Avatar src={credit.icon} alt={credit.label} /> : undefined}
+                            label={credit.label}
+                            component="a"
+                            href={credit.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            clickable
+                            variant="outlined"
+                            size="small"
+                            sx={{
+                              borderColor: "rgba(255,255,255,0.2)",
+                              color: "rgba(255,255,255,0.7)",
+                              "&:hover": {
+                                borderColor: "rgba(255,255,255,0.5)",
+                                color: "white",
+                                bgcolor: "rgba(255,255,255,0.05)"
+                              }
+                            }}
+                          />
+                        ))}
+                      </Box>
+                    );
+                  } catch {
+                    return null;
+                  }
+                })()}
+
+                {/* Stats Row */}
+                <Stack direction="row" spacing={3} alignItems="center" sx={{ mb: 3, color: 'text.secondary' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <VisibilityIcon sx={{ fontSize: 20 }} />
+                    <Typography variant="subtitle1" fontWeight={500}>
+                      {manga.viewCount.toLocaleString()} Views
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <StarIcon sx={{ fontSize: 20, color: '#fbbf24' }} />
+                    <Typography variant="subtitle1" fontWeight={500} sx={{ color: 'white' }}>
+                      {manga.averageRating > 0 ? manga.averageRating.toFixed(1) : "No rating"}
+                    </Typography>
+                    <Typography variant="body2" sx={{ opacity: 0.7 }}>
+                      ({manga.ratingCount} ratings)
+                    </Typography>
+                  </Box>
+                </Stack>
+
+                {/* Description */}
+                <Typography 
+                  variant="body1" 
+                  sx={{ 
+                    fontSize: "1.1rem", 
+                    lineHeight: 1.7, 
+                    color: "rgba(255,255,255,0.8)", 
+                    maxWidth: "800px",
+                    mb: 4
+                  }}
+                >
+                  {manga.description}
+                </Typography>
+
+                {/* Tags */}
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 3 }}>
+                  {manga.tags.map((tag) => (
+                    <LinkChip
+                      key={tag.id}
+                      label={tag.name}
+                      href={`/tag/${encodeURIComponent(tag.name)}`}
+                      sx={{ 
+                        backgroundColor: "rgba(56, 189, 248, 0.1)",
+                        color: "#38bdf8",
+                        border: "1px solid rgba(56, 189, 248, 0.3)",
+                        fontSize: "0.85rem",
+                        '&:hover': {
+                          backgroundColor: "rgba(56, 189, 248, 0.2)",
+                          borderColor: "#38bdf8"
+                        }
+                      }}
+                    />
+                  ))}
+                </Box>
+
+                {/* Rating Component */}
+                <MangaViewRating
+                  mangaId={manga.id}
+                  initialViewCount={manga.viewCount}
+                  initialAverageRating={manga.averageRating}
+                  initialRatingCount={manga.ratingCount}
+                  hideViewCount={true}
+                />
+              </Box>
+            </Grid>
           </Grid>
-        </Grid>
-
-        {/* View Count & Rating Component */}
-        <MangaViewRating
-          mangaId={manga.id}
-          initialViewCount={manga.viewCount}
-          initialAverageRating={manga.averageRating}
-          initialRatingCount={manga.ratingCount}
-        />
-      </Paper>
-
-      {/* Manga Pages Reader */}
-      <Box sx={{ mt: 4, display: "flex", flexDirection: "column", alignItems: "center" }}>
-        {pages.map((pageUrl, index) => (
-          <Box
-            key={index}
-            sx={{
-              position: "relative",
-              width: "100%",
-              mb: 1,
-            }}
-          >
-            <Image
-              src={pageUrl}
-              alt={`Page ${index + 1} of ${manga.title}`}
-              width={0}
-              height={0}
-              sizes="100vw"
-              style={{ width: "100%", height: "auto" }}
-              priority={index === 0}
-            />
-          </Box>
-        ))}
+        </Container>
       </Box>
-    </Container>
+
+      {/* Main Content Area */}
+      <Container maxWidth="lg" sx={{ mt: 6 }}>
+        {/* Pages / Reader */}
+        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0 }}>
+          {pages.map((pageUrl, index) => (
+            <Box
+              key={index}
+              sx={{
+                position: "relative",
+                width: "100%",
+                maxWidth: "1000px", // Limit max width for readability on ultra-wide screens
+                lineHeight: 0, // Remove gap between images
+              }}
+            >
+              <Image
+                src={pageUrl}
+                alt={`Page ${index + 1} of ${manga.title}`}
+                width={0}
+                height={0}
+                sizes="100vw"
+                style={{ width: "100%", height: "auto", display: "block" }}
+                priority={index < 2} // Prioritize first 2 pages
+                loading={index < 2 ? "eager" : "lazy"}
+              />
+            </Box>
+          ))}
+        </Box>
+      </Container>
+    </Box>
   );
 }

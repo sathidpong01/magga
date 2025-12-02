@@ -71,7 +71,7 @@ export async function POST(request: Request) {
           contentType = "image/webp";
           fileName = fileName.replace(/\.[^/.]+$/, "") + ".webp";
         } catch (error) {
-          console.error("Image compression failed, uploading original", error);
+
         }
       }
 
@@ -101,7 +101,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ urls: saved });
   } catch (err) {
-    console.error("Upload error", err);
+
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 }

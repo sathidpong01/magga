@@ -77,7 +77,7 @@ export default function MangaActions({ mangaId, isHidden, slug }: MangaActionsPr
       setCurrentlyHidden(updatedManga.isHidden);
       router.refresh();
     } catch (err) {
-      console.error(err);
+
     } finally {
       setIsToggling(false);
     }

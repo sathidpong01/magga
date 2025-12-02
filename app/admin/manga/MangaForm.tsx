@@ -222,7 +222,7 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
       };
       setCredits(newCredits);
     } catch (error) {
-      console.error("Error fetching credit info:", error);
+
     }
   };
 
@@ -374,7 +374,7 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                 type="submit"
                 variant="contained"
                 disabled={isSubmitting}
-                startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : null}
+                startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" aria-label="Saving..." /> : null}
                 sx={{ 
                   borderRadius: 1, 
                   bgcolor: '#fbbf24', 
@@ -396,7 +396,7 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
           {/* Left Column: General Info */}
           <Grid item xs={12} md={7}>
             <Paper elevation={0} sx={{ p: 3, borderRadius: 1, bgcolor: '#171717' }}>
-              <Typography variant="h6" gutterBottom sx={{ mb: 3, fontSize: '1rem', color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 1 }}>
+              <Typography variant="h6" component="h3" gutterBottom sx={{ mb: 3, fontSize: '1rem', color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 1 }}>
                 General Information
               </Typography>
               <Grid container spacing={3}>
@@ -427,6 +427,7 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                         <InputAdornment position="end">
                           <Tooltip title="Generate from Title">
                             <IconButton
+                              aria-label="Generate slug"
                               onClick={() => {
                                 const newSlug = title
                                   .toLowerCase()
@@ -509,13 +510,13 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
           {/* Right Column: Media Assets */}
           <Grid item xs={12} md={5}>
             <Paper elevation={0} sx={{ p: 3, borderRadius: 1, bgcolor: '#171717', height: '100%' }}>
-              <Typography variant="h6" gutterBottom sx={{ mb: 3, fontSize: '1rem', color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 1 }}>
+              <Typography variant="h6" component="h3" gutterBottom sx={{ mb: 3, fontSize: '1rem', color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 1 }}>
                 Media Assets
               </Typography>
               
               {/* Cover Image */}
               <Box sx={{ mb: 4 }}>
-                <Typography variant="subtitle2" gutterBottom>Cover Image</Typography>
+                <Typography variant="subtitle1" component="h4" gutterBottom>Cover Image</Typography>
                 
                 {!coverItem ? (
                   <Button
@@ -547,6 +548,7 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                       sx={{ width: '100%', height: 'auto', display: 'block' }} 
                     />
                     <IconButton 
+                      aria-label="Remove cover image"
                       size="small" 
                       onClick={handleRemoveCover}
                       sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(0,0,0,0.6)', '&:hover': { bgcolor: 'rgba(220, 38, 38, 0.8)' } }}
@@ -560,7 +562,7 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
               {/* Pages */}
               <Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="subtitle2">Pages ({pageItems.length})</Typography>
+                  <Typography variant="subtitle1" component="h4">Pages ({pageItems.length})</Typography>
                   <Button 
                     size="small" 
                     startIcon={<AddPhotoAlternateIcon />}
@@ -615,7 +617,7 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
           {/* Bottom: Author Credits */}
           <Grid item xs={12}>
             <Paper elevation={0} sx={{ p: 3, borderRadius: 1, bgcolor: '#171717' }}>
-              <Typography variant="h6" gutterBottom sx={{ mb: 3, fontSize: '1rem', color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 1 }}>
+              <Typography variant="h6" component="h3" gutterBottom sx={{ mb: 3, fontSize: '1rem', color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 1 }}>
                 Author Credits
               </Typography>
               <Stack spacing={2}>
@@ -636,7 +638,7 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                             endAdornment: (
                               <InputAdornment position="end">
                                 <Tooltip title="Auto-fetch Title & Icon">
-                                  <IconButton onClick={() => handleFetchCreditInfo(index)} edge="end" disabled={!credit.url}>
+                                  <IconButton aria-label="Fetch credit info" onClick={() => handleFetchCreditInfo(index)} edge="end" disabled={!credit.url}>
                                     <AutoFixHighIcon />
                                   </IconButton>
                                 </Tooltip>
@@ -673,7 +675,7 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                         </Stack>
                       </Grid>
                       <Grid item xs={2} sm={1} sx={{ display: 'flex', alignItems: 'center' }}>
-                        <IconButton color="error" onClick={() => handleRemoveCredit(index)}>
+                        <IconButton aria-label="Remove credit" color="error" onClick={() => handleRemoveCredit(index)}>
                           <DeleteIcon />
                         </IconButton>
                       </Grid>

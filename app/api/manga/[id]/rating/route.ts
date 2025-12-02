@@ -91,7 +91,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error('Failed to get manga rating:', error);
+
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -216,7 +216,7 @@ export async function POST(
       message: existingRating ? 'Rating updated' : 'Rating added',
     });
   } catch (error) {
-    console.error('Failed to save manga rating:', error);
+
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
