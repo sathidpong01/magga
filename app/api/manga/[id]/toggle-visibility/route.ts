@@ -10,7 +10,7 @@ type RouteParams = {
 
 export async function PATCH(request: Request, { params }: RouteParams) {
   const session = await getServerSession();
-  if (!session) {
+  if (!session || session.user?.role?.toUpperCase() !== 'ADMIN') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

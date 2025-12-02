@@ -11,7 +11,7 @@ type RouteParams = {
 
 export async function PUT(request: Request, { params }: RouteParams) {
   const session = await getServerSession();
-  if (!session) {
+  if (!session || session.user?.role?.toUpperCase() !== 'ADMIN') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const data = await request.json();
@@ -62,7 +62,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
 export async function DELETE(request: Request, { params }: RouteParams) {
   const session = await getServerSession();
-  if (!session) {
+  if (!session || session.user?.role?.toUpperCase() !== 'ADMIN') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

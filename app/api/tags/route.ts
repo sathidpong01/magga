@@ -13,7 +13,7 @@ export async function GET() {
 // POST a new tag
 export async function POST(request: Request) {
   const session = await getServerSession();
-  if (!session) {
+  if (!session || session.user?.role?.toUpperCase() !== 'ADMIN') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
