@@ -60,25 +60,27 @@ export default function AdminLayout({
           </Typography>
         </Toolbar>
         <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)' }} />
-        <List component="nav" aria-label="Admin navigation" sx={{ px: 2, mt: 2, gap: 0.5, display: 'flex', flexDirection: 'column' }}>
-          {menuItems.map((item) => (
-            <ListItem key={item.text} disablePadding>
-              <LinkListItemButton
-                href={item.href}
-                sx={{
-                  borderRadius: 1,
-                  "&:hover": { bgcolor: "rgba(255, 255, 255, 0.05)" },
-                }}
-              >
-                <ListItemIcon sx={{ color: "#a3a3a3", minWidth: 40 }}>{item.icon}</ListItemIcon>
-                <ListItemText 
-                  primary={item.text} 
-                  primaryTypographyProps={{ fontWeight: 500 }}
-                />
-              </LinkListItemButton>
-            </ListItem>
-          ))}
-        </List>
+        <Box component="nav" aria-label="Admin navigation">
+          <List sx={{ px: 2, mt: 2, gap: 0.5, display: 'flex', flexDirection: 'column' }}>
+            {menuItems.map((item) => (
+              <ListItem key={item.text} disablePadding>
+                <LinkListItemButton
+                  href={item.href}
+                  sx={{
+                    borderRadius: 1,
+                    "&:hover": { bgcolor: "rgba(255, 255, 255, 0.05)" },
+                  }}
+                >
+                  <ListItemIcon sx={{ color: "#a3a3a3", minWidth: 40 }}>{item.icon}</ListItemIcon>
+                  <ListItemText 
+                    primary={item.text} 
+                    primaryTypographyProps={{ fontWeight: 500 }}
+                  />
+                </LinkListItemButton>
+              </ListItem>
+            ))}
+          </List>
+        </Box>
         
         <Box sx={{ mt: 'auto', px: 2, pb: 1 }}>
           <LinkListItemButton 

@@ -150,10 +150,10 @@ export default function TagManager({ initialTags }: TagManagerProps) {
                 <TableCell component="th" scope="row">{tag.name}</TableCell>
                 <TableCell align="right">
                   <Tooltip title="Edit">
-                    <IconButton onClick={() => handleEdit(tag)}><EditIcon /></IconButton>
+                    <IconButton onClick={() => handleEdit(tag)} aria-label="edit"><EditIcon /></IconButton>
                   </Tooltip>
                   <Tooltip title="Delete">
-                    <IconButton onClick={() => handleDeleteClick(tag)} color="error"><DeleteIcon /></IconButton>
+                    <IconButton onClick={() => handleDeleteClick(tag)} color="error" aria-label="delete"><DeleteIcon /></IconButton>
                   </Tooltip>
                 </TableCell>
               </TableRow>

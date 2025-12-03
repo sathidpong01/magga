@@ -170,6 +170,7 @@ export default function AccountSettings({ user, hasPassword }: Props) {
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 variant="outlined"
                 size="small"
+                inputProps={{ "aria-label": "Display Name" }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     bgcolor: "#262626",
@@ -189,6 +190,7 @@ export default function AccountSettings({ user, hasPassword }: Props) {
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                 variant="outlined"
                 size="small"
+                inputProps={{ "aria-label": "Username" }}
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     bgcolor: "#262626",
@@ -233,6 +235,7 @@ export default function AccountSettings({ user, hasPassword }: Props) {
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   variant="outlined"
                   size="small"
+                  inputProps={{ "aria-label": "Email Address" }}
                   sx={{
                     "& .MuiOutlinedInput-root": {
                       bgcolor: "#262626",
@@ -333,6 +336,7 @@ export default function AccountSettings({ user, hasPassword }: Props) {
                   onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
                   size="small"
                   autoComplete="new-password"
+                  inputProps={{ "aria-label": "New Password" }}
                   sx={{ "& .MuiOutlinedInput-root": { bgcolor: "#262626", "& fieldset": { borderColor: "#404040" } } }}
                   InputProps={{
                     endAdornment: (
@@ -341,6 +345,7 @@ export default function AccountSettings({ user, hasPassword }: Props) {
                           onClick={() => setShowPassword(!showPassword)}
                           edge="end"
                           sx={{ color: "#a3a3a3" }}
+                          aria-label={showPassword ? "Hide password" : "Show password"}
                         >
                           {showPassword ? <VisibilityOff /> : <Visibility />}
                         </IconButton>

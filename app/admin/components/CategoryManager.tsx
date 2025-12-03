@@ -150,10 +150,10 @@ export default function CategoryManager({ initialCategories }: CategoryManagerPr
                 <TableCell component="th" scope="row">{category.name}</TableCell>
                 <TableCell align="right">
                   <Tooltip title="Edit">
-                    <IconButton onClick={() => handleEdit(category)}><EditIcon /></IconButton>
+                    <IconButton onClick={() => handleEdit(category)} aria-label="edit"><EditIcon /></IconButton>
                   </Tooltip>
                   <Tooltip title="Delete">
-                    <IconButton onClick={() => handleDeleteClick(category)} color="error"><DeleteIcon /></IconButton>
+                    <IconButton onClick={() => handleDeleteClick(category)} color="error" aria-label="delete"><DeleteIcon /></IconButton>
                   </Tooltip>
                 </TableCell>
               </TableRow>

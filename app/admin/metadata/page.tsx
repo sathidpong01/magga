@@ -19,13 +19,13 @@ export default async function MetadataPage() {
       </Typography>
       <Grid container spacing={4}>
         <Grid item xs={12} md={6}>
-          <Typography variant="h5" gutterBottom>
+          <Typography variant="h5" component="h2" gutterBottom>
             Categories
           </Typography>
           <CategoryManager initialCategories={categories} />
         </Grid>
         <Grid item xs={12} md={6}>
-          <Typography variant="h5" gutterBottom>
+          <Typography variant="h5" component="h2" gutterBottom>
             Tags
           </Typography>
           <TagManager initialTags={tags} />

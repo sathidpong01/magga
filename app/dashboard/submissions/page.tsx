@@ -22,7 +22,7 @@ export default async function MySubmissionsPage() {
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" fontWeight="bold">My Submissions</Typography>
+        <Typography variant="h4" component="h1" fontWeight="bold">My Submissions</Typography>
         <LinkButton 
           variant="contained" 
           startIcon={<AddIcon />}

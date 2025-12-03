@@ -76,6 +76,7 @@ export default function MangaCard({ manga }: MangaCardProps) {
           )}
           <Typography 
             variant="h5" 
+            component="h2"
             fontWeight={800} 
             sx={{ 
               mb: 0.5, 

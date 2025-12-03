@@ -12,7 +12,7 @@ export default function Sidebar() {
       <Typography variant="caption" color="text.secondary" sx={{ px: 2, mb: 1, display: "block", fontWeight: "bold" }}>
         GENERAL SETTINGS
       </Typography>
-      <List component="nav" sx={{ mb: 2 }}>
+      <List sx={{ mb: 2 }}>
         <ListItem disablePadding>
           <ListItemButton selected sx={{ 
             borderRadius: 2, 

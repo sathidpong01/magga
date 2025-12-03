@@ -106,7 +106,7 @@ export default function AdminSubmissionsPage() {
   return (
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-        <Typography variant="h4" fontWeight="bold">
+        <Typography variant="h4" component="h1" fontWeight="bold">
           Manga Submissions
         </Typography>
         <Button 

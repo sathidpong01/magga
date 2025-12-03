@@ -166,6 +166,7 @@ export default function Header() {
             {session && (
               <IconButton 
                 onClick={handleMenuOpen}
+                aria-label="Open user menu"
                 sx={{ 
                   ml: 1,
                   border: "1px solid rgba(255,255,255,0.1)",
@@ -189,6 +190,7 @@ export default function Header() {
               size="large"
               onClick={handleMenuOpen}
               color="inherit"
+              aria-label="Open mobile menu"
             >
               <MenuIcon />
             </IconButton>
