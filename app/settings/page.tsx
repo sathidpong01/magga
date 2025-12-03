@@ -25,6 +25,10 @@ export default async function SettingsPage() {
     },
   });
 
+  if (!user) {
+    redirect("/api/auth/signin?callbackUrl=/settings");
+  }
+
   const hasPassword = !!user?.password;
 
   return (
