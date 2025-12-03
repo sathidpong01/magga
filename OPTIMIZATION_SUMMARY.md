@@ -64,7 +64,7 @@ export const dynamic = "force-static";
 **Configuration:**
 
 ```typescript
-export const revalidate = 3600; // 1 hour
+export const revalidate = 60; // 1 minute
 export async function generateStaticParams() {
   // Pre-render top 50 manga
 }
@@ -177,14 +177,14 @@ experimental: {
 
 ### Before vs After
 
-| Metric                   | Before        | After                                  | Improvement           |
-| ------------------------ | ------------- | -------------------------------------- | --------------------- |
-| **Home Page TTFB**       | ~500ms        | <100ms                                 | 🔥 **80% faster**     |
-| **Top Manga Load**       | ~500ms        | <30ms                                  | 🚀 **94% faster**     |
-| **Category/Tag**         | ~500ms        | <100ms                                 | ⚡ **80% faster**     |
-| **Function Invocations** | 100%          | ~5%                                    | 💰 **95% reduction**  |
-| **Database Queries**     | Every request | Every 60s (home)<br>Every 5m (cat/tag) | 📉 **>95% reduction** |
-| **Cache Hit Rate**       | ~20%          | ~85%                                   | 📈 **4.25x better**   |
+| Metric                   | Before        | After                                        | Improvement           |
+| ------------------------ | ------------- | -------------------------------------------- | --------------------- |
+| **Home Page TTFB**       | ~500ms        | <100ms                                       | 🔥 **80% faster**     |
+| **Top Manga Load**       | ~500ms        | <30ms                                        | 🚀 **94% faster**     |
+| **Category/Tag**         | ~500ms        | <100ms                                       | ⚡ **80% faster**     |
+| **Function Invocations** | 100%          | ~5%                                          | 💰 **95% reduction**  |
+| **Database Queries**     | Every request | Every 60s (home/manga)<br>Every 5m (cat/tag) | 📉 **>95% reduction** |
+| **Cache Hit Rate**       | ~20%          | ~85%                                         | 📈 **4.25x better**   |
 
 ### Cost Impact
 
@@ -206,7 +206,7 @@ experimental: {
 ```
 Route (app)                                 Size  First Load JS  Revalidate  Expire
 ┌ ○ /                                    6.15 kB         202 kB          1m      1y
-├ ● /[mangaId]                           5.06 kB         151 kB          1h      1y
+├ ● /[mangaId]                           5.06 kB         151 kB          1m      1y
 ├   ├ /cat-แมว                                                           1h      1y
 ├   └ /placehoder                                                        1h      1y
 ├ ƒ /category/[categoryName]               869 B         149 kB          5m

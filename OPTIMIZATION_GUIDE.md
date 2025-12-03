@@ -39,7 +39,7 @@ export const dynamic = "force-static"; // Force static generation
 #### Manga Detail Pages (`app/[mangaId]/page.tsx`)
 
 ```typescript
-export const revalidate = 3600; // Revalidate every hour
+export const revalidate = 60; // Revalidate every 60 seconds
 
 export async function generateStaticParams() {
   // Pre-render top 50 manga at build time
@@ -242,7 +242,7 @@ export const revalidate = 60; // Change to desired seconds
 **Manga pages** (`app/[mangaId]/page.tsx`):
 
 ```typescript
-export const revalidate = 3600; // Currently 1 hour
+export const revalidate = 60; // Currently 60 seconds
 ```
 
 **Recommended values:**

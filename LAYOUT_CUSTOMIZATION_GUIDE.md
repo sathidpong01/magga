@@ -231,7 +231,7 @@
 
 **ปรับได้:**
 
-- `height`: ความสูงของพื้นที่ drop (px)
+- `height`: ความสูงของพื้นที่ drop (120px)
 - `borderRadius`: มุมโค้ง
 
 #### 3.4 Cover Preview
@@ -239,7 +239,7 @@
 ```tsx
 <Box sx={{
   position: 'relative',
-  width: 140,        // ความกว้างของ preview
+  maxWidth: 200,        // ความกว้างสูงสุดของ preview
   borderRadius: 1,
   overflow: 'hidden',
   boxShadow: 3
@@ -251,18 +251,19 @@
 - `width`: ความกว้างของรูป preview
 - `boxShadow`: ความเข้มของเงา (0-24)
 
-#### 3.5 Page Upload Area
+#### 3.5 Page Upload Button
 
 ```tsx
 <Button
   sx={{
-    height: 80,       // ความสูง
-    borderStyle: 'dashed',
-    borderRadius: 1,
-    mb: 2             // ระยะห่างด้านล่าง
+    color: "#fbbf24", // สีปุ่ม
   }}
 >
+  Add Pages
+</Button>
 ```
+
+**หมายเหตุ:** การอัพโหลดหน้า manga เปลี่ยนไปใช้ Modal แทนการ drop ในพื้นที่สี่เหลี่ยม
 
 #### 3.6 Page Preview Grid
 
@@ -316,13 +317,13 @@ gridTemplateColumns: "repeat(auto-fill, minmax(60px, 1fr))";
 #### 4.1 Container หลัก
 
 ```tsx
-<Container maxWidth="md">  // บรรทัด 119
+<Container maxWidth="lg">  // บรรทัด 153
 ```
 
 **ปรับได้:**
 
 - `maxWidth`: `xs`, `sm`, `md`, `lg`, `xl`
-- **คำแนะนำ:** `md` = 960px เหมาะสำหรับการอ่าน
+- **คำแนะนำ:** `lg` = 1280px เหมาะสำหรับการอ่านแบบ wide screen
 
 #### 4.2 Paper Card
 
@@ -346,16 +347,16 @@ gridTemplateColumns: "repeat(auto-fill, minmax(60px, 1fr))";
 #### 4.3 Grid Layout
 
 ```tsx
-<Grid container spacing={4}>  // บรรทัด 131
-  <Grid item xs={12} sm={4}>  // Cover - บรรทัด 133
-  <Grid item xs={12} sm={8}>  // Details - บรรทัด 156
+<Grid container spacing={4}>
+  <Grid item xs={12} md={4} lg={3}>  // Cover
+  <Grid item xs={12} md={8} lg={9}>  // Details
 ```
 
 **ปรับได้:**
 
 - `spacing`: ระยะห่างระหว่างคอลัมน์
-- `sm={4}`: Cover กว้าง 33.33%
-- `sm={8}`: Details กว้าง 66.67%
+- `md={4} lg={3}`: Cover กว้าง 33% (md) หรือ 25% (lg)
+- `md={8} lg={9}`: Details กว้าง 66% (md) หรือ 75% (lg)
 
 #### 4.4 Cover Image
 
@@ -364,20 +365,22 @@ gridTemplateColumns: "repeat(auto-fill, minmax(60px, 1fr))";
   sx={{
     position: "relative",
     width: "100%",
-    paddingTop: "140%",  // อัตราส่วน (140% = 5:7)
+    maxWidth: { xs: "240px", md: "100%" },
+    aspectRatio: "2/3",
     borderRadius: 2,
     overflow: "hidden",
-    boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
+    boxShadow: "0 20px 40px -10px rgba(0,0,0,0.7)",
+    border: "1px solid rgba(255,255,255,0.1)"
   }}
 >
 ```
 
 **ปรับได้:**
 
-- `paddingTop`: อัตราส่วนของรูป
-  - `"140%"` = 5:7 (manga ทั่วไป)
-  - `"150%"` = 2:3
-  - `"133%"` = 3:4
+- `aspectRatio`: อัตราส่วนของรูป
+  - `"2/3"` = 2:3 (มาตรฐาน manga)
+  - `"3/4"` = 3:4
+  - `"1/1"` = 1:1
 - `borderRadius`: มุมโค้ง
 
 #### 4.5 Title
@@ -394,23 +397,18 @@ gridTemplateColumns: "repeat(auto-fill, minmax(60px, 1fr))";
 #### 4.6 Manga Pages
 
 ```tsx
-<Box sx={{
-  mt: 4,              // ระยะห่างด้านบน
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center"
-}}>
+<Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0 }}>
   <Box sx={{
     position: "relative",
-    width: "100%",    // ความกว้างของรูป
-    mb: 1,            // ระยะห่างระหว่างหน้า
+    width: "100%",
+    maxWidth: "1000px", // Limit max width for readability on ultra-wide screens
+    lineHeight: 0, // Remove gap between images
   }}>
 ```
 
 **ปรับได้:**
 
-- `width`: ความกว้างของรูป (`"100%"`, `"90%"`, `"80%"`)
-- `mb`: ระยะห่างระหว่างหน้า (0-4)
+- `maxWidth`: ความกว้างสูงสุด (`"1000px"`)
 
 **ตัวอย่างการปรับ:**
 
@@ -695,4 +693,4 @@ npm run dev
 ---
 
 **สร้างโดย:** Antigravity AI  
-**อัพเดทล่าสุด:** 2025-11-28
+**อัพเดทล่าสุด:** 2025-12-03
