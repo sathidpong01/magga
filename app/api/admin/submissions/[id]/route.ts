@@ -4,15 +4,17 @@ import { authOptions } from "../../../auth/[...nextauth]/route";
 import prisma from "@/lib/prisma";
 
 // GET: Fetch submission details
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
+
     const submission = await prisma.mangaSubmission.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         user: { select: { id: true, name: true, email: true, username: true, image: true, createdAt: true } },
         category: true,
@@ -31,13 +33,14 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 }
 
 // PUT: Update submission details (Edit before approve)
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions);
     if (!session || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
     const body = await req.json();
     const { title, slug, description, categoryId, tagIds, authorCredits, status } = body;
 
@@ -55,7 +58,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     if (tagIds) {
       // Delete existing tags
       await prisma.mangaSubmissionTag.deleteMany({
-        where: { submissionId: params.id }
+        where: { submissionId: id }
       });
       // Create new tags
       updateData.tags = {
@@ -66,7 +69,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     }
 
     const updatedSubmission = await prisma.mangaSubmission.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
     });
 
