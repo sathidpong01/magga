@@ -12,10 +12,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Typography variant="h6" sx={{ px: 2, mb: 2, fontWeight: 'bold' }}>User Dashboard</Typography>
             <List>
               <ListItem disablePadding>
-                <ListItemButton component={Link} href="/dashboard/submissions">
-                  <ListItemIcon><ArticleIcon /></ListItemIcon>
-                  <ListItemText primary="My Submissions" />
-                </ListItemButton>
+                <Link href="/dashboard/submissions" passHref legacyBehavior>
+                  <ListItemButton component="a">
+                    <ListItemIcon><ArticleIcon /></ListItemIcon>
+                    <ListItemText primary="My Submissions" />
+                  </ListItemButton>
+                </Link>
               </ListItem>
             </List>
           </Paper>
