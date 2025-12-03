@@ -5,6 +5,7 @@ import prisma from '@/lib/prisma';
 import { Box, Typography, Grid, Paper, Chip } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import LinkButton from '@/app/components/LinkButton';
+import { MangaSubmission } from '@prisma/client';
 
 export default async function MySubmissionsPage() {
   const session = await getServerSession(authOptions);
@@ -44,9 +45,7 @@ export default async function MySubmissionsPage() {
         </Paper>
       ) : (
         <Grid container spacing={2}>
-import { MangaSubmission } from '@prisma/client';
 
-// ...
 
           {submissions.map((submission: MangaSubmission) => (
             <Grid item xs={12} key={submission.id}>
