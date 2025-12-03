@@ -1,0 +1,220 @@
+"use client";
+
+import { useState } from "react";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import {
+  Container,
+  Box,
+  TextField,
+  Button,
+  Typography,
+  Paper,
+  Alert,
+  Divider,
+  CircularProgress,
+} from "@mui/material";
+import GoogleIcon from '@mui/icons-material/Google';
+
+export default function RegisterPage() {
+  const router = useRouter();
+  const [formData, setFormData] = useState({
+    username: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: formData.username,
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Registration failed");
+      }
+
+      // Auto login after register? Or redirect to login?
+      // Let's redirect to login for now with a success parameter, or just sign in automatically.
+      // Signing in automatically is better UX.
+      const loginRes = await signIn("credentials", {
+        redirect: false,
+        username: formData.username,
+        password: formData.password,
+      });
+
+      if (loginRes?.ok) {
+        router.push("/dashboard/submissions");
+        router.refresh();
+      } else {
+        router.push("/auth/signin?registered=true");
+      }
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Registration failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = () => {
+    signIn("google", { callbackUrl: "/dashboard/submissions" });
+  };
+
+  return (
+    <Container component="main" maxWidth="xs">
+      <Paper
+        elevation={3}
+        sx={{
+          marginTop: 8,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          padding: 4,
+          backgroundColor: "#171717",
+          color: "#fafafa",
+        }}
+      >
+        <Typography component="h1" variant="h5" gutterBottom>
+          Create Account
+        </Typography>
+
+        {error && <Alert severity="error" sx={{ width: '100%', mb: 2 }}>{error}</Alert>}
+
+        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1, width: '100%' }}>
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            label="Username"
+            autoFocus
+            value={formData.username}
+            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+            sx={{
+              "& .MuiInputLabel-root": { color: "#a3a3a3" },
+              "& .MuiOutlinedInput-root": {
+                color: "#fafafa",
+                "& fieldset": { borderColor: "#404040" },
+                "&:hover fieldset": { borderColor: "#fbbf24" },
+                "&.Mui-focused fieldset": { borderColor: "#fbbf24" },
+              },
+            }}
+          />
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            label="Email Address"
+            type="email"
+            value={formData.email}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            sx={{
+              "& .MuiInputLabel-root": { color: "#a3a3a3" },
+              "& .MuiOutlinedInput-root": {
+                color: "#fafafa",
+                "& fieldset": { borderColor: "#404040" },
+                "&:hover fieldset": { borderColor: "#fbbf24" },
+                "&.Mui-focused fieldset": { borderColor: "#fbbf24" },
+              },
+            }}
+          />
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            label="Password"
+            type="password"
+            value={formData.password}
+            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            sx={{
+              "& .MuiInputLabel-root": { color: "#a3a3a3" },
+              "& .MuiOutlinedInput-root": {
+                color: "#fafafa",
+                "& fieldset": { borderColor: "#404040" },
+                "&:hover fieldset": { borderColor: "#fbbf24" },
+                "&.Mui-focused fieldset": { borderColor: "#fbbf24" },
+              },
+            }}
+          />
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            label="Confirm Password"
+            type="password"
+            value={formData.confirmPassword}
+            onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+            sx={{
+              "& .MuiInputLabel-root": { color: "#a3a3a3" },
+              "& .MuiOutlinedInput-root": {
+                color: "#fafafa",
+                "& fieldset": { borderColor: "#404040" },
+                "&:hover fieldset": { borderColor: "#fbbf24" },
+                "&.Mui-focused fieldset": { borderColor: "#fbbf24" },
+              },
+            }}
+          />
+
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            disabled={loading}
+            sx={{ mt: 3, mb: 2, bgcolor: "#fbbf24", color: "#000", "&:hover": { bgcolor: "#f59e0b" } }}
+          >
+            {loading ? <CircularProgress size={24} color="inherit" /> : "Sign Up"}
+          </Button>
+
+          <Divider sx={{ my: 2, borderColor: '#404040' }}>OR</Divider>
+
+          <Button
+            fullWidth
+            type="button"
+            variant="outlined"
+            startIcon={<GoogleIcon />}
+            onClick={() => {
+              console.log("Initiating Google Login from Register...");
+              handleGoogleLogin();
+            }}
+            sx={{ 
+              mb: 2, 
+              color: '#fafafa', 
+              borderColor: '#404040',
+              '&:hover': { borderColor: '#fbbf24', bgcolor: 'rgba(251, 191, 36, 0.08)' } 
+            }}
+          >
+            Sign up with Google
+          </Button>
+
+          <Box sx={{ textAlign: 'center', mt: 2 }}>
+            <Link href="/auth/signin" style={{ color: '#fbbf24', textDecoration: 'none' }}>
+              Already have an account? Sign In
+            </Link>
+          </Box>
+        </Box>
+      </Paper>
+    </Container>
+  );
+}

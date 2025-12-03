@@ -23,6 +23,7 @@ import DashboardIcon from "@mui/icons-material/Dashboard";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import LogoutIcon from "@mui/icons-material/Logout";
 import PersonIcon from "@mui/icons-material/Person";
+import SettingsIcon from "@mui/icons-material/Settings";
 
 export default function Header() {
   const { data: session } = useSession();
@@ -125,21 +126,23 @@ export default function Header() {
 
           {/* Desktop Navigation */}
           <Box sx={{ display: { xs: "none", md: "flex" }, alignItems: "center", gap: 2 }}>
-            {/* Submit Manga Button - Always Visible */}
-            <Button
-              component={Link}
-              href={session ? "/submit" : "/api/auth/signin"}
-              variant="contained"
-              startIcon={<CloudUploadIcon />}
-              sx={{ 
-                bgcolor: "#fbbf24", 
-                color: "black",
-                fontWeight: 700,
-                "&:hover": { bgcolor: "#f59e0b" }
-              }}
-            >
-              ฝากลงมังงะ
-            </Button>
+            {/* Submit Manga Button - Hidden for Admin */}
+            {!isAdmin && (
+              <Button
+                component={Link}
+                href={session ? "/submit" : "/api/auth/signin"}
+                variant="contained"
+                startIcon={<CloudUploadIcon />}
+                sx={{ 
+                  bgcolor: "#fbbf24", 
+                  color: "black",
+                  fontWeight: 700,
+                  "&:hover": { bgcolor: "#f59e0b" }
+                }}
+              >
+                ฝากลงมังงะ
+              </Button>
+            )}
 
             {/* Admin Dashboard (Only for Admin) */}
             {isAdmin && (
@@ -220,10 +223,12 @@ export default function Header() {
                 </Box>
                 <Divider sx={{ borderColor: "rgba(255,255,255,0.1)" }} />
                 
-                <MenuItem onClick={handleMenuClose} component={Link} href="/submit">
-                  <ListItemIcon><CloudUploadIcon sx={{ color: "#fbbf24" }} /></ListItemIcon>
-                  ฝากลงมังงะ
-                </MenuItem>
+                {!isAdmin && (
+                  <MenuItem onClick={handleMenuClose} component={Link} href="/submit">
+                    <ListItemIcon><CloudUploadIcon sx={{ color: "#fbbf24" }} /></ListItemIcon>
+                    ฝากลงมังงะ
+                  </MenuItem>
+                )}
 
                 {isAdmin && (
                   <MenuItem onClick={handleMenuClose} component={Link} href="/admin">
@@ -231,6 +236,11 @@ export default function Header() {
                     Admin Dashboard
                   </MenuItem>
                 )}
+
+                <MenuItem onClick={handleMenuClose} component={Link} href="/settings">
+                  <ListItemIcon><SettingsIcon sx={{ color: "#fbbf24" }} /></ListItemIcon>
+                  Settings
+                </MenuItem>
 
                 <MenuItem onClick={() => signOut()}>
                   <ListItemIcon><LogoutIcon sx={{ color: "#a3a3a3" }} /></ListItemIcon>

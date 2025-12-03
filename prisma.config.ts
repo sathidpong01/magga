@@ -12,8 +12,6 @@ if (process.env.NODE_ENV !== 'production') {
 
 export default defineConfig({
   datasource: {
-    // For CLI commands (like migrate diff), we need a valid file URL because provider is sqlite.
-    // The actual app uses the driver adapter in lib/prisma.ts with the Turso URL.
-    url: 'file:./dev.db',
+    url: process.env.TURSO_DATABASE_URL,
   },
 });

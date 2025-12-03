@@ -16,7 +16,9 @@ import {
   DialogContentText,
   DialogActions,
   CircularProgress,
+  Divider,
 } from "@mui/material";
+import Link from "next/link";
 
 function SignInForm() {
   const [username, setUsername] = useState("");
@@ -93,7 +95,7 @@ function SignInForm() {
             required
             fullWidth
             id="username"
-            label="Username"
+            label="Username or Email"
             name="username"
             autoComplete="username"
             autoFocus
@@ -138,6 +140,37 @@ function SignInForm() {
           >
             Sign In
           </Button>
+
+          <Divider sx={{ my: 2, borderColor: '#404040' }}>OR</Divider>
+
+          <Button
+            fullWidth
+            type="button"
+            variant="outlined"
+            onClick={async () => {
+              console.log("Initiating Google Login...");
+              try {
+                const result = await signIn("google", { callbackUrl });
+                console.log("Google Login Result:", result);
+              } catch (error) {
+                console.error("Google Login Error:", error);
+              }
+            }}
+            sx={{ 
+              mb: 2, 
+              color: '#fafafa', 
+              borderColor: '#404040',
+              '&:hover': { borderColor: '#fbbf24', bgcolor: 'rgba(251, 191, 36, 0.08)' } 
+            }}
+          >
+            Sign in with Google
+          </Button>
+
+          <Box sx={{ textAlign: 'center', mt: 2 }}>
+            <Link href="/auth/register" style={{ color: '#fbbf24', textDecoration: 'none' }}>
+              Don't have an account? Sign Up
+            </Link>
+          </Box>
         </Box>
       </Paper>
 

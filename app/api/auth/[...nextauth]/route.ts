@@ -1,5 +1,7 @@
 import NextAuth, { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import GoogleProvider from 'next-auth/providers/google';
+import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 
@@ -34,7 +36,41 @@ function clearAttempt(identifier: string) {
 }
 
 export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma),
+  session: {
+    strategy: 'jwt',
+  },
+  callbacks: {
+    async jwt({ token, user, trigger, session }) {
+      // On initial sign in
+      if (user) {
+        token.id = user.id;
+        token.role = user.role || 'user';
+      }
+
+      // Handle session update
+      if (trigger === "update" && session) {
+        if (session.name) token.name = session.name;
+        if (session.email) token.email = session.email;
+        // Add other fields if needed
+      }
+
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id as string;
+        session.user.role = token.role as string;
+      }
+      return session;
+    },
+  },
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID || (() => { console.error("Missing GOOGLE_CLIENT_ID"); return "" })(),
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || (() => { console.error("Missing GOOGLE_CLIENT_SECRET"); return "" })(),
+      allowDangerousEmailAccountLinking: true,
+    }),
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
@@ -55,17 +91,16 @@ export const authOptions: NextAuthOptions = {
           throw new Error(`Too many login attempts. Please try again in ${minutesLeft} minute${minutesLeft > 1 ? 's' : ''}.`);
         }
 
-        const user = await prisma.user.findUnique({
-          where: { username: credentials.username },
-          select: {
-            id: true,
-            username: true,
-            password: true,
-            role: true,
+        const user = await prisma.user.findFirst({
+          where: {
+            OR: [
+              { username: credentials.username },
+              { email: credentials.username }
+            ]
           },
         });
 
-        if (!user) {
+        if (!user || !user.password) {
           // Show remaining attempts
           throw new Error(`Invalid username or password. ${rateCheck.remaining} attempt${rateCheck.remaining !== 1 ? 's' : ''} remaining.`);
         }
@@ -83,30 +118,13 @@ export const authOptions: NextAuthOptions = {
         return { 
           id: user.id, 
           name: user.username, 
-          email: `${user.username}@example.com`,
-          role: user.role // Pass role to JWT
+          email: user.email,
+          role: user.role 
         };
       },
     }),
   ],
-  callbacks: {
-    async jwt({ token, user }) {
-      // On initial sign in, add role to token
-      if (user) {
-        token.role = user.role;
-        token.id = user.id;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      // Add role and id to session
-      if (session.user) {
-        session.user.role = token.role as string;
-        session.user.id = token.id as string;
-      }
-      return session;
-    },
-  },
+
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: '/auth/signin',
