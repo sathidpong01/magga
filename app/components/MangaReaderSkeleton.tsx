@@ -1,6 +1,6 @@
 "use client";
 
-import { Skeleton, Paper, Box, Grid } from "@mui/material";
+import { Skeleton, Paper, Box, Grid, Container } from "@mui/material";
 
 export default function MangaReaderSkeleton() {
   return (
