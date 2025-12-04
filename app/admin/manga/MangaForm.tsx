@@ -29,6 +29,7 @@ import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import NotificationModal from "../components/NotificationModal";
 import UploadModal from "../components/UploadModal";
 import { SortableItem } from "../components/SortableItem";
+import UploadProgress, { UploadFileStatus } from "@/app/components/ui/UploadProgress";
 
 // DnD Kit Imports
 import {
@@ -64,6 +65,7 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [uploadFiles, setUploadFiles] = useState<UploadFileStatus[]>([]);
   
   // Modal State
   const [notificationOpen, setNotificationOpen] = useState(false);
@@ -296,30 +298,96 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
         finalCoverUrl = coverItem.content as string;
       }
 
-      // 2. Upload Page Files
-      // We need to preserve order. We'll upload all files first, then reconstruct the array.
-      // Optimization: Upload files in parallel or batch? 
-      // Current API supports batch upload. Let's filter files, upload them, then map back.
-      
+      // 2. Upload Page Files with Progress
       const fileItems = pageItems.filter(p => p.type === 'file');
-      let uploadedFileUrls: string[] = [];
-      
+      let uploadedFileUrls: Record<string, string> = {}; // Map id -> url
+
       if (fileItems.length > 0) {
-        const fd = new FormData();
-        fileItems.forEach(item => fd.append("files", item.content as File));
-        const res = await fetch("/api/upload", { method: "POST", body: fd });
-        if (!res.ok) throw new Error("Failed to upload page files");
-        const json = await res.json();
-        uploadedFileUrls = json.urls;
+        // Initialize progress state
+        const initialStatus: UploadFileStatus[] = fileItems.map(item => ({
+          id: item.id,
+          name: (item.content as File).name,
+          size: (item.content as File).size,
+          progress: 0,
+          status: 'pending'
+        }));
+        setUploadFiles(initialStatus);
+
+        // Upload Queue Logic
+        const queue = [...fileItems];
+        const activeUploads = new Set<Promise<void>>();
+        const CONCURRENCY = 3;
+
+        const uploadFile = (item: PageItem) => {
+          return new Promise<void>((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            const fd = new FormData();
+            fd.append("files", item.content as File);
+
+            xhr.upload.onprogress = (event) => {
+              if (event.lengthComputable) {
+                const progress = (event.loaded / event.total) * 100;
+                setUploadFiles(prev => prev.map(f => 
+                  f.id === item.id ? { ...f, progress, status: 'uploading' } : f
+                ));
+              }
+            };
+
+            xhr.onload = () => {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                  const response = JSON.parse(xhr.responseText);
+                  uploadedFileUrls[item.id] = response.urls[0];
+                  setUploadFiles(prev => prev.map(f => 
+                    f.id === item.id ? { ...f, progress: 100, status: 'completed' } : f
+                  ));
+                  resolve();
+                } catch (e) {
+                  reject(new Error('Invalid response'));
+                }
+              } else {
+                setUploadFiles(prev => prev.map(f => 
+                  f.id === item.id ? { ...f, status: 'error' } : f
+                ));
+                reject(new Error('Upload failed'));
+              }
+            };
+
+            xhr.onerror = () => {
+              setUploadFiles(prev => prev.map(f => 
+                f.id === item.id ? { ...f, status: 'error' } : f
+              ));
+              reject(new Error('Network error'));
+            };
+
+            xhr.open("POST", "/api/upload");
+            xhr.send(fd);
+          });
+        };
+
+        // Process queue
+        while (queue.length > 0 || activeUploads.size > 0) {
+          while (queue.length > 0 && activeUploads.size < CONCURRENCY) {
+            const item = queue.shift()!;
+            const promise = uploadFile(item).then(() => {
+              activeUploads.delete(promise);
+            }).catch((err) => {
+              activeUploads.delete(promise);
+              throw err; // Re-throw to stop process? Or continue? Let's stop on error.
+            });
+            activeUploads.add(promise);
+          }
+          
+          if (activeUploads.size > 0) {
+            await Promise.race(activeUploads);
+          }
+        }
       }
 
       // Reconstruct pages array in order
-      let fileIndex = 0;
       const finalPages = pageItems.map(item => {
         if (item.type === 'url') return item.content as string;
-        const url = uploadedFileUrls[fileIndex];
-        fileIndex++;
-        return url;
+        return uploadedFileUrls[item.id];
       });
 
       const selectedTagIds = selectedTags.map((t) => t.id);
@@ -684,6 +752,9 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                 )}
               </Box>
 
+
+
+// ... (in render, inside Media Assets Paper)
               {/* Pages */}
               <Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
@@ -700,6 +771,13 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                     Add Pages
                   </Button>
                 </Box>
+
+                {/* Upload Progress */}
+                {uploadFiles.length > 0 && (
+                  <Box sx={{ mb: 3 }}>
+                    <UploadProgress files={uploadFiles} />
+                  </Box>
+                )}
 
                 <DndContext 
                   sensors={sensors} 

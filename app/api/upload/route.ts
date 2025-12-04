@@ -51,53 +51,49 @@ export async function POST(request: Request) {
       }
     }
 
-    const saved: string[] = [];
+    const saved = await Promise.all(
+      files.map(async (file) => {
+        const arrayBuffer = await file.arrayBuffer();
+        let imageData: Uint8Array = new Uint8Array(arrayBuffer);
+        let contentType = file.type;
+        let fileName = file.name;
 
-    for (const file of files) {
-      const arrayBuffer = await file.arrayBuffer();
-      let imageData: Uint8Array = new Uint8Array(arrayBuffer);
-      let contentType = file.type;
-      let fileName = file.name;
-
-      // Compress image if it's an image type
-      if (file.type.startsWith("image/")) {
-        try {
-          const compressedBuffer = await sharp(Buffer.from(imageData))
-            .resize(1920, 1920, { fit: "inside", withoutEnlargement: true }) // Resize to max 1920px
-            .webp({ quality: 80 }) // Convert to WebP with 80% quality
-            .toBuffer();
-          
-          imageData = new Uint8Array(compressedBuffer);
-          contentType = "image/webp";
-          fileName = fileName.replace(/\.[^/.]+$/, "") + ".webp";
-        } catch (error) {
-
+        // Compress image if it's an image type
+        if (file.type.startsWith("image/")) {
+          try {
+            const compressedBuffer = await sharp(Buffer.from(imageData))
+              .resize(1920, 1920, { fit: "inside", withoutEnlargement: true }) // Resize to max 1920px
+              .webp({ quality: 80 }) // Convert to WebP with 80% quality
+              .toBuffer();
+            
+            imageData = new Uint8Array(compressedBuffer);
+            contentType = "image/webp";
+            fileName = fileName.replace(/\.[^/.]+$/, "") + ".webp";
+          } catch (error) {
+            console.error("Compression failed for", fileName, error);
+          }
         }
-      }
 
-      const safeName = `${Date.now()}-${fileName.replace(
-        /[^a-zA-Z0-9.-]/g,
-        "_"
-      )}`;
+        const safeName = `${Date.now()}-${fileName.replace(
+          /[^a-zA-Z0-9.-]/g,
+          "_"
+        )}`;
 
-      await S3.send(
-        new PutObjectCommand({
-          Bucket: R2_BUCKET_NAME,
-          Key: safeName,
-          Body: imageData,
-          ContentType: contentType,
-        })
-      );
+        await S3.send(
+          new PutObjectCommand({
+            Bucket: R2_BUCKET_NAME,
+            Key: safeName,
+            Body: imageData,
+            ContentType: contentType,
+          })
+        );
 
-      // Use provided public URL or construct one (though R2 usually needs a custom domain or worker for public access)
-      // If R2_PUBLIC_URL is set (e.g. https://pub-xxx.r2.dev), use it.
-      // Otherwise, we might return just the key or a presumed URL.
-      const url = R2_PUBLIC_URL
-        ? `${R2_PUBLIC_URL}/${safeName}`
-        : `/uploads/${safeName}`; // Fallback if they are proxying or something, but ideally R2_PUBLIC_URL is set.
-
-      saved.push(url);
-    }
+        // Use provided public URL or construct one
+        return R2_PUBLIC_URL
+          ? `${R2_PUBLIC_URL}/${safeName}`
+          : `/uploads/${safeName}`;
+      })
+    );
 
     return NextResponse.json({ urls: saved });
   } catch (err) {
