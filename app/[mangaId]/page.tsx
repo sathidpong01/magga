@@ -78,21 +78,23 @@ export async function generateMetadata({ params }: MangaPageProps) {
     title: title,
     description: description,
     openGraph: {
-      title: `${title} - Magga Reader`,
+      title: `${title} - MAGGA`,
       description: description || "Read your favorite manga online for free.",
+      url: `/manga/${manga.slug}`,
+      siteName: "MAGGA",
       images: [
         {
           url: ogImage,
           width: 1200,
           height: 630,
-          alt: isSensitive ? "Magga Reader" : title,
+          alt: isSensitive ? "MAGGA" : title,
         },
       ],
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: `${title} - Magga Reader`,
+      title: `${title} - MAGGA`,
       description: description || "Read your favorite manga online for free.",
       images: [ogImage],
     },
