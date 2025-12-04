@@ -45,6 +45,10 @@ export async function generateMetadata({ params }: MangaPageProps) {
     where: {
       slug: decodedSlug,
     },
+    include: {
+      tags: true,
+      category: true,
+    },
   });
 
   if (!manga) {
@@ -53,27 +57,44 @@ export async function generateMetadata({ params }: MangaPageProps) {
     };
   }
 
+  // Check for sensitive content
+  const SENSITIVE_KEYWORDS = ['18+', 'adult', 'hentai', 'ecchi', 'mature', 'smut', 'yaoi', 'yuri', 'doujinshi', 'nsfw'];
+  const hasSensitiveTag = manga.tags.some(tag => SENSITIVE_KEYWORDS.includes(tag.name.toLowerCase()));
+  const hasSensitiveCategory = manga.category && SENSITIVE_KEYWORDS.includes(manga.category.name.toLowerCase());
+  const isSensitive = hasSensitiveTag || hasSensitiveCategory;
+
+  const title = manga.title;
+  // Use generic description for sensitive content
+  const description = isSensitive 
+    ? `Read ${manga.title} online at Magga Reader. High quality images and fast loading.` 
+    : manga.description;
+  
+  // Use generic image for sensitive content
+  const ogImage = isSensitive
+    ? "https://placehold.co/1200x630/png?text=Magga+Reader" // Safe placeholder
+    : (manga.coverImage || "https://placehold.co/1200x630/png?text=Magga+Reader");
+
   return {
-    title: manga.title,
-    description: manga.description,
+    title: title,
+    description: description,
     openGraph: {
-      title: "Magga Reader - Read Manga Online",
-      description: "Read your favorite manga online for free. High quality images and fast loading.",
+      title: `${title} - Magga Reader`,
+      description: description || "Read your favorite manga online for free.",
       images: [
         {
-          url: "https://placehold.co/1200x630/png?text=Magga+Reader",
+          url: ogImage,
           width: 1200,
           height: 630,
-          alt: "Magga Reader",
+          alt: isSensitive ? "Magga Reader" : title,
         },
       ],
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: "Magga Reader - Read Manga Online",
-      description: "Read your favorite manga online for free.",
-      images: ["https://placehold.co/1200x630/png?text=Magga+Reader"],
+      title: `${title} - Magga Reader`,
+      description: description || "Read your favorite manga online for free.",
+      images: [ogImage],
     },
   };
 }

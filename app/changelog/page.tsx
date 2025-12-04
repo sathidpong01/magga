@@ -5,6 +5,18 @@ import UpdateIcon from '@mui/icons-material/Update';
 // Static data for changelog
 const changelogData = [
   {
+    date: '2025-12-04',
+    version: 'v1.3.1',
+    title: 'อัปเกรดความปลอดภัยและระบบอัปโหลด',
+    changes: [
+      'เพิ่มระบบ Floating Upload Status: แสดงสถานะการอัปโหลดแบบ Real-time ที่มุมขวาล่าง',
+      'เพิ่มฟีเจอร์ Upload Resilience: อัปโหลดไฟล์ต่อได้ทันทีแม้มีบางไฟล์ล้มเหลว พร้อมปุ่ม Retry',
+      'แก้ไขบั๊กการแสดงผลข้อความ Error "[object Object]" ให้สื่อความหมายชัดเจน',
+      'แก้ไขปัญหา Cache ในหน้าจัดการ Classifications ให้แสดงข้อมูลล่าสุดทันที',
+      'อัปเดต Next.js เป็นเวอร์ชัน 16.0.7 เพื่อแก้ไขช่องโหว่ความปลอดภัย (CVE-2025-55182)'
+    ]
+  },
+  {
     date: '2025-12-02',
     version: 'v1.3.0',
     title: 'ปรับปรุง UI/UX และระบบ Admin',

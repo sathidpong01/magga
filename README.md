@@ -11,7 +11,7 @@
 ![Turso](https://img.shields.io/badge/Turso-black?style=for-the-badge&logo=turso&logoColor=white)
 ![Cloudflare R2](https://img.shields.io/badge/Cloudflare_R2-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)
 
-_พัฒนาด้วย Next.js 15 (App Router) และระบบจัดการหลังบ้านที่ครบครัน_
+_พัฒนาด้วย Next.js 16 (App Router) และระบบจัดการหลังบ้านที่ครบครัน_
 
 ---
 
@@ -23,7 +23,7 @@ _พัฒนาด้วย Next.js 15 (App Router) และระบบจั
 
 โปรเจกต์นี้ใช้เทคโนโลยีที่ทันสมัยเพื่อให้ทำงานได้รวดเร็วและง่ายต่อการดูแลรักษา:
 
-- **Framework:** [Next.js 15](https://nextjs.org/) (App Router)
+- **Framework:** [Next.js 16](https://nextjs.org/) (App Router)
 - **Language:** [TypeScript](https://www.typescriptlang.org/)
 - **Database:** [Turso (LibSQL)](https://turso.tech/) (ผ่าน [Prisma ORM 7](https://www.prisma.io/))
 - **Storage:** [Cloudflare R2](https://www.cloudflare.com/developer-platform/r2/)
@@ -65,6 +65,7 @@ _พัฒนาด้วย Next.js 15 (App Router) และระบบจั
   - อัปโหลดรูปภาพหน้าปก (Cover) และเนื้อหา (Pages) ได้โดยตรง (บันทึกลง Cloudflare R2)
   - **New!** **Friendly URLs (Slug):** รองรับ URL แบบชื่อเรื่อง (เช่น `/manga/one-piece`) เพื่อผลลัพธ์ SEO ที่ดีขึ้น
   - **New!** **Author Credits:** ระบบให้เครดิตผู้แต่ง/ผู้แปล พร้อมฟีเจอร์ **Auto-fetch Metadata** ดึงชื่อและไอคอนจากลิงก์ (Facebook/Twitter) อัตโนมัติ
+  - **New!** **Resilient Uploads:** ระบบอัปโหลดไฟล์แบบ Non-blocking พร้อม Floating Status และปุ่ม Retry สำหรับไฟล์ที่ล้มเหลว
   - **Auto Compression:** ระบบย่อขนาดรูปภาพ (Max 1920px) และแปลงเป็น WebP อัตโนมัติ ช่วยประหยัดพื้นที่จัดเก็บได้ถึง 80%
 - **Classification Management:** จัดการเพิ่ม/ลบ/แก้ไข หมวดหมู่ และ แท็ก ได้อย่างอิสระ
 - **Authentication & RBAC:**
@@ -204,14 +205,16 @@ npm run dev
 - [x] **เปลี่ยนฐานข้อมูล:** ย้ายจาก SQLite ไปใช้ Turso (LibSQL) เรียบร้อยแล้ว
 - [x] **ระบบจัดการรูปภาพ:** เปลี่ยนการเก็บรูปจาก Local ไปใช้ Cloudflare R2 เรียบร้อยแล้ว
 - [x] **Image Optimization:** เพิ่มระบบบีบอัดรูปภาพ (WebP) และ Lazy Loading
-- [x] **UI Redesign:** ปรับโฉมใหม่เป็นธีม "Neutral Dark" ทันสมัยและสบายตา
-- [x] **Role-Based Access Control:** เพิ่มระบบจัดการสิทธิ์ผู้ใช้งาน (Admin/User)
 - [x] **Web Analytics:** ติดตั้งระบบเก็บสถิติผู้เข้าชมเว็บไซต์
 - [x] **Vercel Optimization:** ปรับปรุงประสิทธิภาพ ISR, Loading States และ Image Optimization สำหรับ Vercel
-- [ ] **ระบบสมาชิก:** เพิ่มระบบสมัครสมาชิกสำหรับผู้อ่าน เพื่อให้สามารถเก็บประวัติการอ่าน (History) หรือกดบันทึกเรื่องที่ชอบ (Bookmarks)
+- [x] **ระบบสมาชิก (Authentication):** รองรับการสมัครสมาชิก, เข้าสู่ระบบ และจัดการโปรไฟล์
+- [x] **ระบบส่งผลงาน (User Submissions):** สมาชิกสามารถส่งมังงะเพื่อขอลงเว็บไซต์ได้
+- [ ] **ฟีเจอร์สำหรับผู้อ่าน (Reader Features):**
+  - [ ] **ประวัติการอ่าน (History):** บันทึกตอนที่อ่านล่าสุดอัตโนมัติ
+  - [ ] **รายการโปรด (Bookmarks):** กดติดตามมังงะที่ชอบเพื่อรับการแจ้งเตือน
 - [ ] **คอมเมนต์:** เพิ่มฟีเจอร์ให้ผู้อ่านสามารถแสดงความคิดเห็นในแต่ละเรื่องได้
 - [ ] **SEO & Open Graph:** ปรับปรุง SEO และเพิ่ม Open Graph Tags เพื่อให้การแชร์ลิงก์บน Social Media สวยงามและติดอันดับการค้นหาดีขึ้น
-- [ ] **Social Login:** เพิ่มระบบล็อกอินผ่าน Google หรือ Facebook เพื่อความสะดวกของผู้ใช้งาน
+- [x] **Social Login:** เพิ่มระบบล็อกอินผ่าน Google เพื่อความสะดวกของผู้ใช้งาน (Facebook Coming Soon)
 
 ---
 
