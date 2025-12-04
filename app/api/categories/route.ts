@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../auth/[...nextauth]/route';
+import { revalidatePath } from 'next/cache';
 
 // GET all categories
 export async function GET() {
@@ -28,6 +29,7 @@ export async function POST(request: Request) {
     const newCategory = await prisma.category.create({
       data: { name },
     });
+    revalidatePath('/admin/metadata');
     return NextResponse.json(newCategory, { status: 201 });
   } catch {
     // Handle potential errors, e.g., unique constraint violation

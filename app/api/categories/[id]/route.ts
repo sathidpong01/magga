@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
+import { revalidatePath } from 'next/cache';
 
 type RouteParams = {
   params: Promise<{
@@ -27,6 +28,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
       where: { id },
       data: { name },
     });
+    revalidatePath('/admin/metadata');
     return NextResponse.json(updatedCategory);
   } catch {
     return NextResponse.json({ error: 'Failed to update category' }, { status: 500 });
@@ -46,6 +48,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     await prisma.category.delete({
       where: { id },
     });
+    revalidatePath('/admin/metadata');
     return new NextResponse(null, { status: 204 }); // No Content
   } catch {
     // Handle cases where the category is still in use
