@@ -4,8 +4,8 @@ import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import CloseIcon from '@mui/icons-material/Close';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
 export type UploadFileStatus = {
@@ -20,9 +20,10 @@ export type UploadFileStatus = {
 type UploadProgressProps = {
   files: UploadFileStatus[];
   onCancel?: (id: string) => void;
+  onRetry?: (id: string) => void;
 };
 
-export default function UploadProgress({ files, onCancel }: UploadProgressProps) {
+export default function UploadProgress({ files, onCancel, onRetry }: UploadProgressProps) {
   const [expanded, setExpanded] = useState(true);
   
   const uploadingCount = files.filter(f => f.status === 'uploading' || f.status === 'pending').length;
@@ -85,7 +86,7 @@ export default function UploadProgress({ files, onCancel }: UploadProgressProps)
             </Box>
             <Box>
               <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                {uploadingCount > 0 ? 'Uploading files...' : 'Upload Complete'}
+                {uploadingCount > 0 ? 'Uploading files...' : errorCount > 0 ? 'Upload Failed' : 'Upload Complete'}
               </Typography>
               <Typography variant="caption" color="text.secondary">
                 {completedCount} / {files.length} completed
@@ -123,7 +124,21 @@ export default function UploadProgress({ files, onCancel }: UploadProgressProps)
                       {file.status === 'completed' ? (
                         <CheckCircleIcon sx={{ fontSize: 16, color: '#4ade80' }} />
                       ) : file.status === 'error' ? (
-                        <ErrorIcon sx={{ fontSize: 16, color: '#ef4444' }} />
+                        <Box sx={{ display: 'flex', gap: 1 }}>
+                          <ErrorIcon sx={{ fontSize: 16, color: '#ef4444' }} />
+                          {onRetry && (
+                            <IconButton 
+                              size="small" 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onRetry(file.id);
+                              }}
+                              sx={{ p: 0, color: '#fbbf24' }}
+                            >
+                              <RefreshIcon sx={{ fontSize: 16 }} />
+                            </IconButton>
+                          )}
+                        </Box>
                       ) : (
                         <Typography variant="caption" color="text.secondary">
                           {Math.round(file.progress)}%

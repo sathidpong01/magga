@@ -66,6 +66,8 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [uploadFiles, setUploadFiles] = useState<UploadFileStatus[]>([]);
+  // Keep track of uploaded URLs to avoid re-uploading
+  const [uploadedUrls, setUploadedUrls] = useState<Record<string, string>>({});
   
   // Modal State
   const [notificationOpen, setNotificationOpen] = useState(false);
@@ -300,23 +302,43 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
 
       // 2. Upload Page Files with Progress
       const fileItems = pageItems.filter(p => p.type === 'file');
-      let uploadedFileUrls: Record<string, string> = {}; // Map id -> url
+      
+      // Filter out files that are already uploaded
+      const filesToUpload = fileItems.filter(item => !uploadedUrls[item.id]);
 
-      if (fileItems.length > 0) {
-        // Initialize progress state
-        const initialStatus: UploadFileStatus[] = fileItems.map(item => ({
-          id: item.id,
-          name: (item.content as File).name,
-          size: (item.content as File).size,
-          progress: 0,
-          status: 'pending'
-        }));
-        setUploadFiles(initialStatus);
+      if (filesToUpload.length > 0) {
+        // Initialize progress state for NEW files only
+        // But we want to keep the state of already uploaded files if they exist in uploadFiles
+        setUploadFiles(prev => {
+          const existing = new Map(prev.map(f => [f.id, f]));
+          
+          const newFiles = filesToUpload.map(item => ({
+            id: item.id,
+            name: (item.content as File).name,
+            size: (item.content as File).size,
+            progress: 0,
+            status: 'pending' as const
+          }));
+
+          // Merge: keep existing (if any), add new
+          const merged = [...prev];
+          newFiles.forEach(f => {
+            if (!existing.has(f.id)) {
+              merged.push(f);
+            } else {
+              // Reset status if it was error
+              const idx = merged.findIndex(x => x.id === f.id);
+              if (idx !== -1) merged[idx] = f;
+            }
+          });
+          return merged;
+        });
 
         // Upload Queue Logic
-        const queue = [...fileItems];
+        const queue = [...filesToUpload];
         const activeUploads = new Set<Promise<void>>();
         const CONCURRENCY = 3;
+        let hasUploadErrors = false;
 
         const uploadFile = (item: PageItem) => {
           return new Promise<void>((resolve, reject) => {
@@ -337,7 +359,8 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
               if (xhr.status >= 200 && xhr.status < 300) {
                 try {
                   const response = JSON.parse(xhr.responseText);
-                  uploadedFileUrls[item.id] = response.urls[0];
+                  const url = response.urls[0];
+                  setUploadedUrls(prev => ({ ...prev, [item.id]: url }));
                   setUploadFiles(prev => prev.map(f => 
                     f.id === item.id ? { ...f, progress: 100, status: 'completed' } : f
                   ));
@@ -373,7 +396,9 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
               activeUploads.delete(promise);
             }).catch((err) => {
               activeUploads.delete(promise);
-              throw err; // Re-throw to stop process? Or continue? Let's stop on error.
+              hasUploadErrors = true;
+              console.error(`Failed to upload ${item.id}:`, err);
+              // Do NOT throw here, let other files continue
             });
             activeUploads.add(promise);
           }
@@ -382,13 +407,23 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
             await Promise.race(activeUploads);
           }
         }
+
+        if (hasUploadErrors) {
+          throw new Error("Some files failed to upload. Please retry them.");
+        }
       }
 
       // Reconstruct pages array in order
       const finalPages = pageItems.map(item => {
         if (item.type === 'url') return item.content as string;
-        return uploadedFileUrls[item.id];
+        // Check both the local state and the ref/state we just updated
+        return uploadedUrls[item.id]; 
       });
+
+      // Verify all pages have URLs
+      if (finalPages.some(p => !p)) {
+        throw new Error("Some pages are missing URLs. Please retry uploading.");
+      }
 
       const selectedTagIds = selectedTags.map((t) => t.id);
 
@@ -415,7 +450,26 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
 
       if (!response.ok) {
         const res = await response.json();
-        throw new Error(res.error || "Failed to save manga");
+        let errorMessage = res.error || "Failed to save manga";
+        
+        if (typeof errorMessage === 'object') {
+          // Handle Zod flattened error
+          if (errorMessage.fieldErrors) {
+            const fields = Object.keys(errorMessage.fieldErrors);
+            if (fields.length > 0) {
+              // Get the first error message from the first field
+              errorMessage = `${fields[0]}: ${errorMessage.fieldErrors[fields[0]][0]}`;
+            } else if (errorMessage.formErrors && errorMessage.formErrors.length > 0) {
+              errorMessage = errorMessage.formErrors[0];
+            } else {
+              errorMessage = "Validation failed";
+            }
+          } else {
+            errorMessage = JSON.stringify(errorMessage);
+          }
+        }
+        
+        throw new Error(errorMessage);
       }
       
       const data = await response.json();
@@ -436,6 +490,71 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleRetryUpload = (fileId: string) => {
+    // Reset status to pending for this file
+    setUploadFiles(prev => prev.map(f => 
+      f.id === fileId ? { ...f, status: 'pending', progress: 0 } : f
+    ));
+    
+    // Trigger submit again - it will filter and pick up pending/failed files
+    // We can't easily trigger the full form submit from here without the event object
+    // But we can just trigger the upload logic if we extracted it.
+    // For simplicity, let's just ask the user to click "Save" again, 
+    // OR we can try to re-run the submit logic if we had access to it.
+    // Better UX: The user clicks "Retry" on the file, we could just try to upload THAT file immediately.
+    
+    const item = pageItems.find(p => p.id === fileId);
+    if (!item || item.type !== 'file') return;
+
+    // Simple single file upload retry
+    const xhr = new XMLHttpRequest();
+    const fd = new FormData();
+    fd.append("files", item.content as File);
+
+    setUploadFiles(prev => prev.map(f => 
+      f.id === fileId ? { ...f, status: 'uploading', progress: 0 } : f
+    ));
+
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        const progress = (event.loaded / event.total) * 100;
+        setUploadFiles(prev => prev.map(f => 
+          f.id === fileId ? { ...f, progress, status: 'uploading' } : f
+        ));
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const response = JSON.parse(xhr.responseText);
+          const url = response.urls[0];
+          setUploadedUrls(prev => ({ ...prev, [fileId]: url }));
+          setUploadFiles(prev => prev.map(f => 
+            f.id === fileId ? { ...f, progress: 100, status: 'completed' } : f
+          ));
+        } catch (e) {
+          setUploadFiles(prev => prev.map(f => 
+            f.id === fileId ? { ...f, status: 'error' } : f
+          ));
+        }
+      } else {
+        setUploadFiles(prev => prev.map(f => 
+          f.id === fileId ? { ...f, status: 'error' } : f
+        ));
+      }
+    };
+
+    xhr.onerror = () => {
+      setUploadFiles(prev => prev.map(f => 
+        f.id === fileId ? { ...f, status: 'error' } : f
+      ));
+    };
+
+    xhr.open("POST", "/api/upload");
+    xhr.send(fd);
   };
 
   const handleCloseNotification = () => {
@@ -920,7 +1039,7 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
       
       {/* Floating Upload Progress */}
       {uploadFiles.length > 0 && (
-        <UploadProgress files={uploadFiles} />
+        <UploadProgress files={uploadFiles} onRetry={handleRetryUpload} />
       )}
     </>
   );
