@@ -212,6 +212,7 @@ export default function AdminSubmissionsPage() {
                         component={Link} 
                         href={`/admin/submissions/${sub.id}`}
                         color="primary"
+                        aria-label="View Details"
                       >
                         <VisibilityIcon />
                       </IconButton>

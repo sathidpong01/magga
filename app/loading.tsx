@@ -1,5 +1,5 @@
 import { Container, Box, Grid, Skeleton } from "@mui/material";
-import MangaCardSkeleton from "./components/MangaCardSkeleton";
+import MangaCardSkeleton from "./components/features/manga/MangaCardSkeleton";
 
 export default function HomeLoading() {
   return (

@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { Kanit } from "next/font/google";
 import "./globals.css";
-import { Providers } from "./components/Providers";
-import AgeVerificationModal from "./components/AgeVerificationModal";
+import { Providers } from "./components/layout/Providers";
+import AgeVerificationModal from "./components/features/auth/AgeVerificationModal";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
-import ErrorBoundary from "./components/ErrorBoundary";
-import LayoutWrapper from "./components/LayoutWrapper";
+import ErrorBoundary from "./components/common/ErrorBoundary";
+import LayoutWrapper from "./components/layout/LayoutWrapper";
 
 const kanit = Kanit({
   weight: ["300", "400", "500", "700"],

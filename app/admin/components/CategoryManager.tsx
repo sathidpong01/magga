@@ -162,10 +162,15 @@ export default function CategoryManager({ initialCategories }: CategoryManagerPr
         </Table>
       </TableContainer>
 
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-        <DialogTitle>Delete Category?</DialogTitle>
+      <Dialog 
+        open={deleteDialogOpen} 
+        onClose={() => setDeleteDialogOpen(false)}
+        aria-labelledby="delete-category-title"
+        aria-describedby="delete-category-description"
+      >
+        <DialogTitle id="delete-category-title">Delete Category?</DialogTitle>
         <DialogContent>
-          <DialogContentText>
+          <DialogContentText id="delete-category-description">
             Are you sure you want to delete the category &quot;{categoryToDelete?.name}&quot;? This may affect mangas associated with it.
           </DialogContentText>
         </DialogContent>

@@ -25,12 +25,16 @@ export default function MangaCard({ manga }: MangaCardProps) {
     <Card sx={{ 
       height: 400, 
       position: "relative", 
-      borderRadius: 0.8, // Reduced from 4 to 0.8 (20%)
+      borderRadius: 2, // 16px standard
       overflow: "hidden",
-      boxShadow: "0 10px 30px -10px rgba(0,0,0,0.5)",
-      transition: "transform 0.3s ease",
-      "&:hover": { transform: "scale(1.02)" },
-      bgcolor: "#171717"
+      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+      transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+      "&:hover": { 
+        transform: "translateY(-4px)",
+        boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
+      },
+      bgcolor: "#171717",
+      border: "1px solid rgba(255,255,255,0.05)"
     }}>
       <CardActionArea 
         component={Link} 
@@ -80,13 +84,14 @@ export default function MangaCard({ manga }: MangaCardProps) {
             fontWeight={800} 
             sx={{ 
               mb: 0.5, 
-              textShadow: "0 2px 4px rgba(0,0,0,0.5)",
+              textShadow: "0 2px 4px rgba(0,0,0,0.8)", // Stronger shadow
               overflow: "hidden",
               textOverflow: "ellipsis",
               display: "-webkit-box",
               WebkitLineClamp: 2,
               WebkitBoxOrient: "vertical",
-              lineHeight: 1.2
+              lineHeight: 1.2,
+              color: "#fff"
             }}
           >
             {manga.title}

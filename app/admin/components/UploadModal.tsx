@@ -95,7 +95,7 @@ export default function UploadModal({ open, onClose, onAdd, title = "Add Pages",
     >
       <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
         {title}
-        <IconButton onClick={handleClose} size="small">
+        <IconButton onClick={handleClose} size="small" aria-label="Close">
           <CloseIcon />
         </IconButton>
       </DialogTitle>
@@ -108,63 +108,65 @@ export default function UploadModal({ open, onClose, onAdd, title = "Add Pages",
           </Tabs>
         </Box>
 
-        {tab === 0 ? (
-          <Box>
-            <TextField
-              autoFocus
-              multiline={multiple}
-              rows={multiple ? 4 : 1}
-              fullWidth
-              placeholder={multiple ? "https://example.com/image1.jpg\nhttps://example.com/image2.jpg" : "https://example.com/image.jpg"}
-              value={urls}
-              onChange={(e) => setUrls(e.target.value)}
-              variant="filled"
-              label={multiple ? "Enter Image URLs (one per line)" : "Enter Image URL"}
-              InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
-            />
-            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-              Supported formats: JPG, PNG, WEBP, GIF
-            </Typography>
-          </Box>
-        ) : (
-          <Box
-            onDragEnter={handleDrag}
-            onDragLeave={handleDrag}
-            onDragOver={handleDrag}
-            onDrop={handleDrop}
-            sx={{
-              border: '2px dashed',
-              borderColor: dragActive ? '#fbbf24' : 'rgba(255,255,255,0.2)',
-              borderRadius: 1,
-              p: 4,
-              textAlign: 'center',
-              bgcolor: dragActive ? 'rgba(251, 191, 36, 0.05)' : 'transparent',
-              transition: 'all 0.2s ease',
-              cursor: 'pointer',
-              minHeight: 300,
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'center',
-              alignItems: 'center'
-            }}
-            component="label"
-          >
-            <input
-              type="file"
-              hidden
-              multiple={multiple}
-              accept="image/*"
-              onChange={(e) => handleFiles(e.target.files)}
-            />
-            <CloudUploadIcon sx={{ fontSize: 48, color: dragActive ? '#fbbf24' : 'text.secondary', mb: 2 }} />
-            <Typography variant="h6" component="h3" gutterBottom color={dragActive ? '#fbbf24' : 'text.primary'}>
-              {dragActive ? "Drop files here" : "Drag & Drop files here"}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              or click to browse
-            </Typography>
-          </Box>
-        )}
+        <Box sx={{ minHeight: 320 }}>
+          {tab === 0 ? (
+            <Box>
+              <TextField
+                autoFocus
+                multiline={multiple}
+                rows={multiple ? 4 : 1}
+                fullWidth
+                placeholder={multiple ? "https://example.com/image1.jpg\nhttps://example.com/image2.jpg" : "https://example.com/image.jpg"}
+                value={urls}
+                onChange={(e) => setUrls(e.target.value)}
+                variant="filled"
+                label={multiple ? "Enter Image URLs (one per line)" : "Enter Image URL"}
+                InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
+              />
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                Supported formats: JPG, PNG, WEBP, GIF
+              </Typography>
+            </Box>
+          ) : (
+            <Box
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+              sx={{
+                border: '2px dashed',
+                borderColor: dragActive ? '#fbbf24' : 'rgba(255,255,255,0.2)',
+                borderRadius: 1,
+                p: 4,
+                textAlign: 'center',
+                bgcolor: dragActive ? 'rgba(251, 191, 36, 0.05)' : 'transparent',
+                transition: 'all 0.2s ease',
+                cursor: 'pointer',
+                minHeight: 300,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center'
+              }}
+              component="label"
+            >
+              <input
+                type="file"
+                hidden
+                multiple={multiple}
+                accept="image/*"
+                onChange={(e) => handleFiles(e.target.files)}
+              />
+              <CloudUploadIcon sx={{ fontSize: 48, color: dragActive ? '#fbbf24' : 'text.secondary', mb: 2 }} />
+              <Typography variant="h6" component="h3" gutterBottom color={dragActive ? '#fbbf24' : 'text.primary'}>
+                {dragActive ? "Drop files here" : "Drag & Drop files here"}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                or click to browse
+              </Typography>
+            </Box>
+          )}
+        </Box>
       </DialogContent>
 
       <DialogActions sx={{ p: 3, pt: 0 }}>

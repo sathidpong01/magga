@@ -162,10 +162,15 @@ export default function TagManager({ initialTags }: TagManagerProps) {
         </Table>
       </TableContainer>
 
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-        <DialogTitle>Delete Tag?</DialogTitle>
+      <Dialog 
+        open={deleteDialogOpen} 
+        onClose={() => setDeleteDialogOpen(false)}
+        aria-labelledby="delete-tag-title"
+        aria-describedby="delete-tag-description"
+      >
+        <DialogTitle id="delete-tag-title">Delete Tag?</DialogTitle>
         <DialogContent>
-          <DialogContentText>
+          <DialogContentText id="delete-tag-description">
             Are you sure you want to delete the tag &quot;{tagToDelete?.name}&quot;? This will remove it from all associated mangas.
           </DialogContentText>
         </DialogContent>

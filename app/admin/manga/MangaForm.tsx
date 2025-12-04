@@ -12,6 +12,7 @@ import {
   FormControl,
   InputLabel,
   Autocomplete,
+  createFilterOptions,
   Stack,
   Typography,
   Alert,
@@ -79,6 +80,13 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
   const [description, setDescription] = useState(manga?.description || "");
   const [categoryId, setCategoryId] = useState(manga?.categoryId || "");
   const [selectedTags, setSelectedTags] = useState<Tag[]>(manga?.tags || []);
+  
+  // Local state for options to allow immediate updates
+  const [availableTags, setAvailableTags] = useState<Tag[]>(tags);
+  const [availableCategories, setAvailableCategories] = useState<Category[]>(categories);
+
+  const filter = createFilterOptions<Tag>();
+  const categoryFilter = createFilterOptions<Category>();
 
   // Unified Page State
   const [pageItems, setPageItems] = useState<PageItem[]>(() => {
@@ -223,6 +231,40 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
       setCredits(newCredits);
     } catch (error) {
 
+    }
+  };
+
+  const handleCreateTag = async (inputValue: string) => {
+    try {
+      const res = await fetch("/api/tags", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: inputValue }),
+      });
+      if (!res.ok) throw new Error("Failed to create tag");
+      const newTag = await res.json();
+      setAvailableTags((prev) => [...prev, newTag]);
+      setSelectedTags((prev) => [...prev, newTag]);
+    } catch (error) {
+      console.error("Error creating tag:", error);
+      setError("Failed to create tag");
+    }
+  };
+
+  const handleCreateCategory = async (inputValue: string) => {
+    try {
+      const res = await fetch("/api/categories", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: inputValue }),
+      });
+      if (!res.ok) throw new Error("Failed to create category");
+      const newCategory = await res.json();
+      setAvailableCategories((prev) => [...prev, newCategory]);
+      setCategoryId(newCategory.id);
+    } catch (error) {
+      console.error("Error creating category:", error);
+      setError("Failed to create category");
     }
   };
 
@@ -395,7 +437,7 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
 
           {/* Left Column: General Info */}
           <Grid item xs={12} md={7}>
-            <Paper elevation={0} sx={{ p: 3, borderRadius: 1, bgcolor: '#171717' }}>
+            <Paper elevation={0} sx={{ p: 3, borderRadius: 1, bgcolor: '#171717', minHeight: 600 }}>
               <Typography variant="h6" component="h3" gutterBottom sx={{ mb: 3, fontSize: '1rem', color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 1 }}>
                 General Information
               </Typography>
@@ -460,38 +502,121 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                   />
                 </Grid>
                 <Grid item xs={12} md={6}>
-                  <FormControl fullWidth variant="filled">
-                    <InputLabel id="category-select-label">Category</InputLabel>
-                    <Select
-                      labelId="category-select-label"
-                      id="category"
-                      value={categoryId ?? ""}
-                      onChange={(e) => setCategoryId(e.target.value)}
-                      disableUnderline
-                      sx={{ borderRadius: 1 }}
-                    >
-                      <MenuItem value="">
-                        <em>None</em>
-                      </MenuItem>
-                      {categories.map((cat) => (
-                        <MenuItem key={cat.id} value={cat.id}>
-                          {cat.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                  <Autocomplete
+                    value={availableCategories.find((c) => c.id === categoryId) || null}
+                    onChange={(event, newValue) => {
+                      if (typeof newValue === 'string') {
+                        handleCreateCategory(newValue);
+                      } else if (newValue && (newValue as any).inputValue) {
+                        // Create a new value from the user input
+                        handleCreateCategory((newValue as any).inputValue);
+                      } else {
+                        setCategoryId(newValue?.id || "");
+                      }
+                    }}
+                    filterOptions={(options, params) => {
+                      const filtered = categoryFilter(options, params);
+                      const { inputValue } = params;
+                      // Suggest the creation of a new value
+                      const isExisting = options.some((option) => option.name === inputValue);
+                      if (inputValue !== '' && !isExisting) {
+                        filtered.push({
+                          inputValue,
+                          name: `Add "${inputValue}"`,
+                          id: "new-category",
+                        } as any);
+                      }
+                      return filtered;
+                    }}
+                    selectOnFocus
+                    clearOnBlur
+                    handleHomeEndKeys
+                    id="category-autocomplete"
+                    options={availableCategories}
+                    getOptionLabel={(option) => {
+                      // Value selected with enter, right from the input
+                      if (typeof option === 'string') {
+                        return option;
+                      }
+                      // Add "xxx" option created dynamically
+                      if ((option as any).inputValue) {
+                        return (option as any).inputValue;
+                      }
+                      // Regular option
+                      return option.name;
+                    }}
+                    renderOption={(props, option) => {
+                      const { key, ...optionProps } = props;
+                      return (
+                        <li key={key} {...optionProps}>
+                          {option.name}
+                        </li>
+                      );
+                    }}
+                    freeSolo
+                    renderInput={(params) => (
+                      <TextField 
+                        {...params} 
+                        label="Category" 
+                        variant="filled"
+                        InputProps={{ ...params.InputProps, disableUnderline: true, sx: { borderRadius: 1 } }}
+                      />
+                    )}
+                  />
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <Autocomplete
                     multiple
                     id="tags-autocomplete"
-                    options={tags}
-                    getOptionLabel={(option) => option.name}
+                    options={availableTags}
+                    getOptionLabel={(option) => {
+                      if (typeof option === 'string') return option;
+                      if ((option as any).inputValue) return (option as any).inputValue;
+                      return option.name;
+                    }}
                     value={selectedTags}
                     onChange={(event, newValue) => {
-                      setSelectedTags(newValue);
+                      // Filter out any string values or special "Add" options and handle creation
+                      const processedTags: Tag[] = [];
+                      
+                      newValue.forEach((item) => {
+                        if (typeof item === 'string') {
+                          handleCreateTag(item);
+                        } else if ((item as any).inputValue) {
+                          handleCreateTag((item as any).inputValue);
+                        } else {
+                          processedTags.push(item as Tag);
+                        }
+                      });
+                      
+                      // Update state only with valid existing tags
+                      // New tags will be added via handleCreateTag
+                      const validTags = newValue.filter(t => !(t as any).inputValue && typeof t !== 'string') as Tag[];
+                      setSelectedTags(validTags);
+                    }}
+                    filterOptions={(options, params) => {
+                      const filtered = filter(options, params);
+                      const { inputValue } = params;
+                      const isExisting = options.some((option) => option.name.toLowerCase() === inputValue.toLowerCase());
+                      if (inputValue !== '' && !isExisting) {
+                        filtered.push({
+                          inputValue,
+                          name: `Add "${inputValue}"`,
+                          id: "new-tag",
+                        } as any);
+                      }
+                      return filtered;
                     }}
                     isOptionEqualToValue={(option, value) => option.id === value.id}
+                    renderOption={(props, option) => {
+                      const { key, ...optionProps } = props;
+                      return (
+                        <li key={key} {...optionProps}>
+                          {option.name}
+                        </li>
+                      );
+                    }}
+                    freeSolo
                     renderInput={(params) => (
                       <TextField
                         {...params}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { 
   AppBar, 
   Toolbar, 
@@ -27,6 +28,7 @@ import SettingsIcon from "@mui/icons-material/Settings";
 
 export default function Header() {
   const { data: session } = useSession();
+  const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
@@ -54,13 +56,13 @@ export default function Header() {
       position="sticky" 
       elevation={isScrolled ? 4 : 0}
       sx={{ 
-        backgroundColor: isScrolled ? "#00000000" : "transparent",
+        backgroundColor: isScrolled ? "rgba(10, 10, 10, 0.8)" : "transparent",
         backgroundImage: "none",
-        borderBottom: isScrolled ? "0px solid rgba(255,255,255,0.05)" : "none",
+        borderBottom: isScrolled ? "1px solid rgba(255,255,255,0.1)" : "none",
         transition: "all 0.3s ease-in-out",
         top: 0, 
         zIndex: 1100,
-        backdropFilter: "none", // Explicitly ensure no blur
+        backdropFilter: isScrolled ? "blur(12px)" : "none",
       }} 
     >
       <Container maxWidth="xl">
@@ -134,10 +136,11 @@ export default function Header() {
                 variant="contained"
                 startIcon={<CloudUploadIcon />}
                 sx={{ 
-                  bgcolor: "#fbbf24", 
+                  bgcolor: pathname === "/submit" ? "#f59e0b" : "#fbbf24", 
                   color: "black",
                   fontWeight: 700,
-                  "&:hover": { bgcolor: "#f59e0b" }
+                  "&:hover": { bgcolor: "#f59e0b" },
+                  boxShadow: pathname === "/submit" ? "0 0 0 2px rgba(255,255,255,0.5)" : "none"
                 }}
               >
                 ฝากลงมังงะ
@@ -152,10 +155,11 @@ export default function Header() {
                 variant="contained"
                 startIcon={<DashboardIcon />}
                 sx={{ 
-                  bgcolor: "#ef4444", 
+                  bgcolor: pathname?.startsWith("/admin") ? "#dc2626" : "#ef4444", 
                   color: "white",
                   fontWeight: 600,
-                  "&:hover": { bgcolor: "#dc2626" }
+                  "&:hover": { bgcolor: "#dc2626" },
+                  boxShadow: pathname?.startsWith("/admin") ? "0 0 0 2px rgba(255,255,255,0.5)" : "none"
                 }}
               >
                 Admin

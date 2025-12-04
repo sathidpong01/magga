@@ -1,8 +1,8 @@
 import prisma from "@/lib/prisma";
 import { Grid, Typography, Box, Container } from "@mui/material";
 import { Suspense } from "react";
-import MangaCard from "./components/MangaCard";
-import SearchFilters from "./components/SearchFilters";
+import MangaCard from "./components/features/manga/MangaCard";
+import SearchFilters from "./components/features/search/SearchFilters";
 import { Prisma } from "@prisma/client";
 
 type Props = {

@@ -36,6 +36,8 @@ export default function AgeVerificationModal() {
     <Dialog
       open={open}
       disableEscapeKeyDown
+      aria-labelledby="age-verification-title"
+      aria-describedby="age-verification-description"
       PaperProps={{
         sx: {
           borderRadius: 2,
@@ -55,11 +57,11 @@ export default function AgeVerificationModal() {
       <Box sx={{ display: "flex", justifyContent: "center", mt: 2, mb: 1 }}>
         <WarningAmberIcon color="warning" sx={{ fontSize: 60 }} />
       </Box>
-      <DialogTitle sx={{ fontWeight: "bold", fontSize: "1.5rem" }}>
+      <DialogTitle id="age-verification-title" sx={{ fontWeight: "bold", fontSize: "1.5rem" }}>
         Content Warning
       </DialogTitle>
       <DialogContent>
-        <Typography variant="body1" gutterBottom>
+        <Typography id="age-verification-description" variant="body1" gutterBottom>
           This website contains mature content intended for audiences 18 years of
           age or older.
         </Typography>
