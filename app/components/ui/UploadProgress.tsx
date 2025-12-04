@@ -1,9 +1,12 @@
-import React from 'react';
-import { Box, Paper, Typography, LinearProgress, IconButton } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, Paper, Typography, LinearProgress, IconButton, Collapse, Badge, CircularProgress } from '@mui/material';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import CloseIcon from '@mui/icons-material/Close';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
 export type UploadFileStatus = {
   id: string;
@@ -20,8 +23,11 @@ type UploadProgressProps = {
 };
 
 export default function UploadProgress({ files, onCancel }: UploadProgressProps) {
+  const [expanded, setExpanded] = useState(true);
+  
   const uploadingCount = files.filter(f => f.status === 'uploading' || f.status === 'pending').length;
   const completedCount = files.filter(f => f.status === 'completed').length;
+  const errorCount = files.filter(f => f.status === 'error').length;
   
   if (files.length === 0) return null;
 
@@ -33,105 +39,141 @@ export default function UploadProgress({ files, onCancel }: UploadProgressProps)
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   };
 
+  const totalProgress = files.reduce((acc, curr) => acc + curr.progress, 0) / files.length;
+
   return (
-    <Box sx={{ width: '100%', mt: 2 }}>
-      <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
-        {uploadingCount > 0 
-          ? `${uploadingCount} files uploading...` 
-          : `${completedCount} files completed`}
-      </Typography>
-      
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {files.map((file) => (
-          <Paper
-            key={file.id}
-            elevation={0}
-            sx={{
-              p: 2,
-              border: '1px solid',
-              borderColor: 'rgba(255,255,255,0.1)',
-              borderRadius: 2,
-              bgcolor: '#171717',
-              position: 'relative',
-              overflow: 'hidden'
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-              <Box 
-                sx={{ 
-                  p: 1, 
-                  borderRadius: 1, 
-                  bgcolor: 'rgba(255,255,255,0.05)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                <InsertDriveFileIcon sx={{ color: '#a3a3a3' }} />
-              </Box>
-              
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.5 }}>
-                  <Box>
-                    <Typography variant="subtitle2" noWrap sx={{ fontWeight: 600, mb: 0.5 }}>
-                      {file.name}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {formatSize(file.size)} • {
-                        file.status === 'completed' ? 'Completed' :
-                        file.status === 'error' ? 'Error' :
-                        file.status === 'pending' ? 'Waiting...' :
-                        `${Math.round(file.progress)}%`
-                      }
-                    </Typography>
+    <Box 
+      sx={{ 
+        position: 'fixed', 
+        bottom: 24, 
+        right: 24, 
+        zIndex: 1300,
+        width: 360,
+        maxWidth: 'calc(100vw - 48px)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'flex-end'
+      }}
+    >
+      <Paper
+        elevation={6}
+        sx={{
+          bgcolor: '#171717',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: 2,
+          overflow: 'hidden',
+          width: '100%',
+          transition: 'all 0.3s ease'
+        }}
+      >
+        {/* Header / Minimized State */}
+        <Box 
+          onClick={() => setExpanded(!expanded)}
+          sx={{ 
+            p: 2, 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'space-between',
+            cursor: 'pointer',
+            bgcolor: 'rgba(255,255,255,0.02)',
+            '&:hover': { bgcolor: 'rgba(255,255,255,0.05)' }
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ position: 'relative', display: 'flex' }}>
+              <CircularProgressWithLabel value={totalProgress} />
+            </Box>
+            <Box>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                {uploadingCount > 0 ? 'Uploading files...' : 'Upload Complete'}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {completedCount} / {files.length} completed
+                {errorCount > 0 && ` • ${errorCount} failed`}
+              </Typography>
+            </Box>
+          </Box>
+          <IconButton size="small" sx={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
+            <KeyboardArrowUpIcon />
+          </IconButton>
+        </Box>
+
+        {/* Expanded List */}
+        <Collapse in={expanded}>
+          <Box sx={{ maxHeight: 300, overflowY: 'auto', p: 2, pt: 0 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mt: 2 }}>
+              {files.map((file) => (
+                <Box key={file.id} sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+                  <Box 
+                    sx={{ 
+                      p: 1, 
+                      borderRadius: 1, 
+                      bgcolor: 'rgba(255,255,255,0.05)',
+                      color: '#fbbf24'
+                    }}
+                  >
+                    <InsertDriveFileIcon fontSize="small" color="inherit" />
                   </Box>
                   
-                  {file.status === 'completed' ? (
-                    <IconButton size="small" disabled sx={{ color: '#4ade80' }}>
-                      <CheckCircleIcon fontSize="small" />
-                    </IconButton>
-                  ) : file.status === 'error' ? (
-                    <IconButton size="small" disabled sx={{ color: '#ef4444' }}>
-                      <ErrorIcon fontSize="small" />
-                    </IconButton>
-                  ) : (
-                    onCancel && (
-                      <IconButton 
-                        size="small" 
-                        onClick={() => onCancel(file.id)}
-                        sx={{ color: 'text.secondary', '&:hover': { color: 'text.primary' } }}
-                      >
-                        <CloseIcon fontSize="small" />
-                      </IconButton>
-                    )
-                  )}
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                      <Typography variant="body2" noWrap sx={{ fontSize: '0.85rem' }}>
+                        {file.name}
+                      </Typography>
+                      {file.status === 'completed' ? (
+                        <CheckCircleIcon sx={{ fontSize: 16, color: '#4ade80' }} />
+                      ) : file.status === 'error' ? (
+                        <ErrorIcon sx={{ fontSize: 16, color: '#ef4444' }} />
+                      ) : (
+                        <Typography variant="caption" color="text.secondary">
+                          {Math.round(file.progress)}%
+                        </Typography>
+                      )}
+                    </Box>
+                    <LinearProgress 
+                      variant="determinate" 
+                      value={file.progress} 
+                      sx={{ 
+                        height: 4,
+                        borderRadius: 2,
+                        bgcolor: 'rgba(255,255,255,0.1)',
+                        '& .MuiLinearProgress-bar': {
+                          bgcolor: file.status === 'error' ? '#ef4444' : 
+                                   file.status === 'completed' ? '#4ade80' : '#fbbf24',
+                        }
+                      }}
+                    />
+                  </Box>
                 </Box>
-
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <LinearProgress 
-                    variant="determinate" 
-                    value={file.progress} 
-                    sx={{ 
-                      flex: 1,
-                      height: 6,
-                      borderRadius: 3,
-                      bgcolor: 'rgba(255,255,255,0.1)',
-                      '& .MuiLinearProgress-bar': {
-                        bgcolor: file.status === 'error' ? '#ef4444' : 
-                                 file.status === 'completed' ? '#4ade80' : '#8b5cf6',
-                        borderRadius: 3,
-                      }
-                    }}
-                  />
-                  <Typography variant="caption" sx={{ minWidth: 35, textAlign: 'right', fontWeight: 600 }}>
-                    {Math.round(file.progress)}%
-                  </Typography>
-                </Box>
-              </Box>
+              ))}
             </Box>
-          </Paper>
-        ))}
+          </Box>
+        </Collapse>
+      </Paper>
+    </Box>
+  );
+}
+
+function CircularProgressWithLabel(props: { value: number }) {
+  return (
+    <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+      <CircularProgress variant="determinate" {...props} size={32} thickness={5} sx={{ color: '#fbbf24' }} />
+      <Box
+        sx={{
+          top: 0,
+          left: 0,
+          bottom: 0,
+          right: 0,
+          position: 'absolute',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <CloudUploadIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
       </Box>
     </Box>
   );
 }
+
+

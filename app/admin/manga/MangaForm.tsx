@@ -772,12 +772,7 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                   </Button>
                 </Box>
 
-                {/* Upload Progress */}
-                {uploadFiles.length > 0 && (
-                  <Box sx={{ mb: 3 }}>
-                    <UploadProgress files={uploadFiles} />
-                  </Box>
-                )}
+
 
                 <DndContext 
                   sensors={sensors} 
@@ -922,7 +917,11 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
           onClick: handleCloseNotification
         }}
       />
+      
+      {/* Floating Upload Progress */}
+      {uploadFiles.length > 0 && (
+        <UploadProgress files={uploadFiles} />
+      )}
     </>
   );
 }
-
