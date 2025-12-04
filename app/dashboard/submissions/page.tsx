@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import prisma from '@/lib/prisma';
 import { Box, Typography, Grid, Paper, Chip } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
-import LinkButton from '@/app/components/LinkButton';
+import LinkButton from '@/app/components/ui/LinkButton';
 import { MangaSubmission } from '@prisma/client';
 
 export default async function MySubmissionsPage() {

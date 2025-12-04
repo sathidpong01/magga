@@ -1,4 +1,4 @@
-import LinkListItemButton from "@/app/components/LinkListItemButton";
+import LinkListItemButton from "@/app/components/ui/LinkListItemButton";
 import SignOutButton from "./SignOutButton";
 import {
   Box,

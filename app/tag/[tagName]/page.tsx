@@ -1,7 +1,7 @@
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import { Grid, Typography, Box } from "@mui/material";
-import MangaCard from "@/app/components/MangaCard";
+import MangaCard from "@/app/components/features/manga/MangaCard";
 
 type TagPageProps = {
   params: Promise<{

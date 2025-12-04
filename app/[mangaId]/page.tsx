@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
 import { notFound } from "next/navigation";
-import LinkChip from "@/app/components/LinkChip";
+import LinkChip from "@/app/components/ui/LinkChip";
 import {
   Box,
   Typography,
@@ -12,7 +12,7 @@ import {
   Stack,
 } from "@mui/material";
 import Image from "next/image";
-import MangaViewRating from "@/app/components/MangaViewRating";
+import MangaViewRating from "@/app/components/features/manga/MangaViewRating";
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import StarIcon from '@mui/icons-material/Star';
 

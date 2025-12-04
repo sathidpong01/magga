@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import LinkButton from "@/app/components/LinkButton";
+import LinkButton from "@/app/components/ui/LinkButton";
 import MangaActions from "./MangaActions";
 import {
   Box,
