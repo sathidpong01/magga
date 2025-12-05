@@ -189,7 +189,7 @@ export default function MangaViewRating({
         
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
           <StarIcon sx={{ color: "#fbbf24", fontSize: 24 }} />
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          <Typography variant="h6" component="span" sx={{ fontWeight: 600 }}>
             {averageRating > 0 ? averageRating.toFixed(1) : "ยังไม่มีคะแนน"}
           </Typography>
           {ratingCount > 0 && (
@@ -202,7 +202,7 @@ export default function MangaViewRating({
         {/* Interactive Rating */}
         {isLoading ? (
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <CircularProgress size={20} />
+            <CircularProgress size={20} aria-label="กำลังโหลด" />
             <Typography variant="body2" color="text.secondary">
               กำลังโหลด...
             </Typography>

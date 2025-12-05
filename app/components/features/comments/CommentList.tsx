@@ -175,6 +175,7 @@ function CommentItem({ comment, mangaId, imageIndex, onRefresh, isReply = false 
                 size="small"
                 onClick={(e) => setMenuAnchor(e.currentTarget)}
                 sx={{ ml: "auto", color: "text.secondary" }}
+                aria-label="เพิ่มเติม"
               >
                 <MoreVertIcon fontSize="small" />
               </IconButton>
@@ -267,6 +268,7 @@ function CommentItem({ comment, mangaId, imageIndex, onRefresh, isReply = false 
                 size="small"
                 onClick={() => handleVote(1)}
                 sx={{ color: userVote === 1 ? "#38bdf8" : "text.secondary" }}
+                aria-label="ถูกใจ"
               >
                 <ThumbUpIcon fontSize="small" />
               </IconButton>
@@ -287,6 +289,7 @@ function CommentItem({ comment, mangaId, imageIndex, onRefresh, isReply = false 
                 size="small"
                 onClick={() => handleVote(-1)}
                 sx={{ color: userVote === -1 ? "#f87171" : "text.secondary" }}
+                aria-label="ไม่ถูกใจ"
               >
                 <ThumbDownIcon fontSize="small" />
               </IconButton>

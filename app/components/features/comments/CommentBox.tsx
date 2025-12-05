@@ -162,7 +162,7 @@ export default function CommentBox({
   if (status === "loading") {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
-        <CircularProgress size={24} />
+      <CircularProgress size={24} aria-label="กำลังโหลด" />
       </Box>
     );
   }
@@ -291,6 +291,7 @@ export default function CommentBox({
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isSubmitting}
                   sx={{ color: "#4ade80" }}
+                  aria-label="แนบรูปภาพ"
                 >
                   <ImageIcon fontSize="small" />
                 </IconButton>
@@ -309,6 +310,7 @@ export default function CommentBox({
                   onClick={(e) => setEmojiAnchor(e.currentTarget)}
                   disabled={isSubmitting}
                   sx={{ color: "rgba(255,255,255,0.6)" }}
+                  aria-label="เพิ่ม Emoji"
                 >
                   <EmojiEmotionsIcon fontSize="small" />
                 </IconButton>
@@ -338,8 +340,9 @@ export default function CommentBox({
                 color: content.trim() || imageFile ? "#38bdf8" : "rgba(255,255,255,0.3)",
                 "&:disabled": { color: "rgba(255,255,255,0.2)" },
               }}
+              aria-label="ส่งความคิดเห็น"
             >
-              {isSubmitting ? <CircularProgress size={20} /> : <SendIcon fontSize="small" />}
+              {isSubmitting ? <CircularProgress size={20} aria-label="กำลังส่ง" /> : <SendIcon fontSize="small" />}
             </IconButton>
           </Box>
         </Paper>
