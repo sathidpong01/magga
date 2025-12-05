@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useId } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Box,
@@ -29,6 +29,12 @@ export default function SearchFilters({ categories, tags }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [expanded, setExpanded] = useState(false);
+  
+  // Generate stable IDs to prevent hydration mismatch
+  const categorySelectId = useId();
+  const sortSelectId = useId();
+  const searchInputId = useId();
+  const tagsInputId = useId();
 
   // State for filters
   const [search, setSearch] = useState(searchParams.get("search") || "");
@@ -157,10 +163,12 @@ export default function SearchFilters({ categories, tags }: Props) {
               <TextField
                 select
                 fullWidth
+                id={categorySelectId}
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
                 variant="standard"
                 InputProps={{ disableUnderline: true }}
+                SelectProps={{ id: `${categorySelectId}-select` }}
                 sx={{
                   "& .MuiSelect-select": { py: 0.75, fontSize: "0.85rem", fontWeight: 500 },
                   borderBottom: "1px solid",
@@ -184,10 +192,12 @@ export default function SearchFilters({ categories, tags }: Props) {
               <TextField
                 select
                 fullWidth
+                id={sortSelectId}
                 value={sort}
                 onChange={(e) => setSort(e.target.value)}
                 variant="standard"
                 InputProps={{ disableUnderline: true }}
+                SelectProps={{ id: `${sortSelectId}-select` }}
                 sx={{
                   "& .MuiSelect-select": { py: 0.75, fontSize: "0.85rem", fontWeight: 500 },
                   borderBottom: "1px solid",
@@ -207,6 +217,7 @@ export default function SearchFilters({ categories, tags }: Props) {
               </Typography>
               <TextField
                 fullWidth
+                id={searchInputId}
                 placeholder="Title or artist"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -237,6 +248,7 @@ export default function SearchFilters({ categories, tags }: Props) {
                 renderInput={(params) => (
                   <TextField
                     {...params}
+                    id={tagsInputId}
                     variant="standard"
                     placeholder={selectedTags.length === 0 ? "Search for tag" : ""}
                     InputProps={{

@@ -5,6 +5,20 @@ import UpdateIcon from '@mui/icons-material/Update';
 // Static data for changelog
 const changelogData = [
   {
+    date: '2025-12-05',
+    version: 'v1.4.0',
+    title: 'เพิ่มหน้านโยบายและระบบป้องกัน DevTools',
+    changes: [
+      'เพิ่มหน้า "นโยบายความเป็นส่วนตัว" (Privacy Policy) พร้อมเนื้อหาภาษาไทยครบถ้วน 12 หัวข้อ',
+      'เพิ่มหน้า "ข้อตกลงในการใช้งาน" (Terms of Service) พร้อมเนื้อหาภาษาไทย 13 หัวข้อ',
+      'เพิ่มหน้า "รายงานการละเมิด" (DMCA Report) พร้อมคู่มือส่งคำร้อง DMCA แบบละเอียด',
+      'เพิ่มระบบป้องกัน DevTools: บล็อก F12, Ctrl+Shift+I, Right-click และตรวจจับ DevTools แบบอัตโนมัติ',
+      'ระบบป้องกัน DevTools รองรับ Admin Bypass: แอดมินสามารถใช้งาน DevTools ได้ตามปกติ',
+      'ปรับปรุง Footer ใหม่: เพิ่มโลโก้ขนาดใหญ่พร้อม Glow Effect และลิงก์นโยบาย',
+      'แก้ไข Hydration Mismatch Error ในหน้าแรกโดยใช้ useId() สำหรับ MUI components'
+    ]
+  },
+  {
     date: '2025-12-04',
     version: 'v1.3.1',
     title: 'อัปเกรดความปลอดภัยและระบบอัปโหลด',

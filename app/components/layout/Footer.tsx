@@ -18,7 +18,7 @@ export default function Footer() {
     <Box
       component="footer"
       sx={{
-        py: 4,
+        py: 5,
         px: 2,
         mt: "auto",
         backgroundColor: "#0a0a0a",
@@ -27,16 +27,42 @@ export default function Footer() {
       }}
     >
       <Container maxWidth="lg">
-        <Grid container spacing={4}>
+        <Grid container spacing={4} alignItems="flex-start">
+          {/* Logo & Description */}
+          <Grid item xs={12} md={6}>
+            <Box sx={{ mb: 2 }}>
+              <Image 
+                src="/logo.svg" 
+                alt="MAGGA Logo" 
+                width={120} 
+                height={120}
+                style={{ 
+                  filter: 'drop-shadow(0 0 20px rgba(139, 92, 246, 0.3))',
+                }}
+              />
+            </Box>
+            <Typography 
+              variant="body1" 
+              sx={{ 
+                color: '#737373', 
+                fontSize: '0.95rem', 
+                lineHeight: 1.8,
+                maxWidth: 450
+              }}
+            >
+              เว็บอ่านโดจินแปลไทย 18+ แนว Furry ที่ครบเครื่องที่สุด รวบรวมมังงะและโดจินชิ Furry สายหมี สายเคโมะ หลากหลายแนว แปลไทยคุณภาพ อ่านฟรีออนไลน์
+            </Typography>
+          </Grid>
+
           {/* Policy Links */}
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12} md={6} sx={{ textAlign: { xs: 'left', md: 'right' } }}>
             <Typography 
               variant="subtitle1" 
               sx={{ color: '#fafafa', fontWeight: 700, mb: 2, fontSize: '1rem' }}
             >
               นโยบาย
             </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, alignItems: { xs: 'flex-start', md: 'flex-end' } }}>
               {policyLinks.map((link) => (
                 <Link
                   key={link.href}
@@ -54,30 +80,9 @@ export default function Footer() {
               ))}
             </Box>
           </Grid>
-
-          {/* Logo & Description */}
-          <Grid item xs={12} sm={6}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
-              <Image 
-                src="/logo.svg" 
-                alt="MAGGA Logo" 
-                width={32} 
-                height={32}
-              />
-              <Typography 
-                variant="h6" 
-                sx={{ color: '#fafafa', fontWeight: 700, fontSize: '1.1rem' }}
-              >
-                MAGGA
-              </Typography>
-            </Box>
-            <Typography variant="body1" sx={{ color: '#737373', fontSize: '0.95rem', lineHeight: 1.7 }}>
-              เว็บอ่านโดจินแปลไทย 18+ แนว Furry ที่ครบเครื่องที่สุด รวบรวมมังงะและโดจินชิ Furry สายหมี สายเคโมะ หลากหลายแนว แปลไทยคุณภาพ อ่านฟรีออนไลน์
-            </Typography>
-          </Grid>
         </Grid>
 
-        <Divider sx={{ my: 3, borderColor: 'rgba(255,255,255,0.08)' }} />
+        <Divider sx={{ my: 4, borderColor: 'rgba(255,255,255,0.08)' }} />
 
         {/* Copyright */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
@@ -124,7 +129,7 @@ export default function Footer() {
               target="_blank" 
               rel="noopener noreferrer"
               underline="hover"
-              sx={{ color: '#525252', fontSize: '0.85rem', '&:hover': { color: '#a3a3a3' } }}
+              sx={{ color: '#ffffff', fontSize: '0.85rem', '&:hover': { color: '#a3a3a3' } }}
             >
               Create by Nightsu ❤️
             </Link>

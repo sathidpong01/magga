@@ -3,6 +3,7 @@ import { Kanit } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./components/layout/Providers";
 import AgeVerificationModal from "./components/features/auth/AgeVerificationModal";
+import DevToolsProtection from "./components/security/DevToolsProtection";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import ErrorBoundary from "./components/common/ErrorBoundary";
@@ -65,6 +66,7 @@ export default function RootLayout({
         <ErrorBoundary>
           <Providers>
             <AgeVerificationModal />
+            <DevToolsProtection />
             <LayoutWrapper>
               {children}
             </LayoutWrapper>
