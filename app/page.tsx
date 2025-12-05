@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import MangaCard from "./components/features/manga/MangaCard";
 import SearchFilters from "./components/features/search/SearchFilters";
 import { Prisma } from "@prisma/client";
+import { unstable_cache } from "next/cache";
 
 type Props = {
   searchParams: Promise<{
@@ -14,23 +15,37 @@ type Props = {
   }>;
 };
 
-// Dynamic rendering to support search/filter params
-export const dynamic = 'force-dynamic';
+// Dynamic rendering to support search/filter params, but cache for 60 seconds
+export const revalidate = 60;
+
+// Cache categories for 5 minutes
+const getCategories = unstable_cache(
+  async () => {
+    return prisma.category.findMany({ orderBy: { name: "asc" } });
+  },
+  ["categories"],
+  { revalidate: 300, tags: ["categories"] }
+);
+
+// Cache tags for 5 minutes
+const getTags = unstable_cache(
+  async () => {
+    return prisma.tag.findMany({ 
+      where: { mangas: { some: {} } },
+      orderBy: { name: "asc" } 
+    });
+  },
+  ["tags"],
+  { revalidate: 300, tags: ["tags"] }
+);
 
 export default async function Home({ searchParams }: Props) {
   const params = await searchParams;
   const { search, categoryId, tags: tagNames, sort } = params;
 
-  // Fetch Categories and Tags for the filter component
-  const categories = await prisma.category.findMany({ orderBy: { name: "asc" } });
-  
-  // Only fetch tags that are used by at least one manga
-  const tags = await prisma.tag.findMany({ 
-    where: {
-      mangas: { some: {} } // Only tags with at least one manga
-    },
-    orderBy: { name: "asc" } 
-  });
+  // Fetch Categories and Tags for the filter component (cached)
+  const categories = await getCategories();
+  const tags = await getTags();
 
   // Build Where Clause
   const where: Prisma.MangaWhereInput = {

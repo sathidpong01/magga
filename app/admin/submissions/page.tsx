@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import {
   Box,
   Typography,
@@ -183,12 +184,15 @@ export default function AdminSubmissionsPage() {
               submissions.map((sub) => (
                 <TableRow key={sub.id} hover>
                   <TableCell>
-                    <Box 
-                      component="img" 
-                      src={sub.coverImage} 
-                      alt={sub.title} 
-                      sx={{ width: 40, height: 60, objectFit: "cover", borderRadius: 0.5 }} 
-                    />
+                    <Box sx={{ width: 40, height: 60, position: 'relative', borderRadius: 0.5, overflow: 'hidden' }}>
+                      <Image 
+                        src={sub.coverImage} 
+                        alt={sub.title}
+                        fill
+                        sizes="40px"
+                        style={{ objectFit: 'cover' }}
+                      />
+                    </Box>
                   </TableCell>
                   <TableCell>
                     <Typography variant="subtitle2">{sub.title}</Typography>

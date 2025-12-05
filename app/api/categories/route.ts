@@ -30,6 +30,7 @@ export async function POST(request: Request) {
       data: { name },
     });
     revalidatePath('/admin/metadata');
+    revalidatePath('/'); // Refresh home page to show new category
     return NextResponse.json(newCategory, { status: 201 });
   } catch {
     // Handle potential errors, e.g., unique constraint violation

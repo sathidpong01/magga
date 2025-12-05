@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../../../auth/[...nextauth]/route";
 import prisma from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -56,6 +57,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         approvedMangaId: manga.id
       }
     });
+
+    // 4. Revalidate home page cache to show new manga immediately
+    revalidatePath("/");
+    revalidatePath(`/${manga.slug}`);
 
     return NextResponse.json({ success: true, mangaId: manga.id });
 

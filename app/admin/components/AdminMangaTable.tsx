@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Image from "next/image";
 import {
   Box,
   Typography,
@@ -376,12 +377,15 @@ export default function AdminMangaTable({ mangas, allCategories, allTags }: Prop
                     />
                   </TableCell>
                   <TableCell sx={{ borderBottom: "1px solid rgba(255, 255, 255, 0.08)" }}>
-                    <Box
-                      component="img"
-                      src={manga._cover}
-                      alt={manga.title}
-                      sx={{ width: 40, height: 56, objectFit: "cover", borderRadius: 1, bgcolor: "#262626" }}
-                    />
+                    <Box sx={{ width: 40, height: 56, position: 'relative', borderRadius: 1, overflow: 'hidden', bgcolor: "#262626" }}>
+                      <Image
+                        src={manga._cover}
+                        alt={manga.title}
+                        fill
+                        sizes="40px"
+                        style={{ objectFit: 'cover' }}
+                      />
+                    </Box>
                   </TableCell>
                   <TableCell sx={{ fontWeight: 500, color: "#fafafa", borderBottom: "1px solid rgba(255, 255, 255, 0.08)", maxWidth: 200 }}>
                     <Typography noWrap>{manga.title}</Typography>
@@ -481,12 +485,15 @@ export default function AdminMangaTable({ mangas, allCategories, allTags }: Prop
         <DialogContent>
           {editManga && (
             <Box sx={{ display: "flex", gap: 2, mb: 3, mt: 1 }}>
-              <Box
-                component="img"
-                src={editManga._cover}
-                alt={editManga.title}
-                sx={{ width: 60, height: 84, objectFit: "cover", borderRadius: 1 }}
-              />
+              <Box sx={{ width: 60, height: 84, position: 'relative', borderRadius: 1, overflow: 'hidden' }}>
+                <Image
+                  src={editManga._cover}
+                  alt={editManga.title}
+                  fill
+                  sizes="60px"
+                  style={{ objectFit: 'cover' }}
+                />
+              </Box>
               <Box>
                 <Typography variant="subtitle1" fontWeight={600} sx={{ color: "#fafafa" }}>
                   {editManga.title}

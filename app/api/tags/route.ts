@@ -30,6 +30,7 @@ export async function POST(request: Request) {
       data: { name },
     });
     revalidatePath('/admin/metadata');
+    revalidatePath('/'); // Refresh home page to show new tag
     return NextResponse.json(newTag, { status: 201 });
   } catch {
     return NextResponse.json({ error: 'Tag already exists' }, { status: 409 });
