@@ -18,16 +18,35 @@ const S3 = new S3Client({
 });
 
 export async function GET(req: Request) {
-  // Verify secret to prevent unauthorized calls
+  // Verify secret to prevent unauthorized calls (supports both query param and header)
   const { searchParams } = new URL(req.url);
-  const secret = searchParams.get("secret");
+  const secretParam = searchParams.get("secret");
+  const authHeader = req.headers.get("authorization");
+  const secretHeader = authHeader?.replace("Bearer ", "");
   
-  if (secret !== process.env.CRON_SECRET) {
+  if (secretParam !== process.env.CRON_SECRET && secretHeader !== process.env.CRON_SECRET) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    // 1. Find rejected submissions older than 30 days
+    const results = {
+      rateLimitsDeleted: 0,
+      submissionsDeleted: 0,
+      submissionErrors: 0,
+    };
+
+    // 1. Clean up expired rate limit records (LoginAttempt)
+    try {
+      const { count } = await prisma.loginAttempt.deleteMany({
+        where: { expiresAt: { lt: new Date() } },
+      });
+      results.rateLimitsDeleted = count;
+      console.log(`[Cron Cleanup] Deleted ${count} expired rate limit records`);
+    } catch (err) {
+      console.error("[Cron Cleanup] Rate limit cleanup failed:", err);
+    }
+
+    // 2. Find rejected submissions older than 30 days
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -38,52 +57,47 @@ export async function GET(req: Request) {
       }
     });
 
-    if (oldRejectedSubmissions.length === 0) {
-      return NextResponse.json({ message: "No submissions to clean up" });
-    }
-
-    let deletedCount = 0;
-    let errorCount = 0;
-
-    for (const submission of oldRejectedSubmissions) {
-      try {
-        // Extract file keys from URLs
-        const fileUrls: string[] = [];
-        if (submission.coverImage) fileUrls.push(submission.coverImage);
-        
+    if (oldRejectedSubmissions.length > 0) {
+      for (const submission of oldRejectedSubmissions) {
         try {
-          const pages = JSON.parse(submission.pages as string);
-          if (Array.isArray(pages)) fileUrls.push(...pages);
-        } catch (e) {}
+          // Extract file keys from URLs
+          const fileUrls: string[] = [];
+          if (submission.coverImage) fileUrls.push(submission.coverImage);
+          
+          try {
+            const pages = JSON.parse(submission.pages as string);
+            if (Array.isArray(pages)) fileUrls.push(...pages);
+          } catch {}
 
-        // Delete files from R2
-        for (const url of fileUrls) {
-          if (!url.includes(R2_PUBLIC_URL || '')) continue;
-          
-          const key = url.replace(`${R2_PUBLIC_URL}/`, '');
-          
-          await S3.send(new DeleteObjectCommand({
-            Bucket: R2_BUCKET_NAME,
-            Key: key
-          }));
+          // Delete files from R2
+          for (const url of fileUrls) {
+            if (!url.includes(R2_PUBLIC_URL || '')) continue;
+            
+            const key = url.replace(`${R2_PUBLIC_URL}/`, '');
+            
+            await S3.send(new DeleteObjectCommand({
+              Bucket: R2_BUCKET_NAME,
+              Key: key
+            }));
+          }
+
+          // Delete submission record
+          await prisma.mangaSubmission.delete({
+            where: { id: submission.id }
+          });
+
+          results.submissionsDeleted++;
+        } catch (err) {
+          console.error(`Failed to cleanup submission ${submission.id}:`, err);
+          results.submissionErrors++;
         }
-
-        // Delete submission record
-        await prisma.mangaSubmission.delete({
-          where: { id: submission.id }
-        });
-
-        deletedCount++;
-      } catch (err) {
-        console.error(`Failed to cleanup submission ${submission.id}:`, err);
-        errorCount++;
       }
     }
 
     return NextResponse.json({ 
-      success: true, 
-      deleted: deletedCount, 
-      errors: errorCount 
+      success: true,
+      timestamp: new Date().toISOString(),
+      ...results
     });
 
   } catch (error) {

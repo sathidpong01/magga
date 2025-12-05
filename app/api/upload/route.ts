@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]/route";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
 const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
@@ -24,6 +25,21 @@ export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Rate limiting: 50 uploads per hour per user
+  const userId = (session.user as { id?: string })?.id || session.user?.email || "unknown";
+  const limitCheck = await checkRateLimit(
+    `upload:${userId}`,
+    50, // max 50 uploads
+    60 * 60 * 1000 // per 1 hour
+  );
+
+  if (!limitCheck.allowed) {
+    return NextResponse.json(
+      { error: "Upload limit reached. Please try again later." },
+      { status: 429 }
+    );
   }
 
   try {
@@ -83,9 +99,9 @@ export async function POST(request: Request) {
         }
         // Allow if magic number matches or if it's AVIF (complex signature)
         if (!isValidMagic && file.type !== "image/avif") {
-             // Strict check can be relaxed if needed, but for now warn or block
-             console.warn(`Potential mismatch for ${file.name}: header ${hex}`);
-             // throw new Error("Invalid file signature"); // Uncomment to enforce strictly
+             // Strict check: Reject files with invalid headers to save resources
+             console.warn(`Invalid file signature for ${file.name}: header ${hex}`);
+             throw new Error(`Invalid file signature for ${file.name}`);
         }
 
         let imageData = new Uint8Array(arrayBuffer);
