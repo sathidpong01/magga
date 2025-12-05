@@ -68,9 +68,21 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string;
-        session.user.role = token.role as string;
+      if (session.user && token.id) {
+        // ตรวจสอบว่า user ยังมีอยู่ใน database หรือไม่
+        const userExists = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { id: true, role: true },
+        });
+
+        if (!userExists) {
+          // User ไม่มีใน database แล้ว - return empty session
+          console.warn(`User ${token.id} not found in database, invalidating session`);
+          return { ...session, user: undefined };
+        }
+
+        session.user.id = userExists.id;
+        session.user.role = userExists.role || 'user';
       }
       return session;
     },

@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   Container,
@@ -17,8 +17,11 @@ import {
 } from "@mui/material";
 import GoogleIcon from '@mui/icons-material/Google';
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/";
+
   const [formData, setFormData] = useState({
     username: "",
     email: "",
@@ -56,9 +59,7 @@ export default function RegisterPage() {
         throw new Error(data.error || "Registration failed");
       }
 
-      // Auto login after register? Or redirect to login?
-      // Let's redirect to login for now with a success parameter, or just sign in automatically.
-      // Signing in automatically is better UX.
+      // Auto login after register
       const loginRes = await signIn("credentials", {
         redirect: false,
         username: formData.username,
@@ -66,10 +67,10 @@ export default function RegisterPage() {
       });
 
       if (loginRes?.ok) {
-        router.push("/dashboard/submissions");
+        router.push(callbackUrl);
         router.refresh();
       } else {
-        router.push("/auth/signin?registered=true");
+        router.push(`/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}&registered=true`);
       }
 
     } catch (err) {
@@ -80,7 +81,7 @@ export default function RegisterPage() {
   };
 
   const handleGoogleLogin = () => {
-    signIn("google", { callbackUrl: "/dashboard/submissions" });
+    signIn("google", { callbackUrl });
   };
 
   return (
@@ -216,5 +217,19 @@ export default function RegisterPage() {
         </Box>
       </Paper>
     </Container>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <Container component="main" maxWidth="xs" sx={{ mt: 8, display: 'flex', justifyContent: 'center' }}>
+          <CircularProgress sx={{ color: "#fbbf24" }} />
+        </Container>
+      }
+    >
+      <RegisterForm />
+    </Suspense>
   );
 }

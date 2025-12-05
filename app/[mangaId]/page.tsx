@@ -15,6 +15,8 @@ import Image from "next/image";
 import MangaViewRating from "@/app/components/features/manga/MangaViewRating";
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import StarIcon from '@mui/icons-material/Star';
+import { MangaCommentSection } from "@/app/components/features/comments/MangaComments";
+import MangaReader from "@/app/components/features/comments/MangaReader";
 
 type MangaPageProps = {
   params: Promise<{
@@ -355,30 +357,16 @@ export default async function MangaPage({ params }: MangaPageProps) {
 
       {/* Main Content Area */}
       <Container maxWidth="lg" sx={{ mt: 6 }}>
-        {/* Pages / Reader */}
-        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0 }}>
-          {pages.map((pageUrl, index) => (
-            <Box
-              key={index}
-              sx={{
-                position: "relative",
-                width: "100%",
-                maxWidth: "1000px", // Limit max width for readability on ultra-wide screens
-                lineHeight: 0, // Remove gap between images
-              }}
-            >
-              <Image
-                src={pageUrl}
-                alt={`Page ${index + 1} of ${manga.title}`}
-                width={0}
-                height={0}
-                sizes="100vw"
-                style={{ width: "100%", height: "auto", display: "block" }}
-                priority={index < 2} // Prioritize first 2 pages
-                loading={index < 2 ? "eager" : "lazy"}
-              />
-            </Box>
-          ))}
+        {/* Pages / Reader with scroll tracking */}
+        <MangaReader 
+          mangaId={manga.id} 
+          mangaTitle={manga.title} 
+          pages={pages} 
+        />
+
+        {/* General Comments Section */}
+        <Box sx={{ mt: 6, maxWidth: "800px", mx: "auto", mr: { xs: "auto", md: "340px" } }}>
+          <MangaCommentSection mangaId={manga.id} />
         </Box>
       </Container>
     </Box>

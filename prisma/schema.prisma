@@ -24,17 +24,18 @@ model Manga {
   isHidden      Boolean  @default(false)
 
   // --- View Count & Rating ---
-  viewCount     Int     @default(0)
-  ratingSum     Int     @default(0)
-  ratingCount   Int     @default(0)
-  averageRating Float   @default(0)
+  viewCount     Int   @default(0)
+  ratingSum     Int   @default(0)
+  ratingCount   Int   @default(0)
+  averageRating Float @default(0)
 
   // --- ความสัมพันธ์ ---
   categoryId String?
-  category   Category? @relation(fields: [categoryId], references: [id])
-  tags       Tag[]     @relation
+  category   Category?        @relation(fields: [categoryId], references: [id])
+  tags       Tag[]            @relation
   ratings    MangaRating[]
   submission MangaSubmission?
+  comments   Comment[]
 }
 
 // สำหรับหมวดหมู่
@@ -65,25 +66,27 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts      Account[]
-  sessions      Session[]
-  submissions   MangaSubmission[]
+  accounts        Account[]
+  sessions        Session[]
+  submissions     MangaSubmission[]
   submissionLimit UserSubmissionLimit?
+  comments        Comment[]
+  commentVotes    CommentVote[]
 }
 
 model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?
-  access_token       String?
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?
-  session_state      String?
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -107,33 +110,33 @@ model VerificationToken {
 }
 
 model MangaSubmission {
-  id              String   @id @default(cuid())
-  userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  title           String
-  slug            String?
-  description     String?
-  coverImage      String
-  pages           String   // JSON string
-  categoryId      String?
-  category        Category? @relation(fields: [categoryId], references: [id])
-  tags            MangaSubmissionTag[]
-  authorCredits   String?  // JSON string
-  extraMetadata   String?  // JSON string for flexible metadata
-  
-  status          String   @default("PENDING") // PENDING, UNDER_REVIEW, APPROVED, REJECTED
-  submittedAt     DateTime @default(now())
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  title         String
+  slug          String?
+  description   String?
+  coverImage    String
+  pages         String // JSON string
+  categoryId    String?
+  category      Category?            @relation(fields: [categoryId], references: [id])
+  tags          MangaSubmissionTag[]
+  authorCredits String? // JSON string
+  extraMetadata String? // JSON string for flexible metadata
+
+  status          String    @default("PENDING") // PENDING, UNDER_REVIEW, APPROVED, REJECTED
+  submittedAt     DateTime  @default(now())
   reviewedAt      DateTime?
   reviewedBy      String?
   reviewNote      String?
   rejectionReason String?
-  
-  approvedMangaId String?  @unique
-  approvedManga   Manga?   @relation(fields: [approvedMangaId], references: [id])
-  
-  updatedAt       DateTime @updatedAt
-  
+
+  approvedMangaId String? @unique
+  approvedManga   Manga?  @relation(fields: [approvedMangaId], references: [id])
+
+  updatedAt DateTime @updatedAt
+
   @@index([userId])
   @@index([status])
   @@index([submittedAt])
@@ -145,7 +148,7 @@ model MangaSubmissionTag {
   submission   MangaSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
   tagId        String
   tag          Tag             @relation(fields: [tagId], references: [id])
-  
+
   @@unique([submissionId, tagId])
 }
 
@@ -156,7 +159,7 @@ model UserSubmissionLimit {
   submissionCount Int      @default(0)
   windowStart     DateTime @default(now())
   lastSubmitAt    DateTime @default(now())
-  
+
   @@index([userId])
 }
 
@@ -164,9 +167,9 @@ model UserSubmissionLimit {
 model MangaRating {
   id          String   @id @default(cuid())
   mangaId     String
-  fingerprint String   // Browser fingerprint (hashed)
-  ipAddress   String?  // IP Address สำรอง (hashed)
-  rating      Int      // คะแนน 1-5
+  fingerprint String // Browser fingerprint (hashed)
+  ipAddress   String? // IP Address สำรอง (hashed)
+  rating      Int // คะแนน 1-5
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -187,4 +190,55 @@ model SystemConfig {
   key         String  @id
   value       String
   description String?
+}
+
+// ====== Comment System Models ======
+
+// Comment Model - รองรับทั้ง general และ per-image comments
+model Comment {
+  id       String  @id @default(cuid())
+  content  String // เนื้อหาคอมเมนต์
+  imageUrl String? // รูปแนบ (optional)
+
+  // Relationship
+  mangaId String
+  manga   Manga  @relation(fields: [mangaId], references: [id], onDelete: Cascade)
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Per-image index (null = general comment, 0-N = specific page)
+  imageIndex Int?
+
+  // Parent for nested replies (phase 2)
+  parentId String?
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  Comment[] @relation("CommentReplies")
+
+  // Vote summary (cached for performance)
+  voteScore Int @default(0)
+
+  votes CommentVote[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([mangaId])
+  @@index([mangaId, imageIndex])
+  @@index([userId])
+}
+
+// Vote Model - เก็บ vote แยกเพื่อ track ว่าใครโหวตแล้ว
+model CommentVote {
+  id    String @id @default(cuid())
+  value Int // +1 or -1
+
+  commentId String
+  comment   Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([commentId, userId]) // 1 vote per user per comment
+  @@index([commentId])
 }
