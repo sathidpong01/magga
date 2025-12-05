@@ -224,8 +224,7 @@ function LazyPageWithComments({
             display: "flex",
             flexDirection: "column",
             marginLeft: "auto",
-            marginRight: 10, // 24px เว้นขอบขวา
-            pointerEvents: "auto",
+            marginRight: 10, 
           }}
         >
           <Box sx={{ p: 1.5, flexShrink: 0 }}>

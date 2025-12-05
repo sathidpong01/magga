@@ -148,7 +148,7 @@ function CommentItem({ comment, mangaId, imageIndex, onRefresh, isReply = false 
   };
 
   return (
-    <Box sx={{ display: "flex", gap: 1.5, mb: 1, pl: isReply ? 5 : 0 }}>
+    <Box sx={{ display: "flex", gap: 1, mb: 0.5, pl: isReply ? 5 : 0 }}>
       {/* Avatar */}
       <Avatar
         src={comment.user.image || undefined}
