@@ -2,6 +2,7 @@
 
 import { Box, Container, Typography, Link, Button, Grid, Divider } from "@mui/material";
 import NextLink from "next/link";
+import Image from "next/image";
 import { useSession, signIn } from "next-auth/react";
 
 export default function Footer() {
@@ -28,14 +29,14 @@ export default function Footer() {
       <Container maxWidth="lg">
         <Grid container spacing={4}>
           {/* Policy Links */}
-          <Grid item xs={12} sm={4}>
+          <Grid item xs={12} sm={6}>
             <Typography 
-              variant="subtitle2" 
-              sx={{ color: '#fafafa', fontWeight: 700, mb: 2 }}
+              variant="subtitle1" 
+              sx={{ color: '#fafafa', fontWeight: 700, mb: 2, fontSize: '1rem' }}
             >
               นโยบาย
             </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
               {policyLinks.map((link) => (
                 <Link
                   key={link.href}
@@ -44,7 +45,7 @@ export default function Footer() {
                   underline="hover"
                   sx={{ 
                     color: '#a3a3a3',
-                    fontSize: '0.875rem',
+                    fontSize: '0.95rem',
                     '&:hover': { color: '#fbbf24' }
                   }}
                 >
@@ -54,63 +55,24 @@ export default function Footer() {
             </Box>
           </Grid>
 
-          {/* Quick Links */}
-          <Grid item xs={12} sm={4}>
-            <Typography 
-              variant="subtitle2" 
-              sx={{ color: '#fafafa', fontWeight: 700, mb: 2 }}
-            >
-              ลิงก์ด่วน
-            </Typography>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <Link
-                component={NextLink}
-                href="/"
-                underline="hover"
-                sx={{ color: '#a3a3a3', fontSize: '0.875rem', '&:hover': { color: '#fbbf24' } }}
+          {/* Logo & Description */}
+          <Grid item xs={12} sm={6}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+              <Image 
+                src="/logo.svg" 
+                alt="MAGGA Logo" 
+                width={32} 
+                height={32}
+              />
+              <Typography 
+                variant="h6" 
+                sx={{ color: '#fafafa', fontWeight: 700, fontSize: '1.1rem' }}
               >
-                หน้าแรก
-              </Link>
-              <Link
-                component={NextLink}
-                href="/changelog"
-                underline="hover"
-                sx={{ color: '#a3a3a3', fontSize: '0.875rem', '&:hover': { color: '#fbbf24' } }}
-              >
-                Changelog
-              </Link>
-              {!session && (
-                <Link
-                  component="button"
-                  onClick={() => signIn()}
-                  underline="hover"
-                  sx={{ 
-                    color: '#a3a3a3', 
-                    fontSize: '0.875rem', 
-                    textAlign: 'left',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    p: 0,
-                    '&:hover': { color: '#fbbf24' } 
-                  }}
-                >
-                  เข้าสู่ระบบ
-                </Link>
-              )}
+                MAGGA
+              </Typography>
             </Box>
-          </Grid>
-
-          {/* About */}
-          <Grid item xs={12} sm={4}>
-            <Typography 
-              variant="subtitle2" 
-              sx={{ color: '#fafafa', fontWeight: 700, mb: 2 }}
-            >
-              เกี่ยวกับ
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#737373', fontSize: '0.8rem', lineHeight: 1.6 }}>
-              MAGGA เป็นแพลตฟอร์มอ่านการ์ตูน Furry แปลไทย เนื้อหาทั้งหมดเป็นลิขสิทธิ์ของเจ้าของผลงาน
+            <Typography variant="body1" sx={{ color: '#737373', fontSize: '0.95rem', lineHeight: 1.7 }}>
+              เว็บอ่านโดจินแปลไทย 18+ แนว Furry ที่ครบเครื่องที่สุด รวบรวมมังงะและโดจินชิ Furry สายหมี สายเคโมะ หลากหลายแนว แปลไทยคุณภาพ อ่านฟรีออนไลน์
             </Typography>
           </Grid>
         </Grid>
@@ -119,18 +81,54 @@ export default function Footer() {
 
         {/* Copyright */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
-          <Typography variant="body2" sx={{ color: '#525252', fontSize: '0.75rem' }}>
+          <Typography variant="body2" sx={{ color: '#525252', fontSize: '0.85rem' }}>
             Copyright © {new Date().getFullYear()} MAGGA. All rights reserved.
           </Typography>
-          <Link 
-            href="https://www.facebook.com/nightsu9/" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            underline="hover"
-            sx={{ color: '#525252', fontSize: '0.75rem', '&:hover': { color: '#a3a3a3' } }}
-          >
-            Create by Nightsu ❤️
-          </Link>
+          
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            <Link
+              component={NextLink}
+              href="/changelog"
+              underline="hover"
+              sx={{ 
+                color: '#fbbf24',
+                fontWeight: 600,
+                fontSize: '0.9rem',
+                '&:hover': {
+                  color: '#fcd34d',
+                }
+              }}
+            >
+              Changelog
+            </Link>
+
+            {!session && (
+              <Button 
+                onClick={() => signIn()}
+                variant="text" 
+                size="small"
+                sx={{ 
+                  color: "#525252", 
+                  fontSize: "0.8rem",
+                  minWidth: "auto",
+                  p: 0,
+                  "&:hover": { color: "#a3a3a3", bgcolor: "transparent" }
+                }}
+              >
+                Sign In
+              </Button>
+            )}
+
+            <Link 
+              href="https://www.facebook.com/nightsu9/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              underline="hover"
+              sx={{ color: '#525252', fontSize: '0.85rem', '&:hover': { color: '#a3a3a3' } }}
+            >
+              Create by Nightsu ❤️
+            </Link>
+          </Box>
         </Box>
       </Container>
     </Box>
