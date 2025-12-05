@@ -25,6 +25,7 @@ import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import LogoutIcon from "@mui/icons-material/Logout";
 import PersonIcon from "@mui/icons-material/Person";
 import SettingsIcon from "@mui/icons-material/Settings";
+import ListAltIcon from "@mui/icons-material/ListAlt";
 
 export default function Header() {
   const { data: session } = useSession();
@@ -76,7 +77,7 @@ export default function Header() {
               height={32}
               style={{ 
                 height: "32px", 
-                width: "auto",
+                width: "100px",
                 transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                 filter: "drop-shadow(0 0 0 rgba(255, 255, 255, 0))",
                 transform: "translateX(0)",
@@ -135,6 +136,11 @@ export default function Header() {
                 href={session ? "/submit" : "/api/auth/signin"}
                 variant="contained"
                 startIcon={<CloudUploadIcon />}
+                onClick={() => {
+                  console.log("=== ฝากลงมังงะ Button Clicked ===");
+                  console.log("Session:", session);
+                  console.log("Navigating to:", session ? "/submit" : "/api/auth/signin");
+                }}
                 sx={{ 
                   bgcolor: pathname === "/submit" ? "#f59e0b" : "#fbbf24", 
                   color: "black",
@@ -233,6 +239,13 @@ export default function Header() {
                   <MenuItem onClick={handleMenuClose} component={Link} href="/submit">
                     <ListItemIcon><CloudUploadIcon sx={{ color: "#fbbf24" }} /></ListItemIcon>
                     ฝากลงมังงะ
+                  </MenuItem>
+                )}
+
+                {!isAdmin && (
+                  <MenuItem onClick={handleMenuClose} component={Link} href="/dashboard">
+                    <ListItemIcon><ListAltIcon sx={{ color: "#60a5fa" }} /></ListItemIcon>
+                    รายการที่ฝากลง
                   </MenuItem>
                 )}
 

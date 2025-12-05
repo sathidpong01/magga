@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import {
   Box,
@@ -25,13 +25,12 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
-import NotificationModal from "../admin/components/NotificationModal";
-import UploadModal from "../admin/components/UploadModal";
-import { SortableItem } from "../admin/components/SortableItem";
-import UploadProgress, { UploadFileStatus } from "../components/ui/UploadProgress";
+import NotificationModal from "@/app/admin/components/NotificationModal";
+import UploadModal from "@/app/admin/components/UploadModal";
+import { SortableItem } from "@/app/admin/components/SortableItem";
+import UploadProgress, { UploadFileStatus } from "@/app/components/ui/UploadProgress";
 import { useSession } from "next-auth/react";
 
-// DnD Kit Imports
 import {
   DndContext,
   closestCenter,
@@ -58,11 +57,17 @@ type PageItem = {
   preview: string;
 };
 
-export default function SubmitMangaPage() {
+type AuthorCredit = { url: string; label: string; icon: string };
+
+export default function EditSubmissionPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = use(params);
+  const submissionId = resolvedParams.id;
+  
   const router = useRouter();
   const { data: session, status } = useSession();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [loadingSubmission, setLoadingSubmission] = useState(true);
   
   // Data State
   const [categories, setCategories] = useState<Category[]>([]);
@@ -88,20 +93,10 @@ export default function SubmitMangaPage() {
   const [description, setDescription] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
-  
-  // New Category/Tag State
-  const [newCategoryName, setNewCategoryName] = useState("");
-  const [isCreatingCategory, setIsCreatingCategory] = useState(false);
-
-  // Page State
   const [pageItems, setPageItems] = useState<PageItem[]>([]);
-
-  // Cover State
   const [coverItem, setCoverItem] = useState<PageItem | null>(null);
-
-  // Author Credits State
-  type AuthorCredit = { url: string; label: string; icon: string };
   const [credits, setCredits] = useState<AuthorCredit[]>([]);
+  const [submissionStatus, setSubmissionStatus] = useState("");
 
   // DnD Sensors
   const sensors = useSensors(
@@ -113,7 +108,7 @@ export default function SubmitMangaPage() {
 
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/api/auth/signin?callbackUrl=/submit");
+      router.push("/api/auth/signin?callbackUrl=/dashboard/submissions");
     }
   }, [status, router]);
 
@@ -136,9 +131,68 @@ export default function SubmitMangaPage() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    const fetchSubmission = async () => {
+      try {
+        const res = await fetch(`/api/submissions/${submissionId}`);
+        if (!res.ok) {
+          if (res.status === 403) {
+            router.push("/dashboard/submissions");
+            return;
+          }
+          throw new Error("Failed to fetch submission");
+        }
+        
+        const data = await res.json();
+        setTitle(data.title || "");
+        setSlug(data.slug || "");
+        setDescription(data.description || "");
+        setCategoryId(data.categoryId || "");
+        setSelectedTags(data.tags || []);
+        setSubmissionStatus(data.status);
+        
+        // Set cover
+        if (data.coverImage) {
+          setCoverItem({
+            id: 'cover-existing',
+            type: 'url',
+            content: data.coverImage,
+            preview: data.coverImage
+          });
+        }
+        
+        // Set pages
+        if (data.pages && Array.isArray(data.pages)) {
+          setPageItems(data.pages.map((url: string, index: number) => ({
+            id: `existing-${index}-${Date.now()}`,
+            type: 'url',
+            content: url,
+            preview: url
+          })));
+        }
+        
+        // Set credits
+        if (data.authorCredits) {
+          try {
+            setCredits(JSON.parse(data.authorCredits));
+          } catch {}
+        }
+        
+      } catch (err) {
+        console.error("Failed to fetch submission:", err);
+        setError("Failed to load submission");
+      } finally {
+        setLoadingSubmission(false);
+      }
+    };
+    
+    if (session && submissionId) {
+      fetchSubmission();
+    }
+  }, [session, submissionId, router]);
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-
     if (over && active.id !== over.id) {
       setPageItems((items) => {
         const oldIndex = items.findIndex((item) => item.id === active.id);
@@ -185,16 +239,6 @@ export default function SubmitMangaPage() {
     setCoverItem(null);
   };
 
-  useEffect(() => {
-    return () => {
-      pageItems.forEach(item => {
-        if (item.type === 'file') URL.revokeObjectURL(item.preview);
-      });
-      if (coverItem?.type === 'file') URL.revokeObjectURL(coverItem.preview);
-    };
-  }, []);
-
-  // Credit Handlers
   const handleAddCredit = () => setCredits([...credits, { url: "", label: "", icon: "" }]);
   const handleRemoveCredit = (index: number) => {
     const newCredits = [...credits];
@@ -206,26 +250,8 @@ export default function SubmitMangaPage() {
     newCredits[index] = { ...newCredits[index], [field]: value };
     setCredits(newCredits);
   };
-  const handleFetchCreditInfo = async (index: number) => {
-    const url = credits[index].url;
-    if (!url) return;
-    try {
-      const res = await fetch(`/api/metadata?url=${encodeURIComponent(url)}`);
-      if (!res.ok) throw new Error("Failed to fetch metadata");
-      const data = await res.json();
-      const newCredits = [...credits];
-      newCredits[index] = {
-        ...newCredits[index],
-        label: data.title || newCredits[index].label,
-        icon: data.icon || newCredits[index].icon,
-      };
-      setCredits(newCredits);
-    } catch (error) {
 
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, submitForReview: boolean = false) => {
     e.preventDefault();
     if (!title || !coverItem) {
       setError("Title and Cover Image are required.");
@@ -240,7 +266,7 @@ export default function SubmitMangaPage() {
     setError("");
 
     try {
-      // 1. Upload Cover
+      // 1. Upload Cover if file
       let finalCoverUrl = "";
       if (coverItem.type === 'file') {
         const fd = new FormData();
@@ -253,12 +279,11 @@ export default function SubmitMangaPage() {
         finalCoverUrl = coverItem.content as string;
       }
 
-      // 2. Upload Page Files with Progress
+      // 2. Upload Page Files
       const fileItems = pageItems.filter(p => p.type === 'file');
       const filesToUpload = fileItems.filter(item => !uploadedUrls[item.id]);
 
       if (filesToUpload.length > 0) {
-        // Initialize progress state
         setUploadFiles(prev => {
           const existing = new Map(prev.map(f => [f.id, f]));
           const newFiles = filesToUpload.map(item => ({
@@ -275,7 +300,6 @@ export default function SubmitMangaPage() {
           return merged;
         });
 
-        // Upload with XHR for progress tracking
         const uploadFile = (item: PageItem) => {
           return new Promise<void>((resolve, reject) => {
             const xhr = new XMLHttpRequest();
@@ -324,34 +348,11 @@ export default function SubmitMangaPage() {
           });
         };
 
-        // Upload concurrently (3 at a time)
-        const queue = [...filesToUpload];
-        const activeUploads = new Set<Promise<void>>();
-        const CONCURRENCY = 3;
-        let hasErrors = false;
-
-        while (queue.length > 0 || activeUploads.size > 0) {
-          while (queue.length > 0 && activeUploads.size < CONCURRENCY) {
-            const item = queue.shift()!;
-            const promise = uploadFile(item).then(() => {
-              activeUploads.delete(promise);
-            }).catch(() => {
-              activeUploads.delete(promise);
-              hasErrors = true;
-            });
-            activeUploads.add(promise);
-          }
-          if (activeUploads.size > 0) {
-            await Promise.race(activeUploads);
-          }
-        }
-
-        if (hasErrors) {
-          throw new Error("Some files failed to upload. Please retry.");
+        for (const item of filesToUpload) {
+          await uploadFile(item);
         }
       }
 
-      // Reconstruct pages with uploaded URLs
       const finalPages = pageItems.map(item => {
         if (item.type === 'url') return item.content as string;
         return uploadedUrls[item.id];
@@ -362,37 +363,34 @@ export default function SubmitMangaPage() {
       }
 
       const selectedTagIds = selectedTags.map((t) => t.id);
-      
-      // Handle new tags if any (simplified: assume only existing for now or handle in API)
-      // For this implementation, we'll send IDs. If we want to support creating new tags on the fly,
-      // we'd need to handle that. Let's assume user can only select existing or we send names.
-      // The current API expects IDs.
 
       const body = {
         title,
-        slug: slug || undefined, // Optional, auto-generated if empty
         description,
         coverImage: finalCoverUrl,
         pages: finalPages,
         categoryId: categoryId || null,
         tagIds: selectedTagIds,
         authorCredits: JSON.stringify(credits),
+        status: submitForReview ? "PENDING" : "DRAFT",
       };
 
-      const response = await fetch("/api/submissions", {
-        method: "POST",
+      const response = await fetch(`/api/submissions/${submissionId}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
 
       if (!response.ok) {
         const res = await response.json();
-        throw new Error(res.error || "Failed to submit manga");
+        throw new Error(res.error || "Failed to update submission");
       }
       
       setNotificationType('success');
-      setNotificationTitle('Submission Received');
-      setNotificationMessage('Your manga has been submitted successfully and is pending review.');
+      setNotificationTitle(submitForReview ? 'Submitted for Review' : 'Saved');
+      setNotificationMessage(submitForReview 
+        ? 'Your submission has been sent for review.' 
+        : 'Your changes have been saved.');
       setNotificationOpen(true);
 
     } catch (err) {
@@ -406,16 +404,13 @@ export default function SubmitMangaPage() {
     }
   };
 
-  const handleCloseNotification = () => {
-    setNotificationOpen(false);
-  };
-
+  const handleCloseNotification = () => setNotificationOpen(false);
   const handleGoToDashboard = () => {
     setNotificationOpen(false);
     router.push("/dashboard/submissions");
   };
 
-  if (status === "loading" || loadingData) {
+  if (status === "loading" || loadingData || loadingSubmission) {
     return (
       <Container maxWidth="lg" sx={{ py: 8, display: 'flex', justifyContent: 'center' }}>
         <CircularProgress />
@@ -424,20 +419,29 @@ export default function SubmitMangaPage() {
   }
 
   if (status === "unauthenticated") {
-    return null; // Will redirect
+    return null;
+  }
+
+  const canEdit = submissionStatus === 'PENDING' || submissionStatus === 'DRAFT' || submissionStatus === 'CHANGE_REQUESTED';
+
+  if (!canEdit) {
+    return (
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Alert severity="warning">ไม่สามารถแก้ไข submission ในสถานะนี้ได้</Alert>
+      </Container>
+    );
   }
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box component="form" onSubmit={handleSubmit}>
+      <Box component="form" onSubmit={(e) => handleSubmit(e, false)}>
         <Grid container spacing={3}>
-          {/* Header */}
           <Grid item xs={12} sx={{ mb: 2 }}>
             <Typography variant="h4" component="h1" sx={{ fontWeight: 700, mb: 1 }}>
-              Submit Manga
+              Edit Submission
             </Typography>
             <Typography variant="body1" color="text.secondary">
-              Share your manga with the community. All submissions are reviewed before publishing.
+              แก้ไขรายละเอียด submission ของคุณ
             </Typography>
           </Grid>
 
@@ -447,7 +451,7 @@ export default function SubmitMangaPage() {
             </Grid>
           )}
 
-          {/* Left Column: General Info */}
+          {/* General Info */}
           <Grid item xs={12} md={7}>
             <Paper elevation={0} sx={{ p: 3, borderRadius: 1, bgcolor: '#171717' }}>
               <Typography variant="h6" component="h3" gutterBottom sx={{ mb: 3, fontSize: '1rem', color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 1 }}>
@@ -467,41 +471,6 @@ export default function SubmitMangaPage() {
                 </Grid>
                 <Grid item xs={12}>
                   <TextField
-                    label="Slug (Optional)"
-                    value={slug}
-                    onChange={(e) => setSlug(e.target.value)}
-                    fullWidth
-                    variant="filled"
-                    helperText={slug ? `Preview: /manga/${slug}` : "Leave empty to auto-generate from title"}
-                    InputProps={{
-                      disableUnderline: true,
-                      sx: { borderRadius: 1 },
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <Tooltip title="Generate from Title">
-                            <IconButton
-                              aria-label="Generate slug"
-                              onClick={() => {
-                                const newSlug = title
-                                  .toLowerCase()
-                                  .trim()
-                                  .replace(/[\s]+/g, "-")
-                                  .replace(/[^\w\-\u0E00-\u0E7F]+/g, "")
-                                  .replace(/\-\-+/g, "-");
-                                setSlug(newSlug);
-                              }}
-                              edge="end"
-                            >
-                              <AutoFixHighIcon />
-                            </IconButton>
-                          </Tooltip>
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
                     label="Description"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
@@ -517,19 +486,14 @@ export default function SubmitMangaPage() {
                     <InputLabel id="category-select-label">Category</InputLabel>
                     <Select
                       labelId="category-select-label"
-                      id="category"
                       value={categoryId}
                       onChange={(e) => setCategoryId(e.target.value)}
                       disableUnderline
                       sx={{ borderRadius: 1 }}
                     >
-                      <MenuItem value="">
-                        <em>None</em>
-                      </MenuItem>
+                      <MenuItem value=""><em>None</em></MenuItem>
                       {categories.map((cat) => (
-                        <MenuItem key={cat.id} value={cat.id}>
-                          {cat.name}
-                        </MenuItem>
+                        <MenuItem key={cat.id} value={cat.id}>{cat.name}</MenuItem>
                       ))}
                     </Select>
                   </FormControl>
@@ -537,13 +501,10 @@ export default function SubmitMangaPage() {
                 <Grid item xs={12} md={6}>
                   <Autocomplete
                     multiple
-                    id="tags-autocomplete"
                     options={tags}
                     getOptionLabel={(option) => option.name}
                     value={selectedTags}
-                    onChange={(event, newValue) => {
-                      setSelectedTags(newValue);
-                    }}
+                    onChange={(event, newValue) => setSelectedTags(newValue)}
                     isOptionEqualToValue={(option, value) => option.id === value.id}
                     renderInput={(params) => (
                       <TextField
@@ -560,7 +521,7 @@ export default function SubmitMangaPage() {
             </Paper>
           </Grid>
 
-          {/* Right Column: Media Assets */}
+          {/* Media Assets */}
           <Grid item xs={12} md={5}>
             <Paper elevation={0} sx={{ p: 3, borderRadius: 1, bgcolor: '#171717', height: '100%' }}>
               <Typography variant="h6" component="h3" gutterBottom sx={{ mb: 3, fontSize: '1rem', color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 1 }}>
@@ -575,31 +536,15 @@ export default function SubmitMangaPage() {
                   <Button
                     variant="outlined"
                     fullWidth
-                    onClick={() => {
-                      setUploadTarget('cover');
-                      setUploadModalOpen(true);
-                    }}
-                    sx={{ 
-                      height: 120, 
-                      borderStyle: 'dashed', 
-                      borderColor: 'rgba(255,255,255,0.2)',
-                      borderRadius: 1,
-                      color: 'text.secondary',
-                      flexDirection: 'column',
-                      gap: 1
-                    }}
+                    onClick={() => { setUploadTarget('cover'); setUploadModalOpen(true); }}
+                    sx={{ height: 120, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,0.2)', borderRadius: 1, color: 'text.secondary', flexDirection: 'column', gap: 1 }}
                   >
                     <AddPhotoAlternateIcon sx={{ fontSize: 40, opacity: 0.5 }} />
                     Add Cover Image
                   </Button>
                 ) : (
                   <Box sx={{ position: 'relative', width: '100%', maxWidth: 200, margin: '0 auto', borderRadius: 1, overflow: 'hidden', boxShadow: 3 }}>
-                    <Box 
-                      component="img" 
-                      src={coverItem.preview} 
-                      alt="Cover preview" 
-                      sx={{ width: '100%', height: 'auto', display: 'block' }} 
-                    />
+                    <Box component="img" src={coverItem.preview} alt="Cover preview" sx={{ width: '100%', height: 'auto', display: 'block' }} />
                     <IconButton 
                       aria-label="Remove cover image"
                       size="small" 
@@ -619,25 +564,15 @@ export default function SubmitMangaPage() {
                   <Button 
                     size="small" 
                     startIcon={<AddPhotoAlternateIcon />}
-                    onClick={() => {
-                      setUploadTarget('pages');
-                      setUploadModalOpen(true);
-                    }}
+                    onClick={() => { setUploadTarget('pages'); setUploadModalOpen(true); }}
                     sx={{ color: '#fbbf24' }}
                   >
                     Add Pages
                   </Button>
                 </Box>
 
-                <DndContext 
-                  sensors={sensors} 
-                  collisionDetection={closestCenter} 
-                  onDragEnd={handleDragEnd}
-                >
-                  <SortableContext 
-                    items={pageItems.map(p => p.id)} 
-                    strategy={rectSortingStrategy}
-                  >
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                  <SortableContext items={pageItems.map(p => p.id)} strategy={rectSortingStrategy}>
                     <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: 1 }}>
                       {pageItems.map((item, index) => (
                         <SortableItem 
@@ -653,13 +588,7 @@ export default function SubmitMangaPage() {
                 </DndContext>
 
                 {pageItems.length === 0 && (
-                  <Box sx={{ 
-                    p: 4, 
-                    border: '1px dashed rgba(255,255,255,0.1)', 
-                    borderRadius: 1, 
-                    textAlign: 'center',
-                    color: 'text.secondary'
-                  }}>
+                  <Box sx={{ p: 4, border: '1px dashed rgba(255,255,255,0.1)', borderRadius: 1, textAlign: 'center', color: 'text.secondary' }}>
                     <Typography variant="body2">No pages added yet.</Typography>
                   </Box>
                 )}
@@ -667,7 +596,7 @@ export default function SubmitMangaPage() {
             </Paper>
           </Grid>
 
-          {/* Bottom: Author Credits */}
+          {/* Author Credits */}
           <Grid item xs={12}>
             <Paper elevation={0} sx={{ p: 3, borderRadius: 1, bgcolor: '#171717' }}>
               <Typography variant="h6" component="h3" gutterBottom sx={{ mb: 3, fontSize: '1rem', color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 1 }}>
@@ -685,19 +614,7 @@ export default function SubmitMangaPage() {
                           fullWidth
                           size="small"
                           variant="filled"
-                          InputProps={{ 
-                            disableUnderline: true, 
-                            sx: { borderRadius: 1 },
-                            endAdornment: (
-                              <InputAdornment position="end">
-                                <Tooltip title="Auto-fetch Title & Icon">
-                                  <IconButton aria-label="Fetch credit info" onClick={() => handleFetchCreditInfo(index)} edge="end" disabled={!credit.url}>
-                                    <AutoFixHighIcon />
-                                  </IconButton>
-                                </Tooltip>
-                              </InputAdornment>
-                            )
-                          }}
+                          InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
                         />
                       </Grid>
                       <Grid item xs={12} sm={3}>
@@ -712,20 +629,15 @@ export default function SubmitMangaPage() {
                         />
                       </Grid>
                       <Grid item xs={10} sm={3}>
-                        <Stack direction="row" spacing={1} alignItems="center">
-                          <TextField
-                            label="Icon URL"
-                            value={credit.icon}
-                            onChange={(e) => handleCreditChange(index, "icon", e.target.value)}
-                            fullWidth
-                            size="small"
-                            variant="filled"
-                            InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
-                          />
-                          {credit.icon && (
-                            <Box component="img" src={credit.icon} sx={{ width: 32, height: 32, borderRadius: "50%" }} />
-                          )}
-                        </Stack>
+                        <TextField
+                          label="Icon URL"
+                          value={credit.icon}
+                          onChange={(e) => handleCreditChange(index, "icon", e.target.value)}
+                          fullWidth
+                          size="small"
+                          variant="filled"
+                          InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
+                        />
                       </Grid>
                       <Grid item xs={2} sm={1} sx={{ display: 'flex', alignItems: 'center' }}>
                         <IconButton aria-label="Remove credit" color="error" onClick={() => handleRemoveCredit(index)}>
@@ -746,7 +658,7 @@ export default function SubmitMangaPage() {
             </Paper>
           </Grid>
 
-          {/* Submit Button */}
+          {/* Submit Buttons */}
           <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
             <Button
               variant="text"
@@ -759,8 +671,16 @@ export default function SubmitMangaPage() {
             </Button>
             <Button
               type="submit"
+              variant="outlined"
+              disabled={isSubmitting}
+              sx={{ borderRadius: 1, borderColor: 'rgba(255,255,255,0.2)', color: 'text.secondary' }}
+            >
+              Save as Draft
+            </Button>
+            <Button
               variant="contained"
               disabled={isSubmitting}
+              onClick={(e) => handleSubmit(e, true)}
               startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : null}
               sx={{ 
                 borderRadius: 1, 
@@ -771,7 +691,7 @@ export default function SubmitMangaPage() {
                 '&:hover': { bgcolor: '#f59e0b' }
               }}
             >
-              {isSubmitting ? "Submitting..." : "Submit Manga"}
+              {isSubmitting ? "Saving..." : "Submit for Review"}
             </Button>
           </Grid>
         </Grid>
@@ -802,7 +722,7 @@ export default function SubmitMangaPage() {
         }}
       />
 
-      {/* Upload Progress Indicator */}
+      {/* Upload Progress */}
       <UploadProgress files={uploadFiles} />
     </Container>
   );

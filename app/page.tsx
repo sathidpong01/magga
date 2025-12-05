@@ -9,22 +9,28 @@ type Props = {
   searchParams: Promise<{
     search?: string;
     categoryId?: string;
-    tagIds?: string | string[];
+    tags?: string | string[]; // Changed from tagIds to tags (names)
     sort?: string;
   }>;
 };
 
-// ISR: Revalidate every 60 seconds for frequently changing content
-export const revalidate = 60;
-export const dynamic = 'force-static';
+// Dynamic rendering to support search/filter params
+export const dynamic = 'force-dynamic';
 
 export default async function Home({ searchParams }: Props) {
   const params = await searchParams;
-  const { search, categoryId, tagIds, sort } = params;
+  const { search, categoryId, tags: tagNames, sort } = params;
 
   // Fetch Categories and Tags for the filter component
   const categories = await prisma.category.findMany({ orderBy: { name: "asc" } });
-  const tags = await prisma.tag.findMany({ orderBy: { name: "asc" } });
+  
+  // Only fetch tags that are used by at least one manga
+  const tags = await prisma.tag.findMany({ 
+    where: {
+      mangas: { some: {} } // Only tags with at least one manga
+    },
+    orderBy: { name: "asc" } 
+  });
 
   // Build Where Clause
   const where: Prisma.MangaWhereInput = {
@@ -32,28 +38,28 @@ export default async function Home({ searchParams }: Props) {
   };
 
   if (search) {
-    where.title = { contains: search }; // SQLite doesn't support mode: 'insensitive' easily without raw query, but 'contains' is often case-insensitive in default SQLite config or we accept it.
+    where.title = { contains: search }; 
   }
 
   if (categoryId && categoryId !== "all") {
     where.categoryId = categoryId;
   }
 
-  if (tagIds) {
-    const tagIdArray = Array.isArray(tagIds) ? tagIds : [tagIds];
-    if (tagIdArray.length > 0) {
+  if (tagNames) {
+    const tagNameArray = Array.isArray(tagNames) ? tagNames : [tagNames];
+    if (tagNameArray.length > 0) {
       where.tags = {
         some: {
-          id: { in: tagIdArray },
+          name: { in: tagNameArray }, // Filter by name
         },
       };
     }
   }
 
   // Build OrderBy Clause
-  let orderBy: Prisma.MangaOrderByWithRelationInput = { updatedAt: "desc" };
-  if (sort === "added") {
-    orderBy = { createdAt: "desc" };
+  let orderBy: Prisma.MangaOrderByWithRelationInput = { createdAt: "desc" }; // Default to "Added" (Time Posted)
+  if (sort === "updated") {
+    orderBy = { updatedAt: "desc" };
   } else if (sort === "az") {
     orderBy = { title: "asc" };
   }

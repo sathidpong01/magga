@@ -1,7 +1,6 @@
 import prisma from "@/lib/prisma";
-import { Grid, Typography, Box } from "@mui/material";
-import CategoryManager from "../components/CategoryManager";
-import TagManager from "../components/TagManager";
+import { Box } from "@mui/material";
+import MetadataManager from "../components/MetadataManager";
 
 export default async function MetadataPage() {
   const categories = await prisma.category.findMany({
@@ -14,23 +13,7 @@ export default async function MetadataPage() {
 
   return (
     <Box>
-      <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 4 }}>
-        Classifications
-      </Typography>
-      <Grid container spacing={4}>
-        <Grid item xs={12} md={6}>
-          <Typography variant="h5" component="h2" gutterBottom>
-            Categories
-          </Typography>
-          <CategoryManager initialCategories={categories} />
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Typography variant="h5" component="h2" gutterBottom>
-            Tags
-          </Typography>
-          <TagManager initialTags={tags} />
-        </Grid>
-      </Grid>
+      <MetadataManager initialCategories={categories} initialTags={tags} />
     </Box>
   );
 }

@@ -33,23 +33,23 @@ export default function SearchFilters({ categories, tags }: Props) {
   // State for filters
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [categoryId, setCategoryId] = useState(searchParams.get("categoryId") || "all");
-  const [sort, setSort] = useState(searchParams.get("sort") || "updated");
+  const [sort, setSort] = useState(searchParams.get("sort") || "added");
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
 
   // Initialize selected tags from URL
   useEffect(() => {
-    const tagIds = searchParams.getAll("tagIds");
+    const tagNames = searchParams.getAll("tags");
     
     // Deep compare to avoid infinite loop
-    const currentTagIds = selectedTags.map(t => t.id).sort();
-    const newTagIds = [...tagIds].sort();
-    const isSame = currentTagIds.length === newTagIds.length && 
-                   currentTagIds.every((id, index) => id === newTagIds[index]);
+    const currentTagNames = selectedTags.map(t => t.name).sort();
+    const newTagNames = [...tagNames].sort();
+    const isSame = currentTagNames.length === newTagNames.length && 
+                   currentTagNames.every((name, index) => name === newTagNames[index]);
 
     if (isSame) return;
 
-    if (tagIds.length > 0) {
-      const foundTags = tags.filter((tag) => tagIds.includes(tag.id));
+    if (tagNames.length > 0) {
+      const foundTags = tags.filter((tag) => tagNames.includes(tag.name));
       setSelectedTags(foundTags);
     } else {
       setSelectedTags([]);
@@ -59,12 +59,20 @@ export default function SearchFilters({ categories, tags }: Props) {
 
   const applyFilters = useCallback(() => {
     const params = new URLSearchParams();
-    if (search) params.set("search", search);
+    
+    // Only add params if they differ from defaults
+    if (search.trim() !== "") params.set("search", search);
     if (categoryId && categoryId !== "all") params.set("categoryId", categoryId);
-    if (sort) params.set("sort", sort);
-    selectedTags.forEach((tag) => params.append("tagIds", tag.id));
+    if (sort && sort !== "added") params.set("sort", sort);
+    
+    selectedTags.forEach((tag) => params.append("tags", tag.name)); // Use name instead of ID
 
-    router.push(`/?${params.toString()}`);
+    const queryString = params.toString();
+    if (queryString) {
+      router.push(`/?${queryString}`);
+    } else {
+      router.push("/");
+    }
   }, [search, categoryId, sort, selectedTags, router]);
 
   // Debounce search
@@ -78,7 +86,7 @@ export default function SearchFilters({ categories, tags }: Props) {
   const handleClearFilters = () => {
     setSearch("");
     setCategoryId("all");
-    setSort("updated");
+    setSort("added");
     setSelectedTags([]);
     router.push("/");
   };
@@ -99,7 +107,7 @@ export default function SearchFilters({ categories, tags }: Props) {
         borderColor: "divider",
         borderRadius: 1,
         transition: "all 0.3s ease",
-        width: expanded ? { xs: "100%", md: "60%" } : { xs: "100%", md: "30%" }, // Expand on click
+        width: expanded ? { xs: "100%", md: "42%" } : { xs: "100%", md: "21%" }, // Expand on click
         minWidth: "300px",
       }}
     >
@@ -114,7 +122,7 @@ export default function SearchFilters({ categories, tags }: Props) {
         onClick={handleExpandClick}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, fontSize: "1.1rem" }}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, fontSize: "0.85rem" }}>
             Filters and display
           </Typography>
           {!expanded && (
@@ -154,7 +162,7 @@ export default function SearchFilters({ categories, tags }: Props) {
                 variant="standard"
                 InputProps={{ disableUnderline: true }}
                 sx={{
-                  "& .MuiSelect-select": { py: 1, fontSize: "1.1rem", fontWeight: 500 },
+                  "& .MuiSelect-select": { py: 0.75, fontSize: "0.85rem", fontWeight: 500 },
                   borderBottom: "1px solid",
                   borderColor: "divider",
                 }}
@@ -181,7 +189,7 @@ export default function SearchFilters({ categories, tags }: Props) {
                 variant="standard"
                 InputProps={{ disableUnderline: true }}
                 sx={{
-                  "& .MuiSelect-select": { py: 1, fontSize: "1.1rem", fontWeight: 500 },
+                  "& .MuiSelect-select": { py: 0.75, fontSize: "0.85rem", fontWeight: 500 },
                   borderBottom: "1px solid",
                   borderColor: "divider",
                 }}
@@ -208,7 +216,7 @@ export default function SearchFilters({ categories, tags }: Props) {
                   startAdornment: <SearchIcon color="action" sx={{ mr: 1 }} />,
                 }}
                 sx={{
-                  "& input": { py: 1, fontSize: "1.1rem" },
+                  "& input": { py: 0.75, fontSize: "0.85rem" },
                   borderBottom: "1px solid",
                   borderColor: "divider",
                 }}

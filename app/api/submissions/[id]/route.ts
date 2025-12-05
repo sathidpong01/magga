@@ -4,6 +4,56 @@ import { authOptions } from "../../auth/[...nextauth]/route";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
 
+// GET single submission
+export async function GET(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await params;
+
+    const submission = await prisma.mangaSubmission.findUnique({
+      where: { id },
+      include: {
+        tags: {
+          include: { tag: true }
+        },
+        category: true,
+      }
+    });
+
+    if (!submission) {
+      return NextResponse.json({ error: "Submission not found" }, { status: 404 });
+    }
+
+    // Only owner can view for editing
+    if (submission.userId !== session.user.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    // Transform for frontend
+    const result = {
+      ...submission,
+      tags: submission.tags.map(t => t.tag),
+      pages: typeof submission.pages === 'string' ? JSON.parse(submission.pages) : submission.pages,
+    };
+
+    return NextResponse.json(result);
+
+  } catch (error) {
+    console.error("Fetch submission error:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch submission" },
+      { status: 500 }
+    );
+  }
+}
+
 const updateSubmissionSchema = z.object({
   title: z.string().min(1, "Title is required").optional(),
   description: z.string().optional(),
@@ -50,7 +100,7 @@ export async function PUT(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    if (submission.status !== "DRAFT" && submission.status !== "CHANGE_REQUESTED") {
+    if (submission.status !== "DRAFT" && submission.status !== "PENDING" && submission.status !== "CHANGE_REQUESTED") {
       return NextResponse.json(
         { error: "Cannot edit submission in current status" },
         { status: 400 }
@@ -113,6 +163,60 @@ export async function PUT(
     console.error("Update submission error:", error);
     return NextResponse.json(
       { error: "Failed to update submission" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await params;
+
+    const submission = await prisma.mangaSubmission.findUnique({
+      where: { id },
+    });
+
+    if (!submission) {
+      return NextResponse.json({ error: "Submission not found" }, { status: 404 });
+    }
+
+    // Only owner can delete
+    if (submission.userId !== session.user.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    // Can only delete DRAFT or PENDING submissions
+    if (submission.status !== "DRAFT" && submission.status !== "PENDING") {
+      return NextResponse.json(
+        { error: "Cannot delete submission in current status" },
+        { status: 400 }
+      );
+    }
+
+    // Delete tags first (cascade not set up)
+    await prisma.mangaSubmissionTag.deleteMany({
+      where: { submissionId: id }
+    });
+
+    // Delete submission
+    await prisma.mangaSubmission.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ success: true });
+
+  } catch (error) {
+    console.error("Delete submission error:", error);
+    return NextResponse.json(
+      { error: "Failed to delete submission" },
       { status: 500 }
     );
   }
