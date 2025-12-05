@@ -29,11 +29,14 @@ export async function POST(request: Request) {
   try {
     const form = await request.formData();
     const files = form.getAll("files") as File[];
+    const mangaId = (form.get("mangaId") as string) || "uncategorized";
+    const maxWidth = parseInt((form.get("maxWidth") as string) || "1920");
 
     if (!files || files.length === 0) {
       return NextResponse.json({ error: "No files uploaded" }, { status: 400 });
     }
 
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
     const ALLOWED_MIME_TYPES = [
       "image/jpeg",
       "image/png",
@@ -42,28 +45,66 @@ export async function POST(request: Request) {
       "image/avif"
     ];
 
-    for (const file of files) {
-      if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-        return NextResponse.json(
-          { error: `File type ${file.type} is not allowed. Only images are permitted.` },
-          { status: 400 }
-        );
-      }
-    }
+    // Magic Numbers
+    const MAGIC_NUMBERS: Record<string, string> = {
+      "ffd8ffe0": "image/jpeg",
+      "ffd8ffe1": "image/jpeg",
+      "ffd8ffe2": "image/jpeg",
+      "89504e47": "image/png",
+      "47494638": "image/gif",
+      "52494646": "image/webp", // RIFF...WEBP
+    };
 
     const saved = await Promise.all(
       files.map(async (file) => {
+        // 1. File Size Check
+        if (file.size > MAX_FILE_SIZE) {
+          throw new Error(`File ${file.name} is too large (max 10MB)`);
+        }
+
+        // 2. MIME Type Check
+        if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+          throw new Error(`File type ${file.type} is not allowed.`);
+        }
+
         const arrayBuffer = await file.arrayBuffer();
-        let imageData: Uint8Array = new Uint8Array(arrayBuffer);
+        const buffer = Buffer.from(arrayBuffer);
+
+        // 3. Magic Number Check
+        const hex = buffer.toString("hex", 0, 4);
+        let isValidMagic = false;
+        // Simple check for common types. For WebP it's a bit more complex (RIFF...WEBP), 
+        // but '52494646' (RIFF) is a good start.
+        for (const magic in MAGIC_NUMBERS) {
+          if (hex.startsWith(magic)) {
+            isValidMagic = true;
+            break;
+          }
+        }
+        // Allow if magic number matches or if it's AVIF (complex signature)
+        if (!isValidMagic && file.type !== "image/avif") {
+             // Strict check can be relaxed if needed, but for now warn or block
+             console.warn(`Potential mismatch for ${file.name}: header ${hex}`);
+             // throw new Error("Invalid file signature"); // Uncomment to enforce strictly
+        }
+
+        let imageData = new Uint8Array(arrayBuffer);
         let contentType = file.type;
         let fileName = file.name;
 
-        // Compress image if it's an image type
+        // 4. Resize & Compress
         if (file.type.startsWith("image/")) {
           try {
-            const compressedBuffer = await sharp(Buffer.from(imageData))
-              .resize(1920, 1920, { fit: "inside", withoutEnlargement: true }) // Resize to max 1920px
-              .webp({ quality: 80 }) // Convert to WebP with 80% quality
+            const sharpInstance = sharp(buffer);
+            const metadata = await sharpInstance.metadata();
+            
+            // Only resize if width is greater than maxWidth
+            if (metadata.width && metadata.width > maxWidth) {
+                 sharpInstance.resize(maxWidth, null, { fit: "inside", withoutEnlargement: true });
+            }
+
+            const compressedBuffer = await sharpInstance
+              .webp({ quality: 80 })
               .toBuffer();
             
             imageData = new Uint8Array(compressedBuffer);
@@ -71,33 +112,35 @@ export async function POST(request: Request) {
             fileName = fileName.replace(/\.[^/.]+$/, "") + ".webp";
           } catch (error) {
             console.error("Compression failed for", fileName, error);
+            throw error;
           }
         }
 
-        const safeName = `${Date.now()}-${fileName.replace(
-          /[^a-zA-Z0-9.-]/g,
-          "_"
-        )}`;
+        // 5. Construct Path: uploads/{year}/{month}/{mangaId}/{filename}
+        const date = new Date();
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const safeName = `${Date.now()}-${fileName.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+        const key = `uploads/${year}/${month}/${mangaId}/${safeName}`;
 
         await S3.send(
           new PutObjectCommand({
             Bucket: R2_BUCKET_NAME,
-            Key: safeName,
+            Key: key,
             Body: imageData,
             ContentType: contentType,
           })
         );
 
-        // Use provided public URL or construct one
         return R2_PUBLIC_URL
-          ? `${R2_PUBLIC_URL}/${safeName}`
-          : `/uploads/${safeName}`;
+          ? `${R2_PUBLIC_URL}/${key}`
+          : `/${key}`;
       })
     );
 
     return NextResponse.json({ urls: saved });
-  } catch (err) {
-
-    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+  } catch (err: any) {
+    console.error("Upload error:", err);
+    return NextResponse.json({ error: err.message || "Upload failed" }, { status: 500 });
   }
 }

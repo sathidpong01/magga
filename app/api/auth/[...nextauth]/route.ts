@@ -5,34 +5,44 @@ import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import prisma from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 
-// Simple in-memory rate limiting (for production, use Redis)
-const loginAttempts = new Map<string, { count: number; resetTime: number }>();
-
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
 
-function checkRateLimit(identifier: string): { allowed: boolean; remaining: number; resetTime?: number } {
-  const now = Date.now();
-  const attempt = loginAttempts.get(identifier);
+async function checkRateLimit(identifier: string): Promise<{ allowed: boolean; remaining: number; resetTime?: number }> {
+  const now = new Date();
   
-  if (!attempt || now > attempt.resetTime) {
+  // Clean up expired attempts (optional, or do via cron/scheduled task)
+  // await prisma.loginAttempt.deleteMany({ where: { expiresAt: { lt: now } } });
+
+  const attempt = await prisma.loginAttempt.findUnique({
+    where: { identifier },
+  });
+
+  if (!attempt || now > attempt.expiresAt) {
     // Reset or first attempt
-    loginAttempts.set(identifier, { count: 1, resetTime: now + LOCKOUT_DURATION });
+    await prisma.loginAttempt.upsert({
+      where: { identifier },
+      update: { count: 1, expiresAt: new Date(now.getTime() + LOCKOUT_DURATION) },
+      create: { identifier, count: 1, expiresAt: new Date(now.getTime() + LOCKOUT_DURATION) },
+    });
     return { allowed: true, remaining: MAX_ATTEMPTS - 1 };
   }
-  
+
   if (attempt.count >= MAX_ATTEMPTS) {
-    // Too many attempts
-    return { allowed: false, remaining: 0, resetTime: attempt.resetTime };
+    return { allowed: false, remaining: 0, resetTime: attempt.expiresAt.getTime() };
   }
+
+  // Increment
+  await prisma.loginAttempt.update({
+    where: { identifier },
+    data: { count: { increment: 1 } },
+  });
   
-  // Increment attempt count
-  attempt.count++;
-  return { allowed: true, remaining: MAX_ATTEMPTS - attempt.count };
+  return { allowed: true, remaining: MAX_ATTEMPTS - (attempt.count + 1) };
 }
 
-function clearAttempt(identifier: string) {
-  loginAttempts.delete(identifier);
+async function clearAttempt(identifier: string) {
+  await prisma.loginAttempt.delete({ where: { identifier } }).catch(() => {});
 }
 
 export const authOptions: NextAuthOptions = {
@@ -84,7 +94,7 @@ export const authOptions: NextAuthOptions = {
 
         // Rate limiting by username
         const identifier = credentials.username.toLowerCase();
-        const rateCheck = checkRateLimit(identifier);
+        const rateCheck = await checkRateLimit(identifier);
         
         if (!rateCheck.allowed) {
           const minutesLeft = Math.ceil((rateCheck.resetTime! - Date.now()) / 60000);

@@ -9,8 +9,6 @@ type LinkButtonProps = ButtonProps & { href: string };
 
 export default function LinkButton({ href, ...props }: LinkButtonProps) {
   return (
-    <Link href={href} passHref legacyBehavior>
-      <Button {...props} />
-    </Link>
+    <Button component={Link} href={href} {...props} />
   );
 }

@@ -13,6 +13,9 @@ const submissionSchema = z.object({
   categoryId: z.string().nullable().optional(),
   tagIds: z.array(z.string()).optional(),
   authorCredits: z.string().optional(), // JSON string
+  extraMetadata: z.string().optional(), // JSON string
+  status: z.enum(["DRAFT", "PENDING"]).optional().default("PENDING"),
+  approvedMangaId: z.string().optional(),
 });
 
 export async function POST(req: Request) {
@@ -32,7 +35,10 @@ export async function POST(req: Request) {
       );
     }
 
-    const { title, slug, description, coverImage, pages, categoryId, tagIds, authorCredits } = validation.data;
+    const { 
+      title, slug, description, coverImage, pages, categoryId, tagIds, 
+      authorCredits, extraMetadata, status, approvedMangaId 
+    } = validation.data;
 
     // Generate slug if not provided
     let finalSlug = slug;
@@ -46,13 +52,13 @@ export async function POST(req: Request) {
     }
 
     // Ensure slug is unique (check both Manga and MangaSubmission)
-    // Note: This is a simple check. For high concurrency, might need better handling.
     const existingManga = await prisma.manga.findUnique({ where: { slug: finalSlug } });
-    if (existingManga) {
+    if (existingManga && existingManga.id !== approvedMangaId) {
       finalSlug = `${finalSlug}-${Date.now()}`;
     }
 
-    // Check Rate Limit
+    // Check Rate Limit (Skip for DRAFT updates? Maybe not, to prevent spam)
+    // For now, apply to all creations
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
@@ -93,6 +99,9 @@ export async function POST(req: Request) {
         pages: JSON.stringify(pages),
         categoryId: categoryId || null,
         authorCredits,
+        extraMetadata,
+        status: status, // DRAFT or PENDING
+        approvedMangaId: approvedMangaId || null,
         tags: {
           create: tagIds?.map(tagId => ({
             tag: { connect: { id: tagId } }
