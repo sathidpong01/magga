@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../../auth/[...nextauth]/route";
 import prisma from "@/lib/prisma";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 type RouteParams = {
   params: Promise<{
@@ -16,6 +17,20 @@ export async function POST(request: Request, { params }: RouteParams) {
   
   if (!session?.user?.id) {
     return NextResponse.json({ error: "กรุณาเข้าสู่ระบบก่อนโหวต" }, { status: 401 });
+  }
+
+  // Rate limiting: 30 votes per 15 minutes per user
+  const rateLimit = await checkRateLimit(
+    `vote:${session.user.id}`,
+    30, // max 30 votes
+    15 * 60 * 1000 // per 15 minutes
+  );
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: `คุณโหวตเร็วเกินไป กรุณารอ ${Math.ceil((rateLimit.resetTime! - Date.now()) / 60000)} นาที` },
+      { status: 429 }
+    );
   }
 
   try {

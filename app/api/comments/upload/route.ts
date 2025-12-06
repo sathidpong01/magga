@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../auth/[...nextauth]/route";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { checkRateLimit } from "@/lib/rate-limit";
 import sharp from "sharp";
 
 const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
@@ -25,6 +26,20 @@ export async function POST(request: Request) {
   
   if (!session?.user?.id) {
     return NextResponse.json({ error: "กรุณาเข้าสู่ระบบก่อนอัพโหลดรูป" }, { status: 401 });
+  }
+
+  // Rate limiting: 10 images per 15 minutes per user
+  const rateLimit = await checkRateLimit(
+    `comment-upload:${session.user.id}`,
+    10, // max 10 images
+    15 * 60 * 1000 // per 15 minutes
+  );
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: `คุณอัปโหลดรูปเร็วเกินไป กรุณารอ ${Math.ceil((rateLimit.resetTime! - Date.now()) / 60000)} นาที` },
+      { status: 429 }
+    );
   }
 
   try {

@@ -29,6 +29,9 @@ trace
 # Local env files
 .env*.local
 .env
+.env.production
+.env.development
+.env.backup
 
 # Vercel
 .vercel
@@ -62,6 +65,13 @@ Thumbs.db
 *.swo
 
 # Security - prevent sensitive files
-.env.backup
 *.pem
 *.key
+*.cert
+*.crt
+keys.txt
+secrets.txt
+temp-config.ts
+config.local.ts
+*.secret
+

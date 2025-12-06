@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]/route";
 import prisma from "@/lib/prisma";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 // GET /api/comments - Fetch comments for a manga
 export async function GET(request: Request) {
@@ -73,6 +74,20 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "กรุณาเข้าสู่ระบบก่อนแสดงความคิดเห็น" }, { status: 401 });
   }
 
+  // Rate limiting: 20 comments per 15 minutes per user
+  const rateLimit = await checkRateLimit(
+    `comment:${session.user.id}`,
+    20, // max 20 comments
+    15 * 60 * 1000 // per 15 minutes
+  );
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: `คุณคอมเมนต์เร็วเกินไป กรุณารอ ${Math.ceil((rateLimit.resetTime! - Date.now()) / 60000)} นาที` },
+      { status: 429 }
+    );
+  }
+
   try {
     const body = await request.json();
     const { mangaId, content, imageIndex, imageUrl, parentId } = body;
@@ -90,7 +105,7 @@ export async function POST(request: Request) {
     // Security: ตรวจสอบ imageUrl ว่าเป็น URL ที่ถูกต้อง
     if (imageUrl) {
       try {
-        const url = new URL(imageUrl);
+        new URL(imageUrl);
         const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL || '';
         if (!imageUrl.startsWith(R2_PUBLIC_URL) && !imageUrl.startsWith('/uploads/')) {
           return NextResponse.json({ error: "Invalid image URL" }, { status: 400 });
@@ -100,10 +115,16 @@ export async function POST(request: Request) {
       }
     }
 
-    // Verify manga exists
+    // Verify manga exists and check if hidden
     const manga = await prisma.manga.findUnique({ where: { id: mangaId } });
     if (!manga) {
       return NextResponse.json({ error: "Manga not found" }, { status: 404 });
+    }
+
+    // Security (IDOR): Don't allow comments on hidden manga (unless admin)
+    const userRole = (session.user as { role?: string }).role;
+    if (manga.isHidden && userRole !== 'ADMIN') {
+      return NextResponse.json({ error: "Cannot comment on hidden manga" }, { status: 403 });
     }
 
     // If parentId is provided, verify it exists

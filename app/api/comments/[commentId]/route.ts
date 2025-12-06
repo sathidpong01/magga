@@ -26,6 +26,12 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Content is required" }, { status: 400 });
     }
 
+    // Security: จำกัดความยาว content (consistent with POST)
+    const MAX_CONTENT_LENGTH = 500;
+    if (content.length > MAX_CONTENT_LENGTH) {
+      return NextResponse.json({ error: `ความคิดเห็นต้องไม่เกิน ${MAX_CONTENT_LENGTH} ตัวอักษร` }, { status: 400 });
+    }
+
     // Find the comment
     const comment = await prisma.comment.findUnique({ where: { id: commentId } });
     
@@ -38,9 +44,14 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "You can only edit your own comments" }, { status: 403 });
     }
 
+    // Security: Sanitize content - ป้องกัน XSS (consistent with POST)
+    const sanitizedContent = content.trim()
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+
     const updated = await prisma.comment.update({
       where: { id: commentId },
-      data: { content: content.trim() },
+      data: { content: sanitizedContent },
       include: {
         user: {
           select: { id: true, name: true, username: true, image: true },

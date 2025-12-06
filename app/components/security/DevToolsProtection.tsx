@@ -43,8 +43,8 @@ export default function DevToolsProtection() {
     setDetectionInfo(info);
     setIsBlocked(true);
     
-    // Log to console
-    console.log("DevTools Detection:", info);
+    // Note: Avoid logging sensitive info to console in production
+    // If needed, send to a secure backend API for logging
   }, [isAdmin]);
 
   // Handle back to home - force reload
