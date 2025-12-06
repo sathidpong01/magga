@@ -212,7 +212,7 @@ function LazyPageWithComments({
           left: "100%",
           width: "calc(50vw - 500px + 340px)",
           height: "100%",
-          pointerEvents: "none",
+          pointerEvents: "none", // Outer container doesn't block clicks
         }}
       >
         <Box
@@ -224,7 +224,13 @@ function LazyPageWithComments({
             display: "flex",
             flexDirection: "column",
             marginLeft: "auto",
-            marginRight: 10, 
+            marginRight: 10,
+            pointerEvents: "auto", // Inner panel is interactive
+            bgcolor: "rgba(10, 10, 10, 0.85)",
+            backdropFilter: "blur(8px)",
+            borderRadius: 2,
+            border: "1px solid rgba(255,255,255,0.08)",
+            zIndex: 100,
           }}
         >
           <Box sx={{ p: 1.5, flexShrink: 0 }}>

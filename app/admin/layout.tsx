@@ -18,6 +18,7 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import CategoryIcon from '@mui/icons-material/Category';
 import HomeIcon from '@mui/icons-material/Home';
 import InboxIcon from '@mui/icons-material/Inbox';
+import CommentIcon from '@mui/icons-material/Comment';
 
 const drawerWidth = 220;
 
@@ -31,6 +32,7 @@ export default function AdminLayout({
   const menuItems = [
     { text: 'แดชบอร์ด', href: '/admin', icon: <DashboardIcon /> },
     { text: 'การฝากลง', href: '/admin/submissions', icon: <InboxIcon /> },
+    { text: 'คอมเมนต์', href: '/admin/comments', icon: <CommentIcon /> },
     { text: 'หมวดหมู่', href: '/admin/metadata', icon: <CategoryIcon /> },
   ];
 
