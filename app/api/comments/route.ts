@@ -106,7 +106,15 @@ export async function POST(request: Request) {
     if (imageUrl) {
       try {
         new URL(imageUrl);
-        const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL || '';
+        const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL;
+        
+        // Fail fast if R2_PUBLIC_URL is not configured
+        if (!R2_PUBLIC_URL) {
+          console.error("R2_PUBLIC_URL environment variable is not set");
+          return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
+        }
+        
+        // Only allow URLs from our R2 bucket or local uploads
         if (!imageUrl.startsWith(R2_PUBLIC_URL) && !imageUrl.startsWith('/uploads/')) {
           return NextResponse.json({ error: "Invalid image URL" }, { status: 400 });
         }
