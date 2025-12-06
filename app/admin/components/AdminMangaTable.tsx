@@ -377,7 +377,7 @@ export default function AdminMangaTable({ mangas, allCategories, allTags }: Prop
                     />
                   </TableCell>
                   <TableCell sx={{ borderBottom: "1px solid rgba(255, 255, 255, 0.08)" }}>
-                    <Box sx={{ width: 40, height: 56, position: 'relative', borderRadius: 1, overflow: 'hidden', bgcolor: "#262626" }}>
+                    <Box sx={{ width: 40, height: 56, position: 'relative', borderRadius: 0.1, overflow: 'hidden', bgcolor: "#262626" }}>
                       <Image
                         src={manga._cover}
                         alt={manga.title}
