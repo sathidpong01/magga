@@ -15,8 +15,7 @@ import Image from "next/image";
 import MangaViewRating from "@/app/components/features/manga/MangaViewRating";
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import StarIcon from '@mui/icons-material/Star';
-import { MangaCommentSection } from "@/app/components/features/comments/MangaComments";
-import MangaReader from "@/app/components/features/comments/MangaReader";
+import { SuspendedMangaReader, SuspendedCommentSection } from "./manga-content";
 
 type MangaPageProps = {
   params: Promise<{
@@ -357,16 +356,16 @@ export default async function MangaPage({ params }: MangaPageProps) {
 
       {/* Main Content Area */}
       <Container maxWidth="lg" sx={{ mt: 6 }}>
-        {/* Pages / Reader with scroll tracking */}
-        <MangaReader 
+        {/* Pages / Reader with scroll tracking - Suspense wrapped */}
+        <SuspendedMangaReader 
           mangaId={manga.id} 
           mangaTitle={manga.title} 
           pages={pages} 
         />
 
-        {/* General Comments Section */}
+        {/* General Comments Section - Suspense wrapped */}
         <Box sx={{ mt: 6, maxWidth: "800px", mx: "auto", mr: { xs: "auto", md: "340px" } }}>
-          <MangaCommentSection mangaId={manga.id} />
+          <SuspendedCommentSection mangaId={manga.id} />
         </Box>
       </Container>
     </Box>
