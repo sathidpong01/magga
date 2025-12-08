@@ -57,13 +57,11 @@ export default function Header() {
       position="sticky" 
       elevation={isScrolled ? 4 : 0}
       sx={{ 
-        backgroundColor: isScrolled ? "rgba(10, 10, 10, 0.8)" : "transparent",
+        backgroundColor: isScrolled ? "rgba(0, 0, 0, 0.1)" : "transparent",
         backgroundImage: "none",
-        borderBottom: isScrolled ? "1px solid rgba(255,255,255,0.1)" : "none",
         transition: "all 0.3s ease-in-out",
         top: 0, 
         zIndex: 1100,
-        backdropFilter: isScrolled ? "blur(12px)" : "none",
       }} 
     >
       <Container maxWidth="xl">
