@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import type { Tag } from "@prisma/client";
 import {
@@ -24,6 +24,8 @@ import {
   DialogTitle,
   CircularProgress,
   Tooltip,
+  Pagination,
+  Box,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -31,6 +33,8 @@ import DeleteIcon from "@mui/icons-material/Delete";
 type TagManagerProps = {
   initialTags: Tag[];
 };
+
+const ITEMS_PER_PAGE = 10;
 
 export default function TagManager({ initialTags }: TagManagerProps) {
   const router = useRouter();
@@ -41,6 +45,14 @@ export default function TagManager({ initialTags }: TagManagerProps) {
   const [error, setError] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [tagToDelete, setTagToDelete] = useState<Tag | null>(null);
+  const [page, setPage] = useState(1);
+
+  // Pagination
+  const totalPages = Math.ceil(tags.length / ITEMS_PER_PAGE);
+  const paginatedTags = useMemo(() => {
+    const start = (page - 1) * ITEMS_PER_PAGE;
+    return tags.slice(start, start + ITEMS_PER_PAGE);
+  }, [tags, page]);
 
   useEffect(() => {
     setTags(initialTags);
@@ -145,7 +157,7 @@ export default function TagManager({ initialTags }: TagManagerProps) {
             </TableRow>
           </TableHead>
           <TableBody>
-            {tags.map((tag) => (
+            {paginatedTags.map((tag) => (
               <TableRow key={tag.id} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
                 <TableCell component="th" scope="row">{tag.name}</TableCell>
                 <TableCell align="right">
@@ -161,6 +173,18 @@ export default function TagManager({ initialTags }: TagManagerProps) {
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+          <Pagination
+            count={totalPages}
+            page={page}
+            onChange={(_, p) => setPage(p)}
+            color="primary"
+          />
+        </Box>
+      )}
 
       <Dialog 
         open={deleteDialogOpen} 

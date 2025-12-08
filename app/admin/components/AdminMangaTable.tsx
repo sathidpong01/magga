@@ -29,6 +29,7 @@ import {
   MenuItem,
   Autocomplete,
   TextField,
+  Pagination,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -60,6 +61,8 @@ type Props = {
   allTags: Tag[];
 };
 
+const ITEMS_PER_PAGE = 10;
+
 export default function AdminMangaTable({ mangas, allCategories, allTags }: Props) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
@@ -71,6 +74,9 @@ export default function AdminMangaTable({ mangas, allCategories, allTags }: Prop
   const [editCategoryId, setEditCategoryId] = useState<string>("");
   const [editTags, setEditTags] = useState<Tag[]>([]);
 
+  // Pagination state
+  const [page, setPage] = useState(1);
+
   // Real-time filtering
   const filteredMangas = useMemo(() => {
     if (!searchQuery || searchQuery.length < 1) return mangas;
@@ -79,6 +85,18 @@ export default function AdminMangaTable({ mangas, allCategories, allTags }: Prop
       manga.title.toLowerCase().includes(query)
     );
   }, [mangas, searchQuery]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredMangas.length / ITEMS_PER_PAGE);
+  const paginatedMangas = useMemo(() => {
+    const start = (page - 1) * ITEMS_PER_PAGE;
+    return filteredMangas.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredMangas, page]);
+
+  // Reset to page 1 when searching
+  useMemo(() => {
+    setPage(1);
+  }, [searchQuery]);
 
   // Selection handlers
   const handleSelectAll = (checked: boolean) => {
@@ -360,7 +378,7 @@ export default function AdminMangaTable({ mangas, allCategories, allTags }: Prop
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredMangas.map((manga) => (
+              {paginatedMangas.map((manga) => (
                 <TableRow
                   key={manga.id}
                   sx={{
@@ -458,6 +476,18 @@ export default function AdminMangaTable({ mangas, allCategories, allTags }: Prop
           </Table>
         </TableContainer>
       </Paper>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+          <Pagination
+            count={totalPages}
+            page={page}
+            onChange={(_, p) => setPage(p)}
+            color="primary"
+          />
+        </Box>
+      )}
 
       {/* Quick Edit Modal */}
       <Dialog

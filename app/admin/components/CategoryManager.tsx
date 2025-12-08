@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import type { Category } from "@prisma/client";
 import {
+  Box,
   Button,
   TextField,
   Typography,
@@ -24,6 +25,7 @@ import {
   DialogTitle,
   CircularProgress,
   Tooltip,
+  Pagination,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -31,6 +33,8 @@ import DeleteIcon from "@mui/icons-material/Delete";
 type CategoryManagerProps = {
   initialCategories: Category[];
 };
+
+const ITEMS_PER_PAGE = 10;
 
 export default function CategoryManager({ initialCategories }: CategoryManagerProps) {
   const router = useRouter();
@@ -41,6 +45,14 @@ export default function CategoryManager({ initialCategories }: CategoryManagerPr
   const [error, setError] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
+  const [page, setPage] = useState(1);
+
+  // Pagination
+  const totalPages = Math.ceil(categories.length / ITEMS_PER_PAGE);
+  const paginatedCategories = useMemo(() => {
+    const start = (page - 1) * ITEMS_PER_PAGE;
+    return categories.slice(start, start + ITEMS_PER_PAGE);
+  }, [categories, page]);
 
   useEffect(() => {
     setCategories(initialCategories);
@@ -145,7 +157,7 @@ export default function CategoryManager({ initialCategories }: CategoryManagerPr
             </TableRow>
           </TableHead>
           <TableBody>
-            {categories.map((category) => (
+            {paginatedCategories.map((category) => (
               <TableRow key={category.id} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
                 <TableCell component="th" scope="row">{category.name}</TableCell>
                 <TableCell align="right">
@@ -161,6 +173,18 @@ export default function CategoryManager({ initialCategories }: CategoryManagerPr
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+          <Pagination
+            count={totalPages}
+            page={page}
+            onChange={(_, p) => setPage(p)}
+            color="primary"
+          />
+        </Box>
+      )}
 
       <Dialog 
         open={deleteDialogOpen} 

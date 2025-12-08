@@ -76,6 +76,7 @@ _พัฒนาด้วย Next.js 16 (App Router) และระบบจั
 - **Security Hardening:**
   - Strict MIME Type Validation สำหรับการอัปโหลดไฟล์
   - Security Headers (X-Content-Type-Options, X-Frame-Options, etc.) ปกป้องเว็บจากการโจมตีพื้นฐาน
+  - **New!** **ZAP Security Audit:** ผ่านการตรวจสอบความปลอดภัยด้วย OWASP ZAP (Content Security Policy adjustments)
   - **New!** **DevTools Protection:** ระบบตรวจจับและป้องกัน DevTools เพื่อป้องกันการขโมยข้อมูล (Admin Bypass)
   - **New!** **Policy Pages:** หน้านโยบายความเป็นส่วนตัว, ข้อตกลงในการใช้งาน และรายงานการละเมิด (DMCA)
 

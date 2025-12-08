@@ -966,9 +966,11 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                             endAdornment: (
                               <InputAdornment position="end">
                                 <Tooltip title="Auto-fetch Title & Icon">
-                                  <IconButton aria-label="Fetch credit info" onClick={() => handleFetchCreditInfo(index)} edge="end" disabled={!credit.url}>
-                                    <AutoFixHighIcon />
-                                  </IconButton>
+                                  <span>
+                                    <IconButton aria-label="Fetch credit info" onClick={() => handleFetchCreditInfo(index)} edge="end" disabled={!credit.url}>
+                                      <AutoFixHighIcon />
+                                    </IconButton>
+                                  </span>
                                 </Tooltip>
                               </InputAdornment>
                             )

@@ -2,24 +2,19 @@
 
 import CollapsibleSidebar, { SidebarItem } from "@/app/components/layout/CollapsibleSidebar";
 import { Box } from "@mui/material";
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import CategoryIcon from '@mui/icons-material/Category';
+import AddBoxIcon from '@mui/icons-material/AddBox';
+import ListAltIcon from '@mui/icons-material/ListAlt';
 import HomeIcon from '@mui/icons-material/Home';
-import InboxIcon from '@mui/icons-material/Inbox';
-import CommentIcon from '@mui/icons-material/Comment';
-import CampaignIcon from '@mui/icons-material/Campaign';
+import EditIcon from '@mui/icons-material/Edit';
 
-export default function AdminLayout({
+export default function SubmitLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const menuItems: SidebarItem[] = [
-    { text: 'แดชบอร์ด', href: '/admin', icon: <DashboardIcon /> },
-    { text: 'การฝากลง', href: '/admin/submissions', icon: <InboxIcon /> },
-    { text: 'คอมเมนต์', href: '/admin/comments', icon: <CommentIcon /> },
-    { text: 'โฆษณา', href: '/admin/advertisements', icon: <CampaignIcon /> },
-    { text: 'หมวดหมู่', href: '/admin/metadata', icon: <CategoryIcon /> },
+    { text: 'ฝากลงมังงะ', href: '/submit', icon: <AddBoxIcon /> },
+    { text: 'รายการที่ฝากลง', href: '/submit/my-submissions', icon: <ListAltIcon /> },
   ];
 
   const bottomItems: SidebarItem[] = [
@@ -29,10 +24,10 @@ export default function AdminLayout({
   return (
     <Box sx={{ display: "flex", bgcolor: "#0a0a0a", minHeight: "100vh", color: "#fafafa" }}>
       <CollapsibleSidebar
-        title="Magga Admin"
+        title="ฝากลงมังงะ"
         items={menuItems}
         bottomItems={bottomItems}
-        storageKey="admin-sidebar-collapsed"
+        storageKey="submit-sidebar-collapsed"
       />
       <Box
         component="main"

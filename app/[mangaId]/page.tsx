@@ -16,6 +16,7 @@ import MangaViewRating from "@/app/components/features/manga/MangaViewRating";
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import StarIcon from '@mui/icons-material/Star';
 import { SuspendedMangaReader, SuspendedCommentSection } from "./manga-content";
+import { AdContainer } from "@/app/components/features/ads";
 
 type MangaPageProps = {
   params: Promise<{
@@ -365,6 +366,11 @@ export default async function MangaPage({ params }: MangaPageProps) {
           mangaTitle={manga.title} 
           pages={pages} 
         />
+
+        {/* โฆษณาท้ายหน้าอ่าน */}
+        <Box sx={{ mt: 4, maxWidth: "800px", mx: "auto" }}>
+          <AdContainer placement="manga-end" />
+        </Box>
 
         {/* General Comments Section - Suspense wrapped */}
         <Box sx={{ mt: 6, maxWidth: "800px", mx: "auto", mr: { xs: "auto", md: "340px" } }}>

@@ -387,19 +387,6 @@ gridTemplateColumns: "repeat(auto-fill, minmax(60px, 1fr))";
 
 ```tsx
 <Typography
-  variant="h3"        // ขนาด
-  sx={{
-    fontWeight: 800,  // ความหนา
-  }}
->
-```
-
-#### 4.6 Manga Pages
-
-```tsx
-<Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0 }}>
-  <Box sx={{
-    position: "relative",
     width: "100%",
     maxWidth: "1000px", // Limit max width for readability on ultra-wide screens
     lineHeight: 0, // Remove gap between images

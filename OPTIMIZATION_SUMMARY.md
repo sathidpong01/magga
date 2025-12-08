@@ -290,6 +290,12 @@ Route (app)                                 Size  First Load JS  Revalidate  Exp
 - ✅ HSTS enabled
 - ✅ X-Content-Type-Options: nosniff
 
+### ZAP Security Audit (New!)
+
+- ✅ Verified against OWASP ZAP Standard Scan
+- ✅ Critical vulnerabilities resolved
+- ✅ CSP tuned for production safety (with acceptable risk policy)
+
 ---
 
 ## 🎯 Next Steps

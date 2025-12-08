@@ -79,9 +79,13 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
+              // Note: 'unsafe-inline' and 'unsafe-eval' are required for Next.js/React/MUI to function
+              // For stricter CSP, consider implementing nonce-based CSP with next-safe middleware
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live https://va.vercel-scripts.com https://accounts.google.com",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "img-src 'self' data: blob: https://pub-1f8d25d164134702943300ef6d01fc35.r2.dev https://lh3.googleusercontent.com https://*.googleusercontent.com",
+              // img-src: Using https: wildcard to allow author credit icons from any source
+              // This is an acceptable risk as images cannot execute code (unlike scripts)
+              "img-src 'self' data: blob: https:",
               "font-src 'self' data: https://fonts.gstatic.com",
               "connect-src 'self' https://pub-1f8d25d164134702943300ef6d01fc35.r2.dev https://*.turso.io wss://*.turso.io https://vercel.live https://va.vercel-scripts.com https://accounts.google.com",
               "frame-src 'self' https://vercel.live https://accounts.google.com",

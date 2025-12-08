@@ -1,8 +1,8 @@
 import prisma from "@/lib/prisma";
-import { Grid, Typography, Box, Container } from "@mui/material";
+import { Typography, Box, Container } from "@mui/material";
 import { Suspense } from "react";
-import MangaCard from "./components/features/manga/MangaCard";
 import SearchFilters from "./components/features/search/SearchFilters";
+import MangaGridWithAds from "./components/features/manga/MangaGridWithAds";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 
@@ -121,13 +121,7 @@ export default async function Home({ searchParams }: Props) {
             No mangas found matching your criteria.
           </Typography>
         ) : (
-          <Grid container spacing={3}>
-            {mangas.map((manga) => (
-              <Grid item key={manga.id} xs={12} sm={6} md={4} lg={3}>
-                <MangaCard manga={manga} />
-              </Grid>
-            ))}
-          </Grid>
+          <MangaGridWithAds mangas={mangas} />
         )}
       </Box>
     </Container>

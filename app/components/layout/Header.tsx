@@ -55,13 +55,15 @@ export default function Header() {
   return (
     <AppBar 
       position="sticky" 
-      elevation={isScrolled ? 4 : 0}
+      elevation={0}
       sx={{ 
-        backgroundColor: isScrolled ? "rgba(0, 0, 0, 0.1)" : "transparent",
+        backgroundColor: "transparent",
         backgroundImage: "none",
         transition: "all 0.3s ease-in-out",
         top: 0, 
         zIndex: 1100,
+        boxShadow: "none",
+        borderBottom: "none",
       }} 
     >
       <Container maxWidth="xl">
@@ -73,9 +75,11 @@ export default function Header() {
               alt="Magga Logo" 
               width={100}
               height={32}
+              priority
               style={{ 
-                height: "32px", 
-                width: "100px",
+                width: "auto", 
+                height: "auto",
+                maxHeight: "32px",
                 transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
                 filter: "drop-shadow(0 0 0 rgba(255, 255, 255, 0))",
                 transform: "translateX(0)",
@@ -111,7 +115,6 @@ export default function Header() {
                 target.style.filter = "drop-shadow(0 0 0 rgba(255, 255, 255, 0))";
                 target.style.transform = "translateX(0) translateY(0) scale(1)";
               }}
-              priority
               onError={(e) => {
                 const target = e.currentTarget;
                 target.style.display = 'none';

@@ -243,3 +243,17 @@ model CommentVote {
   @@unique([commentId, userId]) // 1 vote per user per comment
   @@index([commentId])
 }
+
+// สำหรับโฆษณา/Affiliate/Donation
+model Advertisement {
+  id        String   @id @default(cuid())
+  type      String // "affiliate" | "promptpay"
+  title     String // ชื่อสำหรับ admin
+  imageUrl  String // รูป banner
+  linkUrl   String? // ลิงก์ affiliate
+  content   String? // ข้อความเพิ่มเติม / เลข PromptPay
+  placement String // "grid" | "header" | "footer" | "manga-end" | "floating" | "modal"
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

@@ -379,22 +379,6 @@ export const revalidate = 60; // Currently 60 seconds
 
 ### Image Security
 
-- ✅ SVG disabled (`dangerouslyAllowSVG: false`)
-- ✅ Content-Disposition: attachment
-- ✅ Only allow whitelisted domains
-
-### Headers
-
-- ✅ CSP (Content Security Policy)
-- ✅ X-Frame-Options: DENY
-- ✅ HSTS enabled
-- ✅ X-Content-Type-Options: nosniff
-
-### API Security
-
-- Consider: Rate limiting (future enhancement)
-- Consider: API authentication for admin routes
-
 ---
 
 ## 📚 Additional Resources

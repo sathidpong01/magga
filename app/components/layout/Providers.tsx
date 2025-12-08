@@ -47,10 +47,10 @@ const darkTheme = createTheme({
     MuiAppBar: {
       styleOverrides: {
         root: {
-          backgroundColor: "rgba(10, 10, 10, 0.8)", // Neutral Black with opacity
-          backdropFilter: "blur(12px)",
+          backgroundColor: "transparent",
+          backdropFilter: "none",
           boxShadow: "none",
-          borderBottom: "1px solid rgba(255, 255, 255, 0.1)",
+          borderBottom: "none",
         },
       },
     },

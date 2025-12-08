@@ -76,7 +76,7 @@ export default async function AdminPage() {
                 <Grid item xs={6}>
                   <Box sx={{ 
                     p: 2, 
-                    borderRadius: 1.5, 
+                    borderRadius: 1, 
                     bgcolor: 'rgba(96, 165, 250, 0.1)', 
                     border: '1px solid rgba(96, 165, 250, 0.2)',
                     textAlign: 'center'
@@ -92,7 +92,7 @@ export default async function AdminPage() {
                 <Grid item xs={6}>
                   <Box sx={{ 
                     p: 2, 
-                    borderRadius: 1.5, 
+                    borderRadius: 1, 
                     bgcolor: 'rgba(251, 191, 36, 0.1)', 
                     border: '1px solid rgba(251, 191, 36, 0.2)',
                     textAlign: 'center'
@@ -132,7 +132,7 @@ export default async function AdminPage() {
                 <Grid item xs={6}>
                   <Box sx={{ 
                     p: 2, 
-                    borderRadius: 1.5, 
+                    borderRadius: 1, 
                     bgcolor: 'rgba(167, 139, 250, 0.1)', 
                     border: '1px solid rgba(167, 139, 250, 0.2)',
                     textAlign: 'center'
@@ -148,7 +148,7 @@ export default async function AdminPage() {
                 <Grid item xs={6}>
                   <Box sx={{ 
                     p: 2, 
-                    borderRadius: 1.5, 
+                    borderRadius: 1, 
                     bgcolor: 'rgba(244, 114, 182, 0.1)', 
                     border: '1px solid rgba(244, 114, 182, 0.2)',
                     textAlign: 'center'

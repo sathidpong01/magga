@@ -6,6 +6,7 @@ import AgeVerificationModal from "./components/features/auth/AgeVerificationModa
 import DevToolsProtection from "./components/security/DevToolsProtection";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
+import GlobalAds from "./components/features/ads/GlobalAds";
 import ErrorBoundary from "./components/common/ErrorBoundary";
 import LayoutWrapper from "./components/layout/LayoutWrapper";
 
@@ -67,6 +68,7 @@ export default function RootLayout({
           <Providers>
             <AgeVerificationModal />
             <DevToolsProtection />
+            <GlobalAds />
             <LayoutWrapper>
               {children}
             </LayoutWrapper>
