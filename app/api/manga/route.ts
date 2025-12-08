@@ -14,6 +14,7 @@ const mangaSchema = z.object({
   pages: z.array(z.string().url()).optional(),
   isHidden: z.boolean().optional(),
   authorCredits: z.string().optional(),
+  authorName: z.string().optional(), // ชื่อผู้แต่ง for og:title
   slug: z.string().min(1, "Slug is required").regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Invalid slug format"),
 });
 
@@ -31,7 +32,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: result.error.flatten() }, { status: 400 });
     }
 
-    const { title, description, categoryId, selectedTags, coverImage, pages, isHidden, authorCredits, slug } = result.data;
+    const { title, description, categoryId, selectedTags, coverImage, pages, isHidden, authorCredits, authorName, slug } = result.data;
 
     // Check if slug exists
     const existingSlug = await prisma.manga.findUnique({ where: { slug } });
@@ -52,6 +53,7 @@ export async function POST(request: Request) {
         pages: JSON.stringify(pages || []),
         isHidden: isHidden || false,
         authorCredits,
+        authorName,
       },
     });
     revalidatePath('/admin');

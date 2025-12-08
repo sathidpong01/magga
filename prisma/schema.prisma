@@ -18,6 +18,7 @@ model Manga {
   coverImage    String
   pages         String
   authorCredits String? // JSON string: { url: string, label: string, icon: string }[]
+  authorName    String? // ชื่อผู้แต่ง สำหรับ og:title (optional)
   extraMetadata String? // JSON string for flexible metadata
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

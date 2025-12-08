@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback, useId } from "react";
+import { useState, useEffect, useCallback, useId, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Fuse from "fuse.js";
 import {
   Box,
   Paper,
@@ -13,6 +14,10 @@ import {
   IconButton,
   Autocomplete,
   Button,
+  ListItem,
+  ListItemText,
+  ListItemAvatar,
+  Avatar,
 } from "@mui/material";
 import { Category, Tag } from "@prisma/client";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -23,6 +28,17 @@ import SortIcon from "@mui/icons-material/Sort";
 type Props = {
   categories: Category[];
   tags: Tag[];
+};
+
+type SearchItem = {
+  id: string;
+  slug: string;
+  title: string;
+  description: string;
+  coverImage: string;
+  authorName: string;
+  category: string;
+  tags: string;
 };
 
 export default function SearchFilters({ categories, tags }: Props) {
@@ -41,6 +57,53 @@ export default function SearchFilters({ categories, tags }: Props) {
   const [categoryId, setCategoryId] = useState(searchParams.get("categoryId") || "all");
   const [sort, setSort] = useState(searchParams.get("sort") || "added");
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+  
+  // Fuse.js search state
+  const [searchIndex, setSearchIndex] = useState<SearchItem[]>([]);
+  const [searchResults, setSearchResults] = useState<SearchItem[]>([]);
+  const [inputValue, setInputValue] = useState("");
+
+  // Fetch search index on mount
+  useEffect(() => {
+    const fetchSearchIndex = async () => {
+      try {
+        const res = await fetch("/api/search");
+        if (res.ok) {
+          const data = await res.json();
+          setSearchIndex(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch search index:", error);
+      }
+    };
+    fetchSearchIndex();
+  }, []);
+
+  // Create Fuse.js instance
+  const fuse = useMemo(() => {
+    return new Fuse(searchIndex, {
+      keys: [
+        { name: "title", weight: 2 },
+        { name: "authorName", weight: 1.5 },
+        { name: "description", weight: 0.5 },
+        { name: "tags", weight: 1 },
+        { name: "category", weight: 0.8 },
+      ],
+      threshold: 0.4, // Fuzzy tolerance (0 = exact, 1 = match anything)
+      includeScore: true,
+      minMatchCharLength: 2,
+    });
+  }, [searchIndex]);
+
+  // Perform fuzzy search when input changes
+  useEffect(() => {
+    if (inputValue.length >= 2) {
+      const results = fuse.search(inputValue, { limit: 10 });
+      setSearchResults(results.map(r => r.item));
+    } else {
+      setSearchResults([]);
+    }
+  }, [inputValue, fuse]);
 
   // Initialize selected tags from URL
   useEffect(() => {
@@ -91,6 +154,7 @@ export default function SearchFilters({ categories, tags }: Props) {
 
   const handleClearFilters = () => {
     setSearch("");
+    setInputValue("");
     setCategoryId("all");
     setSort("added");
     setSelectedTags([]);
@@ -99,6 +163,12 @@ export default function SearchFilters({ categories, tags }: Props) {
 
   const handleExpandClick = () => {
     setExpanded(!expanded);
+  };
+
+  const handleSelectResult = (item: SearchItem | null) => {
+    if (item) {
+      router.push(`/${item.slug}`);
+    }
   };
 
   return (
@@ -210,27 +280,74 @@ export default function SearchFilters({ categories, tags }: Props) {
               </TextField>
             </Grid>
 
-            {/* Search */}
+            {/* Smart Search with Fuse.js */}
             <Grid item xs={12} sm={6}>
               <Typography variant="subtitle2" gutterBottom color="text.secondary">
-                Search
+                Smart Search
               </Typography>
-              <TextField
-                fullWidth
-                id={searchInputId}
-                placeholder="Title or artist"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                variant="standard"
-                InputProps={{
-                  disableUnderline: true,
-                  startAdornment: <SearchIcon color="action" sx={{ mr: 1 }} />,
+              <Autocomplete
+                freeSolo
+                options={searchResults}
+                getOptionLabel={(option) => 
+                  typeof option === 'string' ? option : option.title
+                }
+                inputValue={inputValue}
+                onInputChange={(_, newValue) => {
+                  setInputValue(newValue);
+                  setSearch(newValue); // Also update filter search
                 }}
-                sx={{
-                  "& input": { py: 0.75, fontSize: "0.85rem" },
-                  borderBottom: "1px solid",
-                  borderColor: "divider",
+                onChange={(_, newValue) => {
+                  if (newValue && typeof newValue !== 'string') {
+                    handleSelectResult(newValue);
+                  }
                 }}
+                renderOption={(props, option) => {
+                  const { key, ...otherProps } = props;
+                  return (
+                    <ListItem key={key} {...otherProps} sx={{ gap: 1.5 }}>
+                      <ListItemAvatar sx={{ minWidth: 40 }}>
+                        <Avatar 
+                          src={option.coverImage} 
+                          alt={option.title}
+                          variant="rounded"
+                          sx={{ width: 40, height: 56 }}
+                        />
+                      </ListItemAvatar>
+                      <ListItemText 
+                        primary={option.authorName ? `[${option.authorName}] ${option.title}` : option.title}
+                        secondary={option.category || option.tags.slice(0, 30)}
+                        primaryTypographyProps={{ 
+                          variant: 'body2', 
+                          fontWeight: 500,
+                          noWrap: true 
+                        }}
+                        secondaryTypographyProps={{ 
+                          variant: 'caption',
+                          noWrap: true 
+                        }}
+                      />
+                    </ListItem>
+                  );
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    id={searchInputId}
+                    placeholder="พิมพ์ชื่อเรื่อง หรือ ชื่อผู้แต่ง..."
+                    variant="standard"
+                    InputProps={{
+                      ...params.InputProps,
+                      disableUnderline: true,
+                      startAdornment: <SearchIcon color="action" sx={{ mr: 1 }} />,
+                    }}
+                    sx={{
+                      "& input": { py: 0.75, fontSize: "0.85rem" },
+                      borderBottom: "1px solid",
+                      borderColor: "divider",
+                    }}
+                  />
+                )}
+                noOptionsText={inputValue.length >= 2 ? "ไม่พบผลลัพธ์" : "พิมพ์อย่างน้อย 2 ตัวอักษร"}
               />
             </Grid>
 

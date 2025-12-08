@@ -82,6 +82,7 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
   const [title, setTitle] = useState(manga?.title || "");
   const [slug, setSlug] = useState(manga?.slug || "");
   const [description, setDescription] = useState(manga?.description || "");
+  const [authorName, setAuthorName] = useState((manga as any)?.authorName || ""); // ชื่อผู้แต่ง
   const [categoryId, setCategoryId] = useState(manga?.categoryId || "");
   const [selectedTags, setSelectedTags] = useState<Tag[]>(manga?.tags || []);
   
@@ -437,6 +438,7 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
         isHidden: saveAsDraft,
         selectedTags: selectedTagIds,
         authorCredits: JSON.stringify(credits),
+        authorName: authorName || null,
       };
 
       const url = manga ? `/api/manga/${manga.id}` : "/api/manga";
@@ -688,6 +690,18 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                     InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
                   />
                 </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    label="ชื่อผู้แต่ง (Author Name)"
+                    value={authorName}
+                    onChange={(e) => setAuthorName(e.target.value)}
+                    fullWidth
+                    variant="filled"
+                    placeholder="เช่น Aokana, Doujin Circle"
+                    helperText="สำหรับแสดงใน og:title เมื่อแชร์ลิงก์ (ไม่บังคับ)"
+                    InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
+                  />
+                </Grid>
                 <Grid item xs={12} md={6}>
                   <Autocomplete
                     value={availableCategories.find((c) => c.id === categoryId) || null}
@@ -871,9 +885,6 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                 )}
               </Box>
 
-
-
-// ... (in render, inside Media Assets Paper)
               {/* Pages */}
               <Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>

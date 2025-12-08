@@ -1,6 +1,6 @@
 # 📊 Vercel Optimization Summary
 
-**Date:** 2025-11-26  
+**Date:** 2025-12-08  
 **Project:** Magga Reader  
 **Status:** ✅ Complete & Ready to Deploy
 
@@ -37,6 +37,22 @@ Optimize Magga Reader manga web application for Vercel deployment to:
 - 🐛 Better debugging in development
 
 ---
+
+### 1.5 SEO & Full-text Search (New!)
+
+**Files:** `app/[mangaId]/page.tsx`, `app/api/search/route.ts`, `SearchFilters.tsx`
+
+**Changes:**
+
+- Open Graph with author name format `[ผู้แต่ง] - ชื่อเรื่อง`
+- OG Image uses site logo
+- Fuse.js fuzzy search with autocomplete
+- Search index API with 5-min cache
+
+**Impact:**
+
+- 🔍 Better SEO and social sharing
+- 📝 Smart search with typo tolerance
 
 ### 2. Static Generation (ISR/SSG)
 

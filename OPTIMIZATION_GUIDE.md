@@ -4,6 +4,20 @@
 
 ## 🚀 การปรับปรุงที่ทำไปแล้ว
 
+### 0. SEO & Search (New!)
+
+#### Open Graph & Structured Data
+
+- **og:title format:** `[ชื่อผู้แต่ง] - ชื่อเรื่อง - MAGGA`
+- **og:image:** ใช้ logo ของเว็บ `/android-chrome-512x512.png`
+- **authorName field:** เพิ่มช่องชื่อผู้แต่งในฟอร์มและ database
+
+#### Fuse.js Full-text Search
+
+- **ค้นหาแบบ Fuzzy:** รองรับพิมพ์ผิด/คำใกล้เคียง
+- **Search Index API:** `/api/search` พร้อม 5 นาที cache
+- **Autocomplete dropdown:** แสดงผลลัพธ์ขณะพิมพ์
+
 ### 1. Database Optimization
 
 #### Prisma Logging
@@ -86,6 +100,21 @@ export async function generateStaticParams() {
 
 - `s-maxage=60`: Cache ที่ CDN edge 60 วินาที
 - `stale-while-revalidate=300`: ระหว่าง revalidate ยังใช้ cache เก่าได้อีก 5 นาที
+
+#### Search API Caching (New!)
+
+```typescript
+// app/api/search/route.ts
+const getSearchIndex = unstable_cache(
+  async () => {
+    /* fetch mangas */
+  },
+  ["search-index"],
+  { revalidate: 300, tags: ["search-index"] }
+);
+```
+
+**ผลลัพธ์:** Search index cached 5 นาที ลด API calls
 
 ### 4. Image Optimization
 

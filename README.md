@@ -49,6 +49,7 @@ _พัฒนาด้วย Next.js 16 (App Router) และระบบจั
 - **Home Page:** แสดงรายการมังงะทั้งหมด พร้อมระบบค้นหา (Search)
 - **Filters & Sort:** กรองมังงะตาม หมวดหมู่ (Category), แท็ก (Tag) และเรียงลำดับตามวันที่อัปเดต/วันที่เพิ่ม/ชื่อเรื่อง
   - _New!_ **Smart Auto-Filter:** ระบบกรองอัตโนมัติที่ฉลาดขึ้น ป้องกันการโหลดซ้ำซ้อน (Infinite Loop) และลดภาระ Server
+  - _New!_ **Fuzzy Search (Fuse.js):** ค้นหาแบบ Fuzzy รองรับพิมพ์ผิด/คำใกล้เคียง พร้อม Autocomplete dropdown
 - **Reader:** หน้าอ่านการ์ตูนแบบเลื่อนลง (Vertical Scroll)
   - _New!_ **Lazy Loading:** โหลดรูปภาพเมื่อเลื่อนลงมาถึง ช่วยให้หน้าเว็บโหลดเร็วขึ้นมาก
   - **Responsive Design:** รองรับการใช้งานทั้งบนมือถือ แท็บเล็ต และเดสก์ท็อป
@@ -64,6 +65,7 @@ _พัฒนาด้วย Next.js 16 (App Router) และระบบจั
   - สร้าง (Create), แก้ไข (Edit), และลบ (Delete) มังงะ
   - อัปโหลดรูปภาพหน้าปก (Cover) และเนื้อหา (Pages) ได้โดยตรง (บันทึกลง Cloudflare R2)
   - **New!** **Friendly URLs (Slug):** รองรับ URL แบบชื่อเรื่อง (เช่น `/manga/one-piece`) เพื่อผลลัพธ์ SEO ที่ดีขึ้น
+  - **New!** **Author Name Field:** เพิ่มช่องชื่อผู้แต่งสำหรับ og:title format `[ผู้แต่ง] - ชื่อเรื่อง`
   - **New!** **Author Credits:** ระบบให้เครดิตผู้แต่ง/ผู้แปล พร้อมฟีเจอร์ **Auto-fetch Metadata** ดึงชื่อและไอคอนจากลิงก์ (Facebook/Twitter) อัตโนมัติ
   - **New!** **Resilient Uploads:** ระบบอัปโหลดไฟล์แบบ Non-blocking พร้อม Floating Status และปุ่ม Retry สำหรับไฟล์ที่ล้มเหลว
   - **Auto Compression:** ระบบย่อขนาดรูปภาพ (Max 1920px) และแปลงเป็น WebP อัตโนมัติ ช่วยประหยัดพื้นที่จัดเก็บได้ถึง 80%
@@ -215,7 +217,8 @@ npm run dev
   - [ ] **ประวัติการอ่าน (History):** บันทึกตอนที่อ่านล่าสุดอัตโนมัติ
   - [ ] **รายการโปรด (Bookmarks):** กดติดตามมังงะที่ชอบเพื่อรับการแจ้งเตือน
 - [ ] **คอมเมนต์:** เพิ่มฟีเจอร์ให้ผู้อ่านสามารถแสดงความคิดเห็นในแต่ละเรื่องได้
-- [ ] **SEO & Open Graph:** ปรับปรุง SEO และเพิ่ม Open Graph Tags เพื่อให้การแชร์ลิงก์บน Social Media สวยงามและติดอันดับการค้นหาดีขึ้น
+- [x] **SEO & Open Graph:** ปรับปรุง SEO และเพิ่ม Open Graph Tags พร้อม Author Name format `[ผู้แต่ง] - ชื่อเรื่อง` และ JSON-LD Structured Data
+- [x] **Full-text Search (Fuse.js):** ระบบค้นหาแบบ Fuzzy Search รองรับพิมพ์ผิด พร้อม Autocomplete dropdown
 - [x] **Social Login:** เพิ่มระบบล็อกอินผ่าน Google เพื่อความสะดวกของผู้ใช้งาน (Facebook Coming Soon)
 
 ---

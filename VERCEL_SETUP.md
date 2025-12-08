@@ -28,6 +28,16 @@ TURSO_AUTH_TOKEN
 
 **หมายเหตุ:** ตรวจสอบว่าใช้ชื่อตัวแปรเป็น `TURSO_*` หรือ `DATABASE_*` ให้ตรงกับที่ใช้ใน `lib/prisma.ts`
 
+#### Database Migration (New!)
+
+หากอัพเดทจากเวอร์ชันก่อน 2025-12-08 ต้องรัน SQL ใน Turso Console:
+
+```sql
+ALTER TABLE "Manga" ADD COLUMN "authorName" TEXT;
+```
+
+จากนั้นรัน `npx prisma generate` เพื่ออัพเดท Prisma client
+
 #### NextAuth
 
 ```

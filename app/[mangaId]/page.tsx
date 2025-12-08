@@ -65,38 +65,41 @@ export async function generateMetadata({ params }: MangaPageProps) {
   const hasSensitiveCategory = manga.category && SENSITIVE_KEYWORDS.includes(manga.category.name.toLowerCase());
   const isSensitive = hasSensitiveTag || hasSensitiveCategory;
 
-  const title = manga.title;
+  // Format title with author name: [Author] - Title
+  const authorName = (manga as any).authorName;
+  const displayTitle = authorName 
+    ? `[${authorName}] - ${manga.title}`
+    : manga.title;
+  
   // Use generic description for sensitive content
   const description = isSensitive 
     ? `Read ${manga.title} online at Magga Reader. High quality images and fast loading.` 
     : manga.description;
   
-  // Use generic image for sensitive content
-  const ogImage = isSensitive
-    ? "https://placehold.co/1200x630/png?text=Magga+Reader" // Safe placeholder
-    : (manga.coverImage || "https://placehold.co/1200x630/png?text=Magga+Reader");
+  // Always use site logo for OG image (safe for all content)
+  const ogImage = "/android-chrome-512x512.png";
 
   return {
-    title: title,
+    title: displayTitle,
     description: description,
     openGraph: {
-      title: `${title} - MAGGA`,
+      title: `${displayTitle} - MAGGA`,
       description: description || "Read your favorite manga online for free.",
-      url: `/manga/${manga.slug}`,
+      url: `/${manga.slug}`,
       siteName: "MAGGA",
       images: [
         {
           url: ogImage,
-          width: 1200,
-          height: 630,
-          alt: isSensitive ? "MAGGA" : title,
+          width: 512,
+          height: 512,
+          alt: "MAGGA",
         },
       ],
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: `${title} - MAGGA`,
+      title: `${displayTitle} - MAGGA`,
       description: description || "Read your favorite manga online for free.",
       images: [ogImage],
     },

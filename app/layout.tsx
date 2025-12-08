@@ -26,9 +26,9 @@ export const metadata: Metadata = {
     siteName: "MAGGA",
     images: [
       {
-        url: "https://placehold.co/1200x630/png?text=MAGGA",
-        width: 1200,
-        height: 630,
+        url: "/android-chrome-512x512.png",
+        width: 512,
+        height: 512,
         alt: "MAGGA",
       },
     ],
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "MAGGA - รวมการ์ตูนแนว Furry แปลไทย",
     description: "เว็บอ่านการ์ตูนออนไลน์ อ่านฟรี อัปเดตใหม่ทุกวัน",
-    images: ["https://placehold.co/1200x630/png?text=MAGGA"],
+    images: ["/android-chrome-512x512.png"],
   },
   other: {
     rating: "mature",

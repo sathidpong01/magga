@@ -12,7 +12,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   
   const { id } = await params;
   const data = await request.json();
-  const { title, description, categoryId, selectedTags, coverImage, pages, isHidden, authorCredits, slug } = data;
+  const { title, description, categoryId, selectedTags, coverImage, pages, isHidden, authorCredits, authorName, slug } = data;
 
   if (!title) {
     return NextResponse.json({ error: 'Title is required' }, { status: 400 });
@@ -46,6 +46,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         pages: pages ? JSON.stringify(pages) : undefined,
         isHidden: isHidden,
         authorCredits,
+        authorName,
       },
     });
     revalidatePath('/admin');
