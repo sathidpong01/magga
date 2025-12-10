@@ -30,22 +30,44 @@ const getCategories = unstable_cache(
 // Cache tags for 5 minutes
 const getTags = unstable_cache(
   async () => {
-    return prisma.tag.findMany({ 
+    return prisma.tag.findMany({
       where: { mangas: { some: {} } },
-      orderBy: { name: "asc" } 
+      orderBy: { name: "asc" },
     });
   },
   ["tags"],
   { revalidate: 300, tags: ["tags"] }
 );
 
+// Cache grid ads for 5 minutes (fetched server-side to avoid Layout Shift)
+const getGridAds = unstable_cache(
+  async () => {
+    return prisma.advertisement.findMany({
+      where: { isActive: true, placement: "grid" },
+      select: {
+        id: true,
+        type: true,
+        title: true,
+        imageUrl: true,
+        linkUrl: true,
+        content: true,
+      },
+    });
+  },
+  ["grid-ads"],
+  { revalidate: 300, tags: ["advertisements"] }
+);
+
 export default async function Home({ searchParams }: Props) {
   const params = await searchParams;
   const { search, categoryId, tags: tagNames, sort } = params;
 
-  // Fetch Categories and Tags for the filter component (cached)
-  const categories = await getCategories();
-  const tags = await getTags();
+  // Fetch Categories, Tags and Grid Ads in parallel (cached)
+  const [categories, tags, gridAds] = await Promise.all([
+    getCategories(),
+    getTags(),
+    getGridAds(),
+  ]);
 
   // Build Where Clause
   const where: Prisma.MangaWhereInput = {
@@ -53,7 +75,7 @@ export default async function Home({ searchParams }: Props) {
   };
 
   if (search) {
-    where.title = { contains: search }; 
+    where.title = { contains: search };
   }
 
   if (categoryId && categoryId !== "all") {
@@ -95,33 +117,33 @@ export default async function Home({ searchParams }: Props) {
           <SearchFilters categories={categories} tags={tags} />
         </Suspense>
 
-        <Typography 
-          variant="h3" 
-          component="h1" 
-          gutterBottom 
-          sx={{ 
-            fontWeight: 800, 
+        <Typography
+          variant="h3"
+          component="h1"
+          gutterBottom
+          sx={{
+            fontWeight: 800,
             mb: 4,
             background: "linear-gradient(135deg, #fbbf24 0%, #38bdf8 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
-            letterSpacing: "-0.02em"
+            letterSpacing: "-0.02em",
           }}
         >
           {search ? `Search Results for "${search}"` : "Discover Manga"}
         </Typography>
-        
+
         {mangas.length === 0 ? (
-          <Typography 
-            variant="h6" 
-            color="text.secondary" 
-            align="center" 
+          <Typography
+            variant="h6"
+            color="text.secondary"
+            align="center"
             sx={{ mt: 8, fontWeight: 400 }}
           >
             No mangas found matching your criteria.
           </Typography>
         ) : (
-          <MangaGridWithAds mangas={mangas} />
+          <MangaGridWithAds mangas={mangas} ads={gridAds} />
         )}
       </Box>
     </Container>

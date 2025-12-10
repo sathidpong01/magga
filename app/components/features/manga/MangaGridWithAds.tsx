@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { Box, Grid } from "@mui/material";
+import { useMemo } from "react";
+import { Grid } from "@mui/material";
 import MangaCard from "@/app/components/features/manga/MangaCard";
 import { AdCard } from "@/app/components/features/ads";
 import type { Manga, Tag, Category } from "@prisma/client";
@@ -22,29 +22,22 @@ interface Ad {
 
 interface MangaGridWithAdsProps {
   mangas: MangaWithDetails[];
+  ads?: Ad[]; // Now received from server
 }
 
-export default function MangaGridWithAds({ mangas }: MangaGridWithAdsProps) {
-  const [ads, setAds] = useState<Ad[]>([]);
-
-  useEffect(() => {
-    fetch("/api/advertisements?placement=grid")
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setAds(data);
-        }
-      })
-      .catch(console.error);
-  }, []);
-
+export default function MangaGridWithAds({
+  mangas,
+  ads = [],
+}: MangaGridWithAdsProps) {
   // สุ่มตำแหน่งโฆษณาใน grid
   const itemsWithAds = useMemo(() => {
     if (ads.length === 0) {
       return mangas.map((manga) => ({ type: "manga" as const, data: manga }));
     }
 
-    const items: Array<{ type: "manga"; data: MangaWithDetails } | { type: "ad"; data: Ad }> = [];
+    const items: Array<
+      { type: "manga"; data: MangaWithDetails } | { type: "ad"; data: Ad }
+    > = [];
     const usedPositions = new Set<number>();
 
     // สุ่มตำแหน่งสำหรับแต่ละโฆษณา (ห่างกันอย่างน้อย 4 ตำแหน่ง)
@@ -54,7 +47,10 @@ export default function MangaGridWithAds({ mangas }: MangaGridWithAdsProps) {
       let pos: number;
       let attempts = 0;
       do {
-        pos = Math.floor(Math.random() * Math.min(mangas.length, 15)) + 3 + index * 5;
+        pos =
+          Math.floor(Math.random() * Math.min(mangas.length, 15)) +
+          3 +
+          index * 5;
         attempts++;
       } while (usedPositions.has(pos) && attempts < 10);
 
@@ -67,7 +63,11 @@ export default function MangaGridWithAds({ mangas }: MangaGridWithAdsProps) {
     let mangaIndex = 0;
     let adIndex = 0;
 
-    for (let i = 0; i < mangas.length + ads.length && mangaIndex < mangas.length; i++) {
+    for (
+      let i = 0;
+      i < mangas.length + ads.length && mangaIndex < mangas.length;
+      i++
+    ) {
       if (adPositions.includes(i) && adIndex < ads.length) {
         items.push({ type: "ad", data: ads[adIndex] });
         adIndex++;
@@ -86,7 +86,10 @@ export default function MangaGridWithAds({ mangas }: MangaGridWithAdsProps) {
         <Grid
           item
           key={item.type === "manga" ? item.data.id : `ad-${item.data.id}`}
-          xs={12} sm={6} md={4} lg={3}
+          xs={12}
+          sm={6}
+          md={4}
+          lg={3}
         >
           {item.type === "manga" ? (
             <MangaCard manga={item.data} />

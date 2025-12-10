@@ -17,8 +17,7 @@ import SendIcon from "@mui/icons-material/Send";
 import ImageIcon from "@mui/icons-material/Image";
 import EmojiEmotionsIcon from "@mui/icons-material/EmojiEmotions";
 import CloseIcon from "@mui/icons-material/Close";
-import data from "@emoji-mart/data";
-import Picker from "@emoji-mart/react";
+import EmojiPicker, { Theme, EmojiClickData } from "emoji-picker-react";
 import AuthModal from "@/app/components/features/auth/AuthModal";
 
 interface CommentBoxProps {
@@ -43,7 +42,9 @@ export default function CommentBox({
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [emojiAnchor, setEmojiAnchor] = useState<HTMLButtonElement | null>(null);
+  const [emojiAnchor, setEmojiAnchor] = useState<HTMLButtonElement | null>(
+    null
+  );
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textFieldRef = useRef<HTMLTextAreaElement>(null);
@@ -56,23 +57,30 @@ export default function CommentBox({
     };
   }, [imagePreview]);
 
-  const handleImageSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleImageSelect = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
 
-    if (file.size > 3 * 1024 * 1024) {
-      alert("ไฟล์ต้องมีขนาดไม่เกิน 3MB");
-      return;
-    }
+      if (file.size > 3 * 1024 * 1024) {
+        alert("ไฟล์ต้องมีขนาดไม่เกิน 3MB");
+        return;
+      }
 
-    if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(file.type)) {
-      alert("รองรับเฉพาะไฟล์ JPEG, PNG, WebP, GIF");
-      return;
-    }
+      if (
+        !["image/jpeg", "image/png", "image/webp", "image/gif"].includes(
+          file.type
+        )
+      ) {
+        alert("รองรับเฉพาะไฟล์ JPEG, PNG, WebP, GIF");
+        return;
+      }
 
-    setImageFile(file);
-    setImagePreview(URL.createObjectURL(file));
-  }, []);
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    },
+    []
+  );
 
   const handleRemoveImage = useCallback(() => {
     if (imagePreview) {
@@ -85,8 +93,8 @@ export default function CommentBox({
     }
   }, [imagePreview]);
 
-  const handleEmojiSelect = useCallback((emoji: { native: string }) => {
-    setContent((prev) => prev + emoji.native);
+  const handleEmojiSelect = useCallback((emojiData: EmojiClickData) => {
+    setContent((prev) => prev + emojiData.emoji);
     setEmojiAnchor(null);
     textFieldRef.current?.focus();
   }, []);
@@ -144,7 +152,16 @@ export default function CommentBox({
     } finally {
       setIsSubmitting(false);
     }
-  }, [content, imageFile, mangaId, imageIndex, parentId, handleRemoveImage, onCommentCreated, isSubmitting]);
+  }, [
+    content,
+    imageFile,
+    mangaId,
+    imageIndex,
+    parentId,
+    handleRemoveImage,
+    onCommentCreated,
+    isSubmitting,
+  ]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -162,7 +179,7 @@ export default function CommentBox({
   if (status === "loading") {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
-      <CircularProgress size={24} aria-label="กำลังโหลด" />
+        <CircularProgress size={24} aria-label="กำลังโหลด" />
       </Box>
     );
   }
@@ -322,12 +339,13 @@ export default function CommentBox({
                 anchorOrigin={{ vertical: "top", horizontal: "left" }}
                 transformOrigin={{ vertical: "bottom", horizontal: "left" }}
               >
-                <Picker
-                  data={data}
-                  onEmojiSelect={handleEmojiSelect}
-                  theme="dark"
-                  previewPosition="none"
-                  skinTonePosition="none"
+                <EmojiPicker
+                  onEmojiClick={handleEmojiSelect}
+                  theme={Theme.DARK}
+                  lazyLoadEmojis={true}
+                  searchPlaceHolder="ค้นหา emoji..."
+                  width={300}
+                  height={400}
                 />
               </Popover>
             </Box>
@@ -337,12 +355,19 @@ export default function CommentBox({
               onClick={handleSubmit}
               disabled={isSubmitting || (!content.trim() && !imageFile)}
               sx={{
-                color: content.trim() || imageFile ? "#38bdf8" : "rgba(255,255,255,0.3)",
+                color:
+                  content.trim() || imageFile
+                    ? "#38bdf8"
+                    : "rgba(255,255,255,0.3)",
                 "&:disabled": { color: "rgba(255,255,255,0.2)" },
               }}
               aria-label="ส่งความคิดเห็น"
             >
-              {isSubmitting ? <CircularProgress size={20} aria-label="กำลังส่ง" /> : <SendIcon fontSize="small" />}
+              {isSubmitting ? (
+                <CircularProgress size={20} aria-label="กำลังส่ง" />
+              ) : (
+                <SendIcon fontSize="small" />
+              )}
             </IconButton>
           </Box>
         </Paper>
