@@ -1,16 +1,18 @@
-import NextAuth, { NextAuthOptions } from 'next-auth';
-import CredentialsProvider from 'next-auth/providers/credentials';
-import GoogleProvider from 'next-auth/providers/google';
-import { PrismaAdapter } from '@next-auth/prisma-adapter';
-import prisma from '@/lib/prisma';
-import bcrypt from 'bcryptjs';
+import NextAuth, { NextAuthOptions } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import prisma from "@/lib/prisma";
+import bcrypt from "bcryptjs";
 
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
 
-async function checkRateLimit(identifier: string): Promise<{ allowed: boolean; remaining: number; resetTime?: number }> {
+async function checkRateLimit(
+  identifier: string
+): Promise<{ allowed: boolean; remaining: number; resetTime?: number }> {
   const now = new Date();
-  
+
   // Clean up expired attempts (optional, or do via cron/scheduled task)
   // await prisma.loginAttempt.deleteMany({ where: { expiresAt: { lt: now } } });
 
@@ -22,14 +24,25 @@ async function checkRateLimit(identifier: string): Promise<{ allowed: boolean; r
     // Reset or first attempt
     await prisma.loginAttempt.upsert({
       where: { identifier },
-      update: { count: 1, expiresAt: new Date(now.getTime() + LOCKOUT_DURATION) },
-      create: { identifier, count: 1, expiresAt: new Date(now.getTime() + LOCKOUT_DURATION) },
+      update: {
+        count: 1,
+        expiresAt: new Date(now.getTime() + LOCKOUT_DURATION),
+      },
+      create: {
+        identifier,
+        count: 1,
+        expiresAt: new Date(now.getTime() + LOCKOUT_DURATION),
+      },
     });
     return { allowed: true, remaining: MAX_ATTEMPTS - 1 };
   }
 
   if (attempt.count >= MAX_ATTEMPTS) {
-    return { allowed: false, remaining: 0, resetTime: attempt.expiresAt.getTime() };
+    return {
+      allowed: false,
+      remaining: 0,
+      resetTime: attempt.expiresAt.getTime(),
+    };
   }
 
   // Increment
@@ -37,7 +50,7 @@ async function checkRateLimit(identifier: string): Promise<{ allowed: boolean; r
     where: { identifier },
     data: { count: { increment: 1 } },
   });
-  
+
   return { allowed: true, remaining: MAX_ATTEMPTS - (attempt.count + 1) };
 }
 
@@ -48,14 +61,15 @@ async function clearAttempt(identifier: string) {
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   session: {
-    strategy: 'jwt',
+    strategy: "jwt",
+    maxAge: 3 * 24 * 60 * 60, // 3 days in seconds
   },
   callbacks: {
     async jwt({ token, user, trigger, session }) {
       // On initial sign in
       if (user) {
         token.id = user.id;
-        token.role = user.role || 'user';
+        token.role = user.role || "user";
       }
 
       // Handle session update
@@ -77,27 +91,39 @@ export const authOptions: NextAuthOptions = {
 
         if (!userExists) {
           // User ไม่มีใน database แล้ว - return empty session
-          console.warn(`User ${token.id} not found in database, invalidating session`);
+          console.warn(
+            `User ${token.id} not found in database, invalidating session`
+          );
           return { ...session, user: undefined };
         }
 
         session.user.id = userExists.id;
-        session.user.role = userExists.role || 'user';
+        session.user.role = userExists.role || "user";
       }
       return session;
     },
   },
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || (() => { console.error("Missing GOOGLE_CLIENT_ID"); return "" })(),
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || (() => { console.error("Missing GOOGLE_CLIENT_SECRET"); return "" })(),
+      clientId:
+        process.env.GOOGLE_CLIENT_ID ||
+        (() => {
+          console.error("Missing GOOGLE_CLIENT_ID");
+          return "";
+        })(),
+      clientSecret:
+        process.env.GOOGLE_CLIENT_SECRET ||
+        (() => {
+          console.error("Missing GOOGLE_CLIENT_SECRET");
+          return "";
+        })(),
       allowDangerousEmailAccountLinking: true,
     }),
     CredentialsProvider({
-      name: 'Credentials',
+      name: "Credentials",
       credentials: {
-        username: { label: 'Username', type: 'text', placeholder: 'admin' },
-        password: { label: 'Password', type: 'password' },
+        username: { label: "Username", type: "text", placeholder: "admin" },
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         if (!credentials?.username || !credentials?.password) {
@@ -107,41 +133,58 @@ export const authOptions: NextAuthOptions = {
         // Rate limiting by username
         const identifier = credentials.username.toLowerCase();
         const rateCheck = await checkRateLimit(identifier);
-        
+
         if (!rateCheck.allowed) {
-          const minutesLeft = Math.ceil((rateCheck.resetTime! - Date.now()) / 60000);
-          throw new Error(`Too many login attempts. Please try again in ${minutesLeft} minute${minutesLeft > 1 ? 's' : ''}.`);
+          const minutesLeft = Math.ceil(
+            (rateCheck.resetTime! - Date.now()) / 60000
+          );
+          throw new Error(
+            `Too many login attempts. Please try again in ${minutesLeft} minute${
+              minutesLeft > 1 ? "s" : ""
+            }.`
+          );
         }
 
         const user = await prisma.user.findFirst({
           where: {
             OR: [
               { username: credentials.username },
-              { email: credentials.username }
-            ]
+              { email: credentials.username },
+            ],
           },
         });
 
         if (!user || !user.password) {
           // Show remaining attempts
-          throw new Error(`Invalid username or password. ${rateCheck.remaining} attempt${rateCheck.remaining !== 1 ? 's' : ''} remaining.`);
+          throw new Error(
+            `Invalid username or password. ${rateCheck.remaining} attempt${
+              rateCheck.remaining !== 1 ? "s" : ""
+            } remaining.`
+          );
         }
 
-        const isValid = await bcrypt.compare(credentials.password, user.password);
+        const isValid = await bcrypt.compare(
+          credentials.password,
+          user.password
+        );
 
         if (!isValid) {
           // Show remaining attempts
-          throw new Error(`Invalid username or password. ${rateCheck.remaining} attempt${rateCheck.remaining !== 1 ? 's' : ''} remaining.`);
+          throw new Error(
+            `Invalid username or password. ${rateCheck.remaining} attempt${
+              rateCheck.remaining !== 1 ? "s" : ""
+            } remaining.`
+          );
         }
 
         // Clear attempts on successful login
         clearAttempt(identifier);
 
-        return { 
-          id: user.id, 
-          name: user.username, 
+        return {
+          id: user.id,
+          name: user.username,
           email: user.email,
-          role: user.role 
+          role: user.role,
         };
       },
     }),
@@ -149,7 +192,7 @@ export const authOptions: NextAuthOptions = {
 
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
-    signIn: '/auth/signin',
+    signIn: "/auth/signin",
   },
 };
 

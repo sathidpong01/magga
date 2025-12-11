@@ -18,6 +18,7 @@ interface Ad {
   imageUrl: string;
   linkUrl?: string | null;
   content?: string | null;
+  repeatCount?: number; // จำนวนครั้งที่แสดงซ้ำ
 }
 
 interface MangaGridWithAdsProps {
@@ -29,52 +30,45 @@ export default function MangaGridWithAds({
   mangas,
   ads = [],
 }: MangaGridWithAdsProps) {
-  // สุ่มตำแหน่งโฆษณาใน grid
+  // ใช้ตำแหน่งแบบ deterministic (ไม่สุ่ม) เพื่อหลีกเลี่ยง hydration mismatch
   const itemsWithAds = useMemo(() => {
     if (ads.length === 0) {
       return mangas.map((manga) => ({ type: "manga" as const, data: manga }));
     }
 
-    const items: Array<
-      { type: "manga"; data: MangaWithDetails } | { type: "ad"; data: Ad }
-    > = [];
-    const usedPositions = new Set<number>();
-
-    // สุ่มตำแหน่งสำหรับแต่ละโฆษณา (ห่างกันอย่างน้อย 4 ตำแหน่ง)
-    const adPositions: number[] = [];
-    ads.forEach((_, index) => {
-      // สุ่มตำแหน่งระหว่าง 3-12 (ไม่ใช่ตำแหน่งแรกๆ)
-      let pos: number;
-      let attempts = 0;
-      do {
-        pos =
-          Math.floor(Math.random() * Math.min(mangas.length, 15)) +
-          3 +
-          index * 5;
-        attempts++;
-      } while (usedPositions.has(pos) && attempts < 10);
-
-      if (!usedPositions.has(pos) && pos < mangas.length + ads.length) {
-        adPositions.push(pos);
-        usedPositions.add(pos);
+    // ขยาย ads ตาม repeatCount (เช่น repeatCount=3 จะได้ ad ตัวเดิม 3 ครั้ง)
+    const expandedAds: Ad[] = [];
+    ads.forEach((ad) => {
+      const count = ad.repeatCount || 1;
+      for (let i = 0; i < count; i++) {
+        expandedAds.push(ad);
       }
     });
 
+    const items: Array<
+      | { type: "manga"; data: MangaWithDetails }
+      | { type: "ad"; data: Ad; index: number }
+    > = [];
+
+    // วางโฆษณาที่ตำแหน่งคงที่: ทุกๆ 5 ตำแหน่ง เริ่มจากตำแหน่ง 4
     let mangaIndex = 0;
     let adIndex = 0;
+    let totalIndex = 0;
 
-    for (
-      let i = 0;
-      i < mangas.length + ads.length && mangaIndex < mangas.length;
-      i++
-    ) {
-      if (adPositions.includes(i) && adIndex < ads.length) {
-        items.push({ type: "ad", data: ads[adIndex] });
+    while (mangaIndex < mangas.length) {
+      // แทรก ad ที่ตำแหน่ง 6, 13, 20... (ทุกๆ 10 หลังจากตำแหน่งที่ 6)
+      if (
+        adIndex < expandedAds.length &&
+        totalIndex > 0 &&
+        (totalIndex + 1) % 10 === 0
+      ) {
+        items.push({ type: "ad", data: expandedAds[adIndex], index: adIndex });
         adIndex++;
-      } else if (mangaIndex < mangas.length) {
+      } else {
         items.push({ type: "manga", data: mangas[mangaIndex] });
         mangaIndex++;
       }
+      totalIndex++;
     }
 
     return items;
@@ -85,7 +79,11 @@ export default function MangaGridWithAds({
       {itemsWithAds.map((item, index) => (
         <Grid
           item
-          key={item.type === "manga" ? item.data.id : `ad-${item.data.id}`}
+          key={
+            item.type === "manga"
+              ? item.data.id
+              : `ad-${item.data.id}-${item.index}`
+          }
           xs={12}
           sm={6}
           md={4}

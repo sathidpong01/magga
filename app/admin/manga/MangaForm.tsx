@@ -25,11 +25,14 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
-import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
+import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
 import NotificationModal from "../components/NotificationModal";
 import UploadModal from "../components/UploadModal";
 import { SortableItem } from "../components/SortableItem";
-import UploadProgress, { UploadFileStatus } from "@/app/components/ui/UploadProgress";
+import UploadProgress, {
+  UploadFileStatus,
+} from "@/app/components/ui/UploadProgress";
+import { authFetch } from "@/lib/auth-fetch";
 
 // DnD Kit Imports
 import {
@@ -40,13 +43,13 @@ import {
   useSensor,
   useSensors,
   DragEndEvent,
-} from '@dnd-kit/core';
+} from "@dnd-kit/core";
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   rectSortingStrategy,
-} from '@dnd-kit/sortable';
+} from "@dnd-kit/sortable";
 
 type MangaFormProps = {
   manga?: Manga & { tags: Tag[] };
@@ -56,7 +59,7 @@ type MangaFormProps = {
 
 type PageItem = {
   id: string;
-  type: 'url' | 'file';
+  type: "url" | "file";
   content: string | File;
   preview: string;
 };
@@ -68,27 +71,32 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
   const [uploadFiles, setUploadFiles] = useState<UploadFileStatus[]>([]);
   // Keep track of uploaded URLs to avoid re-uploading
   const [uploadedUrls, setUploadedUrls] = useState<Record<string, string>>({});
-  
+
   // Modal State
   const [notificationOpen, setNotificationOpen] = useState(false);
-  const [notificationType, setNotificationType] = useState<'success' | 'error'>('success');
+  const [notificationType, setNotificationType] = useState<"success" | "error">(
+    "success"
+  );
   const [notificationTitle, setNotificationTitle] = useState("");
   const [notificationMessage, setNotificationMessage] = useState("");
-  
+
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
-  const [uploadTarget, setUploadTarget] = useState<'cover' | 'pages'>('pages');
+  const [uploadTarget, setUploadTarget] = useState<"cover" | "pages">("pages");
 
   // Form State
   const [title, setTitle] = useState(manga?.title || "");
   const [slug, setSlug] = useState(manga?.slug || "");
   const [description, setDescription] = useState(manga?.description || "");
-  const [authorName, setAuthorName] = useState((manga as any)?.authorName || ""); // ชื่อผู้แต่ง
+  const [authorName, setAuthorName] = useState(
+    (manga as any)?.authorName || ""
+  ); // ชื่อผู้แต่ง
   const [categoryId, setCategoryId] = useState(manga?.categoryId || "");
   const [selectedTags, setSelectedTags] = useState<Tag[]>(manga?.tags || []);
-  
+
   // Local state for options to allow immediate updates
   const [availableTags, setAvailableTags] = useState<Tag[]>(tags);
-  const [availableCategories, setAvailableCategories] = useState<Category[]>(categories);
+  const [availableCategories, setAvailableCategories] =
+    useState<Category[]>(categories);
 
   const filter = createFilterOptions<Tag>();
   const categoryFilter = createFilterOptions<Category>();
@@ -98,7 +106,7 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
     if (!manga?.pages) return [];
     let initialPages: string[] = [];
     if (Array.isArray(manga.pages)) initialPages = manga.pages as string[];
-    else if (typeof manga.pages === 'string') {
+    else if (typeof manga.pages === "string") {
       try {
         const parsed = JSON.parse(manga.pages);
         if (Array.isArray(parsed)) initialPages = parsed;
@@ -106,12 +114,12 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
         initialPages = [];
       }
     }
-    
+
     return initialPages.map((url, index) => ({
       id: `existing-${index}-${Date.now()}`,
-      type: 'url',
+      type: "url",
       content: url,
-      preview: url
+      preview: url,
     }));
   });
 
@@ -119,10 +127,10 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
   const [coverItem, setCoverItem] = useState<PageItem | null>(() => {
     if (manga?.coverImage) {
       return {
-        id: 'cover-existing',
-        type: 'url',
+        id: "cover-existing",
+        type: "url",
         content: manga.coverImage,
-        preview: manga.coverImage
+        preview: manga.coverImage,
       };
     }
     return null;
@@ -159,40 +167,43 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
     }
   };
 
-  const handleAddItems = (newItems: { type: 'url' | 'file'; content: string | File }[]) => {
+  const handleAddItems = (
+    newItems: { type: "url" | "file"; content: string | File }[]
+  ) => {
     const processedItems: PageItem[] = newItems.map((item, index) => ({
       id: `new-${Date.now()}-${index}`,
       type: item.type,
       content: item.content,
-      preview: item.type === 'file' 
-        ? URL.createObjectURL(item.content as File)
-        : item.content as string
+      preview:
+        item.type === "file"
+          ? URL.createObjectURL(item.content as File)
+          : (item.content as string),
     }));
 
-    if (uploadTarget === 'cover') {
+    if (uploadTarget === "cover") {
       // Replace existing cover
-      if (coverItem?.type === 'file') {
+      if (coverItem?.type === "file") {
         URL.revokeObjectURL(coverItem.preview);
       }
       setCoverItem(processedItems[0]); // Take only the first one for cover
     } else {
       // Append to pages
-      setPageItems(prev => [...prev, ...processedItems]);
+      setPageItems((prev) => [...prev, ...processedItems]);
     }
   };
 
   const handleRemovePage = (id: string) => {
-    setPageItems(prev => {
-      const item = prev.find(p => p.id === id);
-      if (item?.type === 'file') {
+    setPageItems((prev) => {
+      const item = prev.find((p) => p.id === id);
+      if (item?.type === "file") {
         URL.revokeObjectURL(item.preview);
       }
-      return prev.filter(p => p.id !== id);
+      return prev.filter((p) => p.id !== id);
     });
   };
 
   const handleRemoveCover = () => {
-    if (coverItem?.type === 'file') {
+    if (coverItem?.type === "file") {
       URL.revokeObjectURL(coverItem.preview);
     }
     setCoverItem(null);
@@ -201,21 +212,26 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
   // Cleanup object URLs on unmount
   useEffect(() => {
     return () => {
-      pageItems.forEach(item => {
-        if (item.type === 'file') URL.revokeObjectURL(item.preview);
+      pageItems.forEach((item) => {
+        if (item.type === "file") URL.revokeObjectURL(item.preview);
       });
-      if (coverItem?.type === 'file') URL.revokeObjectURL(coverItem.preview);
+      if (coverItem?.type === "file") URL.revokeObjectURL(coverItem.preview);
     };
   }, []);
 
   // Credit Handlers
-  const handleAddCredit = () => setCredits([...credits, { url: "", label: "", icon: "" }]);
+  const handleAddCredit = () =>
+    setCredits([...credits, { url: "", label: "", icon: "" }]);
   const handleRemoveCredit = (index: number) => {
     const newCredits = [...credits];
     newCredits.splice(index, 1);
     setCredits(newCredits);
   };
-  const handleCreditChange = (index: number, field: keyof AuthorCredit, value: string) => {
+  const handleCreditChange = (
+    index: number,
+    field: keyof AuthorCredit,
+    value: string
+  ) => {
     const newCredits = [...credits];
     newCredits[index] = { ...newCredits[index], [field]: value };
     setCredits(newCredits);
@@ -224,7 +240,9 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
     const url = credits[index].url;
     if (!url) return;
     try {
-      const res = await fetch(`/api/metadata?url=${encodeURIComponent(url)}`);
+      const res = await authFetch(
+        `/api/metadata?url=${encodeURIComponent(url)}`
+      );
       if (!res.ok) throw new Error("Failed to fetch metadata");
       const data = await res.json();
       const newCredits = [...credits];
@@ -234,14 +252,12 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
         icon: data.icon || newCredits[index].icon,
       };
       setCredits(newCredits);
-    } catch (error) {
-
-    }
+    } catch (error) {}
   };
 
   const handleCreateTag = async (inputValue: string) => {
     try {
-      const res = await fetch("/api/tags", {
+      const res = await authFetch("/api/tags", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: inputValue }),
@@ -258,7 +274,7 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
 
   const handleCreateCategory = async (inputValue: string) => {
     try {
-      const res = await fetch("/api/categories", {
+      const res = await authFetch("/api/categories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: inputValue }),
@@ -273,7 +289,10 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
     }
   };
 
-  const handleSubmitWithDraft = async (e: React.FormEvent, saveAsDraft: boolean) => {
+  const handleSubmitWithDraft = async (
+    e: React.FormEvent,
+    saveAsDraft: boolean
+  ) => {
     e.preventDefault();
     if (!title || !coverItem) {
       setError("Title and Cover Image are required.");
@@ -290,10 +309,13 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
     try {
       // 1. Upload Cover if it's a file
       let finalCoverUrl = "";
-      if (coverItem.type === 'file') {
+      if (coverItem.type === "file") {
         const fd = new FormData();
         fd.append("files", coverItem.content as File);
-        const res = await fetch("/api/upload", { method: "POST", body: fd });
+        const res = await authFetch("/api/upload", {
+          method: "POST",
+          body: fd,
+        });
         if (!res.ok) throw new Error("Failed to upload cover image");
         const json = await res.json();
         finalCoverUrl = json.urls[0];
@@ -302,33 +324,33 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
       }
 
       // 2. Upload Page Files with Progress
-      const fileItems = pageItems.filter(p => p.type === 'file');
-      
+      const fileItems = pageItems.filter((p) => p.type === "file");
+
       // Filter out files that are already uploaded
-      const filesToUpload = fileItems.filter(item => !uploadedUrls[item.id]);
+      const filesToUpload = fileItems.filter((item) => !uploadedUrls[item.id]);
 
       if (filesToUpload.length > 0) {
         // Initialize progress state for NEW files only
         // But we want to keep the state of already uploaded files if they exist in uploadFiles
-        setUploadFiles(prev => {
-          const existing = new Map(prev.map(f => [f.id, f]));
-          
-          const newFiles = filesToUpload.map(item => ({
+        setUploadFiles((prev) => {
+          const existing = new Map(prev.map((f) => [f.id, f]));
+
+          const newFiles = filesToUpload.map((item) => ({
             id: item.id,
             name: (item.content as File).name,
             size: (item.content as File).size,
             progress: 0,
-            status: 'pending' as const
+            status: "pending" as const,
           }));
 
           // Merge: keep existing (if any), add new
           const merged = [...prev];
-          newFiles.forEach(f => {
+          newFiles.forEach((f) => {
             if (!existing.has(f.id)) {
               merged.push(f);
             } else {
               // Reset status if it was error
-              const idx = merged.findIndex(x => x.id === f.id);
+              const idx = merged.findIndex((x) => x.id === f.id);
               if (idx !== -1) merged[idx] = f;
             }
           });
@@ -350,9 +372,13 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
             xhr.upload.onprogress = (event) => {
               if (event.lengthComputable) {
                 const progress = (event.loaded / event.total) * 100;
-                setUploadFiles(prev => prev.map(f => 
-                  f.id === item.id ? { ...f, progress, status: 'uploading' } : f
-                ));
+                setUploadFiles((prev) =>
+                  prev.map((f) =>
+                    f.id === item.id
+                      ? { ...f, progress, status: "uploading" }
+                      : f
+                  )
+                );
               }
             };
 
@@ -361,27 +387,35 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                 try {
                   const response = JSON.parse(xhr.responseText);
                   const url = response.urls[0];
-                  setUploadedUrls(prev => ({ ...prev, [item.id]: url }));
-                  setUploadFiles(prev => prev.map(f => 
-                    f.id === item.id ? { ...f, progress: 100, status: 'completed' } : f
-                  ));
+                  setUploadedUrls((prev) => ({ ...prev, [item.id]: url }));
+                  setUploadFiles((prev) =>
+                    prev.map((f) =>
+                      f.id === item.id
+                        ? { ...f, progress: 100, status: "completed" }
+                        : f
+                    )
+                  );
                   resolve();
                 } catch (e) {
-                  reject(new Error('Invalid response'));
+                  reject(new Error("Invalid response"));
                 }
               } else {
-                setUploadFiles(prev => prev.map(f => 
-                  f.id === item.id ? { ...f, status: 'error' } : f
-                ));
-                reject(new Error('Upload failed'));
+                setUploadFiles((prev) =>
+                  prev.map((f) =>
+                    f.id === item.id ? { ...f, status: "error" } : f
+                  )
+                );
+                reject(new Error("Upload failed"));
               }
             };
 
             xhr.onerror = () => {
-              setUploadFiles(prev => prev.map(f => 
-                f.id === item.id ? { ...f, status: 'error' } : f
-              ));
-              reject(new Error('Network error'));
+              setUploadFiles((prev) =>
+                prev.map((f) =>
+                  f.id === item.id ? { ...f, status: "error" } : f
+                )
+              );
+              reject(new Error("Network error"));
             };
 
             xhr.open("POST", "/api/upload");
@@ -393,17 +427,19 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
         while (queue.length > 0 || activeUploads.size > 0) {
           while (queue.length > 0 && activeUploads.size < CONCURRENCY) {
             const item = queue.shift()!;
-            const promise = uploadFile(item).then(() => {
-              activeUploads.delete(promise);
-            }).catch((err) => {
-              activeUploads.delete(promise);
-              hasUploadErrors = true;
-              console.error(`Failed to upload ${item.id}:`, err);
-              // Do NOT throw here, let other files continue
-            });
+            const promise = uploadFile(item)
+              .then(() => {
+                activeUploads.delete(promise);
+              })
+              .catch((err) => {
+                activeUploads.delete(promise);
+                hasUploadErrors = true;
+                console.error(`Failed to upload ${item.id}:`, err);
+                // Do NOT throw here, let other files continue
+              });
             activeUploads.add(promise);
           }
-          
+
           if (activeUploads.size > 0) {
             await Promise.race(activeUploads);
           }
@@ -415,14 +451,14 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
       }
 
       // Reconstruct pages array in order
-      const finalPages = pageItems.map(item => {
-        if (item.type === 'url') return item.content as string;
+      const finalPages = pageItems.map((item) => {
+        if (item.type === "url") return item.content as string;
         // Check both the local state and the ref/state we just updated
-        return uploadedUrls[item.id]; 
+        return uploadedUrls[item.id];
       });
 
       // Verify all pages have URLs
-      if (finalPages.some(p => !p)) {
+      if (finalPages.some((p) => !p)) {
         throw new Error("Some pages are missing URLs. Please retry uploading.");
       }
 
@@ -444,7 +480,7 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
       const url = manga ? `/api/manga/${manga.id}` : "/api/manga";
       const method = manga ? "PUT" : "POST";
 
-      const response = await fetch(url, {
+      const response = await authFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -453,15 +489,20 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
       if (!response.ok) {
         const res = await response.json();
         let errorMessage = res.error || "Failed to save manga";
-        
-        if (typeof errorMessage === 'object') {
+
+        if (typeof errorMessage === "object") {
           // Handle Zod flattened error
           if (errorMessage.fieldErrors) {
             const fields = Object.keys(errorMessage.fieldErrors);
             if (fields.length > 0) {
               // Get the first error message from the first field
-              errorMessage = `${fields[0]}: ${errorMessage.fieldErrors[fields[0]][0]}`;
-            } else if (errorMessage.formErrors && errorMessage.formErrors.length > 0) {
+              errorMessage = `${fields[0]}: ${
+                errorMessage.fieldErrors[fields[0]][0]
+              }`;
+            } else if (
+              errorMessage.formErrors &&
+              errorMessage.formErrors.length > 0
+            ) {
               errorMessage = errorMessage.formErrors[0];
             } else {
               errorMessage = "Validation failed";
@@ -470,24 +511,27 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
             errorMessage = JSON.stringify(errorMessage);
           }
         }
-        
+
         throw new Error(errorMessage);
       }
-      
-      const data = await response.json();
-      
-      setNotificationType('success');
-      setNotificationTitle(manga ? 'Manga Updated' : 'Manga Created');
-      setNotificationMessage(manga 
-        ? `Successfully updated "${title}".` 
-        : `Successfully created "${title}".`);
-      setNotificationOpen(true);
 
+      const data = await response.json();
+
+      setNotificationType("success");
+      setNotificationTitle(manga ? "Manga Updated" : "Manga Created");
+      setNotificationMessage(
+        manga
+          ? `Successfully updated "${title}".`
+          : `Successfully created "${title}".`
+      );
+      setNotificationOpen(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
-      setNotificationType('error');
-      setNotificationTitle('Error');
-      setNotificationMessage(err instanceof Error ? err.message : "An unexpected error occurred.");
+      setNotificationType("error");
+      setNotificationTitle("Error");
+      setNotificationMessage(
+        err instanceof Error ? err.message : "An unexpected error occurred."
+      );
       setNotificationOpen(true);
     } finally {
       setIsSubmitting(false);
@@ -496,35 +540,41 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
 
   const handleRetryUpload = (fileId: string) => {
     // Reset status to pending for this file
-    setUploadFiles(prev => prev.map(f => 
-      f.id === fileId ? { ...f, status: 'pending', progress: 0 } : f
-    ));
-    
+    setUploadFiles((prev) =>
+      prev.map((f) =>
+        f.id === fileId ? { ...f, status: "pending", progress: 0 } : f
+      )
+    );
+
     // Trigger submit again - it will filter and pick up pending/failed files
     // We can't easily trigger the full form submit from here without the event object
     // But we can just trigger the upload logic if we extracted it.
-    // For simplicity, let's just ask the user to click "Save" again, 
+    // For simplicity, let's just ask the user to click "Save" again,
     // OR we can try to re-run the submit logic if we had access to it.
     // Better UX: The user clicks "Retry" on the file, we could just try to upload THAT file immediately.
-    
-    const item = pageItems.find(p => p.id === fileId);
-    if (!item || item.type !== 'file') return;
+
+    const item = pageItems.find((p) => p.id === fileId);
+    if (!item || item.type !== "file") return;
 
     // Simple single file upload retry
     const xhr = new XMLHttpRequest();
     const fd = new FormData();
     fd.append("files", item.content as File);
 
-    setUploadFiles(prev => prev.map(f => 
-      f.id === fileId ? { ...f, status: 'uploading', progress: 0 } : f
-    ));
+    setUploadFiles((prev) =>
+      prev.map((f) =>
+        f.id === fileId ? { ...f, status: "uploading", progress: 0 } : f
+      )
+    );
 
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable) {
         const progress = (event.loaded / event.total) * 100;
-        setUploadFiles(prev => prev.map(f => 
-          f.id === fileId ? { ...f, progress, status: 'uploading' } : f
-        ));
+        setUploadFiles((prev) =>
+          prev.map((f) =>
+            f.id === fileId ? { ...f, progress, status: "uploading" } : f
+          )
+        );
       }
     };
 
@@ -533,26 +583,28 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
         try {
           const response = JSON.parse(xhr.responseText);
           const url = response.urls[0];
-          setUploadedUrls(prev => ({ ...prev, [fileId]: url }));
-          setUploadFiles(prev => prev.map(f => 
-            f.id === fileId ? { ...f, progress: 100, status: 'completed' } : f
-          ));
+          setUploadedUrls((prev) => ({ ...prev, [fileId]: url }));
+          setUploadFiles((prev) =>
+            prev.map((f) =>
+              f.id === fileId ? { ...f, progress: 100, status: "completed" } : f
+            )
+          );
         } catch (e) {
-          setUploadFiles(prev => prev.map(f => 
-            f.id === fileId ? { ...f, status: 'error' } : f
-          ));
+          setUploadFiles((prev) =>
+            prev.map((f) => (f.id === fileId ? { ...f, status: "error" } : f))
+          );
         }
       } else {
-        setUploadFiles(prev => prev.map(f => 
-          f.id === fileId ? { ...f, status: 'error' } : f
-        ));
+        setUploadFiles((prev) =>
+          prev.map((f) => (f.id === fileId ? { ...f, status: "error" } : f))
+        );
       }
     };
 
     xhr.onerror = () => {
-      setUploadFiles(prev => prev.map(f => 
-        f.id === fileId ? { ...f, status: 'error' } : f
-      ));
+      setUploadFiles((prev) =>
+        prev.map((f) => (f.id === fileId ? { ...f, status: "error" } : f))
+      );
     };
 
     xhr.open("POST", "/api/upload");
@@ -574,7 +626,16 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
       <Box component="form" onSubmit={(e) => handleSubmitWithDraft(e, false)}>
         <Grid container spacing={3}>
           {/* Header / Actions */}
-          <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Grid
+            item
+            xs={12}
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              mb: 2,
+            }}
+          >
             <Typography variant="h5" component="h2" sx={{ fontWeight: 700 }}>
               {manga ? "Edit Manga" : "Create New Manga"}
             </Typography>
@@ -596,7 +657,11 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                     handleSubmitWithDraft(e, true);
                   }}
                   disabled={isSubmitting}
-                  sx={{ borderRadius: 1, borderColor: 'rgba(255,255,255,0.1)', color: 'text.secondary' }}
+                  sx={{
+                    borderRadius: 1,
+                    borderColor: "rgba(255,255,255,0.1)",
+                    color: "text.secondary",
+                  }}
                 >
                   Save Draft
                 </Button>
@@ -605,29 +670,57 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                 type="submit"
                 variant="contained"
                 disabled={isSubmitting}
-                startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" aria-label="Saving..." /> : null}
-                sx={{ 
-                  borderRadius: 1, 
-                  bgcolor: '#fbbf24', 
-                  color: '#000',
-                  '&:hover': { bgcolor: '#f59e0b' }
+                startIcon={
+                  isSubmitting ? (
+                    <CircularProgress
+                      size={20}
+                      color="inherit"
+                      aria-label="Saving..."
+                    />
+                  ) : null
+                }
+                sx={{
+                  borderRadius: 1,
+                  bgcolor: "#fbbf24",
+                  color: "#000",
+                  "&:hover": { bgcolor: "#f59e0b" },
                 }}
               >
-                {isSubmitting ? "Saving..." : manga ? "Update Manga" : "Create Manga"}
+                {isSubmitting
+                  ? "Saving..."
+                  : manga
+                  ? "Update Manga"
+                  : "Create Manga"}
               </Button>
             </Stack>
           </Grid>
 
           {error && (
             <Grid item xs={12}>
-              <Alert severity="error" sx={{ borderRadius: 1 }}>{error}</Alert>
+              <Alert severity="error" sx={{ borderRadius: 1 }}>
+                {error}
+              </Alert>
             </Grid>
           )}
 
           {/* Left Column: General Info */}
           <Grid item xs={12} md={7}>
-            <Paper elevation={0} sx={{ p: 3, borderRadius: 1, bgcolor: '#171717', minHeight: 600 }}>
-              <Typography variant="h6" component="h3" gutterBottom sx={{ mb: 3, fontSize: '1rem', color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 1 }}>
+            <Paper
+              elevation={0}
+              sx={{ p: 3, borderRadius: 1, bgcolor: "#171717", minHeight: 600 }}
+            >
+              <Typography
+                variant="h6"
+                component="h3"
+                gutterBottom
+                sx={{
+                  mb: 3,
+                  fontSize: "1rem",
+                  color: "text.secondary",
+                  textTransform: "uppercase",
+                  letterSpacing: 1,
+                }}
+              >
                 General Information
               </Typography>
               <Grid container spacing={3}>
@@ -639,7 +732,10 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                     fullWidth
                     required
                     variant="filled"
-                    InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
+                    InputProps={{
+                      disableUnderline: true,
+                      sx: { borderRadius: 1 },
+                    }}
                   />
                 </Grid>
                 <Grid item xs={12}>
@@ -687,7 +783,10 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                     multiline
                     rows={4}
                     variant="filled"
-                    InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
+                    InputProps={{
+                      disableUnderline: true,
+                      sx: { borderRadius: 1 },
+                    }}
                   />
                 </Grid>
                 <Grid item xs={12}>
@@ -699,14 +798,20 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                     variant="filled"
                     placeholder="เช่น Aokana, Doujin Circle"
                     helperText="สำหรับแสดงใน og:title เมื่อแชร์ลิงก์ (ไม่บังคับ)"
-                    InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
+                    InputProps={{
+                      disableUnderline: true,
+                      sx: { borderRadius: 1 },
+                    }}
                   />
                 </Grid>
                 <Grid item xs={12} md={6}>
                   <Autocomplete
-                    value={availableCategories.find((c) => c.id === categoryId) || null}
+                    value={
+                      availableCategories.find((c) => c.id === categoryId) ||
+                      null
+                    }
                     onChange={(event, newValue) => {
-                      if (typeof newValue === 'string') {
+                      if (typeof newValue === "string") {
                         handleCreateCategory(newValue);
                       } else if (newValue && (newValue as any).inputValue) {
                         // Create a new value from the user input
@@ -719,8 +824,10 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                       const filtered = categoryFilter(options, params);
                       const { inputValue } = params;
                       // Suggest the creation of a new value
-                      const isExisting = options.some((option) => option.name === inputValue);
-                      if (inputValue !== '' && !isExisting) {
+                      const isExisting = options.some(
+                        (option) => option.name === inputValue
+                      );
+                      if (inputValue !== "" && !isExisting) {
                         filtered.push({
                           inputValue,
                           name: `Add "${inputValue}"`,
@@ -736,7 +843,7 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                     options={availableCategories}
                     getOptionLabel={(option) => {
                       // Value selected with enter, right from the input
-                      if (typeof option === 'string') {
+                      if (typeof option === "string") {
                         return option;
                       }
                       // Add "xxx" option created dynamically
@@ -756,11 +863,15 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                     }}
                     freeSolo
                     renderInput={(params) => (
-                      <TextField 
-                        {...params} 
-                        label="Category" 
+                      <TextField
+                        {...params}
+                        label="Category"
                         variant="filled"
-                        InputProps={{ ...params.InputProps, disableUnderline: true, sx: { borderRadius: 1 } }}
+                        InputProps={{
+                          ...params.InputProps,
+                          disableUnderline: true,
+                          sx: { borderRadius: 1 },
+                        }}
                       />
                     )}
                   />
@@ -771,17 +882,18 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                     id="tags-autocomplete"
                     options={availableTags}
                     getOptionLabel={(option) => {
-                      if (typeof option === 'string') return option;
-                      if ((option as any).inputValue) return (option as any).inputValue;
+                      if (typeof option === "string") return option;
+                      if ((option as any).inputValue)
+                        return (option as any).inputValue;
                       return option.name;
                     }}
                     value={selectedTags}
                     onChange={(event, newValue) => {
                       // Filter out any string values or special "Add" options and handle creation
                       const processedTags: Tag[] = [];
-                      
+
                       newValue.forEach((item) => {
-                        if (typeof item === 'string') {
+                        if (typeof item === "string") {
                           handleCreateTag(item);
                         } else if ((item as any).inputValue) {
                           handleCreateTag((item as any).inputValue);
@@ -789,17 +901,22 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                           processedTags.push(item as Tag);
                         }
                       });
-                      
+
                       // Update state only with valid existing tags
                       // New tags will be added via handleCreateTag
-                      const validTags = newValue.filter(t => !(t as any).inputValue && typeof t !== 'string') as Tag[];
+                      const validTags = newValue.filter(
+                        (t) => !(t as any).inputValue && typeof t !== "string"
+                      ) as Tag[];
                       setSelectedTags(validTags);
                     }}
                     filterOptions={(options, params) => {
                       const filtered = filter(options, params);
                       const { inputValue } = params;
-                      const isExisting = options.some((option) => option.name.toLowerCase() === inputValue.toLowerCase());
-                      if (inputValue !== '' && !isExisting) {
+                      const isExisting = options.some(
+                        (option) =>
+                          option.name.toLowerCase() === inputValue.toLowerCase()
+                      );
+                      if (inputValue !== "" && !isExisting) {
                         filtered.push({
                           inputValue,
                           name: `Add "${inputValue}"`,
@@ -808,7 +925,9 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                       }
                       return filtered;
                     }}
-                    isOptionEqualToValue={(option, value) => option.id === value.id}
+                    isOptionEqualToValue={(option, value) =>
+                      option.id === value.id
+                    }
                     renderOption={(props, option) => {
                       const { key, ...optionProps } = props;
                       return (
@@ -824,7 +943,11 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                         variant="filled"
                         label="Tags"
                         placeholder="Select tags"
-                        InputProps={{ ...params.InputProps, disableUnderline: true, sx: { borderRadius: 1 } }}
+                        InputProps={{
+                          ...params.InputProps,
+                          disableUnderline: true,
+                          sx: { borderRadius: 1 },
+                        }}
                       />
                     )}
                   />
@@ -835,49 +958,83 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
 
           {/* Right Column: Media Assets */}
           <Grid item xs={12} md={5}>
-            <Paper elevation={0} sx={{ p: 3, borderRadius: 1, bgcolor: '#171717', height: '100%' }}>
-              <Typography variant="h6" component="h3" gutterBottom sx={{ mb: 3, fontSize: '1rem', color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 1 }}>
+            <Paper
+              elevation={0}
+              sx={{ p: 3, borderRadius: 1, bgcolor: "#171717", height: "100%" }}
+            >
+              <Typography
+                variant="h6"
+                component="h3"
+                gutterBottom
+                sx={{
+                  mb: 3,
+                  fontSize: "1rem",
+                  color: "text.secondary",
+                  textTransform: "uppercase",
+                  letterSpacing: 1,
+                }}
+              >
                 Media Assets
               </Typography>
-              
+
               {/* Cover Image */}
               <Box sx={{ mb: 4 }}>
-                <Typography variant="subtitle1" component="h4" gutterBottom>Cover Image</Typography>
-                
+                <Typography variant="subtitle1" component="h4" gutterBottom>
+                  Cover Image
+                </Typography>
+
                 {!coverItem ? (
                   <Button
                     variant="outlined"
                     fullWidth
                     onClick={() => {
-                      setUploadTarget('cover');
+                      setUploadTarget("cover");
                       setUploadModalOpen(true);
                     }}
-                    sx={{ 
-                      height: 120, 
-                      borderStyle: 'dashed', 
-                      borderColor: 'rgba(255,255,255,0.2)',
+                    sx={{
+                      height: 120,
+                      borderStyle: "dashed",
+                      borderColor: "rgba(255,255,255,0.2)",
                       borderRadius: 1,
-                      color: 'text.secondary',
-                      flexDirection: 'column',
-                      gap: 1
+                      color: "text.secondary",
+                      flexDirection: "column",
+                      gap: 1,
                     }}
                   >
-                    <AddPhotoAlternateIcon sx={{ fontSize: 40, opacity: 0.5 }} />
+                    <AddPhotoAlternateIcon
+                      sx={{ fontSize: 40, opacity: 0.5 }}
+                    />
                     Add Cover Image
                   </Button>
                 ) : (
-                  <Box sx={{ position: 'relative', width: '100%', maxWidth: 200, margin: '0 auto', borderRadius: 1, overflow: 'hidden', boxShadow: 3 }}>
-                    <Box 
-                      component="img" 
-                      src={coverItem.preview} 
-                      alt="Cover preview" 
-                      sx={{ width: '100%', height: 'auto', display: 'block' }} 
+                  <Box
+                    sx={{
+                      position: "relative",
+                      width: "100%",
+                      maxWidth: 200,
+                      margin: "0 auto",
+                      borderRadius: 1,
+                      overflow: "hidden",
+                      boxShadow: 3,
+                    }}
+                  >
+                    <Box
+                      component="img"
+                      src={coverItem.preview}
+                      alt="Cover preview"
+                      sx={{ width: "100%", height: "auto", display: "block" }}
                     />
-                    <IconButton 
+                    <IconButton
                       aria-label="Remove cover image"
-                      size="small" 
+                      size="small"
                       onClick={handleRemoveCover}
-                      sx={{ position: 'absolute', top: 4, right: 4, bgcolor: 'rgba(0,0,0,0.6)', '&:hover': { bgcolor: 'rgba(220, 38, 38, 0.8)' } }}
+                      sx={{
+                        position: "absolute",
+                        top: 4,
+                        right: 4,
+                        bgcolor: "rgba(0,0,0,0.6)",
+                        "&:hover": { bgcolor: "rgba(220, 38, 38, 0.8)" },
+                      }}
                     >
                       <DeleteIcon fontSize="small" />
                     </IconButton>
@@ -887,38 +1044,52 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
 
               {/* Pages */}
               <Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Typography variant="subtitle1" component="h4">Pages ({pageItems.length})</Typography>
-                  <Button 
-                    size="small" 
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    mb: 2,
+                  }}
+                >
+                  <Typography variant="subtitle1" component="h4">
+                    Pages ({pageItems.length})
+                  </Typography>
+                  <Button
+                    size="small"
                     startIcon={<AddPhotoAlternateIcon />}
                     onClick={() => {
-                      setUploadTarget('pages');
+                      setUploadTarget("pages");
                       setUploadModalOpen(true);
                     }}
-                    sx={{ color: '#fbbf24' }}
+                    sx={{ color: "#fbbf24" }}
                   >
                     Add Pages
                   </Button>
                 </Box>
 
-
-
-                <DndContext 
-                  sensors={sensors} 
-                  collisionDetection={closestCenter} 
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
                   onDragEnd={handleDragEnd}
                 >
-                  <SortableContext 
-                    items={pageItems.map(p => p.id)} 
+                  <SortableContext
+                    items={pageItems.map((p) => p.id)}
                     strategy={rectSortingStrategy}
                   >
-                    <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: 1 }}>
+                    <Box
+                      sx={{
+                        display: "grid",
+                        gridTemplateColumns:
+                          "repeat(auto-fill, minmax(80px, 1fr))",
+                        gap: 1,
+                      }}
+                    >
                       {pageItems.map((item, index) => (
-                        <SortableItem 
-                          key={item.id} 
-                          id={item.id} 
-                          src={item.preview} 
+                        <SortableItem
+                          key={item.id}
+                          id={item.id}
+                          src={item.preview}
                           index={index}
                           onRemove={() => handleRemovePage(item.id)}
                         />
@@ -928,13 +1099,15 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                 </DndContext>
 
                 {pageItems.length === 0 && (
-                  <Box sx={{ 
-                    p: 4, 
-                    border: '1px dashed rgba(255,255,255,0.1)', 
-                    borderRadius: 1, 
-                    textAlign: 'center',
-                    color: 'text.secondary'
-                  }}>
+                  <Box
+                    sx={{
+                      p: 4,
+                      border: "1px dashed rgba(255,255,255,0.1)",
+                      borderRadius: 1,
+                      textAlign: "center",
+                      color: "text.secondary",
+                    }}
+                  >
                     <Typography variant="body2">No pages added yet.</Typography>
                   </Box>
                 )}
@@ -944,36 +1117,62 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
 
           {/* Bottom: Author Credits */}
           <Grid item xs={12}>
-            <Paper elevation={0} sx={{ p: 3, borderRadius: 1, bgcolor: '#171717' }}>
-              <Typography variant="h6" component="h3" gutterBottom sx={{ mb: 3, fontSize: '1rem', color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 1 }}>
+            <Paper
+              elevation={0}
+              sx={{ p: 3, borderRadius: 1, bgcolor: "#171717" }}
+            >
+              <Typography
+                variant="h6"
+                component="h3"
+                gutterBottom
+                sx={{
+                  mb: 3,
+                  fontSize: "1rem",
+                  color: "text.secondary",
+                  textTransform: "uppercase",
+                  letterSpacing: 1,
+                }}
+              >
                 Author Credits
               </Typography>
               <Stack spacing={2}>
                 {credits.map((credit, index) => (
-                  <Box key={index} sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+                  <Box
+                    key={index}
+                    sx={{ display: "flex", gap: 2, alignItems: "flex-start" }}
+                  >
                     <Grid container spacing={2}>
                       <Grid item xs={12} sm={5}>
                         <TextField
                           label="URL"
                           value={credit.url}
-                          onChange={(e) => handleCreditChange(index, "url", e.target.value)}
+                          onChange={(e) =>
+                            handleCreditChange(index, "url", e.target.value)
+                          }
                           fullWidth
                           size="small"
                           variant="filled"
-                          InputProps={{ 
-                            disableUnderline: true, 
+                          InputProps={{
+                            disableUnderline: true,
                             sx: { borderRadius: 1 },
                             endAdornment: (
                               <InputAdornment position="end">
                                 <Tooltip title="Auto-fetch Title & Icon">
                                   <span>
-                                    <IconButton aria-label="Fetch credit info" onClick={() => handleFetchCreditInfo(index)} edge="end" disabled={!credit.url}>
+                                    <IconButton
+                                      aria-label="Fetch credit info"
+                                      onClick={() =>
+                                        handleFetchCreditInfo(index)
+                                      }
+                                      edge="end"
+                                      disabled={!credit.url}
+                                    >
                                       <AutoFixHighIcon />
                                     </IconButton>
                                   </span>
                                 </Tooltip>
                               </InputAdornment>
-                            )
+                            ),
                           }}
                         />
                       </Grid>
@@ -981,11 +1180,16 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                         <TextField
                           label="Label"
                           value={credit.label}
-                          onChange={(e) => handleCreditChange(index, "label", e.target.value)}
+                          onChange={(e) =>
+                            handleCreditChange(index, "label", e.target.value)
+                          }
                           fullWidth
                           size="small"
                           variant="filled"
-                          InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
+                          InputProps={{
+                            disableUnderline: true,
+                            sx: { borderRadius: 1 },
+                          }}
                         />
                       </Grid>
                       <Grid item xs={10} sm={3}>
@@ -993,29 +1197,56 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                           <TextField
                             label="Icon URL"
                             value={credit.icon}
-                            onChange={(e) => handleCreditChange(index, "icon", e.target.value)}
+                            onChange={(e) =>
+                              handleCreditChange(index, "icon", e.target.value)
+                            }
                             fullWidth
                             size="small"
                             variant="filled"
-                            InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
+                            InputProps={{
+                              disableUnderline: true,
+                              sx: { borderRadius: 1 },
+                            }}
                           />
                           {credit.icon && (
-                            <Box component="img" src={credit.icon} sx={{ width: 32, height: 32, borderRadius: "50%" }} />
+                            <Box
+                              component="img"
+                              src={credit.icon}
+                              sx={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: "50%",
+                              }}
+                            />
                           )}
                         </Stack>
                       </Grid>
-                      <Grid item xs={2} sm={1} sx={{ display: 'flex', alignItems: 'center' }}>
-                        <IconButton aria-label="Remove credit" color="error" onClick={() => handleRemoveCredit(index)}>
+                      <Grid
+                        item
+                        xs={2}
+                        sm={1}
+                        sx={{ display: "flex", alignItems: "center" }}
+                      >
+                        <IconButton
+                          aria-label="Remove credit"
+                          color="error"
+                          onClick={() => handleRemoveCredit(index)}
+                        >
                           <DeleteIcon />
                         </IconButton>
                       </Grid>
                     </Grid>
                   </Box>
                 ))}
-                <Button 
-                  variant="outlined" 
-                  onClick={handleAddCredit} 
-                  sx={{ alignSelf: "flex-start", borderRadius: 1, borderColor: 'rgba(255,255,255,0.2)', color: 'text.secondary' }}
+                <Button
+                  variant="outlined"
+                  onClick={handleAddCredit}
+                  sx={{
+                    alignSelf: "flex-start",
+                    borderRadius: 1,
+                    borderColor: "rgba(255,255,255,0.2)",
+                    color: "text.secondary",
+                  }}
                 >
                   Add Author Credit
                 </Button>
@@ -1030,8 +1261,8 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
         open={uploadModalOpen}
         onClose={() => setUploadModalOpen(false)}
         onAdd={handleAddItems}
-        title={uploadTarget === 'cover' ? "Set Cover Image" : "Add Pages"}
-        multiple={uploadTarget === 'pages'}
+        title={uploadTarget === "cover" ? "Set Cover Image" : "Add Pages"}
+        multiple={uploadTarget === "pages"}
       />
 
       {/* Notification Modal */}
@@ -1041,15 +1272,19 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
         type={notificationType}
         title={notificationTitle}
         message={notificationMessage}
-        primaryAction={notificationType === 'success' ? {
-          label: "Go to List",
-          onClick: handleGoToList
-        } : {
-          label: "Close",
-          onClick: handleCloseNotification
-        }}
+        primaryAction={
+          notificationType === "success"
+            ? {
+                label: "Go to List",
+                onClick: handleGoToList,
+              }
+            : {
+                label: "Close",
+                onClick: handleCloseNotification,
+              }
+        }
       />
-      
+
       {/* Floating Upload Progress */}
       {uploadFiles.length > 0 && (
         <UploadProgress files={uploadFiles} onRetry={handleRetryUpload} />

@@ -246,14 +246,15 @@ model CommentVote {
 
 // สำหรับโฆษณา/Affiliate/Donation
 model Advertisement {
-  id        String   @id @default(cuid())
-  type      String // "affiliate" | "promptpay"
-  title     String // ชื่อสำหรับ admin
-  imageUrl  String // รูป banner
-  linkUrl   String? // ลิงก์ affiliate
-  content   String? // ข้อความเพิ่มเติม / เลข PromptPay
-  placement String // "grid" | "header" | "footer" | "manga-end" | "floating" | "modal"
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  type        String // "affiliate" | "promptpay"
+  title       String // ชื่อสำหรับ admin
+  imageUrl    String // รูป banner
+  linkUrl     String? // ลิงก์ affiliate
+  content     String? // ข้อความเพิ่มเติม / เลข PromptPay
+  placement   String // "grid" | "header" | "footer" | "manga-end" | "floating" | "modal"
+  repeatCount Int      @default(1) // จำนวนครั้งที่แสดงซ้ำ (สำหรับ grid เท่านั้น)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

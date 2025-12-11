@@ -41,6 +41,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import LinkButton from "@/app/components/ui/LinkButton";
 import MangaActions from "../MangaActions";
 import { useRouter } from "next/navigation";
+import { authFetch } from "@/lib/auth-fetch";
 
 type Tag = { id: string; name: string };
 type Category = { id: string; name: string };
@@ -138,7 +139,7 @@ export default function AdminMangaTable({
 
     setIsLoading(true);
     try {
-      const res = await fetch("/api/admin/manga/bulk-action", {
+      const res = await authFetch("/api/admin/manga/bulk-action", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -177,7 +178,7 @@ export default function AdminMangaTable({
 
     setIsLoading(true);
     try {
-      const res = await fetch("/api/admin/manga/quick-edit", {
+      const res = await authFetch("/api/admin/manga/quick-edit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

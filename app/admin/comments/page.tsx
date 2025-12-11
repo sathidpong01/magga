@@ -33,6 +33,7 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import ReplyIcon from "@mui/icons-material/Reply";
 import Link from "next/link";
+import { authFetch } from "@/lib/auth-fetch";
 
 interface Comment {
   id: string;
@@ -96,7 +97,7 @@ export default function AdminCommentsPage() {
       });
       if (search) params.set("search", search);
 
-      const res = await fetch(`/api/admin/comments?${params}`);
+      const res = await authFetch(`/api/admin/comments?${params}`);
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.error || "Failed to fetch");
@@ -132,7 +133,7 @@ export default function AdminCommentsPage() {
     if (selected.length === 0) return;
     setDeleting(true);
     try {
-      const res = await fetch("/api/admin/comments", {
+      const res = await authFetch("/api/admin/comments", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ commentIds: selected }),
@@ -146,7 +147,9 @@ export default function AdminCommentsPage() {
       setDeleteDialogOpen(false);
       fetchComments();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to delete comments");
+      setError(
+        err instanceof Error ? err.message : "Failed to delete comments"
+      );
     } finally {
       setDeleting(false);
     }
@@ -156,7 +159,9 @@ export default function AdminCommentsPage() {
     setPagination((prev) => ({ ...prev, page: newPage + 1 }));
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     setPagination((prev) => ({
       ...prev,
       limit: parseInt(event.target.value, 10),
@@ -177,7 +182,11 @@ export default function AdminCommentsPage() {
 
   return (
     <Box>
-      <Typography variant="h5" fontWeight="bold" sx={{ mb: 3, color: "#fafafa" }}>
+      <Typography
+        variant="h5"
+        fontWeight="bold"
+        sx={{ mb: 3, color: "#fafafa" }}
+      >
         จัดการความคิดเห็น
       </Typography>
 
@@ -188,7 +197,11 @@ export default function AdminCommentsPage() {
       )}
 
       {success && (
-        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess(null)}>
+        <Alert
+          severity="success"
+          sx={{ mb: 2 }}
+          onClose={() => setSuccess(null)}
+        >
           {success}
         </Alert>
       )}
@@ -206,7 +219,11 @@ export default function AdminCommentsPage() {
           flexWrap: "wrap",
         }}
       >
-        <Box component="form" onSubmit={handleSearch} sx={{ flex: 1, minWidth: 200 }}>
+        <Box
+          component="form"
+          onSubmit={handleSearch}
+          sx={{ flex: 1, minWidth: 200 }}
+        >
           <TextField
             size="small"
             placeholder="ค้นหาความคิดเห็น, ผู้ใช้, มังงะ..."
@@ -258,30 +275,74 @@ export default function AdminCommentsPage() {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell padding="checkbox" sx={{ borderColor: "rgba(255,255,255,0.1)" }}>
+              <TableCell
+                padding="checkbox"
+                sx={{ borderColor: "rgba(255,255,255,0.1)" }}
+              >
                 <Checkbox
-                  indeterminate={selected.length > 0 && selected.length < comments.length}
-                  checked={comments.length > 0 && selected.length === comments.length}
+                  indeterminate={
+                    selected.length > 0 && selected.length < comments.length
+                  }
+                  checked={
+                    comments.length > 0 && selected.length === comments.length
+                  }
                   onChange={handleSelectAll}
                   sx={{ color: "#737373" }}
                 />
               </TableCell>
-              <TableCell sx={{ color: "#a3a3a3", fontWeight: 600, borderColor: "rgba(255,255,255,0.1)", width: 80 }}>
+              <TableCell
+                sx={{
+                  color: "#a3a3a3",
+                  fontWeight: 600,
+                  borderColor: "rgba(255,255,255,0.1)",
+                  width: 80,
+                }}
+              >
                 ประเภท
               </TableCell>
-              <TableCell sx={{ color: "#a3a3a3", fontWeight: 600, borderColor: "rgba(255,255,255,0.1)" }}>
+              <TableCell
+                sx={{
+                  color: "#a3a3a3",
+                  fontWeight: 600,
+                  borderColor: "rgba(255,255,255,0.1)",
+                }}
+              >
                 ผู้ใช้
               </TableCell>
-              <TableCell sx={{ color: "#a3a3a3", fontWeight: 600, borderColor: "rgba(255,255,255,0.1)" }}>
+              <TableCell
+                sx={{
+                  color: "#a3a3a3",
+                  fontWeight: 600,
+                  borderColor: "rgba(255,255,255,0.1)",
+                }}
+              >
                 ความคิดเห็น
               </TableCell>
-              <TableCell sx={{ color: "#a3a3a3", fontWeight: 600, borderColor: "rgba(255,255,255,0.1)" }}>
+              <TableCell
+                sx={{
+                  color: "#a3a3a3",
+                  fontWeight: 600,
+                  borderColor: "rgba(255,255,255,0.1)",
+                }}
+              >
                 มังงะ
               </TableCell>
-              <TableCell sx={{ color: "#a3a3a3", fontWeight: 600, borderColor: "rgba(255,255,255,0.1)" }}>
+              <TableCell
+                sx={{
+                  color: "#a3a3a3",
+                  fontWeight: 600,
+                  borderColor: "rgba(255,255,255,0.1)",
+                }}
+              >
                 โหวต
               </TableCell>
-              <TableCell sx={{ color: "#a3a3a3", fontWeight: 600, borderColor: "rgba(255,255,255,0.1)" }}>
+              <TableCell
+                sx={{
+                  color: "#a3a3a3",
+                  fontWeight: 600,
+                  borderColor: "rgba(255,255,255,0.1)",
+                }}
+              >
                 วันที่
               </TableCell>
               <TableCell sx={{ borderColor: "rgba(255,255,255,0.1)" }} />
@@ -290,13 +351,25 @@ export default function AdminCommentsPage() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={8} align="center" sx={{ py: 4, borderColor: "rgba(255,255,255,0.1)" }}>
+                <TableCell
+                  colSpan={8}
+                  align="center"
+                  sx={{ py: 4, borderColor: "rgba(255,255,255,0.1)" }}
+                >
                   <CircularProgress size={32} />
                 </TableCell>
               </TableRow>
             ) : comments.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} align="center" sx={{ py: 4, color: "#737373", borderColor: "rgba(255,255,255,0.1)" }}>
+                <TableCell
+                  colSpan={8}
+                  align="center"
+                  sx={{
+                    py: 4,
+                    color: "#737373",
+                    borderColor: "rgba(255,255,255,0.1)",
+                  }}
+                >
                   ไม่พบความคิดเห็น
                 </TableCell>
               </TableRow>
@@ -311,7 +384,10 @@ export default function AdminCommentsPage() {
                     "&.Mui-selected": { bgcolor: "rgba(139, 92, 246, 0.1)" },
                   }}
                 >
-                  <TableCell padding="checkbox" sx={{ borderColor: "rgba(255,255,255,0.1)" }}>
+                  <TableCell
+                    padding="checkbox"
+                    sx={{ borderColor: "rgba(255,255,255,0.1)" }}
+                  >
                     <Checkbox
                       checked={selected.includes(comment.id)}
                       onChange={() => handleSelect(comment.id)}
@@ -320,19 +396,32 @@ export default function AdminCommentsPage() {
                   </TableCell>
                   <TableCell sx={{ borderColor: "rgba(255,255,255,0.1)" }}>
                     {comment.parent ? (
-                      <Tooltip title={`ตอบกลับ: ${comment.parent.user.name || comment.parent.user.username} - "${truncate(comment.parent.content, 50)}"`}>
+                      <Tooltip
+                        title={`ตอบกลับ: ${
+                          comment.parent.user.name ||
+                          comment.parent.user.username
+                        } - "${truncate(comment.parent.content, 50)}"`}
+                      >
                         <Chip
                           icon={<ReplyIcon sx={{ fontSize: 14 }} />}
                           label="ตอบกลับ"
                           size="small"
-                          sx={{ bgcolor: "rgba(251, 191, 36, 0.2)", color: "#fbbf24", fontSize: "0.7rem" }}
+                          sx={{
+                            bgcolor: "rgba(251, 191, 36, 0.2)",
+                            color: "#fbbf24",
+                            fontSize: "0.7rem",
+                          }}
                         />
                       </Tooltip>
                     ) : (
                       <Chip
                         label="หลัก"
                         size="small"
-                        sx={{ bgcolor: "rgba(139, 92, 246, 0.2)", color: "#a78bfa", fontSize: "0.7rem" }}
+                        sx={{
+                          bgcolor: "rgba(139, 92, 246, 0.2)",
+                          color: "#a78bfa",
+                          fontSize: "0.7rem",
+                        }}
                       />
                     )}
                   </TableCell>
@@ -345,15 +434,25 @@ export default function AdminCommentsPage() {
                         {comment.user.name?.[0] || "U"}
                       </Avatar>
                       <Box>
-                        <Typography variant="body2" sx={{ color: "#fafafa", fontSize: "0.8rem" }}>
-                          {comment.user.name || comment.user.username || "Unknown"}
+                        <Typography
+                          variant="body2"
+                          sx={{ color: "#fafafa", fontSize: "0.8rem" }}
+                        >
+                          {comment.user.name ||
+                            comment.user.username ||
+                            "Unknown"}
                         </Typography>
                       </Box>
                     </Box>
                   </TableCell>
-                  <TableCell sx={{ borderColor: "rgba(255,255,255,0.1)", maxWidth: 300 }}>
+                  <TableCell
+                    sx={{ borderColor: "rgba(255,255,255,0.1)", maxWidth: 300 }}
+                  >
                     <Tooltip title={comment.content}>
-                      <Typography variant="body2" sx={{ color: "#d4d4d4", fontSize: "0.8rem" }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ color: "#d4d4d4", fontSize: "0.8rem" }}
+                      >
                         {truncate(comment.content, 80)}
                       </Typography>
                     </Tooltip>
@@ -361,7 +460,12 @@ export default function AdminCommentsPage() {
                       <Chip
                         label="มีรูปภาพ"
                         size="small"
-                        sx={{ mt: 0.5, bgcolor: "rgba(59, 130, 246, 0.2)", color: "#60a5fa", fontSize: "0.7rem" }}
+                        sx={{
+                          mt: 0.5,
+                          bgcolor: "rgba(59, 130, 246, 0.2)",
+                          color: "#60a5fa",
+                          fontSize: "0.7rem",
+                        }}
                       />
                     )}
                   </TableCell>
@@ -369,7 +473,11 @@ export default function AdminCommentsPage() {
                     <Link
                       href={`/manga/${comment.manga.slug || comment.manga.id}`}
                       target="_blank"
-                      style={{ color: "#8b5cf6", textDecoration: "none", fontSize: "0.8rem" }}
+                      style={{
+                        color: "#8b5cf6",
+                        textDecoration: "none",
+                        fontSize: "0.8rem",
+                      }}
                     >
                       {truncate(comment.manga.title, 30)}
                     </Link>
@@ -379,13 +487,29 @@ export default function AdminCommentsPage() {
                       label={comment.voteScore}
                       size="small"
                       sx={{
-                        bgcolor: comment.voteScore > 0 ? "rgba(34, 197, 94, 0.2)" : comment.voteScore < 0 ? "rgba(239, 68, 68, 0.2)" : "rgba(255,255,255,0.1)",
-                        color: comment.voteScore > 0 ? "#22c55e" : comment.voteScore < 0 ? "#ef4444" : "#a3a3a3",
+                        bgcolor:
+                          comment.voteScore > 0
+                            ? "rgba(34, 197, 94, 0.2)"
+                            : comment.voteScore < 0
+                            ? "rgba(239, 68, 68, 0.2)"
+                            : "rgba(255,255,255,0.1)",
+                        color:
+                          comment.voteScore > 0
+                            ? "#22c55e"
+                            : comment.voteScore < 0
+                            ? "#ef4444"
+                            : "#a3a3a3",
                         fontSize: "0.75rem",
                       }}
                     />
                   </TableCell>
-                  <TableCell sx={{ borderColor: "rgba(255,255,255,0.1)", color: "#737373", fontSize: "0.75rem" }}>
+                  <TableCell
+                    sx={{
+                      borderColor: "rgba(255,255,255,0.1)",
+                      color: "#737373",
+                      fontSize: "0.75rem",
+                    }}
+                  >
                     {new Date(comment.createdAt).toLocaleDateString("th-TH", {
                       day: "2-digit",
                       month: "short",
@@ -443,7 +567,10 @@ export default function AdminCommentsPage() {
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)} disabled={deleting}>
+          <Button
+            onClick={() => setDeleteDialogOpen(false)}
+            disabled={deleting}
+          >
             ยกเลิก
           </Button>
           <Button
@@ -451,7 +578,9 @@ export default function AdminCommentsPage() {
             color="error"
             variant="contained"
             disabled={deleting}
-            startIcon={deleting ? <CircularProgress size={16} /> : <DeleteIcon />}
+            startIcon={
+              deleting ? <CircularProgress size={16} /> : <DeleteIcon />
+            }
           >
             {deleting ? "กำลังลบ..." : "ลบ"}
           </Button>

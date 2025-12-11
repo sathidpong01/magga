@@ -51,6 +51,7 @@ const getGridAds = unstable_cache(
         imageUrl: true,
         linkUrl: true,
         content: true,
+        repeatCount: true,
       },
     });
   },

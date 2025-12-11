@@ -31,6 +31,7 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { authFetch } from "@/lib/auth-fetch";
 
 type Submission = {
   id: string;
@@ -74,7 +75,7 @@ export default function AdminSubmissionsPage() {
       });
       if (debouncedSearch) params.append("search", debouncedSearch);
 
-      const res = await fetch(`/api/admin/submissions?${params}`);
+      const res = await authFetch(`/api/admin/submissions?${params}`);
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
       setSubmissions(data.submissions);
@@ -90,28 +91,42 @@ export default function AdminSubmissionsPage() {
     fetchSubmissions();
   }, [page, statusFilter, debouncedSearch]);
 
-  const handleStatusChange = (event: React.SyntheticEvent, newValue: string) => {
+  const handleStatusChange = (
+    event: React.SyntheticEvent,
+    newValue: string
+  ) => {
     setStatusFilter(newValue);
     setPage(1);
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "APPROVED": return "success";
-      case "REJECTED": return "error";
-      case "UNDER_REVIEW": return "warning";
-      default: return "default";
+      case "APPROVED":
+        return "success";
+      case "REJECTED":
+        return "error";
+      case "UNDER_REVIEW":
+        return "warning";
+      default:
+        return "default";
     }
   };
 
   return (
     <Box sx={{ p: 3 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
         <Typography variant="h4" component="h1" fontWeight="bold">
           Manga Submissions
         </Typography>
-        <Button 
-          startIcon={<RefreshIcon />} 
+        <Button
+          startIcon={<RefreshIcon />}
           onClick={fetchSubmissions}
           variant="outlined"
           sx={{ borderRadius: 1 }}
@@ -120,13 +135,13 @@ export default function AdminSubmissionsPage() {
         </Button>
       </Box>
 
-      <Paper sx={{ mb: 3, bgcolor: '#171717', borderRadius: 1 }}>
-        <Tabs 
-          value={statusFilter} 
-          onChange={handleStatusChange} 
+      <Paper sx={{ mb: 3, bgcolor: "#171717", borderRadius: 1 }}>
+        <Tabs
+          value={statusFilter}
+          onChange={handleStatusChange}
           textColor="inherit"
           indicatorColor="primary"
-          sx={{ borderBottom: 1, borderColor: 'divider' }}
+          sx={{ borderBottom: 1, borderColor: "divider" }}
         >
           <Tab label="All" value="ALL" />
           <Tab label="Pending" value="PENDING" />
@@ -134,7 +149,7 @@ export default function AdminSubmissionsPage() {
           <Tab label="Approved" value="APPROVED" />
           <Tab label="Rejected" value="REJECTED" />
         </Tabs>
-        
+
         <Box sx={{ p: 2 }}>
           <TextField
             fullWidth
@@ -148,14 +163,17 @@ export default function AdminSubmissionsPage() {
                   <SearchIcon color="action" />
                 </InputAdornment>
               ),
-              sx: { borderRadius: 1, bgcolor: 'background.paper' }
+              sx: { borderRadius: 1, bgcolor: "background.paper" },
             }}
             size="small"
           />
         </Box>
       </Paper>
 
-      <TableContainer component={Paper} sx={{ bgcolor: '#171717', borderRadius: 1 }}>
+      <TableContainer
+        component={Paper}
+        sx={{ bgcolor: "#171717", borderRadius: 1 }}
+      >
         <Table>
           <TableHead>
             <TableRow>
@@ -177,20 +195,30 @@ export default function AdminSubmissionsPage() {
             ) : submissions.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                  <Typography color="text.secondary">No submissions found.</Typography>
+                  <Typography color="text.secondary">
+                    No submissions found.
+                  </Typography>
                 </TableCell>
               </TableRow>
             ) : (
               submissions.map((sub) => (
                 <TableRow key={sub.id} hover>
                   <TableCell>
-                    <Box sx={{ width: 40, height: 60, position: 'relative', borderRadius: 0.5, overflow: 'hidden' }}>
-                      <Image 
-                        src={sub.coverImage} 
+                    <Box
+                      sx={{
+                        width: 40,
+                        height: 60,
+                        position: "relative",
+                        borderRadius: 0.5,
+                        overflow: "hidden",
+                      }}
+                    >
+                      <Image
+                        src={sub.coverImage}
                         alt={sub.title}
                         fill
                         sizes="40px"
-                        style={{ objectFit: 'cover' }}
+                        style={{ objectFit: "cover" }}
                       />
                     </Box>
                   </TableCell>
@@ -198,13 +226,15 @@ export default function AdminSubmissionsPage() {
                     <Typography variant="subtitle2">{sub.title}</Typography>
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2">{sub.user.username || sub.user.name || sub.user.email}</Typography>
+                    <Typography variant="body2">
+                      {sub.user.username || sub.user.name || sub.user.email}
+                    </Typography>
                   </TableCell>
                   <TableCell>
-                    <Chip 
-                      label={sub.status} 
-                      color={getStatusColor(sub.status) as any} 
-                      size="small" 
+                    <Chip
+                      label={sub.status}
+                      color={getStatusColor(sub.status) as any}
+                      size="small"
                     />
                   </TableCell>
                   <TableCell>
@@ -212,8 +242,8 @@ export default function AdminSubmissionsPage() {
                   </TableCell>
                   <TableCell align="right">
                     <Tooltip title="View Details">
-                      <IconButton 
-                        component={Link} 
+                      <IconButton
+                        component={Link}
                         href={`/admin/submissions/${sub.id}`}
                         color="primary"
                         aria-label="View Details"
@@ -230,11 +260,11 @@ export default function AdminSubmissionsPage() {
       </TableContainer>
 
       <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
-        <Pagination 
-          count={totalPages} 
-          page={page} 
-          onChange={(e, p) => setPage(p)} 
-          color="primary" 
+        <Pagination
+          count={totalPages}
+          page={page}
+          onChange={(e, p) => setPage(p)}
+          color="primary"
         />
       </Box>
     </Box>
