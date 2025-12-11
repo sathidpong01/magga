@@ -60,17 +60,10 @@ export async function POST(request: Request) {
       "image/webp",
       "image/gif",
       "image/avif",
+      "image/bmp", // BMP support
+      "image/heic", // iPhone HEIC (converted by Sharp)
+      "image/heif", // HEIF variant
     ];
-
-    // Magic Numbers
-    const MAGIC_NUMBERS: Record<string, string> = {
-      ffd8ffe0: "image/jpeg",
-      ffd8ffe1: "image/jpeg",
-      ffd8ffe2: "image/jpeg",
-      "89504e47": "image/png",
-      "47494638": "image/gif",
-      "52494646": "image/webp", // RIFF...WEBP
-    };
 
     const saved = await Promise.all(
       files.map(async (file) => {
@@ -87,22 +80,44 @@ export async function POST(request: Request) {
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
-        // 3. Magic Number Check
-        const hex = buffer.toString("hex", 0, 4);
+        // 3. Magic Number Check - Validate file signature
+        const hex = buffer.toString("hex", 0, 12); // Read 12 bytes for HEIC/ftyp check
+        const hex4 = hex.substring(0, 8); // First 4 bytes
         let isValidMagic = false;
-        // Simple check for common types. For WebP it's a bit more complex (RIFF...WEBP),
-        // but '52494646' (RIFF) is a good start.
-        for (const magic in MAGIC_NUMBERS) {
-          if (hex.startsWith(magic)) {
-            isValidMagic = true;
-            break;
-          }
+
+        // JPEG: ffd8ff (all variants: JFIF, EXIF, DQT, SOF0, etc.)
+        if (hex4.startsWith("ffd8ff")) {
+          isValidMagic = true;
         }
-        // Allow if magic number matches or if it's AVIF (complex signature)
-        if (!isValidMagic && file.type !== "image/avif") {
-          // Strict check: Reject files with invalid headers to save resources
+        // PNG: 89504e47
+        else if (hex4 === "89504e47") {
+          isValidMagic = true;
+        }
+        // GIF: 47494638 (GIF8)
+        else if (hex4.startsWith("47494638")) {
+          isValidMagic = true;
+        }
+        // WebP: RIFF....WEBP (52494646)
+        else if (hex4.startsWith("52494646")) {
+          isValidMagic = true;
+        }
+        // BMP: 424d (BM)
+        else if (hex4.startsWith("424d")) {
+          isValidMagic = true;
+        }
+        // HEIC/HEIF: ftyp marker (00 00 00 xx 66 74 79 70 = ....ftyp)
+        // The 4th byte offset contains 'ftyp' (66747970)
+        else if (hex.includes("66747970")) {
+          isValidMagic = true;
+        }
+        // AVIF: Also uses ftyp but with 'avif' brand
+        else if (file.type === "image/avif") {
+          isValidMagic = true; // AVIF has complex signature, trust MIME type
+        }
+
+        if (!isValidMagic) {
           console.warn(
-            `Invalid file signature for ${file.name}: header ${hex}`
+            `Invalid file signature for ${file.name}: header ${hex4}`
           );
           throw new Error(`Invalid file signature for ${file.name}`);
         }

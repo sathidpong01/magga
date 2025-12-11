@@ -17,6 +17,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import StarIcon from "@mui/icons-material/Star";
 import { SuspendedMangaReader, SuspendedCommentSection } from "./manga-content";
 import { AdContainer } from "@/app/components/features/ads";
+import ScrollToTop from "@/app/components/ui/ScrollToTop";
 
 type MangaPageProps = {
   params: Promise<{
@@ -224,7 +225,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
                 sx={{
                   position: "relative",
                   width: "100%",
-                  maxWidth: { xs: "240px", md: "100%" },
+                  maxWidth: { xs: "280px", md: "100%" },
                   aspectRatio: "2/3",
                   borderRadius: 2,
                   overflow: "hidden",
@@ -323,7 +324,11 @@ export default async function MangaPage({ params }: MangaPageProps) {
                             key={index}
                             avatar={
                               credit.icon ? (
-                                <Avatar src={credit.icon} alt={credit.label} />
+                                <Avatar
+                                  src={credit.icon}
+                                  alt=""
+                                  sx={{ width: 28, height: 28 }}
+                                />
                               ) : undefined
                             }
                             label={credit.label}
@@ -333,10 +338,14 @@ export default async function MangaPage({ params }: MangaPageProps) {
                             rel="noopener noreferrer"
                             clickable
                             variant="outlined"
-                            size="small"
                             sx={{
+                              height: 36,
+                              fontSize: "0.9rem",
                               borderColor: "rgba(255,255,255,0.2)",
-                              color: "rgba(255,255,255,0.7)",
+                              color: "rgba(255,255,255,0.85)",
+                              "& .MuiChip-label": {
+                                px: 1.5,
+                              },
                               "&:hover": {
                                 borderColor: "rgba(255,255,255,0.5)",
                                 color: "white",
@@ -457,6 +466,9 @@ export default async function MangaPage({ params }: MangaPageProps) {
           <SuspendedCommentSection mangaId={manga.id} />
         </Box>
       </Container>
+
+      {/* Back to Top Button */}
+      <ScrollToTop />
     </Box>
   );
 }

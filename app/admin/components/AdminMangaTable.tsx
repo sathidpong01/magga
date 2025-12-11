@@ -50,6 +50,7 @@ type Manga = {
   title: string;
   slug: string;
   isHidden: boolean;
+  viewCount: number;
   _cover: string;
   category: Category | null;
   tags: Tag[];
@@ -63,12 +64,16 @@ type Props = {
 
 const ITEMS_PER_PAGE = 10;
 
-export default function AdminMangaTable({ mangas, allCategories, allTags }: Props) {
+export default function AdminMangaTable({
+  mangas,
+  allCategories,
+  allTags,
+}: Props) {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Quick Edit Modal State
   const [editManga, setEditManga] = useState<Manga | null>(null);
   const [editCategoryId, setEditCategoryId] = useState<string>("");
@@ -81,9 +86,7 @@ export default function AdminMangaTable({ mangas, allCategories, allTags }: Prop
   const filteredMangas = useMemo(() => {
     if (!searchQuery || searchQuery.length < 1) return mangas;
     const query = searchQuery.toLowerCase();
-    return mangas.filter((manga) =>
-      manga.title.toLowerCase().includes(query)
-    );
+    return mangas.filter((manga) => manga.title.toLowerCase().includes(query));
   }, [mangas, searchQuery]);
 
   // Pagination
@@ -124,7 +127,7 @@ export default function AdminMangaTable({ mangas, allCategories, allTags }: Prop
   // Bulk actions
   const handleBulkAction = async (action: "delete" | "show" | "hide") => {
     if (selectedIds.size === 0) return;
-    
+
     const confirmMsg = {
       delete: `ยืนยันการลบ ${selectedIds.size} รายการ?`,
       show: `ยืนยันการเผยแพร่ ${selectedIds.size} รายการ?`,
@@ -220,7 +223,11 @@ export default function AdminMangaTable({ mangas, allCategories, allTags }: Prop
           }}
         >
           <Box>
-            <Typography variant="h6" fontWeight="bold" sx={{ color: "#fafafa" }}>
+            <Typography
+              variant="h6"
+              fontWeight="bold"
+              sx={{ color: "#fafafa" }}
+            >
               รายการมังงะ
             </Typography>
             <Typography variant="body2" sx={{ color: "#a3a3a3" }}>
@@ -229,7 +236,14 @@ export default function AdminMangaTable({ mangas, allCategories, allTags }: Prop
             </Typography>
           </Box>
 
-          <Box sx={{ display: "flex", gap: 2, alignItems: "center", flexWrap: "wrap" }}>
+          <Box
+            sx={{
+              display: "flex",
+              gap: 2,
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
             {/* Search Input */}
             <Paper
               sx={{
@@ -280,7 +294,10 @@ export default function AdminMangaTable({ mangas, allCategories, allTags }: Prop
               borderBottom: "1px solid rgba(139, 92, 246, 0.3)",
             }}
           >
-            <Typography variant="body2" sx={{ color: "#fafafa", fontWeight: 500 }}>
+            <Typography
+              variant="body2"
+              sx={{ color: "#fafafa", fontWeight: 500 }}
+            >
               เลือกแล้ว {selectedIds.size} รายการ
             </Typography>
             <Box sx={{ display: "flex", gap: 1 }}>
@@ -357,22 +374,69 @@ export default function AdminMangaTable({ mangas, allCategories, allTags }: Prop
                     }}
                   />
                 </TableCell>
-                <TableCell sx={{ fontWeight: 600, color: "#a3a3a3", borderBottom: "1px solid rgba(255, 255, 255, 0.08)" }}>
+                <TableCell
+                  sx={{
+                    fontWeight: 600,
+                    color: "#a3a3a3",
+                    borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+                  }}
+                >
                   ปก
                 </TableCell>
-                <TableCell sx={{ fontWeight: 600, color: "#a3a3a3", borderBottom: "1px solid rgba(255, 255, 255, 0.08)" }}>
+                <TableCell
+                  sx={{
+                    fontWeight: 600,
+                    color: "#a3a3a3",
+                    borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+                  }}
+                >
                   ชื่อเรื่อง
                 </TableCell>
-                <TableCell sx={{ fontWeight: 600, color: "#a3a3a3", borderBottom: "1px solid rgba(255, 255, 255, 0.08)" }}>
+                <TableCell
+                  sx={{
+                    fontWeight: 600,
+                    color: "#a3a3a3",
+                    borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+                  }}
+                >
                   หมวดหมู่
                 </TableCell>
-                <TableCell sx={{ fontWeight: 600, color: "#a3a3a3", borderBottom: "1px solid rgba(255, 255, 255, 0.08)" }}>
+                <TableCell
+                  sx={{
+                    fontWeight: 600,
+                    color: "#a3a3a3",
+                    borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+                  }}
+                >
                   แท็ก
                 </TableCell>
-                <TableCell sx={{ fontWeight: 600, color: "#a3a3a3", borderBottom: "1px solid rgba(255, 255, 255, 0.08)" }}>
+                <TableCell
+                  sx={{
+                    fontWeight: 600,
+                    color: "#a3a3a3",
+                    borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+                  }}
+                >
                   สถานะ
                 </TableCell>
-                <TableCell align="right" sx={{ fontWeight: 600, color: "#a3a3a3", borderBottom: "1px solid rgba(255, 255, 255, 0.08)" }}>
+                <TableCell
+                  sx={{
+                    fontWeight: 600,
+                    color: "#a3a3a3",
+                    borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+                    textAlign: "right",
+                  }}
+                >
+                  ผู้เข้าชม
+                </TableCell>
+                <TableCell
+                  align="right"
+                  sx={{
+                    fontWeight: 600,
+                    color: "#a3a3a3",
+                    borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+                  }}
+                >
                   จัดการ
                 </TableCell>
               </TableRow>
@@ -384,34 +448,72 @@ export default function AdminMangaTable({ mangas, allCategories, allTags }: Prop
                   sx={{
                     "&:last-child td, &:last-child th": { border: 0 },
                     "&:hover": { bgcolor: "rgba(255, 255, 255, 0.02)" },
-                    bgcolor: selectedIds.has(manga.id) ? "rgba(139, 92, 246, 0.08)" : "transparent",
+                    bgcolor: selectedIds.has(manga.id)
+                      ? "rgba(139, 92, 246, 0.08)"
+                      : "transparent",
                   }}
                 >
-                  <TableCell padding="checkbox" sx={{ borderBottom: "1px solid rgba(255, 255, 255, 0.08)" }}>
+                  <TableCell
+                    padding="checkbox"
+                    sx={{ borderBottom: "1px solid rgba(255, 255, 255, 0.08)" }}
+                  >
                     <Checkbox
                       checked={selectedIds.has(manga.id)}
-                      onChange={(e) => handleSelectOne(manga.id, e.target.checked)}
-                      sx={{ color: "#a3a3a3", "&.Mui-checked": { color: "#8b5cf6" } }}
+                      onChange={(e) =>
+                        handleSelectOne(manga.id, e.target.checked)
+                      }
+                      sx={{
+                        color: "#a3a3a3",
+                        "&.Mui-checked": { color: "#8b5cf6" },
+                      }}
                     />
                   </TableCell>
-                  <TableCell sx={{ borderBottom: "1px solid rgba(255, 255, 255, 0.08)" }}>
-                    <Box sx={{ width: 40, height: 56, position: 'relative', borderRadius: 0.1, overflow: 'hidden', bgcolor: "#262626" }}>
+                  <TableCell
+                    sx={{ borderBottom: "1px solid rgba(255, 255, 255, 0.08)" }}
+                  >
+                    <Box
+                      sx={{
+                        width: 40,
+                        height: 56,
+                        position: "relative",
+                        borderRadius: 0.1,
+                        overflow: "hidden",
+                        bgcolor: "#262626",
+                      }}
+                    >
                       <Image
                         src={manga._cover}
                         alt={manga.title}
                         fill
                         sizes="40px"
-                        style={{ objectFit: 'cover' }}
+                        style={{ objectFit: "cover" }}
                       />
                     </Box>
                   </TableCell>
-                  <TableCell sx={{ fontWeight: 500, color: "#fafafa", borderBottom: "1px solid rgba(255, 255, 255, 0.08)", maxWidth: 200 }}>
+                  <TableCell
+                    sx={{
+                      fontWeight: 500,
+                      color: "#fafafa",
+                      borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+                      maxWidth: 200,
+                    }}
+                  >
                     <Typography noWrap>{manga.title}</Typography>
                   </TableCell>
-                  <TableCell sx={{ color: "#d4d4d4", borderBottom: "1px solid rgba(255, 255, 255, 0.08)" }}>
+                  <TableCell
+                    sx={{
+                      color: "#d4d4d4",
+                      borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+                    }}
+                  >
                     {manga.category?.name || "ไม่มีหมวดหมู่"}
                   </TableCell>
-                  <TableCell sx={{ borderBottom: "1px solid rgba(255, 255, 255, 0.08)", maxWidth: 150 }}>
+                  <TableCell
+                    sx={{
+                      borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+                      maxWidth: 150,
+                    }}
+                  >
                     <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
                       {manga.tags.slice(0, 2).map((tag) => (
                         <Chip
@@ -440,32 +542,79 @@ export default function AdminMangaTable({ mangas, allCategories, allTags }: Prop
                       )}
                     </Box>
                   </TableCell>
-                  <TableCell sx={{ borderBottom: "1px solid rgba(255, 255, 255, 0.08)" }}>
+                  <TableCell
+                    sx={{ borderBottom: "1px solid rgba(255, 255, 255, 0.08)" }}
+                  >
                     {manga.isHidden ? (
-                      <Chip label="ซ่อน" size="small" sx={{ bgcolor: "rgba(234, 179, 8, 0.2)", color: "#facc15", fontWeight: 600, borderRadius: 1, height: 24 }} />
+                      <Chip
+                        label="ซ่อน"
+                        size="small"
+                        sx={{
+                          bgcolor: "rgba(234, 179, 8, 0.2)",
+                          color: "#facc15",
+                          fontWeight: 600,
+                          borderRadius: 1,
+                          height: 24,
+                        }}
+                      />
                     ) : (
-                      <Chip label="เผยแพร่" size="small" sx={{ bgcolor: "rgba(34, 197, 94, 0.2)", color: "#4ade80", fontWeight: 600, borderRadius: 1, height: 24 }} />
+                      <Chip
+                        label="เผยแพร่"
+                        size="small"
+                        sx={{
+                          bgcolor: "rgba(34, 197, 94, 0.2)",
+                          color: "#4ade80",
+                          fontWeight: 600,
+                          borderRadius: 1,
+                          height: 24,
+                        }}
+                      />
                     )}
                   </TableCell>
-                  <TableCell align="right" sx={{ borderBottom: "1px solid rgba(255, 255, 255, 0.08)" }}>
-                    <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 0.5 }}>
+                  <TableCell
+                    sx={{
+                      borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+                      textAlign: "right",
+                      color: "#a3a3a3",
+                    }}
+                  >
+                    {manga.viewCount.toLocaleString()}
+                  </TableCell>
+                  <TableCell
+                    align="right"
+                    sx={{ borderBottom: "1px solid rgba(255, 255, 255, 0.08)" }}
+                  >
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        gap: 0.5,
+                      }}
+                    >
                       <Tooltip title="ตั้งค่าด่วน">
                         <IconButton
                           size="small"
                           onClick={() => openQuickEdit(manga)}
-                          sx={{ color: "#a78bfa", "&:hover": { bgcolor: "rgba(167, 139, 250, 0.1)" } }}
+                          sx={{
+                            color: "#a78bfa",
+                            "&:hover": { bgcolor: "rgba(167, 139, 250, 0.1)" },
+                          }}
                         >
                           <SettingsIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                      <MangaActions mangaId={manga.id} isHidden={manga.isHidden} slug={manga.slug} />
+                      <MangaActions
+                        mangaId={manga.id}
+                        isHidden={manga.isHidden}
+                        slug={manga.slug}
+                      />
                     </Box>
                   </TableCell>
                 </TableRow>
               ))}
               {filteredMangas.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                  <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
                     <Typography color="text.secondary">
                       {searchQuery ? "ไม่พบมังงะที่ค้นหา" : "ยังไม่มีมังงะ"}
                     </Typography>
@@ -503,7 +652,14 @@ export default function AdminMangaTable({ mangas, allCategories, allTags }: Prop
           },
         }}
       >
-        <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", color: "#fafafa" }}>
+        <DialogTitle
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            color: "#fafafa",
+          }}
+        >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <SettingsIcon sx={{ color: "#a78bfa" }} />
             ตั้งค่าด่วน
@@ -515,17 +671,29 @@ export default function AdminMangaTable({ mangas, allCategories, allTags }: Prop
         <DialogContent>
           {editManga && (
             <Box sx={{ display: "flex", gap: 2, mb: 3, mt: 1 }}>
-              <Box sx={{ width: 60, height: 84, position: 'relative', borderRadius: 1, overflow: 'hidden' }}>
+              <Box
+                sx={{
+                  width: 60,
+                  height: 84,
+                  position: "relative",
+                  borderRadius: 1,
+                  overflow: "hidden",
+                }}
+              >
                 <Image
                   src={editManga._cover}
                   alt={editManga.title}
                   fill
                   sizes="60px"
-                  style={{ objectFit: 'cover' }}
+                  style={{ objectFit: "cover" }}
                 />
               </Box>
               <Box>
-                <Typography variant="subtitle1" fontWeight={600} sx={{ color: "#fafafa" }}>
+                <Typography
+                  variant="subtitle1"
+                  fontWeight={600}
+                  sx={{ color: "#fafafa" }}
+                >
                   {editManga.title}
                 </Typography>
                 <Typography variant="body2" sx={{ color: "#a3a3a3" }}>
@@ -544,9 +712,15 @@ export default function AdminMangaTable({ mangas, allCategories, allTags }: Prop
               label="หมวดหมู่"
               sx={{
                 color: "#fafafa",
-                ".MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255, 255, 255, 0.2)" },
-                "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255, 255, 255, 0.3)" },
-                "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#8b5cf6" },
+                ".MuiOutlinedInput-notchedOutline": {
+                  borderColor: "rgba(255, 255, 255, 0.2)",
+                },
+                "&:hover .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "rgba(255, 255, 255, 0.3)",
+                },
+                "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                  borderColor: "#8b5cf6",
+                },
               }}
             >
               <MenuItem value="">
@@ -576,8 +750,12 @@ export default function AdminMangaTable({ mangas, allCategories, allTags }: Prop
                 sx={{
                   "& .MuiInputBase-root": { color: "#fafafa" },
                   "& .MuiInputLabel-root": { color: "#a3a3a3" },
-                  "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255, 255, 255, 0.2)" },
-                  "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255, 255, 255, 0.3)" },
+                  "& .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "rgba(255, 255, 255, 0.2)",
+                  },
+                  "&:hover .MuiOutlinedInput-notchedOutline": {
+                    borderColor: "rgba(255, 255, 255, 0.3)",
+                  },
                 }}
               />
             )}
@@ -600,7 +778,9 @@ export default function AdminMangaTable({ mangas, allCategories, allTags }: Prop
             }}
           />
         </DialogContent>
-        <DialogActions sx={{ p: 2, borderTop: "1px solid rgba(255, 255, 255, 0.1)" }}>
+        <DialogActions
+          sx={{ p: 2, borderTop: "1px solid rgba(255, 255, 255, 0.1)" }}
+        >
           <Button onClick={closeQuickEdit} sx={{ color: "#a3a3a3" }}>
             ยกเลิก
           </Button>
