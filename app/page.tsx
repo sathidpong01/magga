@@ -15,8 +15,8 @@ type Props = {
   }>;
 };
 
-// Dynamic rendering to support search/filter params, but cache for 60 seconds
-export const revalidate = 60;
+// ISR: Revalidate every 1 hour (On-demand revalidation handles immediate updates)
+export const revalidate = 3600;
 
 // Cache categories for 5 minutes
 const getCategories = unstable_cache(

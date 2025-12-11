@@ -28,7 +28,8 @@ export async function POST(request: Request) {
   }
 
   // Rate limiting: 50 uploads per hour per user
-  const userId = (session.user as { id?: string })?.id || session.user?.email || "unknown";
+  const userId =
+    (session.user as { id?: string })?.id || session.user?.email || "unknown";
   const limitCheck = await checkRateLimit(
     `upload:${userId}`,
     50, // max 50 uploads
@@ -58,14 +59,14 @@ export async function POST(request: Request) {
       "image/png",
       "image/webp",
       "image/gif",
-      "image/avif"
+      "image/avif",
     ];
 
     // Magic Numbers
     const MAGIC_NUMBERS: Record<string, string> = {
-      "ffd8ffe0": "image/jpeg",
-      "ffd8ffe1": "image/jpeg",
-      "ffd8ffe2": "image/jpeg",
+      ffd8ffe0: "image/jpeg",
+      ffd8ffe1: "image/jpeg",
+      ffd8ffe2: "image/jpeg",
       "89504e47": "image/png",
       "47494638": "image/gif",
       "52494646": "image/webp", // RIFF...WEBP
@@ -89,7 +90,7 @@ export async function POST(request: Request) {
         // 3. Magic Number Check
         const hex = buffer.toString("hex", 0, 4);
         let isValidMagic = false;
-        // Simple check for common types. For WebP it's a bit more complex (RIFF...WEBP), 
+        // Simple check for common types. For WebP it's a bit more complex (RIFF...WEBP),
         // but '52494646' (RIFF) is a good start.
         for (const magic in MAGIC_NUMBERS) {
           if (hex.startsWith(magic)) {
@@ -99,9 +100,11 @@ export async function POST(request: Request) {
         }
         // Allow if magic number matches or if it's AVIF (complex signature)
         if (!isValidMagic && file.type !== "image/avif") {
-             // Strict check: Reject files with invalid headers to save resources
-             console.warn(`Invalid file signature for ${file.name}: header ${hex}`);
-             throw new Error(`Invalid file signature for ${file.name}`);
+          // Strict check: Reject files with invalid headers to save resources
+          console.warn(
+            `Invalid file signature for ${file.name}: header ${hex}`
+          );
+          throw new Error(`Invalid file signature for ${file.name}`);
         }
 
         let imageData = new Uint8Array(arrayBuffer);
@@ -113,16 +116,19 @@ export async function POST(request: Request) {
           try {
             const sharpInstance = sharp(buffer);
             const metadata = await sharpInstance.metadata();
-            
+
             // Only resize if width is greater than maxWidth
             if (metadata.width && metadata.width > maxWidth) {
-                 sharpInstance.resize(maxWidth, null, { fit: "inside", withoutEnlargement: true });
+              sharpInstance.resize(maxWidth, null, {
+                fit: "inside",
+                withoutEnlargement: true,
+              });
             }
 
             const compressedBuffer = await sharpInstance
               .webp({ quality: 80 })
               .toBuffer();
-            
+
             imageData = new Uint8Array(compressedBuffer);
             contentType = "image/webp";
             fileName = fileName.replace(/\.[^/.]+$/, "") + ".webp";
@@ -136,7 +142,10 @@ export async function POST(request: Request) {
         const date = new Date();
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, "0");
-        const safeName = `${Date.now()}-${fileName.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
+        const safeName = `${Date.now()}-${fileName.replace(
+          /[^a-zA-Z0-9.-]/g,
+          "_"
+        )}`;
         const key = `uploads/${year}/${month}/${mangaId}/${safeName}`;
 
         await S3.send(
@@ -145,18 +154,20 @@ export async function POST(request: Request) {
             Key: key,
             Body: imageData,
             ContentType: contentType,
+            CacheControl: "public, max-age=31536000, immutable",
           })
         );
 
-        return R2_PUBLIC_URL
-          ? `${R2_PUBLIC_URL}/${key}`
-          : `/${key}`;
+        return R2_PUBLIC_URL ? `${R2_PUBLIC_URL}/${key}` : `/${key}`;
       })
     );
 
     return NextResponse.json({ urls: saved });
   } catch (err: any) {
     console.error("Upload error:", err);
-    return NextResponse.json({ error: err.message || "Upload failed" }, { status: 500 });
+    return NextResponse.json(
+      { error: err.message || "Upload failed" },
+      { status: 500 }
+    );
   }
 }

@@ -1,27 +1,32 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
+    // Bypass Vercel Image CDN - serve directly from R2 (already optimized by Sharp)
+    unoptimized: true,
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'pub-1f8d25d164134702943300ef6d01fc35.r2.dev',
-        port: '',
-        pathname: '/**',
+        protocol: "https",
+        hostname: "pub-1f8d25d164134702943300ef6d01fc35.r2.dev",
+        port: "",
+        pathname: "/**",
       },
     ],
-    formats: ['image/avif', 'image/webp'],
+    formats: ["image/avif", "image/webp"],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 31536000,
     dangerouslyAllowSVG: false,
-    contentDispositionType: 'attachment',
-    unoptimized: false,
+    contentDispositionType: "attachment",
   },
   compress: true,
   poweredByHeader: false,
-  serverExternalPackages: ['@libsql/client', '@prisma/adapter-libsql', 'libsql'],
+  serverExternalPackages: [
+    "@libsql/client",
+    "@prisma/adapter-libsql",
+    "libsql",
+  ],
   experimental: {
-    optimizePackageImports: ['@mui/material', '@mui/icons-material'],
+    optimizePackageImports: ["@mui/material", "@mui/icons-material"],
     scrollRestoration: true,
   },
   reactStrictMode: true,
@@ -30,53 +35,54 @@ const nextConfig = {
   webpack: (config) => {
     config.module.rules.push({
       test: /\.md$|LICENSE$|\.d\.ts$/,
-      use: 'ignore-loader',
+      use: "ignore-loader",
     });
     config.module.rules.push({
       test: /\.node$/,
-      use: 'node-loader',
+      use: "node-loader",
     });
     return config;
   },
   async headers() {
     return [
       {
-        source: '/:path*',
+        source: "/:path*",
         headers: [
           {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
+            key: "X-Content-Type-Options",
+            value: "nosniff",
           },
           {
-            key: 'X-Frame-Options',
-            value: 'DENY',
+            key: "X-Frame-Options",
+            value: "DENY",
           },
           {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin",
           },
           {
-            key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+            key: "Permissions-Policy",
+            value:
+              "camera=(), microphone=(), geolocation=(), interest-cohort=()",
           },
           {
-            key: 'X-DNS-Prefetch-Control',
-            value: 'on'
+            key: "X-DNS-Prefetch-Control",
+            value: "on",
           },
           {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=31536000; includeSubDomains; preload'
+            key: "Strict-Transport-Security",
+            value: "max-age=31536000; includeSubDomains; preload",
           },
           {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block'
+            key: "X-XSS-Protection",
+            value: "1; mode=block",
           },
           {
-            key: 'Cross-Origin-Opener-Policy',
-            value: 'same-origin-allow-popups'
+            key: "Cross-Origin-Opener-Policy",
+            value: "same-origin-allow-popups",
           },
           {
-            key: 'Content-Security-Policy',
+            key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
               // Note: 'unsafe-inline' and 'unsafe-eval' are required for Next.js/React/MUI to function
@@ -94,7 +100,7 @@ const nextConfig = {
               "form-action 'self' https://accounts.google.com",
               "frame-ancestors 'none'",
               "upgrade-insecure-requests",
-            ].join('; ')
+            ].join("; "),
           },
         ],
       },

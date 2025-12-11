@@ -82,7 +82,7 @@ export default function MangaGridWithAds({
 
   return (
     <Grid container spacing={3}>
-      {itemsWithAds.map((item) => (
+      {itemsWithAds.map((item, index) => (
         <Grid
           item
           key={item.type === "manga" ? item.data.id : `ad-${item.data.id}`}
@@ -92,7 +92,7 @@ export default function MangaGridWithAds({
           lg={3}
         >
           {item.type === "manga" ? (
-            <MangaCard manga={item.data} />
+            <MangaCard manga={item.data} priority={index < 6} />
           ) : (
             <AdCard ad={item.data} />
           )}

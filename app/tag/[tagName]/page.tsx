@@ -9,8 +9,8 @@ type TagPageProps = {
   }>;
 };
 
-// ISR: Revalidate every 5 minutes
-export const revalidate = 300;
+// ISR: Revalidate every 1 hour (On-demand revalidation handles immediate updates)
+export const revalidate = 3600;
 
 export async function generateMetadata({ params }: TagPageProps) {
   const { tagName: encodedTagName } = await params;
@@ -58,4 +58,3 @@ export default async function TagPage({ params }: TagPageProps) {
     </Box>
   );
 }
-

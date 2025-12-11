@@ -13,8 +13,8 @@ import {
 } from "@mui/material";
 import Image from "next/image";
 import MangaViewRating from "@/app/components/features/manga/MangaViewRating";
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import StarIcon from '@mui/icons-material/Star';
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import StarIcon from "@mui/icons-material/Star";
 import { SuspendedMangaReader, SuspendedCommentSection } from "./manga-content";
 import { AdContainer } from "@/app/components/features/ads";
 
@@ -24,14 +24,15 @@ type MangaPageProps = {
   }>;
 };
 
-export const revalidate = 60; // Revalidate every minute
+// ISR: Revalidate every 1 hour (On-demand revalidation handles immediate updates)
+export const revalidate = 3600;
 
 // Pre-render top 50 manga at build time for better performance
 export async function generateStaticParams() {
   const topMangas = await prisma.manga.findMany({
     where: { isHidden: false },
     select: { slug: true },
-    orderBy: { updatedAt: 'desc' },
+    orderBy: { updatedAt: "desc" },
     take: 50,
   });
 
@@ -60,22 +61,37 @@ export async function generateMetadata({ params }: MangaPageProps) {
   }
 
   // Check for sensitive content
-  const SENSITIVE_KEYWORDS = ['18+', 'adult', 'hentai', 'ecchi', 'mature', 'smut', 'yaoi', 'yuri', 'doujinshi', 'nsfw'];
-  const hasSensitiveTag = manga.tags.some(tag => SENSITIVE_KEYWORDS.includes(tag.name.toLowerCase()));
-  const hasSensitiveCategory = manga.category && SENSITIVE_KEYWORDS.includes(manga.category.name.toLowerCase());
+  const SENSITIVE_KEYWORDS = [
+    "18+",
+    "adult",
+    "hentai",
+    "ecchi",
+    "mature",
+    "smut",
+    "yaoi",
+    "yuri",
+    "doujinshi",
+    "nsfw",
+  ];
+  const hasSensitiveTag = manga.tags.some((tag) =>
+    SENSITIVE_KEYWORDS.includes(tag.name.toLowerCase())
+  );
+  const hasSensitiveCategory =
+    manga.category &&
+    SENSITIVE_KEYWORDS.includes(manga.category.name.toLowerCase());
   const isSensitive = hasSensitiveTag || hasSensitiveCategory;
 
   // Format title with author name: [Author] - Title
   const authorName = (manga as any).authorName;
-  const displayTitle = authorName 
+  const displayTitle = authorName
     ? `[${authorName}] - ${manga.title}`
     : manga.title;
-  
+
   // Use generic description for sensitive content
-  const description = isSensitive 
-    ? `Read ${manga.title} online at Magga Reader. High quality images and fast loading.` 
+  const description = isSensitive
+    ? `Read ${manga.title} online at Magga Reader. High quality images and fast loading.`
     : manga.description;
-  
+
   // Always use site logo for OG image (safe for all content)
   const ogImage = "/android-chrome-512x512.png";
 
@@ -108,7 +124,7 @@ export async function generateMetadata({ params }: MangaPageProps) {
 
 export default async function MangaPage({ params }: MangaPageProps) {
   const { mangaId } = await params;
-  
+
   // Safely decode URI, handle malformed URIs
   let decodedSlug: string;
   try {
@@ -116,7 +132,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
   } catch {
     notFound();
   }
-  
+
   const manga = await prisma.manga.findUnique({
     where: {
       slug: decodedSlug,
@@ -152,36 +168,58 @@ export default async function MangaPage({ params }: MangaPageProps) {
   })();
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#0a0a0a', pb: 8 }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: "#0a0a0a", pb: 8 }}>
       {/* Hero / Header Section with Blurred Background */}
-      <Box sx={{ position: 'relative', overflow: 'hidden', mb: -4 }}>
+      <Box sx={{ position: "relative", overflow: "hidden", mb: -4 }}>
         {/* Background Image Layer */}
-        <Box sx={{ 
-          position: 'absolute', 
-          inset: 0, 
-          zIndex: 0,
-          opacity: 0.3,
-          filter: 'blur(40px)',
-          transform: 'scale(1.1)', // Prevent blur edges
-        }}>
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 0,
+            opacity: 0.3,
+            filter: "blur(40px)",
+            transform: "scale(1.1)", // Prevent blur edges
+          }}
+        >
           <Image
             src={manga.coverImage}
             alt=""
             fill
-            style={{ objectFit: 'cover' }}
+            style={{ objectFit: "cover" }}
             priority
           />
-          <Box sx={{ 
-            position: 'absolute', 
-            inset: 0, 
-            background: 'linear-gradient(to bottom, rgba(10,10,10,0.2) 0%, #0a0a0a 100%)' 
-          }} />
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 0,
+              background:
+                "linear-gradient(to bottom, rgba(10,10,10,0.2) 0%, #0a0a0a 100%)",
+            }}
+          />
         </Box>
 
-        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, pt: { xs: 4, md: 6 }, pb: { xs: 4, md: 4 } }}>
+        <Container
+          maxWidth="lg"
+          sx={{
+            position: "relative",
+            zIndex: 1,
+            pt: { xs: 4, md: 6 },
+            pb: { xs: 4, md: 4 },
+          }}
+        >
           <Grid container spacing={4}>
             {/* Left: Cover Image */}
-            <Grid item xs={12} md={4} lg={3} sx={{ display: 'flex', justifyContent: { xs: 'center', md: 'flex-start' } }}>
+            <Grid
+              item
+              xs={12}
+              md={4}
+              lg={3}
+              sx={{
+                display: "flex",
+                justifyContent: { xs: "center", md: "flex-start" },
+              }}
+            >
               <Box
                 sx={{
                   position: "relative",
@@ -191,7 +229,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
                   borderRadius: 2,
                   overflow: "hidden",
                   boxShadow: "0 20px 40px -10px rgba(0,0,0,0.7)",
-                  border: "1px solid rgba(255,255,255,0.1)"
+                  border: "1px solid rgba(255,255,255,0.1)",
                 }}
               >
                 <Image
@@ -206,40 +244,53 @@ export default async function MangaPage({ params }: MangaPageProps) {
             </Grid>
 
             {/* Right: Details */}
-            <Grid item xs={12} md={8} lg={9} sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+            <Grid
+              item
+              xs={12}
+              md={8}
+              lg={9}
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "flex-end",
+              }}
+            >
               <Box>
                 {/* Category Chip */}
                 {manga.category && (
-                  <Chip 
-                    label={manga.category.name} 
+                  <Chip
+                    label={manga.category.name}
                     component="a"
-                    href={`/category/${encodeURIComponent(manga.category.name)}`}
+                    href={`/category/${encodeURIComponent(
+                      manga.category.name
+                    )}`}
                     clickable
-                    sx={{ 
-                      bgcolor: "#fbbf24", 
-                      color: "black", 
-                      fontWeight: "bold", 
+                    sx={{
+                      bgcolor: "#fbbf24",
+                      color: "black",
+                      fontWeight: "bold",
                       mb: 2,
                       fontSize: "0.85rem",
                       height: 28,
-                      "&:hover": { bgcolor: "#f59e0b" }
-                    }} 
+                      "&:hover": { bgcolor: "#f59e0b" },
+                    }}
                   />
                 )}
 
                 {/* Title */}
-                <Typography 
-                  variant="h2" 
-                  component="h1" 
-                  sx={{ 
-                    fontWeight: 800, 
+                <Typography
+                  variant="h2"
+                  component="h1"
+                  sx={{
+                    fontWeight: 800,
                     mb: 1,
                     fontSize: { xs: "2.5rem", md: "3.5rem" },
                     lineHeight: 1.1,
-                    background: "linear-gradient(135deg, #fbbf24 0%, #38bdf8 100%)",
+                    background:
+                      "linear-gradient(135deg, #fbbf24 0%, #38bdf8 100%)",
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor: "transparent",
-                    filter: "drop-shadow(0 2px 10px rgba(0,0,0,0.3))"
+                    filter: "drop-shadow(0 2px 10px rgba(0,0,0,0.3))",
                   }}
                 >
                   {manga.title}
@@ -255,15 +306,26 @@ export default async function MangaPage({ params }: MangaPageProps) {
                       label: string;
                       icon: string;
                     }[];
-                    
+
                     if (credits.length === 0) return null;
-                    
+
                     return (
-                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 2 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: 2,
+                          mb: 2,
+                        }}
+                      >
                         {credits.map((credit, index) => (
                           <Chip
                             key={index}
-                            avatar={credit.icon ? <Avatar src={credit.icon} alt={credit.label} /> : undefined}
+                            avatar={
+                              credit.icon ? (
+                                <Avatar src={credit.icon} alt={credit.label} />
+                              ) : undefined
+                            }
                             label={credit.label}
                             component="a"
                             href={credit.url}
@@ -278,8 +340,8 @@ export default async function MangaPage({ params }: MangaPageProps) {
                               "&:hover": {
                                 borderColor: "rgba(255,255,255,0.5)",
                                 color: "white",
-                                bgcolor: "rgba(255,255,255,0.05)"
-                              }
+                                bgcolor: "rgba(255,255,255,0.05)",
+                              },
                             }}
                           />
                         ))}
@@ -291,17 +353,28 @@ export default async function MangaPage({ params }: MangaPageProps) {
                 })()}
 
                 {/* Stats Row */}
-                <Stack direction="row" spacing={3} alignItems="center" sx={{ mb: 3, color: 'text.secondary' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Stack
+                  direction="row"
+                  spacing={3}
+                  alignItems="center"
+                  sx={{ mb: 3, color: "text.secondary" }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                     <VisibilityIcon sx={{ fontSize: 20 }} />
                     <Typography variant="subtitle1" fontWeight={500}>
                       {manga.viewCount.toLocaleString()} Views
                     </Typography>
                   </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <StarIcon sx={{ fontSize: 20, color: '#fbbf24' }} />
-                    <Typography variant="subtitle1" fontWeight={500} sx={{ color: 'white' }}>
-                      {manga.averageRating > 0 ? manga.averageRating.toFixed(1) : "No rating"}
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <StarIcon sx={{ fontSize: 20, color: "#fbbf24" }} />
+                    <Typography
+                      variant="subtitle1"
+                      fontWeight={500}
+                      sx={{ color: "white" }}
+                    >
+                      {manga.averageRating > 0
+                        ? manga.averageRating.toFixed(1)
+                        : "No rating"}
                     </Typography>
                     <Typography variant="body2" sx={{ opacity: 0.7 }}>
                       ({manga.ratingCount} ratings)
@@ -310,14 +383,14 @@ export default async function MangaPage({ params }: MangaPageProps) {
                 </Stack>
 
                 {/* Description */}
-                <Typography 
-                  variant="body1" 
-                  sx={{ 
-                    fontSize: "1.1rem", 
-                    lineHeight: 1.7, 
-                    color: "rgba(255,255,255,0.8)", 
+                <Typography
+                  variant="body1"
+                  sx={{
+                    fontSize: "1.1rem",
+                    lineHeight: 1.7,
+                    color: "rgba(255,255,255,0.8)",
                     maxWidth: "800px",
-                    mb: 4
+                    mb: 4,
                   }}
                 >
                   {manga.description}
@@ -330,15 +403,15 @@ export default async function MangaPage({ params }: MangaPageProps) {
                       key={tag.id}
                       label={tag.name}
                       href={`/tag/${encodeURIComponent(tag.name)}`}
-                      sx={{ 
+                      sx={{
                         backgroundColor: "rgba(56, 189, 248, 0.1)",
                         color: "#38bdf8",
                         border: "1px solid rgba(56, 189, 248, 0.3)",
                         fontSize: "0.85rem",
-                        '&:hover': {
+                        "&:hover": {
                           backgroundColor: "rgba(56, 189, 248, 0.2)",
-                          borderColor: "#38bdf8"
-                        }
+                          borderColor: "#38bdf8",
+                        },
                       }}
                     />
                   ))}
@@ -361,10 +434,10 @@ export default async function MangaPage({ params }: MangaPageProps) {
       {/* Main Content Area */}
       <Container maxWidth="lg" sx={{ mt: 6 }}>
         {/* Pages / Reader with scroll tracking - Suspense wrapped */}
-        <SuspendedMangaReader 
-          mangaId={manga.id} 
-          mangaTitle={manga.title} 
-          pages={pages} 
+        <SuspendedMangaReader
+          mangaId={manga.id}
+          mangaTitle={manga.title}
+          pages={pages}
         />
 
         {/* โฆษณาท้ายหน้าอ่าน */}
@@ -373,7 +446,14 @@ export default async function MangaPage({ params }: MangaPageProps) {
         </Box>
 
         {/* General Comments Section - Suspense wrapped */}
-        <Box sx={{ mt: 6, maxWidth: "800px", mx: "auto", mr: { xs: "auto", md: "340px" } }}>
+        <Box
+          sx={{
+            mt: 6,
+            maxWidth: "800px",
+            mx: "auto",
+            mr: { xs: "auto", md: "340px" },
+          }}
+        >
           <SuspendedCommentSection mangaId={manga.id} />
         </Box>
       </Container>
