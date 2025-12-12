@@ -1,10 +1,11 @@
 "use client";
 
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState, useCallback, forwardRef } from "react";
 import Image from "next/image";
 import { Box, Typography, Divider, CircularProgress } from "@mui/material";
 import CommentBox from "./CommentBox";
 import CommentList from "./CommentList";
+import ReadingProgress from "@/app/components/ui/ReadingProgress";
 
 interface MangaReaderProps {
   mangaId: string;
@@ -23,8 +24,33 @@ export default function MangaReader({ mangaId, mangaTitle, pages }: MangaReaderP
   const commentsCacheRef = useRef<CommentsCache>({});
   const [loadingPages, setLoadingPages] = useState<Set<number>>(new Set());
   const [refreshKey, setRefreshKey] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
+  const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const CACHE_DURATION = 5 * 60 * 1000;
+
+  // Track current page with IntersectionObserver
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const index = pageRefs.current.indexOf(entry.target as HTMLDivElement);
+            if (index !== -1) {
+              setCurrentPage(index);
+            }
+          }
+        });
+      },
+      { rootMargin: "-40% 0px -40% 0px", threshold: 0 }
+    );
+
+    pageRefs.current.forEach((ref) => {
+      if (ref) observer.observe(ref);
+    });
+
+    return () => observer.disconnect();
+  }, [pages.length]);
 
   const fetchComments = useCallback(async (imageIndex: number, forceRefresh = false): Promise<any[]> => {
     const cached = commentsCacheRef.current[imageIndex];
@@ -69,6 +95,9 @@ export default function MangaReader({ mangaId, mangaTitle, pages }: MangaReaderP
 
   return (
     <Box sx={{ position: "relative" }}>
+      {/* Reading Progress Indicator */}
+      <ReadingProgress currentPage={currentPage} totalPages={pages.length} />
+
       <Box sx={{ 
         display: "flex", 
         flexDirection: "column", 
@@ -79,6 +108,7 @@ export default function MangaReader({ mangaId, mangaTitle, pages }: MangaReaderP
         {pages.map((pageUrl, index) => (
           <LazyPageWithComments
             key={index}
+            ref={(el: HTMLDivElement | null) => { pageRefs.current[index] = el; }}
             refreshKey={refreshKey}
             mangaId={mangaId}
             mangaTitle={mangaTitle}
@@ -109,7 +139,7 @@ interface LazyPageProps {
   onCommentCreated: () => void;
 }
 
-function LazyPageWithComments({
+const LazyPageWithComments = forwardRef<HTMLDivElement, LazyPageProps>(function LazyPageWithComments({
   mangaId,
   mangaTitle,
   pageUrl,
@@ -120,11 +150,12 @@ function LazyPageWithComments({
   isLoading,
   onFetchComments,
   onCommentCreated,
-}: LazyPageProps) {
+}, ref) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [comments, setComments] = useState<any[]>([]);
   const hasFetchedRef = useRef(false);
+  const [imageLoading, setImageLoading] = useState(true);
 
   // Lazy load: ตรวจจับเมื่อรูปเข้าสู่ viewport
   useEffect(() => {
@@ -179,7 +210,7 @@ function LazyPageWithComments({
 
   return (
     <Box
-      ref={containerRef}
+      ref={ref}
       sx={{
         position: "relative",
         width: "100%",
@@ -187,21 +218,50 @@ function LazyPageWithComments({
         lineHeight: 0,
       }}
     >
-      <Image
-        src={pageUrl}
-        alt={`Page ${imageIndex + 1} of ${mangaTitle}`}
-        width={0}
-        height={0}
-        sizes="100vw"
-        style={{
-          width: "100%",
-          height: "auto",
-          display: "block",
-          borderRadius: "4px",
-        }}
-        priority={imageIndex < 2}
-        loading={imageIndex < 2 ? "eager" : "lazy"}
-      />
+      {/* Image with Skeleton Loading */}
+      <Box sx={{ position: "relative", minHeight: imageLoading ? 600 : "auto" }}>
+        {/* Skeleton Placeholder */}
+        {imageLoading && (
+          <Box
+            sx={{
+              position: "absolute",
+              inset: 0,
+              bgcolor: "rgba(255, 255, 255, 0.03)",
+              borderRadius: "4px",
+              overflow: "hidden",
+              "&::after": {
+                content: '""',
+                position: "absolute",
+                inset: 0,
+                background: "linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.04), transparent)",
+                animation: "shimmer 1.5s infinite",
+              },
+              "@keyframes shimmer": {
+                "0%": { transform: "translateX(-100%)" },
+                "100%": { transform: "translateX(100%)" },
+              },
+            }}
+          />
+        )}
+        <Image
+          src={pageUrl}
+          alt={`Page ${imageIndex + 1} of ${mangaTitle}`}
+          width={0}
+          height={0}
+          sizes="100vw"
+          style={{
+            width: "100%",
+            height: "auto",
+            display: "block",
+            borderRadius: "4px",
+            opacity: imageLoading ? 0 : 1,
+            transition: "opacity 0.3s ease-in-out",
+          }}
+          priority={imageIndex < 2}
+          loading={imageIndex < 2 ? "eager" : "lazy"}
+          onLoad={() => setImageLoading(false)}
+        />
+      </Box>
 
       {/* Desktop: Comment Panel - โหลดเฉพาะเมื่อ visible */}
       <Box
@@ -286,4 +346,5 @@ function LazyPageWithComments({
       </Box>
     </Box>
   );
-}
+});
+

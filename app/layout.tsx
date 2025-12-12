@@ -3,9 +3,9 @@ import { Kanit } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./components/layout/Providers";
 import AgeVerificationModal from "./components/features/auth/AgeVerificationModal";
+import CookieConsent from "./components/features/auth/CookieConsent";
 import DevToolsProtection from "./components/security/DevToolsProtection";
-import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Analytics } from "@vercel/analytics/react";
+import ConditionalAnalytics from "./components/features/analytics/ConditionalAnalytics";
 import GlobalAds from "./components/features/ads/GlobalAds";
 import ErrorBoundary from "./components/common/ErrorBoundary";
 import LayoutWrapper from "./components/layout/LayoutWrapper";
@@ -67,6 +67,7 @@ export default function RootLayout({
         <ErrorBoundary>
           <Providers>
             <AgeVerificationModal />
+            <CookieConsent />
             <DevToolsProtection />
             <GlobalAds />
             <LayoutWrapper>
@@ -74,9 +75,9 @@ export default function RootLayout({
             </LayoutWrapper>
           </Providers>
         </ErrorBoundary>
-        <SpeedInsights />
-        <Analytics />
+        <ConditionalAnalytics />
       </body>
     </html>
   );
 }
+

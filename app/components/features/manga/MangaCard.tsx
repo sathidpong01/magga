@@ -1,12 +1,19 @@
 "use client";
 
+import { memo } from "react";
 import { Card, CardActionArea, Typography, Box, Chip } from "@mui/material";
 import Image from "next/image";
 import Link from "next/link";
-import { Manga, Tag } from "@prisma/client";
 
-interface MangaWithDetails extends Manga {
-  tags: Tag[];
+// Minimal interface for MangaCard - only fields we actually use
+export interface MangaWithDetails {
+  id: string;
+  slug: string;
+  title: string;
+  coverImage: string;
+  viewCount: number;
+  averageRating: number;
+  tags: { id: string; name: string }[];
   category: { name: string } | null;
 }
 
@@ -15,7 +22,7 @@ interface MangaCardProps {
   priority?: boolean;
 }
 
-export default function MangaCard({ manga, priority = false }: MangaCardProps) {
+function MangaCard({ manga, priority = false }: MangaCardProps) {
   return (
     <Card
       sx={{
@@ -129,3 +136,5 @@ export default function MangaCard({ manga, priority = false }: MangaCardProps) {
     </Card>
   );
 }
+
+export default memo(MangaCard);

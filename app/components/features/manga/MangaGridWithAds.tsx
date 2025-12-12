@@ -2,14 +2,8 @@
 
 import { useMemo } from "react";
 import { Grid } from "@mui/material";
-import MangaCard from "@/app/components/features/manga/MangaCard";
+import MangaCard, { MangaWithDetails } from "@/app/components/features/manga/MangaCard";
 import { AdCard } from "@/app/components/features/ads";
-import type { Manga, Tag, Category } from "@prisma/client";
-
-interface MangaWithDetails extends Manga {
-  tags: Tag[];
-  category: Category | null;
-}
 
 interface Ad {
   id: string;

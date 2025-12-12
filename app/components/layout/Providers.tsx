@@ -4,6 +4,7 @@ import { SessionProvider } from "next-auth/react";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter';
+import { ToastProvider } from "@/app/contexts/ToastContext";
 
 import { Kanit } from "next/font/google";
 
@@ -118,7 +119,9 @@ export const Providers = ({ children }: Props) => {
     <AppRouterCacheProvider>
       <ThemeProvider theme={darkTheme}>
         <CssBaseline />
-        <SessionProvider>{children}</SessionProvider>
+        <SessionProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </SessionProvider>
       </ThemeProvider>
     </AppRouterCacheProvider>
   );

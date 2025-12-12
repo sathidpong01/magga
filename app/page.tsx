@@ -2,7 +2,7 @@ import prisma from "@/lib/prisma";
 import { Typography, Box, Container } from "@mui/material";
 import { Suspense } from "react";
 import SearchFilters from "./components/features/search/SearchFilters";
-import MangaGridWithAds from "./components/features/manga/MangaGridWithAds";
+import InfiniteMangaGrid from "./components/features/manga/InfiniteMangaGrid";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 
@@ -10,12 +10,14 @@ type Props = {
   searchParams: Promise<{
     search?: string;
     categoryId?: string;
-    tags?: string | string[]; // Changed from tagIds to tags (names)
+    tags?: string | string[];
     sort?: string;
   }>;
 };
 
-// ISR: Revalidate every 1 hour (On-demand revalidation handles immediate updates)
+const ITEMS_PER_PAGE = 12;
+
+// ISR: Revalidate every 1 hour
 export const revalidate = 3600;
 
 // Cache categories for 5 minutes
@@ -39,7 +41,7 @@ const getTags = unstable_cache(
   { revalidate: 300, tags: ["tags"] }
 );
 
-// Cache grid ads for 5 minutes (fetched server-side to avoid Layout Shift)
+// Cache grid ads for 5 minutes
 const getGridAds = unstable_cache(
   async () => {
     return prisma.advertisement.findMany({
@@ -83,33 +85,53 @@ export default async function Home({ searchParams }: Props) {
     where.categoryId = categoryId;
   }
 
-  if (tagNames) {
-    const tagNameArray = Array.isArray(tagNames) ? tagNames : [tagNames];
-    if (tagNameArray.length > 0) {
-      where.tags = {
-        some: {
-          name: { in: tagNameArray }, // Filter by name
-        },
-      };
-    }
+  const tagNameArray = tagNames
+    ? Array.isArray(tagNames)
+      ? tagNames
+      : [tagNames]
+    : [];
+
+  if (tagNameArray.length > 0) {
+    where.tags = {
+      some: {
+        name: { in: tagNameArray },
+      },
+    };
   }
 
   // Build OrderBy Clause
-  let orderBy: Prisma.MangaOrderByWithRelationInput = { createdAt: "desc" }; // Default to "Added" (Time Posted)
+  let orderBy: Prisma.MangaOrderByWithRelationInput = { createdAt: "desc" };
   if (sort === "updated") {
     orderBy = { updatedAt: "desc" };
   } else if (sort === "az") {
     orderBy = { title: "asc" };
   }
 
-  const mangas = await prisma.manga.findMany({
-    where,
-    orderBy,
-    include: {
-      category: true,
-      tags: true,
-    },
-  });
+  // Fetch first page + total count
+  const [mangas, total] = await Promise.all([
+    prisma.manga.findMany({
+      where,
+      orderBy,
+      take: ITEMS_PER_PAGE,
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        coverImage: true,
+        viewCount: true,
+        averageRating: true,
+        category: {
+          select: { name: true },
+        },
+        tags: {
+          select: { id: true, name: true },
+        },
+      },
+    }),
+    prisma.manga.count({ where }),
+  ]);
+
+  const hasMore = mangas.length < total;
 
   return (
     <Container maxWidth="xl">
@@ -134,19 +156,17 @@ export default async function Home({ searchParams }: Props) {
           {search ? `Search Results for "${search}"` : "Discover Manga"}
         </Typography>
 
-        {mangas.length === 0 ? (
-          <Typography
-            variant="h6"
-            color="text.secondary"
-            align="center"
-            sx={{ mt: 8, fontWeight: 400 }}
-          >
-            No mangas found matching your criteria.
-          </Typography>
-        ) : (
-          <MangaGridWithAds mangas={mangas} ads={gridAds} />
-        )}
+        <InfiniteMangaGrid
+          initialMangas={mangas}
+          initialHasMore={hasMore}
+          ads={gridAds}
+          search={search}
+          categoryId={categoryId}
+          tags={tagNameArray.join(",")}
+          sort={sort}
+        />
       </Box>
     </Container>
   );
 }
+

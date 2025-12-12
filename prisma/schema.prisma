@@ -37,6 +37,12 @@ model Manga {
   ratings    MangaRating[]
   submission MangaSubmission?
   comments   Comment[]
+
+  // --- Indexes for query optimization ---
+  @@index([categoryId])
+  @@index([viewCount(sort: Desc)])
+  @@index([updatedAt(sort: Desc)])
+  @@index([isHidden])
 }
 
 // สำหรับหมวดหมู่
