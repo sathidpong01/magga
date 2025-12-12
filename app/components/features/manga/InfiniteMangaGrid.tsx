@@ -151,7 +151,7 @@ export default function InfiniteMangaGrid({
                 ? item.data.id
                 : `ad-${item.data.id}-${item.index}`
             }
-            xs={12}
+            xs={6}
             sm={6}
             md={4}
             lg={3}
