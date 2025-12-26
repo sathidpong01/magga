@@ -1,10 +1,16 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 
-const PLACEHOLDER = 'https://via.placeholder.com/300x400.png?text=No+Cover';
+// R2 storage domain
+const R2_DOMAIN = 'pub-1f8d25d164134702943300ef6d01fc35.r2.dev';
 
 export async function resolveLocalImage(src?: string) {
-  if (!src) return PLACEHOLDER;
+  if (!src) return '';
+
+  // Quick check: if it's an R2 URL, return as-is
+  if (src.includes(R2_DOMAIN)) {
+    return src;
+  }
 
   // If it's already a relative path starting with /uploads/, check existence
   try {
@@ -16,7 +22,7 @@ export async function resolveLocalImage(src?: string) {
         await fs.access(filePath);
         return pathname;
       } catch {
-        return PLACEHOLDER;
+        return src; // Return original if file not found locally
       }
     }
     // Not a local uploads URL — return original
@@ -29,9 +35,10 @@ export async function resolveLocalImage(src?: string) {
         await fs.access(filePath);
         return src;
       } catch {
-        return PLACEHOLDER;
+        return src; // Return original
       }
     }
     return src;
   }
 }
+

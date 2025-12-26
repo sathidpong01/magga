@@ -362,36 +362,38 @@ export default async function AdminPage() {
                   </Box>
                 </Grid>
                 <Grid item xs={4}>
-                  <Box
-                    component={Link}
+                  <Link
                     href="/admin/submissions"
-                    sx={{
-                      p: 2,
-                      borderRadius: 1,
-                      bgcolor: "rgba(251, 146, 60, 0.1)",
-                      border: "1px solid rgba(251, 146, 60, 0.2)",
-                      textAlign: "center",
-                      display: "block",
-                      textDecoration: "none",
-                      transition: "all 0.2s",
-                      "&:hover": {
-                        bgcolor: "rgba(251, 146, 60, 0.2)",
-                      },
-                    }}
+                    style={{ textDecoration: "none" }}
                   >
-                    <Typography
-                      variant="h4"
-                      sx={{ fontWeight: 700, color: "#fb923c" }}
+                    <Box
+                      sx={{
+                        p: 2,
+                        borderRadius: 1,
+                        bgcolor: "rgba(251, 146, 60, 0.1)",
+                        border: "1px solid rgba(251, 146, 60, 0.2)",
+                        textAlign: "center",
+                        display: "block",
+                        transition: "all 0.2s",
+                        "&:hover": {
+                          bgcolor: "rgba(251, 146, 60, 0.2)",
+                        },
+                      }}
                     >
-                      {pendingSubmissions}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ color: "#a3a3a3", mt: 0.5 }}
-                    >
-                      รออนุมัติ
-                    </Typography>
-                  </Box>
+                      <Typography
+                        variant="h4"
+                        sx={{ fontWeight: 700, color: "#fb923c" }}
+                      >
+                        {pendingSubmissions}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{ color: "#a3a3a3", mt: 0.5 }}
+                      >
+                        รออนุมัติ
+                      </Typography>
+                    </Box>
+                  </Link>
                 </Grid>
               </Grid>
             </CardContent>
@@ -432,50 +434,52 @@ export default async function AdminPage() {
               </Box>
               <Box sx={{ maxHeight: 180, overflow: "auto" }}>
                 {topManga.map((manga, index) => (
-                  <Box
+                  <Link
                     key={manga.id}
-                    component={Link}
                     href={`/${manga.slug}`}
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      py: 0.75,
-                      px: 1,
-                      borderRadius: 0.5,
-                      textDecoration: "none",
-                      "&:hover": { bgcolor: "rgba(255,255,255,0.05)" },
-                    }}
+                    style={{ textDecoration: "none" }}
                   >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Chip
-                        label={`#${index + 1}`}
-                        size="small"
-                        sx={{
-                          bgcolor: index < 3 ? "rgba(251, 191, 36, 0.2)" : "rgba(255,255,255,0.1)",
-                          color: index < 3 ? "#fbbf24" : "#a3a3a3",
-                          fontWeight: 600,
-                          fontSize: "0.7rem",
-                          height: 20,
-                        }}
-                      />
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color: "#fafafa",
-                          maxWidth: 180,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {manga.title}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        py: 0.75,
+                        px: 1,
+                        borderRadius: 0.5,
+                        "&:hover": { bgcolor: "rgba(255,255,255,0.05)" },
+                      }}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Chip
+                          label={`#${index + 1}`}
+                          size="small"
+                          sx={{
+                            bgcolor: index < 3 ? "rgba(251, 191, 36, 0.2)" : "rgba(255,255,255,0.1)",
+                            color: index < 3 ? "#fbbf24" : "#a3a3a3",
+                            fontWeight: 600,
+                            fontSize: "0.7rem",
+                            height: 20,
+                          }}
+                        />
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: "#fafafa",
+                            maxWidth: 180,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {manga.title}
+                        </Typography>
+                      </Box>
+                      <Typography variant="caption" sx={{ color: "#a3a3a3" }}>
+                        {manga.viewCount.toLocaleString()} views
                       </Typography>
                     </Box>
-                    <Typography variant="caption" sx={{ color: "#a3a3a3" }}>
-                      {manga.viewCount.toLocaleString()} views
-                    </Typography>
-                  </Box>
+                  </Link>
                 ))}
               </Box>
             </CardContent>

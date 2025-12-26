@@ -483,11 +483,12 @@ export default function AdminMangaTable({
                       }}
                     >
                       <Image
-                        src={manga._cover}
+                        src={manga._cover || "/placeholder.png"}
                         alt={manga.title}
                         fill
                         sizes="40px"
                         style={{ objectFit: "cover" }}
+                        unoptimized
                       />
                     </Box>
                   </TableCell>
