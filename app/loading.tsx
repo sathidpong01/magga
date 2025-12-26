@@ -26,7 +26,7 @@ export default function HomeLoading() {
         {/* Manga Cards Grid Skeleton */}
         <Grid container spacing={3}>
           {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-            <Grid item key={i} xs={12} sm={6} md={4} lg={3}>
+            <Grid item key={i} xs={6} sm={6} md={4} lg={3}>
               <MangaCardSkeleton />
             </Grid>
           ))}

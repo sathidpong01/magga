@@ -15,6 +15,23 @@ import UpdateIcon from "@mui/icons-material/Update";
 // Static data for changelog
 const changelogData = [
   {
+    date: "2025-12-26",
+    version: "v1.5.0",
+    title: "UX/UI Improvements & Performance Optimization",
+    changes: [
+      "เพิ่ม Empty State UI ใหม่พร้อมไอคอนและปุ่ม Clear Filters",
+      "เพิ่ม Infinite Scroll สำหรับหน้าแรก (โหลดเพิ่มอัตโนมัติเมื่อเลื่อนลง)",
+      "เพิ่ม Error Boundary แบบ Global และหน้าอ่านมังงะ",
+      "เพิ่มระบบ Toast Notifications (Success, Error, Info, Warning)",
+      "เพิ่ม Reading Progress Indicator แสดงหน้าปัจจุบันและ Progress Bar",
+      "เพิ่ม Cookie Consent Popup พร้อม Analytics ตาม GDPR/PDPA",
+      "ปรับ Layout การ์ดหน้าแรกเป็น 2 คอลัมน์บนมือถือ",
+      "แก้ไข CLS (Cumulative Layout Shift) ในหน้าอ่านมังงะ",
+      "เพิ่ม Micro-animations สำหรับ hover effects และ fade-in",
+      "เพิ่ม Loading Skeletons สำหรับหน้า Category และ Tag",
+    ],
+  },
+  {
     date: "2025-12-08",
     version: "v1.4.1",
     title: "Security Hardening & Bug Fixes",

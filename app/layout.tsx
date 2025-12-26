@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "./components/layout/Providers";
 import AgeVerificationModal from "./components/features/auth/AgeVerificationModal";
 import CookieConsent from "./components/features/auth/CookieConsent";
+import SessionExpiryWarning from "./components/features/auth/SessionExpiryWarning";
 import DevToolsProtection from "./components/security/DevToolsProtection";
 import ConditionalAnalytics from "./components/features/analytics/ConditionalAnalytics";
 import GlobalAds from "./components/features/ads/GlobalAds";
@@ -68,6 +69,7 @@ export default function RootLayout({
           <Providers>
             <AgeVerificationModal />
             <CookieConsent />
+            <SessionExpiryWarning />
             <DevToolsProtection />
             <GlobalAds />
             <LayoutWrapper>

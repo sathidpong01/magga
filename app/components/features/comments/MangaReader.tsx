@@ -219,30 +219,31 @@ const LazyPageWithComments = forwardRef<HTMLDivElement, LazyPageProps>(function 
       }}
     >
       {/* Image with Skeleton Loading */}
-      <Box sx={{ position: "relative", minHeight: imageLoading ? 600 : "auto" }}>
-        {/* Skeleton Placeholder */}
-        {imageLoading && (
-          <Box
-            sx={{
+      <Box sx={{ position: "relative" }}>
+        {/* Skeleton Placeholder - stays behind until image loads */}
+        <Box
+          sx={{
+            position: "absolute",
+            inset: 0,
+            bgcolor: "rgba(255, 255, 255, 0.03)",
+            borderRadius: "4px",
+            overflow: "hidden",
+            opacity: imageLoading ? 1 : 0,
+            transition: "opacity 0.3s ease-in-out",
+            minHeight: 400,
+            "&::after": {
+              content: '""',
               position: "absolute",
               inset: 0,
-              bgcolor: "rgba(255, 255, 255, 0.03)",
-              borderRadius: "4px",
-              overflow: "hidden",
-              "&::after": {
-                content: '""',
-                position: "absolute",
-                inset: 0,
-                background: "linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.04), transparent)",
-                animation: "shimmer 1.5s infinite",
-              },
-              "@keyframes shimmer": {
-                "0%": { transform: "translateX(-100%)" },
-                "100%": { transform: "translateX(100%)" },
-              },
-            }}
-          />
-        )}
+              background: "linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.04), transparent)",
+              animation: "shimmer 1.5s infinite",
+            },
+            "@keyframes shimmer": {
+              "0%": { transform: "translateX(-100%)" },
+              "100%": { transform: "translateX(100%)" },
+            },
+          }}
+        />
         <Image
           src={pageUrl}
           alt={`Page ${imageIndex + 1} of ${mangaTitle}`}

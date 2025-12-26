@@ -102,6 +102,7 @@ function PlacementPreview({
                   src={previewImage}
                   alt=""
                   fill
+                  sizes="70px"
                   style={{ objectFit: "cover" }}
                 />
               ) : (
@@ -651,6 +652,7 @@ export default function AdvertisementsPage() {
                       src={ad.imageUrl}
                       alt={ad.title}
                       fill
+                      sizes="60px"
                       style={{ objectFit: "cover" }}
                     />
                   </Box>

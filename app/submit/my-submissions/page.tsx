@@ -130,7 +130,7 @@ export default function MySubmissionsPage() {
               <TableRow key={sub.id}>
                 <TableCell>
                   <Box sx={{ width: 50, height: 70, position: "relative", borderRadius: 0.5, overflow: "hidden" }}>
-                    <Image src={sub.coverImage} alt={sub.title} fill style={{ objectFit: "cover" }} />
+                    <Image src={sub.coverImage} alt={sub.title} fill sizes="50px" style={{ objectFit: "cover" }} />
                   </Box>
                 </TableCell>
                 <TableCell>
