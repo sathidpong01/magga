@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
   Box,
   IconButton,
@@ -24,9 +24,9 @@ interface ImageCommentPanelProps {
   onCommentCreated?: () => void;
 }
 
-export default function ImageCommentPanel({ 
-  mangaId, 
-  imageIndex, 
+export default function ImageCommentPanel({
+  mangaId,
+  imageIndex,
   totalPages,
   cachedComments,
   onCommentsLoaded,
@@ -36,44 +36,86 @@ export default function ImageCommentPanel({
   const [isLoading, setIsLoading] = useState(!cachedComments);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  const fetchComments = useCallback(async (forceRefresh = false) => {
-    // ใช้ cache ถ้ามี และไม่ได้ force refresh
-    if (cachedComments && !forceRefresh) {
+  // Use refs for callbacks to avoid dependency issues
+  const onCommentsLoadedRef = useRef(onCommentsLoaded);
+  onCommentsLoadedRef.current = onCommentsLoaded;
+
+  // Fetch comments for specific imageIndex
+  useEffect(() => {
+    // If we have cached comments, use them
+    if (cachedComments) {
       setComments(cachedComments);
       setIsLoading(false);
       return;
     }
 
+    // Otherwise fetch from API
+    let isMounted = true;
     setIsLoading(true);
-    try {
-      const params = new URLSearchParams({
-        mangaId,
-        imageIndex: String(imageIndex),
-      });
 
-      const res = await fetch(`/api/comments?${params}`);
-      if (!res.ok) throw new Error("Failed to fetch");
+    const fetchData = async () => {
+      try {
+        const params = new URLSearchParams({
+          mangaId,
+          imageIndex: String(imageIndex),
+        });
 
-      const data = await res.json();
-      const fetchedComments = data.comments || [];
-      setComments(fetchedComments);
-      onCommentsLoaded?.(fetchedComments);
-    } catch (error) {
-      console.error("Error fetching comments:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [mangaId, imageIndex, cachedComments, onCommentsLoaded]);
+        const res = await fetch(`/api/comments?${params}`);
+        if (!res.ok) throw new Error("Failed to fetch");
 
-  // Fetch when imageIndex changes (if no cache)
-  useEffect(() => {
-    if (cachedComments) {
-      setComments(cachedComments);
-      setIsLoading(false);
-    } else {
-      fetchComments();
-    }
-  }, [imageIndex, cachedComments, fetchComments]);
+        const data = await res.json();
+        const fetchedComments = data.comments || [];
+
+        if (isMounted) {
+          setComments(fetchedComments);
+          setIsLoading(false);
+          onCommentsLoadedRef.current?.(fetchedComments);
+        }
+      } catch (error) {
+        console.error("Error fetching comments:", error);
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [mangaId, imageIndex, cachedComments]);
+
+  const fetchComments = useCallback(
+    async (forceRefresh = false) => {
+      if (!forceRefresh && cachedComments) {
+        setComments(cachedComments);
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        const params = new URLSearchParams({
+          mangaId,
+          imageIndex: String(imageIndex),
+        });
+
+        const res = await fetch(`/api/comments?${params}`);
+        if (!res.ok) throw new Error("Failed to fetch");
+
+        const data = await res.json();
+        const fetchedComments = data.comments || [];
+        setComments(fetchedComments);
+        onCommentsLoadedRef.current?.(fetchedComments);
+      } catch (error) {
+        console.error("Error fetching comments:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [mangaId, imageIndex, cachedComments]
+  );
 
   const handleCommentCreated = useCallback(() => {
     onCommentCreated?.();
@@ -102,7 +144,11 @@ export default function ImageCommentPanel({
       >
         {/* Header */}
         <Box sx={{ p: 1.5, flexShrink: 0 }}>
-          <Typography variant="subtitle2" fontWeight={600} sx={{ color: "white" }}>
+          <Typography
+            variant="subtitle2"
+            fontWeight={600}
+            sx={{ color: "white" }}
+          >
             {pageLabel}
           </Typography>
           <Typography variant="caption" color="text.secondary">
@@ -189,26 +235,48 @@ export default function ImageCommentPanel({
             },
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2, borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              p: 2,
+              borderBottom: "1px solid rgba(255,255,255,0.1)",
+            }}
+          >
             <Box>
-              <Typography variant="h6" fontWeight={600}>ความคิดเห็น</Typography>
+              <Typography variant="h6" fontWeight={600}>
+                ความคิดเห็น
+              </Typography>
               <Typography variant="body2" color="text.secondary">
                 {pageLabel} • {commentCount} ความคิดเห็น
               </Typography>
             </Box>
-            <IconButton onClick={() => setIsMobileOpen(false)} sx={{ color: "white" }}>
+            <IconButton
+              onClick={() => setIsMobileOpen(false)}
+              sx={{ color: "white" }}
+            >
               <CloseIcon />
             </IconButton>
           </Box>
           <Box sx={{ p: 2, overflowY: "auto", flex: 1 }}>
-            <CommentBox mangaId={mangaId} imageIndex={imageIndex} onCommentCreated={handleCommentCreated} />
+            <CommentBox
+              mangaId={mangaId}
+              imageIndex={imageIndex}
+              onCommentCreated={handleCommentCreated}
+            />
             <Divider sx={{ my: 2, borderColor: "rgba(255,255,255,0.1)" }} />
             {isLoading ? (
               <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
                 <CircularProgress size={32} />
               </Box>
             ) : (
-              <CommentList comments={comments} mangaId={mangaId} imageIndex={imageIndex} onRefresh={handleCommentCreated} />
+              <CommentList
+                comments={comments}
+                mangaId={mangaId}
+                imageIndex={imageIndex}
+                onRefresh={handleCommentCreated}
+              />
             )}
           </Box>
         </Drawer>

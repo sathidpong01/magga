@@ -40,8 +40,18 @@ interface MangaImageCommentsProps {
 }
 
 // Component นี้จะติดตามว่ารูปไหนอยู่ในหน้าจอ
-export function MangaImageComments({ mangaId, totalPages, imageRefs }: MangaImageCommentsProps) {
+export function MangaImageComments({
+  mangaId,
+  totalPages,
+  imageRefs,
+}: MangaImageCommentsProps) {
   const [currentPage, setCurrentPage] = useState(0);
+  const currentPageRef = useRef(currentPage);
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    currentPageRef.current = currentPage;
+  }, [currentPage]);
 
   useEffect(() => {
     if (!imageRefs.current) return;
@@ -50,11 +60,13 @@ export function MangaImageComments({ mangaId, totalPages, imageRefs }: MangaImag
       (entries) => {
         // หารูปที่อยู่ในหน้าจอมากที่สุด
         let maxRatio = 0;
-        let visibleIndex = currentPage;
+        let visibleIndex = currentPageRef.current;
 
         entries.forEach((entry) => {
           if (entry.isIntersecting && entry.intersectionRatio > maxRatio) {
-            const index = imageRefs.current?.indexOf(entry.target as HTMLDivElement);
+            const index = imageRefs.current?.indexOf(
+              entry.target as HTMLDivElement
+            );
             if (index !== undefined && index !== -1) {
               maxRatio = entry.intersectionRatio;
               visibleIndex = index;
@@ -62,7 +74,7 @@ export function MangaImageComments({ mangaId, totalPages, imageRefs }: MangaImag
           }
         });
 
-        if (maxRatio > 0) {
+        if (maxRatio > 0 && visibleIndex !== currentPageRef.current) {
           setCurrentPage(visibleIndex);
         }
       },
@@ -78,7 +90,7 @@ export function MangaImageComments({ mangaId, totalPages, imageRefs }: MangaImag
     });
 
     return () => observer.disconnect();
-  }, [imageRefs, currentPage]);
+  }, [imageRefs]);
 
   return (
     <ImageCommentPanel
@@ -96,7 +108,11 @@ interface ImageCommentProps {
   pageLabel?: string;
 }
 
-export function MangaImageCommentButton({ mangaId, imageIndex, pageLabel }: ImageCommentProps) {
+export function MangaImageCommentButton({
+  mangaId,
+  imageIndex,
+  pageLabel,
+}: ImageCommentProps) {
   // This is now only used for mobile
   return null; // Desktop uses MangaImageComments instead
 }
