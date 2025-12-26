@@ -35,16 +35,16 @@ export default function ReadingProgress({
     <Box
       sx={{
         position: "fixed",
-        top: 64, // Below header
+        bottom: 0,
         left: 0,
         right: 0,
         zIndex: 1100,
-        bgcolor: "rgba(10, 10, 10, 0.9)",
+        bgcolor: "rgba(10, 10, 10, 0.95)",
         backdropFilter: "blur(8px)",
-        borderBottom: "1px solid rgba(255,255,255,0.08)",
-        transform: isVisible ? "translateY(0)" : "translateY(-100%)",
+        borderTop: "1px solid rgba(255,255,255,0.08)",
+        transform: isVisible ? "translateY(0)" : "translateY(100%)",
         transition: "transform 0.3s ease-in-out",
-        py: 0.5,
+        py: 0.75,
         px: 2,
       }}
     >
