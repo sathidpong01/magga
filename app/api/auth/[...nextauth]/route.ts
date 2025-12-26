@@ -83,10 +83,16 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (session.user && token.id) {
-        // ตรวจสอบว่า user ยังมีอยู่ใน database หรือไม่
+        // ตรวจสอบว่า user ยังมีอยู่ใน database หรือไม่ และดึงข้อมูลเพิ่มเติม
         const userExists = await prisma.user.findUnique({
           where: { id: token.id as string },
-          select: { id: true, role: true },
+          select: {
+            id: true,
+            role: true,
+            name: true,
+            username: true,
+            image: true,
+          },
         });
 
         if (!userExists) {
@@ -99,6 +105,9 @@ export const authOptions: NextAuthOptions = {
 
         session.user.id = userExists.id;
         session.user.role = userExists.role || "user";
+        // เพิ่มข้อมูล profile
+        session.user.name = userExists.name || userExists.username || null;
+        session.user.image = userExists.image || null;
       }
       return session;
     },

@@ -5,6 +5,7 @@ import { Providers } from "./components/layout/Providers";
 import AgeVerificationModal from "./components/features/auth/AgeVerificationModal";
 import CookieConsent from "./components/features/auth/CookieConsent";
 import SessionExpiryWarning from "./components/features/auth/SessionExpiryWarning";
+import SessionExpiredNotice from "./components/features/auth/SessionExpiredNotice";
 import DevToolsProtection from "./components/security/DevToolsProtection";
 import ConditionalAnalytics from "./components/features/analytics/ConditionalAnalytics";
 import GlobalAds from "./components/features/ads/GlobalAds";
@@ -20,7 +21,8 @@ const kanit = Kanit({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXTAUTH_URL || "https://magga.vercel.app"),
   title: "MAGGA - รวมการ์ตูนแนว Furry แปลไทย",
-  description: "MAGGA - เว็บอ่านโดจินแปลไทย 18+ แนว Furry ที่ครบเครื่องที่สุด รวบรวมมังงะและโดจินชิ Furry สายหมี สายเคโมะ หลากหลายแนว แปลไทยคุณภาพ อ่านฟรีออนไลน์",
+  description:
+    "MAGGA - เว็บอ่านโดจินแปลไทย 18+ แนว Furry ที่ครบเครื่องที่สุด รวบรวมมังงะและโดจินชิ Furry สายหมี สายเคโมะ หลากหลายแนว แปลไทยคุณภาพ อ่านฟรีออนไลน์",
   openGraph: {
     title: "MAGGA - รวมการ์ตูนแนว Furry แปลไทย",
     description: "เว็บอ่านการ์ตูนออนไลน์ อ่านฟรี อัปเดตใหม่ทุกวัน",
@@ -48,10 +50,7 @@ export const metadata: Metadata = {
     adult: "true",
   },
   icons: {
-    icon: [
-      { url: "/favicon.ico" },
-      { url: "/favicon.png", type: "image/png" },
-    ],
+    icon: [{ url: "/favicon.ico" }, { url: "/favicon.png", type: "image/png" }],
     shortcut: "/favicon.png",
     apple: "/apple-touch-icon.png",
   },
@@ -70,11 +69,10 @@ export default function RootLayout({
             <AgeVerificationModal />
             <CookieConsent />
             <SessionExpiryWarning />
+            <SessionExpiredNotice />
             <DevToolsProtection />
             <GlobalAds />
-            <LayoutWrapper>
-              {children}
-            </LayoutWrapper>
+            <LayoutWrapper>{children}</LayoutWrapper>
           </Providers>
         </ErrorBoundary>
         <ConditionalAnalytics />
@@ -82,4 +80,3 @@ export default function RootLayout({
     </html>
   );
 }
-

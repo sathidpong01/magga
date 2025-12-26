@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
@@ -23,6 +23,7 @@ export default function SessionExpiryWarning() {
   const { data: session, status, update } = useSession();
   const [showWarning, setShowWarning] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
+  const [isExtending, setIsExtending] = useState(false);
 
   const checkSessionExpiry = useCallback(() => {
     if (!session?.expires) return;
@@ -32,8 +33,8 @@ export default function SessionExpiryWarning() {
     const remaining = expiresAt - now;
 
     if (remaining <= 0) {
-      // Session expired - will be handled by NextAuth
       setShowWarning(false);
+      signOut({ callbackUrl: "/" });
       return;
     }
 
@@ -45,43 +46,37 @@ export default function SessionExpiryWarning() {
     }
   }, [session?.expires]);
 
-  // Check session expiry periodically
   useEffect(() => {
     if (status !== "authenticated") return;
-
-    // Initial check
     checkSessionExpiry();
-
-    // Set up interval
     const interval = setInterval(checkSessionExpiry, CHECK_INTERVAL_MS);
-
     return () => clearInterval(interval);
   }, [status, checkSessionExpiry]);
 
-  // Countdown timer when warning is shown
   useEffect(() => {
     if (!showWarning) return;
-
     const countdown = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(countdown);
+          signOut({ callbackUrl: "/" });
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
-
     return () => clearInterval(countdown);
   }, [showWarning]);
 
   const handleExtendSession = async () => {
+    setIsExtending(true);
     try {
-      // Trigger session refresh
       await update();
       setShowWarning(false);
     } catch (error) {
       console.error("Failed to extend session:", error);
+    } finally {
+      setIsExtending(false);
     }
   };
 
@@ -93,6 +88,8 @@ export default function SessionExpiryWarning() {
 
   if (!showWarning) return null;
 
+  const isUrgent = timeLeft < 60;
+
   return (
     <Dialog
       open={showWarning}
@@ -102,8 +99,10 @@ export default function SessionExpiryWarning() {
       PaperProps={{
         sx: {
           bgcolor: "#171717",
-          border: "1px solid rgba(251, 191, 36, 0.3)",
-          borderRadius: 2,
+          border: `1px solid ${
+            isUrgent ? "rgba(239, 68, 68, 0.4)" : "rgba(255,255,255,0.1)"
+          }`,
+          borderRadius: 1,
         },
       }}
     >
@@ -111,50 +110,67 @@ export default function SessionExpiryWarning() {
         sx={{
           display: "flex",
           alignItems: "center",
-          gap: 1.5,
-          color: "#fbbf24",
+          gap: 1,
+          color: isUrgent ? "#ef4444" : "#fbbf24",
         }}
       >
-        <AccessTimeIcon />
-        Session ใกล้หมดอายุ
+        <AccessTimeIcon fontSize="small" />
+        {isUrgent ? "Session ใกล้หมดอายุ!" : "Session ใกล้หมดอายุ"}
       </DialogTitle>
+
       <DialogContent>
-        <Typography sx={{ color: "#d4d4d4", mb: 2 }}>
-          Session ของคุณจะหมดอายุใน{" "}
-          <Box component="span" sx={{ color: "#fbbf24", fontWeight: 600 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+          <Typography sx={{ color: "#d4d4d4" }}>เหลือเวลาอีก</Typography>
+          <Typography
+            sx={{
+              color: isUrgent ? "#ef4444" : "#fbbf24",
+              fontWeight: 600,
+              fontFamily: "monospace",
+              fontSize: "1.25rem",
+            }}
+          >
             {formatTime(timeLeft)}
-          </Box>{" "}
-          นาที
+          </Typography>
+        </Box>
+
+        <Typography variant="body2" sx={{ color: "#737373", mb: 2 }}>
+          กด "ต่ออายุ" เพื่อใช้งานต่อ
         </Typography>
-        <Typography variant="body2" sx={{ color: "#a3a3a3", mb: 2 }}>
-          กดปุ่ม &quot;ต่ออายุ&quot; เพื่อใช้งานต่อ หรือระบบจะออกจากระบบอัตโนมัติ
-        </Typography>
+
         <LinearProgress
           variant="determinate"
           value={(timeLeft / (WARNING_THRESHOLD_MS / 1000)) * 100}
           sx={{
-            height: 6,
-            borderRadius: 3,
-            bgcolor: "rgba(251, 191, 36, 0.2)",
+            height: 4,
+            borderRadius: 2,
+            bgcolor: "rgba(255,255,255,0.1)",
             "& .MuiLinearProgress-bar": {
-              bgcolor: "#fbbf24",
+              bgcolor: isUrgent ? "#ef4444" : "#fbbf24",
             },
           }}
         />
       </DialogContent>
-      <DialogActions sx={{ p: 2, pt: 0 }}>
+
+      <DialogActions sx={{ p: 2, pt: 1 }}>
+        <Button
+          onClick={() => signOut({ callbackUrl: "/" })}
+          size="small"
+          sx={{ color: "#737373" }}
+        >
+          ออกจากระบบ
+        </Button>
         <Button
           onClick={handleExtendSession}
           variant="contained"
-          fullWidth
+          size="small"
+          disabled={isExtending}
           sx={{
-            bgcolor: "#fbbf24",
+            bgcolor: isUrgent ? "#ef4444" : "#fbbf24",
             color: "#000",
-            "&:hover": { bgcolor: "#f59e0b" },
-            fontWeight: 600,
+            "&:hover": { bgcolor: isUrgent ? "#dc2626" : "#f59e0b" },
           }}
         >
-          ต่ออายุ Session
+          {isExtending ? "กำลังต่ออายุ..." : "ต่ออายุ"}
         </Button>
       </DialogActions>
     </Dialog>
