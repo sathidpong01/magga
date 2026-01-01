@@ -15,6 +15,23 @@ import UpdateIcon from "@mui/icons-material/Update";
 // Static data for changelog
 const changelogData = [
   {
+    date: "2026-01-01",
+    version: "v1.6.0",
+    title: "Server Actions, Streaming & Performance Optimization",
+    changes: [
+      "เพิ่ม Server Actions สำหรับระบบ Comments (สร้าง, แก้ไข, ลบ, โหวต) ลด API Routes",
+      "เพิ่ม Server Actions สำหรับระบบ Submit Manga (Hybrid approach)",
+      "เพิ่ม Streaming SSR ด้วย React Suspense สำหรับหน้าหลักและหน้ามังงะ",
+      "เพิ่ม Server-First Comments: Comments ถูก render จาก Server โดยตรง ลด JS ฝั่ง Client",
+      "เพิ่ม Image Lightbox สำหรับรูปในคอมเมนต์ (ไม่ redirect ไปยัง R2 URL)",
+      "ปรับ Layouts (Submit/Dashboard) เป็น Server Components ลด JavaScript bundle",
+      "เพิ่ม loading.tsx สำหรับหน้า Submit และ Settings (Skeleton Loading)",
+      "เพิ่ม CommentSectionSkeleton เป็น Suspense fallback ที่สวยงาม",
+      "ปรับปรุง Parallel Fetching ลด Waterfall ในหน้ามังงะ",
+      "ปรับ authorName validation รองรับค่าว่าง (null/undefined)",
+    ],
+  },
+  {
     date: "2025-12-26",
     version: "v1.5.0",
     title: "UX/UI Improvements & Performance Optimization",

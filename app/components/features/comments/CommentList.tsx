@@ -13,6 +13,8 @@ import {
   TextField,
   Button,
   Collapse,
+  Modal,
+  Fade,
 } from "@mui/material";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ThumbDownIcon from "@mui/icons-material/ThumbDown";
@@ -21,6 +23,11 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ReplyIcon from "@mui/icons-material/Reply";
 import CommentBox from "./CommentBox";
+import {
+  voteComment,
+  updateComment,
+  deleteComment,
+} from "@/app/actions/comments";
 
 interface CommentUser {
   id: string;
@@ -53,7 +60,13 @@ interface CommentItemProps {
   isReply?: boolean;
 }
 
-function CommentItem({ comment, mangaId, imageIndex, onRefresh, isReply = false }: CommentItemProps) {
+function CommentItem({
+  comment,
+  mangaId,
+  imageIndex,
+  onRefresh,
+  isReply = false,
+}: CommentItemProps) {
   const { data: session } = useSession();
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(comment.content);
@@ -61,10 +74,13 @@ function CommentItem({ comment, mangaId, imageIndex, onRefresh, isReply = false 
   const [voteScore, setVoteScore] = useState(comment.voteScore);
   const [userVote, setUserVote] = useState<number | null>(() => {
     if (!session?.user?.id) return null;
-    return comment.votes.find((v) => v.userId === session.user.id)?.value ?? null;
+    return (
+      comment.votes.find((v) => v.userId === session.user.id)?.value ?? null
+    );
   });
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
 
   const isOwner = session?.user?.id === comment.user.id;
   const isAdmin = (session?.user as { role?: string })?.role === "admin";
@@ -77,17 +93,16 @@ function CommentItem({ comment, mangaId, imageIndex, onRefresh, isReply = false 
       }
 
       try {
-        const res = await fetch(`/api/comments/${comment.id}/vote`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ value }),
-        });
+        const result = await voteComment(comment.id, value);
 
-        if (!res.ok) throw new Error("Vote failed");
+        if (result.error) {
+          throw new Error(result.error);
+        }
 
-        const data = await res.json();
-        setVoteScore(data.voteScore);
-        setUserVote(data.userVote);
+        if ("voteScore" in result && result.voteScore !== undefined) {
+          setVoteScore(result.voteScore);
+          setUserVote(result.userVote ?? null);
+        }
       } catch {
         console.error("Vote error");
       }
@@ -100,13 +115,15 @@ function CommentItem({ comment, mangaId, imageIndex, onRefresh, isReply = false 
     setIsSubmitting(true);
 
     try {
-      const res = await fetch(`/api/comments/${comment.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: editContent }),
-      });
+      const formData = new FormData();
+      formData.append("commentId", comment.id);
+      formData.append("content", editContent);
 
-      if (!res.ok) throw new Error("Edit failed");
+      const result = await updateComment(formData);
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
 
       setIsEditing(false);
       onRefresh();
@@ -121,8 +138,10 @@ function CommentItem({ comment, mangaId, imageIndex, onRefresh, isReply = false 
     if (!confirm("ยืนยันการลบความคิดเห็นนี้?")) return;
 
     try {
-      const res = await fetch(`/api/comments/${comment.id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Delete failed");
+      const result = await deleteComment(comment.id);
+      if (result.error) {
+        throw new Error(result.error);
+      }
       onRefresh();
     } catch {
       alert("ลบไม่สำเร็จ");
@@ -144,204 +163,288 @@ function CommentItem({ comment, mangaId, imageIndex, onRefresh, isReply = false 
     if (diffHours < 24) return `${diffHours} ชั่วโมงที่แล้ว`;
     if (diffDays < 7) return `${diffDays} วันที่แล้ว`;
 
-    return date.toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" });
+    return date.toLocaleDateString("th-TH", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
   };
 
   return (
-    <Box sx={{ display: "flex", gap: 1, mb: 0.5, pl: isReply ? 5 : 0 }}>
-      {/* Avatar */}
-      <Avatar
-        src={comment.user.image || undefined}
-        alt={comment.user.name || "User"}
-        sx={{ width: isReply ? 32 : 40, height: isReply ? 32 : 40 }}
-      >
-        {(comment.user.name || comment.user.username)?.[0]?.toUpperCase() || "U"}
-      </Avatar>
+    <>
+      <Box sx={{ display: "flex", gap: 1, mb: 0.5, pl: isReply ? 5 : 0 }}>
+        {/* Avatar */}
+        <Avatar
+          src={comment.user.image || undefined}
+          alt={comment.user.name || "User"}
+          sx={{ width: isReply ? 32 : 40, height: isReply ? 32 : 40 }}
+        >
+          {(comment.user.name || comment.user.username)?.[0]?.toUpperCase() ||
+            "U"}
+        </Avatar>
 
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        {/* Header */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-          <Typography variant="subtitle2" fontWeight={600} sx={{ color: "white" }}>
-            {comment.user.name || comment.user.username || "ผู้ใช้"}
-          </Typography>
-          <Typography variant="caption" sx={{ color: "text.secondary" }}>
-            {formatTime(comment.createdAt)}
-          </Typography>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          {/* Header */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
+            <Typography
+              variant="subtitle2"
+              fontWeight={600}
+              sx={{ color: "white" }}
+            >
+              {comment.user.name || comment.user.username || "ผู้ใช้"}
+            </Typography>
+            <Typography variant="caption" sx={{ color: "text.secondary" }}>
+              {formatTime(comment.createdAt)}
+            </Typography>
 
-          {/* Menu for owner/admin */}
-          {(isOwner || isAdmin) && (
-            <>
-              <IconButton
-                size="small"
-                onClick={(e) => setMenuAnchor(e.currentTarget)}
-                sx={{ ml: "auto", color: "text.secondary" }}
-                aria-label="เพิ่มเติม"
-              >
-                <MoreVertIcon fontSize="small" />
-              </IconButton>
-              <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => setMenuAnchor(null)}>
-                {isOwner && (
-                  <MenuItem
-                    onClick={() => {
-                      setIsEditing(true);
-                      setMenuAnchor(null);
-                    }}
-                  >
-                    <EditIcon fontSize="small" sx={{ mr: 1 }} /> แก้ไข
+            {/* Menu for owner/admin */}
+            {(isOwner || isAdmin) && (
+              <>
+                <IconButton
+                  size="small"
+                  onClick={(e) => setMenuAnchor(e.currentTarget)}
+                  sx={{ ml: "auto", color: "text.secondary" }}
+                  aria-label="เพิ่มเติม"
+                >
+                  <MoreVertIcon fontSize="small" />
+                </IconButton>
+                <Menu
+                  anchorEl={menuAnchor}
+                  open={Boolean(menuAnchor)}
+                  onClose={() => setMenuAnchor(null)}
+                >
+                  {isOwner && (
+                    <MenuItem
+                      onClick={() => {
+                        setIsEditing(true);
+                        setMenuAnchor(null);
+                      }}
+                    >
+                      <EditIcon fontSize="small" sx={{ mr: 1 }} /> แก้ไข
+                    </MenuItem>
+                  )}
+                  <MenuItem onClick={handleDelete}>
+                    <DeleteIcon fontSize="small" sx={{ mr: 1 }} /> ลบ
                   </MenuItem>
-                )}
-                <MenuItem onClick={handleDelete}>
-                  <DeleteIcon fontSize="small" sx={{ mr: 1 }} /> ลบ
-                </MenuItem>
-              </Menu>
+                </Menu>
+              </>
+            )}
+          </Box>
+
+          {/* Content */}
+          {isEditing ? (
+            <Box sx={{ mb: 1 }}>
+              <TextField
+                fullWidth
+                multiline
+                size="small"
+                value={editContent}
+                onChange={(e) => setEditContent(e.target.value)}
+                disabled={isSubmitting}
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    bgcolor: "rgba(255,255,255,0.05)",
+                    color: "white",
+                  },
+                }}
+              />
+              <Box sx={{ mt: 1, display: "flex", gap: 1 }}>
+                <Button
+                  size="small"
+                  variant="contained"
+                  onClick={handleEdit}
+                  disabled={isSubmitting}
+                >
+                  บันทึก
+                </Button>
+                <Button size="small" onClick={() => setIsEditing(false)}>
+                  ยกเลิก
+                </Button>
+              </Box>
+            </Box>
+          ) : (
+            <>
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "rgba(255,255,255,0.9)",
+                  whiteSpace: "pre-wrap",
+                  wordBreak: "break-word",
+                }}
+              >
+                {comment.content}
+              </Typography>
+
+              {/* Image */}
+              {comment.imageUrl && (
+                <Box
+                  onClick={() => setLightboxOpen(true)}
+                  sx={{ display: "block", mt: 1, cursor: "pointer" }}
+                >
+                  <Box
+                    component="img"
+                    src={comment.imageUrl}
+                    alt="Attached"
+                    sx={{
+                      maxWidth: "100%",
+                      maxHeight: 300,
+                      borderRadius: 0.5,
+                      objectFit: "contain",
+                      cursor: "pointer",
+                      transition: "transform 0.2s ease",
+                      "&:hover": {
+                        transform: "scale(1.02)",
+                      },
+                    }}
+                  />
+                </Box>
+              )}
             </>
           )}
-        </Box>
 
-        {/* Content */}
-        {isEditing ? (
-          <Box sx={{ mb: 1 }}>
-            <TextField
-              fullWidth
-              multiline
-              size="small"
-              value={editContent}
-              onChange={(e) => setEditContent(e.target.value)}
-              disabled={isSubmitting}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  bgcolor: "rgba(255,255,255,0.05)",
-                  color: "white",
-                },
-              }}
-            />
-            <Box sx={{ mt: 1, display: "flex", gap: 1 }}>
-              <Button size="small" variant="contained" onClick={handleEdit} disabled={isSubmitting}>
-                บันทึก
-              </Button>
-              <Button size="small" onClick={() => setIsEditing(false)}>
-                ยกเลิก
-              </Button>
+          {/* Actions */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mt: 1 }}>
+            {/* Voting */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <Tooltip title="ถูกใจ">
+                <IconButton
+                  size="small"
+                  onClick={() => handleVote(1)}
+                  sx={{ color: userVote === 1 ? "#38bdf8" : "text.secondary" }}
+                  aria-label="ถูกใจ"
+                >
+                  <ThumbUpIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+              <Typography
+                variant="caption"
+                sx={{
+                  minWidth: 20,
+                  textAlign: "center",
+                  color:
+                    voteScore > 0
+                      ? "#4ade80"
+                      : voteScore < 0
+                      ? "#f87171"
+                      : "text.secondary",
+                  fontWeight: 600,
+                }}
+              >
+                {voteScore}
+              </Typography>
+              <Tooltip title="ไม่ถูกใจ">
+                <IconButton
+                  size="small"
+                  onClick={() => handleVote(-1)}
+                  sx={{ color: userVote === -1 ? "#f87171" : "text.secondary" }}
+                  aria-label="ไม่ถูกใจ"
+                >
+                  <ThumbDownIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
             </Box>
-          </Box>
-        ) : (
-          <>
-            <Typography
-              variant="body2"
-              sx={{ color: "rgba(255,255,255,0.9)", whiteSpace: "pre-wrap", wordBreak: "break-word" }}
-            >
-              {comment.content}
-            </Typography>
 
-            {/* Image */}
-            {comment.imageUrl && (
-              <Box
-                component="a"
-                href={comment.imageUrl}
-                target="_blank"
-                rel="noopener"
-                sx={{ display: "block", mt: 1 }}
+            {/* Reply button (only for top-level comments) */}
+            {!isReply && session && (
+              <Button
+                size="small"
+                startIcon={<ReplyIcon />}
+                onClick={() => setShowReply(!showReply)}
+                sx={{ color: "text.secondary", textTransform: "none" }}
               >
-                <Box
-                  component="img"
-                  src={comment.imageUrl}
-                  alt="Attached"
-                  sx={{
-                    maxWidth: "100%",
-                    maxHeight: 300,
-                    borderRadius: 0.5,
-                    objectFit: "contain",
-                    cursor: "pointer",
-                  }}
-                />
-              </Box>
+                ตอบกลับ
+              </Button>
             )}
-          </>
-        )}
-
-        {/* Actions */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mt: 1 }}>
-          {/* Voting */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <Tooltip title="ถูกใจ">
-              <IconButton
-                size="small"
-                onClick={() => handleVote(1)}
-                sx={{ color: userVote === 1 ? "#38bdf8" : "text.secondary" }}
-                aria-label="ถูกใจ"
-              >
-                <ThumbUpIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            <Typography
-              variant="caption"
-              sx={{
-                minWidth: 20,
-                textAlign: "center",
-                color: voteScore > 0 ? "#4ade80" : voteScore < 0 ? "#f87171" : "text.secondary",
-                fontWeight: 600,
-              }}
-            >
-              {voteScore}
-            </Typography>
-            <Tooltip title="ไม่ถูกใจ">
-              <IconButton
-                size="small"
-                onClick={() => handleVote(-1)}
-                sx={{ color: userVote === -1 ? "#f87171" : "text.secondary" }}
-                aria-label="ไม่ถูกใจ"
-              >
-                <ThumbDownIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
           </Box>
 
-          {/* Reply button (only for top-level comments) */}
-          {!isReply && session && (
-            <Button
-              size="small"
-              startIcon={<ReplyIcon />}
-              onClick={() => setShowReply(!showReply)}
-              sx={{ color: "text.secondary", textTransform: "none" }}
-            >
-              ตอบกลับ
-            </Button>
-          )}
-        </Box>
-
-        {/* Reply Box */}
-        <Collapse in={showReply}>
-          <Box sx={{ mt: 2 }}>
-            <CommentBox
-              mangaId={mangaId}
-              imageIndex={imageIndex}
-              parentId={comment.id}
-              placeholder="ตอบกลับ..."
-              onCommentCreated={() => {
-                setShowReply(false);
-                onRefresh();
-              }}
-            />
-          </Box>
-        </Collapse>
-
-        {/* Nested Replies */}
-        {comment.replies && comment.replies.length > 0 && (
-          <Box sx={{ mt: 2 }}>
-            {comment.replies.map((reply) => (
-              <CommentItem
-                key={reply.id}
-                comment={reply}
+          {/* Reply Box */}
+          <Collapse in={showReply}>
+            <Box sx={{ mt: 2 }}>
+              <CommentBox
                 mangaId={mangaId}
                 imageIndex={imageIndex}
-                onRefresh={onRefresh}
-                isReply
+                parentId={comment.id}
+                placeholder="ตอบกลับ..."
+                onCommentCreated={() => {
+                  setShowReply(false);
+                  onRefresh();
+                }}
               />
-            ))}
-          </Box>
-        )}
+            </Box>
+          </Collapse>
+
+          {/* Nested Replies */}
+          {comment.replies && comment.replies.length > 0 && (
+            <Box sx={{ mt: 2 }}>
+              {comment.replies.map((reply) => (
+                <CommentItem
+                  key={reply.id}
+                  comment={reply}
+                  mangaId={mangaId}
+                  imageIndex={imageIndex}
+                  onRefresh={onRefresh}
+                  isReply
+                />
+              ))}
+            </Box>
+          )}
+        </Box>
       </Box>
-    </Box>
+
+      {/* Image Lightbox Modal */}
+      {comment.imageUrl && (
+        <Modal
+          open={lightboxOpen}
+          onClose={() => setLightboxOpen(false)}
+          closeAfterTransition
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Fade in={lightboxOpen}>
+            <Box
+              sx={{
+                outline: "none",
+                maxWidth: "90vw",
+                maxHeight: "90vh",
+                position: "relative",
+              }}
+            >
+              <Box
+                component="img"
+                src={comment.imageUrl!}
+                alt="Attached"
+                onClick={() => setLightboxOpen(false)}
+                sx={{
+                  maxWidth: "90vw",
+                  maxHeight: "90vh",
+                  objectFit: "contain",
+                  borderRadius: 1,
+                  cursor: "zoom-out",
+                  boxShadow: "0 20px 60px rgba(0,0,0,0.8)",
+                }}
+              />
+              <IconButton
+                onClick={() => setLightboxOpen(false)}
+                sx={{
+                  position: "absolute",
+                  top: -40,
+                  right: 0,
+                  color: "white",
+                  bgcolor: "rgba(0,0,0,0.5)",
+                  "&:hover": { bgcolor: "rgba(0,0,0,0.7)" },
+                }}
+                aria-label="Close"
+              >
+                ✕
+              </IconButton>
+            </Box>
+          </Fade>
+        </Modal>
+      )}
+    </>
   );
 }
 
@@ -352,7 +455,12 @@ interface CommentListProps {
   onRefresh: () => void;
 }
 
-export default function CommentList({ comments, mangaId, imageIndex, onRefresh }: CommentListProps) {
+export default function CommentList({
+  comments,
+  mangaId,
+  imageIndex,
+  onRefresh,
+}: CommentListProps) {
   if (comments.length === 0) {
     return (
       <Box sx={{ py: 4, textAlign: "center" }}>

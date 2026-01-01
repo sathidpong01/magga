@@ -19,6 +19,7 @@ import EmojiEmotionsIcon from "@mui/icons-material/EmojiEmotions";
 import CloseIcon from "@mui/icons-material/Close";
 import EmojiPicker, { Theme, EmojiClickData } from "emoji-picker-react";
 import AuthModal from "@/app/components/features/auth/AuthModal";
+import { createComment } from "@/app/actions/comments";
 
 interface CommentBoxProps {
   mangaId: string;
@@ -106,6 +107,7 @@ export default function CommentBox({
     setIsSubmitting(true);
 
     try {
+      // Upload image if provided (still uses API for file upload)
       let imageUrl: string | undefined;
 
       if (imageFile) {
@@ -126,21 +128,24 @@ export default function CommentBox({
         imageUrl = url;
       }
 
-      const res = await fetch("/api/comments", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mangaId,
-          content: content.trim(),
-          imageIndex,
-          imageUrl,
-          parentId,
-        }),
-      });
+      // Use Server Action instead of fetch
+      const formData = new FormData();
+      formData.append("mangaId", mangaId);
+      formData.append("content", content.trim());
+      if (imageIndex !== null && imageIndex !== undefined) {
+        formData.append("imageIndex", String(imageIndex));
+      }
+      if (imageUrl) {
+        formData.append("imageUrl", imageUrl);
+      }
+      if (parentId) {
+        formData.append("parentId", parentId);
+      }
 
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to post comment");
+      const result = await createComment(formData);
+
+      if (result.error) {
+        throw new Error(result.error);
       }
 
       setContent("");

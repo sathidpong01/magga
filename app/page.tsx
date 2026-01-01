@@ -2,7 +2,8 @@ import prisma from "@/lib/prisma";
 import { Typography, Box, Container } from "@mui/material";
 import { Suspense } from "react";
 import SearchFilters from "./components/features/search/SearchFilters";
-import InfiniteMangaGrid from "./components/features/manga/InfiniteMangaGrid";
+import StreamingMangaGrid from "./components/features/manga/StreamingMangaGrid";
+import MangaGridSkeleton from "./components/features/manga/MangaGridSkeleton";
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 
@@ -14,8 +15,6 @@ type Props = {
     sort?: string;
   }>;
 };
-
-const ITEMS_PER_PAGE = 12;
 
 // ISR: Revalidate every 1 hour
 export const revalidate = 3600;
@@ -107,32 +106,6 @@ export default async function Home({ searchParams }: Props) {
     orderBy = { title: "asc" };
   }
 
-  // Fetch first page + total count
-  const [mangas, total] = await Promise.all([
-    prisma.manga.findMany({
-      where,
-      orderBy,
-      take: ITEMS_PER_PAGE,
-      select: {
-        id: true,
-        slug: true,
-        title: true,
-        coverImage: true,
-        viewCount: true,
-        averageRating: true,
-        category: {
-          select: { name: true },
-        },
-        tags: {
-          select: { id: true, name: true },
-        },
-      },
-    }),
-    prisma.manga.count({ where }),
-  ]);
-
-  const hasMore = mangas.length < total;
-
   return (
     <Container maxWidth="xl">
       <Box sx={{ my: 4 }}>
@@ -156,17 +129,19 @@ export default async function Home({ searchParams }: Props) {
           {search ? `Search Results for "${search}"` : "Discover Manga"}
         </Typography>
 
-        <InfiniteMangaGrid
-          initialMangas={mangas}
-          initialHasMore={hasMore}
-          ads={gridAds}
-          search={search}
-          categoryId={categoryId}
-          tags={tagNameArray.join(",")}
-          sort={sort}
-        />
+        {/* Streaming: Manga grid loads progressively while skeleton shows */}
+        <Suspense fallback={<MangaGridSkeleton count={12} />}>
+          <StreamingMangaGrid
+            where={where}
+            orderBy={orderBy}
+            ads={gridAds}
+            search={search}
+            categoryId={categoryId}
+            tags={tagNameArray.join(",")}
+            sort={sort}
+          />
+        </Suspense>
       </Box>
     </Container>
   );
 }
-

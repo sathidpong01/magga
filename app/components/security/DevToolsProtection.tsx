@@ -20,32 +20,48 @@ interface DetectionInfo {
 export default function DevToolsProtection() {
   const { data: session } = useSession();
   const [isBlocked, setIsBlocked] = useState(false);
-  const [detectionInfo, setDetectionInfo] = useState<DetectionInfo | null>(null);
+  const [detectionInfo, setDetectionInfo] = useState<DetectionInfo | null>(
+    null
+  );
   const devtoolsOpenRef = useRef(false);
+
+  // Skip protection in development mode
+  const isDevelopment = process.env.NODE_ENV === "development";
 
   // Skip protection for Admin users
   const isAdmin = session?.user?.role === "ADMIN";
 
-  const handleDetection = useCallback((method: string) => {
-    if (isAdmin) return;
-    
-    const info: DetectionInfo = {
-      method,
-      timestamp: new Date().toLocaleString("th-TH", { timeZone: "Asia/Bangkok" }),
-      url: typeof window !== "undefined" ? window.location.href : "",
-      screenSize: typeof window !== "undefined" ? `${screen.width}x${screen.height}` : "",
-      windowSize: typeof window !== "undefined" ? `${window.innerWidth}x${window.innerHeight}` : "",
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      language: typeof navigator !== "undefined" ? navigator.language : "",
-      userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "",
-    };
-    
-    setDetectionInfo(info);
-    setIsBlocked(true);
-    
-    // Note: Avoid logging sensitive info to console in production
-    // If needed, send to a secure backend API for logging
-  }, [isAdmin]);
+  const handleDetection = useCallback(
+    (method: string) => {
+      if (isAdmin || isDevelopment) return;
+
+      const info: DetectionInfo = {
+        method,
+        timestamp: new Date().toLocaleString("th-TH", {
+          timeZone: "Asia/Bangkok",
+        }),
+        url: typeof window !== "undefined" ? window.location.href : "",
+        screenSize:
+          typeof window !== "undefined"
+            ? `${screen.width}x${screen.height}`
+            : "",
+        windowSize:
+          typeof window !== "undefined"
+            ? `${window.innerWidth}x${window.innerHeight}`
+            : "",
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        language: typeof navigator !== "undefined" ? navigator.language : "",
+        userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "",
+      };
+
+      setDetectionInfo(info);
+      setIsBlocked(true);
+
+      // Note: Avoid logging sensitive info to console in production
+      // If needed, send to a secure backend API for logging
+    },
+    [isAdmin]
+  );
 
   // Handle back to home - force reload
   const handleBackToHome = () => {
@@ -53,7 +69,7 @@ export default function DevToolsProtection() {
   };
 
   useEffect(() => {
-    if (isAdmin) return;
+    if (isAdmin || isDevelopment) return;
 
     // 1. Block keyboard shortcuts
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -152,10 +168,11 @@ export default function DevToolsProtection() {
 
     const checkDevTools = () => {
       const widthThreshold = window.outerWidth - window.innerWidth > threshold;
-      const heightThreshold = window.outerHeight - window.innerHeight > threshold;
-      
+      const heightThreshold =
+        window.outerHeight - window.innerHeight > threshold;
+
       const isOpen = widthThreshold || heightThreshold;
-      
+
       if (isOpen && !devtoolsOpenRef.current) {
         devtoolsOpenRef.current = true;
         handleDetection("DevTools window size detected");
@@ -171,10 +188,10 @@ export default function DevToolsProtection() {
     document.addEventListener("contextmenu", handleContextMenu);
     document.addEventListener("dragstart", handleDragStart);
     document.addEventListener("copy", handleCopy);
-    
+
     // Check DevTools on resize
     window.addEventListener("resize", checkDevTools);
-    
+
     // Periodic checks
     const devToolsInterval = setInterval(checkDevTools, 500);
 
@@ -194,8 +211,8 @@ export default function DevToolsProtection() {
     };
   }, [isAdmin, handleDetection]);
 
-  // Don't render block screen for admin
-  if (isAdmin || !isBlocked) return null;
+  // Don't render block screen for admin or in development
+  if (isAdmin || isDevelopment || !isBlocked) return null;
 
   return (
     <Box
@@ -206,7 +223,8 @@ export default function DevToolsProtection() {
         right: 0,
         bottom: 0,
         zIndex: 99999,
-        background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%)",
+        background:
+          "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -255,10 +273,7 @@ export default function DevToolsProtection() {
         </Typography>
 
         {/* Subtitle */}
-        <Typography
-          variant="body1"
-          sx={{ color: "#94a3b8", mb: 4 }}
-        >
+        <Typography variant="body1" sx={{ color: "#94a3b8", mb: 4 }}>
           ระบบตรวจพบการใช้งาน Developer Tools
           <br />
           เพื่อความปลอดภัยของเว็บไซต์ การเข้าถึงถูกจำกัด
@@ -278,12 +293,25 @@ export default function DevToolsProtection() {
           >
             <Typography
               variant="subtitle2"
-              sx={{ color: "#a78bfa", mb: 2, display: "flex", alignItems: "center", gap: 1 }}
+              sx={{
+                color: "#a78bfa",
+                mb: 2,
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+              }}
             >
               📋 รายละเอียดการตรวจจับ
             </Typography>
-            
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, fontSize: "0.8rem" }}>
+
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 0.5,
+                fontSize: "0.8rem",
+              }}
+            >
               <InfoRow label="วิธีการตรวจจับ" value={detectionInfo.method} />
               <InfoRow label="เวลา" value={detectionInfo.timestamp} />
               <InfoRow label="URL" value={detectionInfo.url} truncate />
@@ -291,7 +319,11 @@ export default function DevToolsProtection() {
               <InfoRow label="ขนาดหน้าต่าง" value={detectionInfo.windowSize} />
               <InfoRow label="เขตเวลา" value={detectionInfo.timezone} />
               <InfoRow label="ภาษา" value={detectionInfo.language} />
-              <InfoRow label="User Agent" value={detectionInfo.userAgent} truncate />
+              <InfoRow
+                label="User Agent"
+                value={detectionInfo.userAgent}
+                truncate
+              />
             </Box>
           </Paper>
         )}
@@ -317,25 +349,37 @@ export default function DevToolsProtection() {
         </Button>
 
         {/* Footer */}
-        <Typography variant="caption" sx={{ display: "block", mt: 3, color: "#64748b" }}>
+        <Typography
+          variant="caption"
+          sx={{ display: "block", mt: 3, color: "#64748b" }}
+        >
           ปิด Developer Tools แล้วหน้าจอนี้จะหายไปอัตโนมัติ
-          <br />
-          © {new Date().getFullYear()} MAGGA - สงวนลิขสิทธิ์
+          <br />© {new Date().getFullYear()} MAGGA - สงวนลิขสิทธิ์
         </Typography>
       </Paper>
     </Box>
   );
 }
 
-function InfoRow({ label, value, truncate }: { label: string; value: string; truncate?: boolean }) {
+function InfoRow({
+  label,
+  value,
+  truncate,
+}: {
+  label: string;
+  value: string;
+  truncate?: boolean;
+}) {
   return (
     <Typography variant="body2" sx={{ color: "#94a3b8" }}>
       <strong style={{ color: "#e2e8f0" }}>{label}:</strong>{" "}
-      <span style={{ 
-        wordBreak: truncate ? "break-all" : "normal",
-        display: truncate ? "inline-block" : "inline",
-        maxWidth: truncate ? "100%" : "none"
-      }}>
+      <span
+        style={{
+          wordBreak: truncate ? "break-all" : "normal",
+          display: truncate ? "inline-block" : "inline",
+          maxWidth: truncate ? "100%" : "none",
+        }}
+      >
         {value}
       </span>
     </Typography>

@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server';
-import { revalidatePath } from 'next/cache';
-import prisma from '@/lib/prisma';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '../auth/[...nextauth]/route';
-import { z } from 'zod';
+import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
+import prisma from "@/lib/prisma";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../auth/[...nextauth]/route";
+import { z } from "zod";
 
 const mangaSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -14,14 +14,17 @@ const mangaSchema = z.object({
   pages: z.array(z.string().url()).optional(),
   isHidden: z.boolean().optional(),
   authorCredits: z.string().optional(),
-  authorName: z.string().optional(), // ชื่อผู้แต่ง for og:title
-  slug: z.string().min(1, "Slug is required").regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Invalid slug format"),
+  authorName: z.string().nullish(), // ชื่อผู้แต่ง for og:title (optional, can be null)
+  slug: z
+    .string()
+    .min(1, "Slug is required")
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Invalid slug format"),
 });
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user?.role?.toUpperCase() !== 'ADMIN') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!session || session.user?.role?.toUpperCase() !== "ADMIN") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
@@ -29,15 +32,32 @@ export async function POST(request: Request) {
     const result = mangaSchema.safeParse(body);
 
     if (!result.success) {
-      return NextResponse.json({ error: result.error.flatten() }, { status: 400 });
+      return NextResponse.json(
+        { error: result.error.flatten() },
+        { status: 400 }
+      );
     }
 
-    const { title, description, categoryId, selectedTags, coverImage, pages, isHidden, authorCredits, authorName, slug } = result.data;
+    const {
+      title,
+      description,
+      categoryId,
+      selectedTags,
+      coverImage,
+      pages,
+      isHidden,
+      authorCredits,
+      authorName,
+      slug,
+    } = result.data;
 
     // Check if slug exists
     const existingSlug = await prisma.manga.findUnique({ where: { slug } });
     if (existingSlug) {
-      return NextResponse.json({ error: 'Slug already exists' }, { status: 400 });
+      return NextResponse.json(
+        { error: "Slug already exists" },
+        { status: 400 }
+      );
     }
 
     const newManga = await prisma.manga.create({
@@ -49,18 +69,21 @@ export async function POST(request: Request) {
         tags: {
           connect: selectedTags.map((tagId: string) => ({ id: tagId })),
         },
-        coverImage: coverImage || 'https://via.placeholder.com/300x400.png?text=Cover',
+        coverImage:
+          coverImage || "https://via.placeholder.com/300x400.png?text=Cover",
         pages: JSON.stringify(pages || []),
         isHidden: isHidden || false,
         authorCredits,
         authorName,
       },
     });
-    revalidatePath('/admin');
-    revalidatePath('/');
+    revalidatePath("/admin");
+    revalidatePath("/");
     return NextResponse.json(newManga, { status: 201 });
   } catch (error) {
-
-    return NextResponse.json({ error: 'Failed to create manga' }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to create manga" },
+      { status: 500 }
+    );
   }
 }
