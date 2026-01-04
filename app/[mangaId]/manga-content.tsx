@@ -4,11 +4,11 @@ import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import { MangaReaderSkeleton } from "./loading-skeletons";
 
-// Dynamic imports with no SSR for heavy components
+// Dynamic import WITH SSR enabled for better FCP/LCP
+// The component will render on server first, then hydrate on client
 const MangaReader = dynamic(
   () => import("@/app/components/features/comments/MangaReader"),
   {
-    ssr: false,
     loading: () => <MangaReaderSkeleton />,
   }
 );

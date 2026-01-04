@@ -3,29 +3,24 @@
 import { SessionProvider } from "next-auth/react";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
-import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter';
+import { AppRouterCacheProvider } from "@mui/material-nextjs/v14-appRouter";
 import { ToastProvider } from "@/app/contexts/ToastContext";
 
-import { Kanit } from "next/font/google";
-
-const kanit = Kanit({
-  weight: ["300", "400", "500", "700"],
-  subsets: ["latin", "thai"],
-  display: "swap",
-});
+// NOTE: Font is already loaded in layout.tsx, use CSS font-family string here
+// to avoid loading the font twice which causes CLS issues
 
 const darkTheme = createTheme({
   palette: {
     mode: "dark",
     background: {
       default: "#0a0a0a", // Neutral Black
-      paper: "#171717",   // Neutral 900
+      paper: "#171717", // Neutral 900
     },
     primary: {
-      main: "#8b5cf6",    // Violet 500
+      main: "#8b5cf6", // Violet 500
     },
     secondary: {
-      main: "#10b981",    // Emerald 500
+      main: "#10b981", // Emerald 500
     },
     text: {
       primary: "#fafafa", // Neutral 50
@@ -33,7 +28,7 @@ const darkTheme = createTheme({
     },
   },
   typography: {
-    fontFamily: kanit.style.fontFamily,
+    fontFamily: "'Kanit', sans-serif",
     h1: { fontWeight: 700 },
     h2: { fontWeight: 700 },
     h3: { fontWeight: 600 },
@@ -61,7 +56,8 @@ const darkTheme = createTheme({
           backgroundImage: "none",
           backgroundColor: "#171717", // Neutral 900
           border: "1px solid rgba(255, 255, 255, 0.1)",
-          boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+          boxShadow:
+            "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
         },
       },
     },
@@ -93,15 +89,18 @@ const darkTheme = createTheme({
             minHeight: 24,
             border: "2px solid #0a0a0a",
           },
-          "&::-webkit-scrollbar-thumb:focus, & *::-webkit-scrollbar-thumb:focus": {
-            backgroundColor: "#525252", // Neutral 600
-          },
-          "&::-webkit-scrollbar-thumb:active, & *::-webkit-scrollbar-thumb:active": {
-            backgroundColor: "#525252",
-          },
-          "&::-webkit-scrollbar-thumb:hover, & *::-webkit-scrollbar-thumb:hover": {
-            backgroundColor: "#525252",
-          },
+          "&::-webkit-scrollbar-thumb:focus, & *::-webkit-scrollbar-thumb:focus":
+            {
+              backgroundColor: "#525252", // Neutral 600
+            },
+          "&::-webkit-scrollbar-thumb:active, & *::-webkit-scrollbar-thumb:active":
+            {
+              backgroundColor: "#525252",
+            },
+          "&::-webkit-scrollbar-thumb:hover, & *::-webkit-scrollbar-thumb:hover":
+            {
+              backgroundColor: "#525252",
+            },
         },
       },
     },
@@ -111,8 +110,6 @@ const darkTheme = createTheme({
 type Props = {
   children?: React.ReactNode;
 };
-
-
 
 export const Providers = ({ children }: Props) => {
   return (

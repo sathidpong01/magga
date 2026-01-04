@@ -21,6 +21,7 @@ import ServerCommentSection from "@/app/components/features/comments/ServerComme
 import { Suspense } from "react";
 import { AdContainer } from "@/app/components/features/ads";
 import ScrollToTop from "@/app/components/ui/ScrollToTop";
+import { unstable_cache } from "next/cache";
 
 type MangaPageProps = {
   params: Promise<{
@@ -30,6 +31,32 @@ type MangaPageProps = {
 
 // ISR: Revalidate every 1 hour (On-demand revalidation handles immediate updates)
 export const revalidate = 3600;
+
+// Cache manga data to prevent duplicate queries between generateMetadata and MangaPage
+const getMangaBySlug = unstable_cache(
+  async (slug: string) => {
+    return prisma.manga.findUnique({
+      where: { slug },
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        description: true,
+        coverImage: true,
+        pages: true,
+        authorCredits: true,
+        authorName: true,
+        category: true,
+        tags: true,
+        viewCount: true,
+        averageRating: true,
+        ratingCount: true,
+      },
+    });
+  },
+  ["manga-by-slug"],
+  { revalidate: 60, tags: ["manga"] }
+);
 
 // Pre-render top 50 manga at build time for better performance
 export async function generateStaticParams() {
@@ -47,16 +74,14 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: MangaPageProps) {
   const { mangaId } = await params;
-  const decodedSlug = decodeURIComponent(mangaId);
-  const manga = await prisma.manga.findUnique({
-    where: {
-      slug: decodedSlug,
-    },
-    include: {
-      tags: true,
-      category: true,
-    },
-  });
+  let decodedSlug: string;
+  try {
+    decodedSlug = decodeURIComponent(mangaId);
+  } catch {
+    return { title: "Not Found" };
+  }
+
+  const manga = await getMangaBySlug(decodedSlug);
 
   if (!manga) {
     return {
@@ -137,25 +162,8 @@ export default async function MangaPage({ params }: MangaPageProps) {
     notFound();
   }
 
-  const manga = await prisma.manga.findUnique({
-    where: {
-      slug: decodedSlug,
-    },
-    select: {
-      id: true,
-      slug: true,
-      title: true,
-      description: true,
-      coverImage: true,
-      pages: true,
-      authorCredits: true,
-      category: true,
-      tags: true,
-      viewCount: true,
-      averageRating: true,
-      ratingCount: true,
-    },
-  });
+  // Use cached query (shared with generateMetadata)
+  const manga = await getMangaBySlug(decodedSlug);
 
   if (!manga) {
     notFound();

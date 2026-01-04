@@ -45,7 +45,7 @@ export default function SearchFilters({ categories, tags }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [expanded, setExpanded] = useState(false);
-  
+
   // Generate stable IDs to prevent hydration mismatch
   const categorySelectId = useId();
   const sortSelectId = useId();
@@ -54,10 +54,12 @@ export default function SearchFilters({ categories, tags }: Props) {
 
   // State for filters
   const [search, setSearch] = useState(searchParams.get("search") || "");
-  const [categoryId, setCategoryId] = useState(searchParams.get("categoryId") || "all");
+  const [categoryId, setCategoryId] = useState(
+    searchParams.get("categoryId") || "all"
+  );
   const [sort, setSort] = useState(searchParams.get("sort") || "added");
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
-  
+
   // Fuse.js search state
   const [searchIndex, setSearchIndex] = useState<SearchItem[]>([]);
   const [searchResults, setSearchResults] = useState<SearchItem[]>([]);
@@ -99,7 +101,7 @@ export default function SearchFilters({ categories, tags }: Props) {
   useEffect(() => {
     if (inputValue.length >= 2) {
       const results = fuse.search(inputValue, { limit: 10 });
-      setSearchResults(results.map(r => r.item));
+      setSearchResults(results.map((r) => r.item));
     } else {
       setSearchResults([]);
     }
@@ -108,12 +110,13 @@ export default function SearchFilters({ categories, tags }: Props) {
   // Initialize selected tags from URL
   useEffect(() => {
     const tagNames = searchParams.getAll("tags");
-    
+
     // Deep compare to avoid infinite loop
-    const currentTagNames = selectedTags.map(t => t.name).sort();
+    const currentTagNames = selectedTags.map((t) => t.name).sort();
     const newTagNames = [...tagNames].sort();
-    const isSame = currentTagNames.length === newTagNames.length && 
-                   currentTagNames.every((name, index) => name === newTagNames[index]);
+    const isSame =
+      currentTagNames.length === newTagNames.length &&
+      currentTagNames.every((name, index) => name === newTagNames[index]);
 
     if (isSame) return;
 
@@ -128,12 +131,13 @@ export default function SearchFilters({ categories, tags }: Props) {
 
   const applyFilters = useCallback(() => {
     const params = new URLSearchParams();
-    
+
     // Only add params if they differ from defaults
     if (search.trim() !== "") params.set("search", search);
-    if (categoryId && categoryId !== "all") params.set("categoryId", categoryId);
+    if (categoryId && categoryId !== "all")
+      params.set("categoryId", categoryId);
     if (sort && sort !== "added") params.set("sort", sort);
-    
+
     selectedTags.forEach((tag) => params.append("tags", tag.name)); // Use name instead of ID
 
     const queryString = params.toString();
@@ -198,7 +202,10 @@ export default function SearchFilters({ categories, tags }: Props) {
         onClick={handleExpandClick}
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 600, fontSize: "0.85rem" }}>
+          <Typography
+            variant="subtitle1"
+            sx={{ fontWeight: 600, fontSize: "0.85rem" }}
+          >
             Filters and display
           </Typography>
           {!expanded && (
@@ -206,15 +213,22 @@ export default function SearchFilters({ categories, tags }: Props) {
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                 <SortIcon fontSize="small" />
                 <Typography variant="body2">
-                  Order: {sort === "updated" ? "Updated" : sort === "added" ? "Added" : "A-Z"}
+                  Order:{" "}
+                  {sort === "updated"
+                    ? "Updated"
+                    : sort === "added"
+                    ? "Added"
+                    : "A-Z"}
                 </Typography>
               </Box>
-
             </Box>
           )}
         </Box>
-        <IconButton 
-          onClick={(e) => { e.stopPropagation(); handleExpandClick(); }}
+        <IconButton
+          onClick={(e) => {
+            e.stopPropagation();
+            handleExpandClick();
+          }}
           aria-label={expanded ? "Collapse filters" : "Expand filters"}
         >
           {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
@@ -225,9 +239,98 @@ export default function SearchFilters({ categories, tags }: Props) {
       <Collapse in={expanded}>
         <Box sx={{ mt: 3 }}>
           <Grid container spacing={2}>
+            {/* Smart Search with Fuse.js - Top, centered, full width */}
+            <Grid item xs={12}>
+              <Typography
+                variant="subtitle2"
+                gutterBottom
+                color="text.secondary"
+              >
+                Smart Search
+              </Typography>
+              <Autocomplete
+                freeSolo
+                options={searchResults}
+                getOptionLabel={(option) =>
+                  typeof option === "string" ? option : option.title
+                }
+                inputValue={inputValue}
+                onInputChange={(_, newValue) => {
+                  setInputValue(newValue);
+                  setSearch(newValue); // Also update filter search
+                }}
+                onChange={(_, newValue) => {
+                  if (newValue && typeof newValue !== "string") {
+                    handleSelectResult(newValue);
+                  }
+                }}
+                renderOption={(props, option) => {
+                  const { key, ...otherProps } = props;
+                  return (
+                    <ListItem key={key} {...otherProps} sx={{ gap: 1.5 }}>
+                      <ListItemAvatar sx={{ minWidth: 40 }}>
+                        <Avatar
+                          src={option.coverImage}
+                          alt={option.title}
+                          variant="rounded"
+                          sx={{ width: 40, height: 56 }}
+                        />
+                      </ListItemAvatar>
+                      <ListItemText
+                        primary={
+                          option.authorName
+                            ? `[${option.authorName}] ${option.title}`
+                            : option.title
+                        }
+                        secondary={option.category || option.tags.slice(0, 30)}
+                        primaryTypographyProps={{
+                          variant: "body2",
+                          fontWeight: 500,
+                          noWrap: true,
+                        }}
+                        secondaryTypographyProps={{
+                          variant: "caption",
+                          noWrap: true,
+                        }}
+                      />
+                    </ListItem>
+                  );
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    id={searchInputId}
+                    placeholder="พิมพ์ชื่อเรื่อง หรือ ชื่อผู้แต่ง..."
+                    variant="standard"
+                    InputProps={{
+                      ...params.InputProps,
+                      disableUnderline: true,
+                      startAdornment: (
+                        <SearchIcon color="action" sx={{ mr: 1 }} />
+                      ),
+                    }}
+                    sx={{
+                      "& input": { py: 0.75, fontSize: "0.85rem" },
+                      borderBottom: "1px solid",
+                      borderColor: "divider",
+                    }}
+                  />
+                )}
+                noOptionsText={
+                  inputValue.length >= 2
+                    ? "ไม่พบผลลัพธ์"
+                    : "พิมพ์อย่างน้อย 2 ตัวอักษร"
+                }
+              />
+            </Grid>
+
             {/* Category */}
             <Grid item xs={12} sm={6}>
-              <Typography variant="subtitle2" gutterBottom color="text.secondary">
+              <Typography
+                variant="subtitle2"
+                gutterBottom
+                color="text.secondary"
+              >
                 Category
               </Typography>
               <TextField
@@ -240,7 +343,11 @@ export default function SearchFilters({ categories, tags }: Props) {
                 InputProps={{ disableUnderline: true }}
                 SelectProps={{ id: `${categorySelectId}-select` }}
                 sx={{
-                  "& .MuiSelect-select": { py: 0.75, fontSize: "0.85rem", fontWeight: 500 },
+                  "& .MuiSelect-select": {
+                    py: 0.75,
+                    fontSize: "0.85rem",
+                    fontWeight: 500,
+                  },
                   borderBottom: "1px solid",
                   borderColor: "divider",
                 }}
@@ -256,7 +363,11 @@ export default function SearchFilters({ categories, tags }: Props) {
 
             {/* Sorting */}
             <Grid item xs={12} sm={6}>
-              <Typography variant="subtitle2" gutterBottom color="text.secondary">
+              <Typography
+                variant="subtitle2"
+                gutterBottom
+                color="text.secondary"
+              >
                 Sorting
               </Typography>
               <TextField
@@ -269,7 +380,11 @@ export default function SearchFilters({ categories, tags }: Props) {
                 InputProps={{ disableUnderline: true }}
                 SelectProps={{ id: `${sortSelectId}-select` }}
                 sx={{
-                  "& .MuiSelect-select": { py: 0.75, fontSize: "0.85rem", fontWeight: 500 },
+                  "& .MuiSelect-select": {
+                    py: 0.75,
+                    fontSize: "0.85rem",
+                    fontWeight: 500,
+                  },
                   borderBottom: "1px solid",
                   borderColor: "divider",
                 }}
@@ -280,80 +395,13 @@ export default function SearchFilters({ categories, tags }: Props) {
               </TextField>
             </Grid>
 
-            {/* Smart Search with Fuse.js */}
-            <Grid item xs={12} sm={6}>
-              <Typography variant="subtitle2" gutterBottom color="text.secondary">
-                Smart Search
-              </Typography>
-              <Autocomplete
-                freeSolo
-                options={searchResults}
-                getOptionLabel={(option) => 
-                  typeof option === 'string' ? option : option.title
-                }
-                inputValue={inputValue}
-                onInputChange={(_, newValue) => {
-                  setInputValue(newValue);
-                  setSearch(newValue); // Also update filter search
-                }}
-                onChange={(_, newValue) => {
-                  if (newValue && typeof newValue !== 'string') {
-                    handleSelectResult(newValue);
-                  }
-                }}
-                renderOption={(props, option) => {
-                  const { key, ...otherProps } = props;
-                  return (
-                    <ListItem key={key} {...otherProps} sx={{ gap: 1.5 }}>
-                      <ListItemAvatar sx={{ minWidth: 40 }}>
-                        <Avatar 
-                          src={option.coverImage} 
-                          alt={option.title}
-                          variant="rounded"
-                          sx={{ width: 40, height: 56 }}
-                        />
-                      </ListItemAvatar>
-                      <ListItemText 
-                        primary={option.authorName ? `[${option.authorName}] ${option.title}` : option.title}
-                        secondary={option.category || option.tags.slice(0, 30)}
-                        primaryTypographyProps={{ 
-                          variant: 'body2', 
-                          fontWeight: 500,
-                          noWrap: true 
-                        }}
-                        secondaryTypographyProps={{ 
-                          variant: 'caption',
-                          noWrap: true 
-                        }}
-                      />
-                    </ListItem>
-                  );
-                }}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    id={searchInputId}
-                    placeholder="พิมพ์ชื่อเรื่อง หรือ ชื่อผู้แต่ง..."
-                    variant="standard"
-                    InputProps={{
-                      ...params.InputProps,
-                      disableUnderline: true,
-                      startAdornment: <SearchIcon color="action" sx={{ mr: 1 }} />,
-                    }}
-                    sx={{
-                      "& input": { py: 0.75, fontSize: "0.85rem" },
-                      borderBottom: "1px solid",
-                      borderColor: "divider",
-                    }}
-                  />
-                )}
-                noOptionsText={inputValue.length >= 2 ? "ไม่พบผลลัพธ์" : "พิมพ์อย่างน้อย 2 ตัวอักษร"}
-              />
-            </Grid>
-
-            {/* Tags */}
-            <Grid item xs={12} sm={6}>
-              <Typography variant="subtitle2" gutterBottom color="text.secondary">
+            {/* Tags - Full width to allow horizontal tag display */}
+            <Grid item xs={12}>
+              <Typography
+                variant="subtitle2"
+                gutterBottom
+                color="text.secondary"
+              >
                 Tags
               </Typography>
               <Autocomplete
@@ -367,7 +415,9 @@ export default function SearchFilters({ categories, tags }: Props) {
                     {...params}
                     id={tagsInputId}
                     variant="standard"
-                    placeholder={selectedTags.length === 0 ? "Search for tag" : ""}
+                    placeholder={
+                      selectedTags.length === 0 ? "Search for tag" : ""
+                    }
                     InputProps={{
                       ...params.InputProps,
                       disableUnderline: true,
@@ -377,18 +427,33 @@ export default function SearchFilters({ categories, tags }: Props) {
                 sx={{
                   borderBottom: "1px solid",
                   borderColor: "divider",
-                  "& .MuiAutocomplete-inputRoot": { py: 0.5 },
+                  "& .MuiAutocomplete-inputRoot": {
+                    py: 0.5,
+                    flexWrap: "wrap",
+                    gap: 0.5,
+                  },
+                  "& .MuiAutocomplete-tag": {
+                    margin: "2px",
+                  },
                 }}
               />
             </Grid>
 
             {/* Action Buttons */}
-            <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
+            <Grid
+              item
+              xs={12}
+              sx={{
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 2,
+                mt: 2,
+              }}
+            >
               <Button variant="outlined" onClick={handleClearFilters}>
                 Clear
               </Button>
             </Grid>
-
           </Grid>
         </Box>
       </Collapse>
