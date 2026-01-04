@@ -57,7 +57,8 @@ export default function InfiniteMangaGrid({
       const params = new URLSearchParams();
       params.set("page", String(page + 1));
       if (search) params.set("search", search);
-      if (categoryId && categoryId !== "all") params.set("categoryId", categoryId);
+      if (categoryId && categoryId !== "all")
+        params.set("categoryId", categoryId);
       if (tags) params.set("tags", tags);
       if (sort) params.set("sort", sort);
 
@@ -142,7 +143,8 @@ export default function InfiniteMangaGrid({
 
   return (
     <>
-      <Grid container spacing={3}>
+      {/* Add minHeight to prevent CLS when grid content loads */}
+      <Grid container spacing={3} sx={{ minHeight: 400 * 3 }}>
         {itemsWithAds.map((item, index) => (
           <Grid
             item
@@ -157,7 +159,7 @@ export default function InfiniteMangaGrid({
             lg={3}
           >
             {item.type === "manga" ? (
-              <MangaCard manga={item.data} priority={index < 6} />
+              <MangaCard manga={item.data} priority={index < 4} />
             ) : (
               <AdCard ad={item.data} />
             )}

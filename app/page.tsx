@@ -109,7 +109,8 @@ export default async function Home({ searchParams }: Props) {
   return (
     <Container maxWidth="xl">
       <Box sx={{ my: 4 }}>
-        <Suspense fallback={<Box sx={{ height: 100 }} />}>
+        {/* Reserve space for SearchFilters to prevent CLS */}
+        <Suspense fallback={<Box sx={{ minHeight: 56 }} />}>
           <SearchFilters categories={categories} tags={tags} />
         </Suspense>
 
