@@ -63,6 +63,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Preconnect to R2 CDN for faster image loading */}
+        <link
+          rel="preconnect"
+          href="https://pub-1f8d25d164134702943300ef6d01fc35.r2.dev"
+        />
+        <link
+          rel="dns-prefetch"
+          href="https://pub-1f8d25d164134702943300ef6d01fc35.r2.dev"
+        />
+      </head>
       <body className={kanit.className}>
         <ErrorBoundary>
           <Providers>

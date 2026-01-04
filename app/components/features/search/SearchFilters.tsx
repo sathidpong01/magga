@@ -64,10 +64,15 @@ export default function SearchFilters({ categories, tags }: Props) {
   const [searchIndex, setSearchIndex] = useState<SearchItem[]>([]);
   const [searchResults, setSearchResults] = useState<SearchItem[]>([]);
   const [inputValue, setInputValue] = useState("");
+  const [isIndexLoading, setIsIndexLoading] = useState(false);
 
-  // Fetch search index on mount
+  // Lazy load search index only when user starts typing (2+ characters)
+  // This defers the API call until needed, improving initial page load
   useEffect(() => {
     const fetchSearchIndex = async () => {
+      if (isIndexLoading || searchIndex.length > 0) return;
+
+      setIsIndexLoading(true);
       try {
         const res = await fetch("/api/search");
         if (res.ok) {
@@ -76,10 +81,16 @@ export default function SearchFilters({ categories, tags }: Props) {
         }
       } catch (error) {
         console.error("Failed to fetch search index:", error);
+      } finally {
+        setIsIndexLoading(false);
       }
     };
-    fetchSearchIndex();
-  }, []);
+
+    // Only fetch when user types 2+ characters and index is empty
+    if (inputValue.length >= 2 && searchIndex.length === 0) {
+      fetchSearchIndex();
+    }
+  }, [inputValue, searchIndex.length, isIndexLoading]);
 
   // Create Fuse.js instance
   const fuse = useMemo(() => {
