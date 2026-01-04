@@ -153,37 +153,33 @@ export default function Header() {
               display: { xs: "none", md: "flex" },
               alignItems: "center",
               gap: 2,
+              // Reserve minimum space for buttons to prevent CLS
+              minWidth: 180,
+              justifyContent: "flex-end",
             }}
           >
-            {/* Submit Manga Button - Hidden for Admin */}
-            {!isAdmin && (
-              <Button
-                component={Link}
-                href={session ? "/submit" : "/api/auth/signin"}
-                variant="contained"
-                startIcon={<CloudUploadIcon />}
-                onClick={() => {
-                  console.log("=== ฝากลงมังงะ Button Clicked ===");
-                  console.log("Session:", session);
-                  console.log(
-                    "Navigating to:",
-                    session ? "/submit" : "/api/auth/signin"
-                  );
-                }}
-                sx={{
-                  bgcolor: pathname === "/submit" ? "#f59e0b" : "#fbbf24",
-                  color: "black",
-                  fontWeight: 700,
-                  "&:hover": { bgcolor: "#f59e0b" },
-                  boxShadow:
-                    pathname === "/submit"
-                      ? "0 0 0 2px rgba(255,255,255,0.5)"
-                      : "none",
-                }}
-              >
-                ฝากลงมังงะ
-              </Button>
-            )}
+            {/* Submit Manga Button - Always render but hide for Admin */}
+            <Button
+              component={Link}
+              href={session ? "/submit" : "/api/auth/signin"}
+              variant="contained"
+              startIcon={<CloudUploadIcon />}
+              sx={{
+                bgcolor: pathname === "/submit" ? "#f59e0b" : "#fbbf24",
+                color: "black",
+                fontWeight: 700,
+                "&:hover": { bgcolor: "#f59e0b" },
+                boxShadow:
+                  pathname === "/submit"
+                    ? "0 0 0 2px rgba(255,255,255,0.5)"
+                    : "none",
+                // Hide for admin but keep space
+                visibility: isAdmin ? "hidden" : "visible",
+                position: isAdmin ? "absolute" : "relative",
+              }}
+            >
+              ฝากลงมังงะ
+            </Button>
 
             {/* Admin Dashboard (Only for Admin) */}
             {isAdmin && (
@@ -208,26 +204,35 @@ export default function Header() {
               </Button>
             )}
 
-            {/* Profile / Menu (Only if logged in) */}
-            {session && (
-              <IconButton
-                onClick={handleMenuOpen}
-                aria-label="Open user menu"
-                sx={{
-                  ml: 1,
-                  border: "1px solid rgba(255,255,255,0.1)",
-                  p: 0.5,
-                }}
-              >
-                <Avatar
-                  src={session.user?.image || undefined}
-                  alt={session.user?.name || "User"}
-                  sx={{ width: 32, height: 32, bgcolor: "#262626" }}
+            {/* Profile / Menu - Reserve space with placeholder */}
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {session && (
+                <IconButton
+                  onClick={handleMenuOpen}
+                  aria-label="Open user menu"
+                  sx={{
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    p: 0.5,
+                  }}
                 >
-                  {session.user?.name?.charAt(0) || <PersonIcon />}
-                </Avatar>
-              </IconButton>
-            )}
+                  <Avatar
+                    src={session.user?.image || undefined}
+                    alt={session.user?.name || "User"}
+                    sx={{ width: 32, height: 32, bgcolor: "#262626" }}
+                  >
+                    {session.user?.name?.charAt(0) || <PersonIcon />}
+                  </Avatar>
+                </IconButton>
+              )}
+            </Box>
           </Box>
 
           {/* Mobile Menu Icon */}
