@@ -1,16 +1,30 @@
 "use client";
 
-import { useRef, useEffect, useState, useCallback, forwardRef } from "react";
+import {
+  useRef,
+  useEffect,
+  useState,
+  useCallback,
+  forwardRef,
+  useMemo,
+} from "react";
 import Image from "next/image";
 import { Box, Typography, Divider, CircularProgress } from "@mui/material";
 import CommentBox from "./CommentBox";
 import CommentList from "./CommentList";
 import ReadingProgress from "@/app/components/ui/ReadingProgress";
 
+// Page data can be string (legacy) or object with dimensions (new)
+interface PageData {
+  url: string;
+  width?: number;
+  height?: number;
+}
+
 interface MangaReaderProps {
   mangaId: string;
   mangaTitle: string;
-  pages: string[];
+  pages: string[] | PageData[]; // Support both legacy and new format
 }
 
 interface CommentsCache {
@@ -30,6 +44,18 @@ export default function MangaReader({
   const [refreshKey, setRefreshKey] = useState(0);
   const [currentPage, setCurrentPage] = useState(0);
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  // Normalize pages to PageData format (support both legacy string[] and new object[])
+  const normalizedPages: PageData[] = useMemo(() => {
+    return pages.map((page) => {
+      if (typeof page === "string") {
+        // Legacy format: just URL string
+        return { url: page, width: 0, height: 0 };
+      }
+      // New format: object with url, width, height
+      return page;
+    });
+  }, [pages]);
 
   const CACHE_DURATION = 5 * 60 * 1000;
 
@@ -126,7 +152,7 @@ export default function MangaReader({
           mr: { xs: 0, md: "340px" },
         }}
       >
-        {pages.map((pageUrl, index) => (
+        {normalizedPages.map((pageData, index) => (
           <LazyPageWithComments
             key={index}
             ref={(el: HTMLDivElement | null) => {
@@ -135,9 +161,9 @@ export default function MangaReader({
             refreshKey={refreshKey}
             mangaId={mangaId}
             mangaTitle={mangaTitle}
-            pageUrl={pageUrl}
+            pageData={pageData}
             imageIndex={index}
-            totalPages={pages.length}
+            totalPages={normalizedPages.length}
             getCachedComments={() => commentsCacheRef.current[index]?.comments}
             isLoading={loadingPages.has(index)}
             onFetchComments={() => fetchComments(index)}
@@ -152,7 +178,7 @@ export default function MangaReader({
 interface LazyPageProps {
   mangaId: string;
   mangaTitle: string;
-  pageUrl: string;
+  pageData: PageData;
   imageIndex: number;
   totalPages: number;
   refreshKey: number;
@@ -167,7 +193,7 @@ const LazyPageWithComments = forwardRef<HTMLDivElement, LazyPageProps>(
     {
       mangaId,
       mangaTitle,
-      pageUrl,
+      pageData,
       imageIndex,
       totalPages,
       refreshKey,
@@ -304,10 +330,11 @@ const LazyPageWithComments = forwardRef<HTMLDivElement, LazyPageProps>(
             }}
           />
           <Image
-            src={pageUrl}
+            src={pageData.url}
             alt={`Page ${imageIndex + 1} of ${mangaTitle}`}
-            width={0}
-            height={0}
+            // Use dimensions when available (prevents CLS), fallback to 0 for legacy data
+            width={pageData.width || 0}
+            height={pageData.height || 0}
             sizes="100vw"
             style={{
               width: "100%",

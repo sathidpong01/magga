@@ -47,7 +47,10 @@ export async function POST(request: Request) {
     const form = await request.formData();
     const files = form.getAll("files") as File[];
     const mangaId = (form.get("mangaId") as string) || "uncategorized";
-    const maxWidth = parseInt((form.get("maxWidth") as string) || "1920");
+
+    // Upload type: 'cover' = 400px, 'page' = 1920px (default)
+    const uploadType = (form.get("type") as string) || "page";
+    const maxWidth = uploadType === "cover" ? 400 : 1920;
 
     if (!files || files.length === 0) {
       return NextResponse.json({ error: "No files uploaded" }, { status: 400 });
@@ -125,6 +128,8 @@ export async function POST(request: Request) {
         let imageData = new Uint8Array(arrayBuffer);
         let contentType = file.type;
         let fileName = file.name;
+        let finalWidth = 0;
+        let finalHeight = 0;
 
         // 4. Resize & Compress
         if (file.type.startsWith("image/")) {
@@ -132,12 +137,22 @@ export async function POST(request: Request) {
             const sharpInstance = sharp(buffer);
             const metadata = await sharpInstance.metadata();
 
+            // Store original dimensions (or resized if we resize)
+            finalWidth = metadata.width || 0;
+            finalHeight = metadata.height || 0;
+
             // Only resize if width is greater than maxWidth
             if (metadata.width && metadata.width > maxWidth) {
               sharpInstance.resize(maxWidth, null, {
                 fit: "inside",
                 withoutEnlargement: true,
               });
+              // Calculate new dimensions after resize
+              if (metadata.width && metadata.height) {
+                const ratio = maxWidth / metadata.width;
+                finalWidth = maxWidth;
+                finalHeight = Math.round(metadata.height * ratio);
+              }
             }
 
             const compressedBuffer = await sharpInstance
@@ -173,7 +188,12 @@ export async function POST(request: Request) {
           })
         );
 
-        return R2_PUBLIC_URL ? `${R2_PUBLIC_URL}/${key}` : `/${key}`;
+        // Return object with url and dimensions for CLS prevention
+        return {
+          url: R2_PUBLIC_URL ? `${R2_PUBLIC_URL}/${key}` : `/${key}`,
+          width: finalWidth,
+          height: finalHeight,
+        };
       })
     );
 

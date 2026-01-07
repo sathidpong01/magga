@@ -16,6 +16,8 @@ model Manga {
   title         String   @unique
   description   String?
   coverImage    String
+  coverWidth    Int? // Image width for CLS prevention
+  coverHeight   Int? // Image height for CLS prevention
   pages         String
   authorCredits String? // JSON string: { url: string, label: string, icon: string }[]
   authorName    String? // ชื่อผู้แต่ง สำหรับ og:title (optional)
