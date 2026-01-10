@@ -12,29 +12,27 @@ type EditMangaPageProps = {
 // and passes it to the client component form.
 export default async function EditMangaPage({ params }: EditMangaPageProps) {
   const { mangaId } = await params;
-  const mangaPromise = prisma.manga.findUnique({
-    where: { id: mangaId },
-    include: { tags: true },
-  });
-
-  const categoriesPromise = prisma.category.findMany({
-    orderBy: { name: 'asc' }
-  });
-
-  const tagsPromise = prisma.tag.findMany({
-    orderBy: { name: 'asc' }
-  });
-
-  const [manga, categories, tags] = await Promise.all([
-    mangaPromise,
-    categoriesPromise,
-    tagsPromise,
+  
+  const [manga, categories, tags, authors] = await Promise.all([
+    prisma.manga.findUnique({
+      where: { id: mangaId },
+      include: { tags: true, author: true },
+    }),
+    prisma.category.findMany({
+      orderBy: { name: 'asc' }
+    }),
+    prisma.tag.findMany({
+      orderBy: { name: 'asc' }
+    }),
+    prisma.author.findMany({
+      orderBy: { name: 'asc' }
+    }),
   ]);
 
   if (!manga) {
     notFound();
   }
 
-  return <MangaForm manga={manga} categories={categories} tags={tags} />;
+  return <MangaForm manga={manga} categories={categories} tags={tags} authors={authors} />;
 }
 

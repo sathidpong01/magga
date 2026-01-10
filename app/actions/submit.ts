@@ -19,6 +19,7 @@ const SubmitMangaSchema = z.object({
     .array(z.string().url("Invalid page URL"))
     .min(1, "At least one page is required"),
   categoryId: z.string().nullable().optional(),
+  authorId: z.string().nullable().optional(),
   tagIds: z.array(z.string()).optional(),
   authorCredits: z.string().optional(),
   status: z.enum(["DRAFT", "PENDING"]).optional().default("PENDING"),
@@ -70,6 +71,7 @@ export async function submitManga(data: z.input<typeof SubmitMangaSchema>) {
     coverImage,
     pages,
     categoryId,
+    authorId,
     tagIds,
     authorCredits,
     status,
@@ -129,6 +131,7 @@ export async function submitManga(data: z.input<typeof SubmitMangaSchema>) {
         coverImage,
         pages: JSON.stringify(pages),
         categoryId: categoryId || null,
+        authorId: authorId || null,
         authorCredits,
         status: status,
         approvedMangaId: approvedMangaId || null,
@@ -243,5 +246,46 @@ export async function createTag(name: string) {
   } catch (error) {
     console.error("Create tag error:", error);
     return { error: "Failed to create tag" };
+  }
+}
+
+/**
+ * Create a new author (Server Action)
+ * Returns existing author if name matches
+ */
+export async function createAuthor(name: string) {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user?.id) {
+    return { error: "Unauthorized" };
+  }
+
+  if (!name || name.trim().length === 0) {
+    return { error: "Author name is required" };
+  }
+
+  try {
+    // Check if exists (case-insensitive via lowercase comparison)
+    const allAuthors = await prisma.author.findMany();
+    const existing = allAuthors.find(
+      (a) => a.name.toLowerCase() === name.trim().toLowerCase()
+    );
+
+    if (existing) {
+      return { author: existing };
+    }
+
+    // Create new author
+    const author = await prisma.author.create({
+      data: { name: name.trim() },
+    });
+
+    // Revalidate pages that show authors
+    revalidatePath("/submit");
+
+    return { author };
+  } catch (error) {
+    console.error("Create author error:", error);
+    return { error: "Failed to create author" };
   }
 }

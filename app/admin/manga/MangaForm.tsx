@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import type { Category, Tag, Manga } from "@prisma/client";
+import type { Category, Tag, Manga, Author } from "@prisma/client";
 import {
   Box,
   TextField,
@@ -52,9 +52,10 @@ import {
 } from "@dnd-kit/sortable";
 
 type MangaFormProps = {
-  manga?: Manga & { tags: Tag[] };
+  manga?: Manga & { tags: Tag[]; author?: Author | null };
   categories: Category[];
   tags: Tag[];
+  authors: Author[];
 };
 
 type PageItem = {
@@ -64,7 +65,7 @@ type PageItem = {
   preview: string;
 };
 
-export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
+export default function MangaForm({ manga, categories, tags, authors }: MangaFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -97,9 +98,14 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
   const [availableTags, setAvailableTags] = useState<Tag[]>(tags);
   const [availableCategories, setAvailableCategories] =
     useState<Category[]>(categories);
+  const [availableAuthors, setAvailableAuthors] = useState<Author[]>(authors);
+  const [selectedAuthor, setSelectedAuthor] = useState<Author | null>(
+    manga?.author || null
+  );
 
   const filter = createFilterOptions<Tag>();
   const categoryFilter = createFilterOptions<Category>();
+  const authorFilter = createFilterOptions<Author>();
 
   // Unified Page State
   const [pageItems, setPageItems] = useState<PageItem[]>(() => {
@@ -289,6 +295,23 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
     }
   };
 
+  const handleCreateAuthor = async (inputValue: string) => {
+    try {
+      const res = await authFetch("/api/authors", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: inputValue }),
+      });
+      if (!res.ok) throw new Error("Failed to create author");
+      const newAuthor = await res.json();
+      setAvailableAuthors((prev) => [...prev, newAuthor]);
+      setSelectedAuthor(newAuthor);
+    } catch (error) {
+      console.error("Error creating author:", error);
+      setError("Failed to create author");
+    }
+  };
+
   const handleSubmitWithDraft = async (
     e: React.FormEvent,
     saveAsDraft: boolean
@@ -471,6 +494,7 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
         coverImage: finalCoverUrl,
         pages: finalPages,
         categoryId: categoryId || null,
+        authorId: selectedAuthor?.id || null,
         isHidden: saveAsDraft,
         selectedTags: selectedTagIds,
         authorCredits: JSON.stringify(credits),
@@ -789,15 +813,80 @@ export default function MangaForm({ manga, categories, tags }: MangaFormProps) {
                     }}
                   />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid item xs={12} md={6}>
+                  <Autocomplete
+                    value={selectedAuthor}
+                    onChange={(event, newValue) => {
+                      if (typeof newValue === "string") {
+                        handleCreateAuthor(newValue);
+                      } else if (newValue && (newValue as any).inputValue) {
+                        handleCreateAuthor((newValue as any).inputValue);
+                      } else {
+                        setSelectedAuthor(newValue);
+                        // Auto-fill authorName for og:title if empty
+                        if (newValue && !authorName) {
+                          setAuthorName(newValue.name);
+                        }
+                      }
+                    }}
+                    filterOptions={(options, params) => {
+                      const filtered = authorFilter(options, params);
+                      const { inputValue } = params;
+                      const isExisting = options.some(
+                        (option) => option.name.toLowerCase() === inputValue.toLowerCase()
+                      );
+                      if (inputValue !== "" && !isExisting) {
+                        filtered.push({
+                          inputValue,
+                          name: `Add "${inputValue}"`,
+                          id: "new-author",
+                        } as any);
+                      }
+                      return filtered;
+                    }}
+                    selectOnFocus
+                    clearOnBlur
+                    handleHomeEndKeys
+                    id="author-autocomplete"
+                    options={availableAuthors}
+                    getOptionLabel={(option) => {
+                      if (typeof option === "string") return option;
+                      if ((option as any).inputValue) return (option as any).inputValue;
+                      return option.name;
+                    }}
+                    renderOption={(props, option) => {
+                      const { key, ...optionProps } = props;
+                      return (
+                        <li key={key} {...optionProps}>
+                          {option.name}
+                        </li>
+                      );
+                    }}
+                    freeSolo
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Author"
+                        variant="filled"
+                        placeholder="Select or create author"
+                        InputProps={{
+                          ...params.InputProps,
+                          disableUnderline: true,
+                          sx: { borderRadius: 1 },
+                        }}
+                      />
+                    )}
+                  />
+                </Grid>
+                <Grid item xs={12} md={6}>
                   <TextField
-                    label="ชื่อผู้แต่ง (Author Name)"
+                    label="ชื่อผู้แต่ง (Author Name for OG)"
                     value={authorName}
                     onChange={(e) => setAuthorName(e.target.value)}
                     fullWidth
                     variant="filled"
                     placeholder="เช่น Aokana, Doujin Circle"
-                    helperText="สำหรับแสดงใน og:title เมื่อแชร์ลิงก์ (ไม่บังคับ)"
+                    helperText="สำหรับแสดงใน og:title เมื่อแชร์ลิงก์ (auto-filled from author)"
                     InputProps={{
                       disableUnderline: true,
                       sx: { borderRadius: 1 },

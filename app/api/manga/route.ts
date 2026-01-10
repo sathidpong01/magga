@@ -8,13 +8,14 @@ import { z } from "zod";
 const mangaSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().optional(),
-  categoryId: z.string().optional(),
+  categoryId: z.string().nullable().optional(),
+  authorId: z.string().nullable().optional(),
   selectedTags: z.array(z.string()),
   coverImage: z.string().url().optional(),
   pages: z.array(z.string().url()).optional(),
   isHidden: z.boolean().optional(),
   authorCredits: z.string().optional(),
-  authorName: z.string().nullish(), // ชื่อผู้แต่ง for og:title (optional, can be null)
+  authorName: z.string().nullish(),
   slug: z
     .string()
     .min(1, "Slug is required")
@@ -42,6 +43,7 @@ export async function POST(request: Request) {
       title,
       description,
       categoryId,
+      authorId,
       selectedTags,
       coverImage,
       pages,
@@ -66,6 +68,7 @@ export async function POST(request: Request) {
         slug,
         description,
         categoryId,
+        authorId,
         tags: {
           connect: selectedTags.map((tagId: string) => ({ id: tagId })),
         },

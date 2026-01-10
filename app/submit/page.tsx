@@ -32,7 +32,8 @@ import UploadProgress, {
   UploadFileStatus,
 } from "../components/ui/UploadProgress";
 import { useSession } from "next-auth/react";
-import { submitManga } from "@/app/actions/submit";
+import { submitManga, createAuthor } from "@/app/actions/submit";
+import { createFilterOptions } from "@mui/material";
 
 // DnD Kit Imports
 import {
@@ -53,6 +54,7 @@ import {
 
 type Category = { id: string; name: string };
 type Tag = { id: string; name: string };
+type Author = { id: string; name: string; profileUrl?: string | null; iconUrl?: string | null };
 
 type PageItem = {
   id: string;
@@ -70,7 +72,10 @@ export default function SubmitMangaPage() {
   // Data State
   const [categories, setCategories] = useState<Category[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
+  const [authors, setAuthors] = useState<Author[]>([]);
+  const [selectedAuthor, setSelectedAuthor] = useState<Author | null>(null);
   const [loadingData, setLoadingData] = useState(true);
+  const authorFilter = createFilterOptions<Author>();
 
   // Modal State
   const [notificationOpen, setNotificationOpen] = useState(false);
@@ -125,13 +130,15 @@ export default function SubmitMangaPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [catRes, tagRes] = await Promise.all([
+        const [catRes, tagRes, authorRes] = await Promise.all([
           fetch("/api/categories"),
           fetch("/api/tags"),
+          fetch("/api/authors"),
         ]);
 
         if (catRes.ok) setCategories(await catRes.json());
         if (tagRes.ok) setTags(await tagRes.json());
+        if (authorRes.ok) setAuthors(await authorRes.json());
       } catch (err) {
         console.error("Failed to fetch data", err);
       } finally {
@@ -234,6 +241,20 @@ export default function SubmitMangaPage() {
       };
       setCredits(newCredits);
     } catch (error) {}
+  };
+
+  const handleCreateAuthor = async (inputValue: string) => {
+    try {
+      const result = await createAuthor(inputValue);
+      if (result.error) throw new Error(result.error);
+      if (result.author) {
+        setAuthors((prev) => [...prev, result.author]);
+        setSelectedAuthor(result.author);
+      }
+    } catch (error) {
+      console.error("Error creating author:", error);
+      setError("Failed to create author");
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -401,6 +422,7 @@ export default function SubmitMangaPage() {
         coverImage: finalCoverUrl,
         pages: finalPages as string[],
         categoryId: categoryId || null,
+        authorId: selectedAuthor?.id || null,
         tagIds: selectedTagIds,
         authorCredits: JSON.stringify(credits),
       });
@@ -609,6 +631,67 @@ export default function SubmitMangaPage() {
                         variant="filled"
                         label="Tags"
                         placeholder="Select tags"
+                        InputProps={{
+                          ...params.InputProps,
+                          disableUnderline: true,
+                          sx: { borderRadius: 1 },
+                        }}
+                      />
+                    )}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <Autocomplete
+                    value={selectedAuthor}
+                    onChange={(event, newValue) => {
+                      if (typeof newValue === "string") {
+                        handleCreateAuthor(newValue);
+                      } else if (newValue && (newValue as any).inputValue) {
+                        handleCreateAuthor((newValue as any).inputValue);
+                      } else {
+                        setSelectedAuthor(newValue);
+                      }
+                    }}
+                    filterOptions={(options, params) => {
+                      const filtered = authorFilter(options, params);
+                      const { inputValue } = params;
+                      const isExisting = options.some(
+                        (option) => option.name.toLowerCase() === inputValue.toLowerCase()
+                      );
+                      if (inputValue !== "" && !isExisting) {
+                        filtered.push({
+                          inputValue,
+                          name: `Add "${inputValue}"`,
+                          id: "new-author",
+                        } as any);
+                      }
+                      return filtered;
+                    }}
+                    selectOnFocus
+                    clearOnBlur
+                    handleHomeEndKeys
+                    id="author-autocomplete"
+                    options={authors}
+                    getOptionLabel={(option) => {
+                      if (typeof option === "string") return option;
+                      if ((option as any).inputValue) return (option as any).inputValue;
+                      return option.name;
+                    }}
+                    renderOption={(props, option) => {
+                      const { key, ...optionProps } = props;
+                      return (
+                        <li key={key} {...optionProps}>
+                          {option.name}
+                        </li>
+                      );
+                    }}
+                    freeSolo
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Author"
+                        variant="filled"
+                        placeholder="Select or create author"
                         InputProps={{
                           ...params.InputProps,
                           disableUnderline: true,

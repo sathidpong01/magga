@@ -35,6 +35,8 @@ model Manga {
   // --- ความสัมพันธ์ ---
   categoryId String?
   category   Category?        @relation(fields: [categoryId], references: [id])
+  authorId   String?
+  author     Author?          @relation(fields: [authorId], references: [id])
   tags       Tag[]            @relation
   ratings    MangaRating[]
   submission MangaSubmission?
@@ -42,6 +44,7 @@ model Manga {
 
   // --- Indexes for query optimization ---
   @@index([categoryId])
+  @@index([authorId])
   @@index([viewCount(sort: Desc)])
   @@index([updatedAt(sort: Desc)])
   @@index([isHidden])
@@ -61,6 +64,18 @@ model Tag {
   name             String               @unique
   mangas           Manga[]              @relation
   mangaSubmissions MangaSubmissionTag[]
+}
+
+// สำหรับผู้แต่ง
+model Author {
+  id          String            @id @default(cuid())
+  name        String            @unique
+  profileUrl  String?           // ลิงก์ไปยังโปรไฟล์ผู้แต่ง
+  iconUrl     String?           // รูป favicon/avatar
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  mangas      Manga[]
+  submissions MangaSubmission[]
 }
 
 model User {
@@ -130,6 +145,8 @@ model MangaSubmission {
   pages         String // JSON string
   categoryId    String?
   category      Category?            @relation(fields: [categoryId], references: [id])
+  authorId      String?
+  author        Author?              @relation(fields: [authorId], references: [id])
   tags          MangaSubmissionTag[]
   authorCredits String? // JSON string
   extraMetadata String? // JSON string for flexible metadata
