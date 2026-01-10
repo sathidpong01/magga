@@ -4,10 +4,19 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { validatePassword } from "@/lib/password-validation";
 
 const passwordSchema = z.object({
   currentPassword: z.string().optional(),
-  newPassword: z.string().min(6, "Password must be at least 6 characters"),
+  newPassword: z.string().superRefine((pwd, ctx) => {
+    const result = validatePassword(pwd);
+    if (!result.isValid) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: result.errors[0] || "Password is too weak",
+      });
+    }
+  }),
 });
 
 export async function PUT(req: Request) {

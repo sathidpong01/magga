@@ -38,6 +38,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         coverImage: submission.coverImage,
         pages: submission.pages, // Already JSON string
         categoryId: submission.categoryId,
+        authorId: submission.authorId,
         authorCredits: submission.authorCredits,
         isHidden: !publishImmediately,
         tags: {

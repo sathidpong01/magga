@@ -11,8 +11,9 @@ const submissionSchema = z.object({
   coverImage: z.string().url("Invalid cover image URL"),
   pages: z.array(z.string().url("Invalid page URL")).min(1, "At least one page is required"),
   categoryId: z.string().nullable().optional(),
+  authorId: z.string().nullable().optional(),
   tagIds: z.array(z.string()).optional(),
-  authorCredits: z.string().optional(), // JSON string
+  authorCredits: z.string().optional(), // JSON string - for backwards compatibility
   extraMetadata: z.string().optional(), // JSON string
   status: z.enum(["DRAFT", "PENDING"]).optional().default("PENDING"),
   approvedMangaId: z.string().optional(),
@@ -36,7 +37,7 @@ export async function POST(req: Request) {
     }
 
     const { 
-      title, slug, description, coverImage, pages, categoryId, tagIds, 
+      title, slug, description, coverImage, pages, categoryId, authorId, tagIds, 
       authorCredits, extraMetadata, status, approvedMangaId 
     } = validation.data;
 
@@ -98,6 +99,7 @@ export async function POST(req: Request) {
         coverImage,
         pages: JSON.stringify(pages),
         categoryId: categoryId || null,
+        authorId: authorId || null,
         authorCredits,
         extraMetadata,
         status: status, // DRAFT or PENDING

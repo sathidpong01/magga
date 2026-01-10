@@ -4,6 +4,7 @@ import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { headers } from "next/headers";
 
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
@@ -139,8 +140,13 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        // Rate limiting by username
-        const identifier = credentials.username.toLowerCase();
+        // Rate limiting by username + IP
+        const headersList = await headers();
+        const clientIP = headersList.get('x-forwarded-for')?.split(',')[0]?.trim() 
+          || headersList.get('x-real-ip') 
+          || headersList.get('cf-connecting-ip') 
+          || 'unknown';
+        const identifier = `login:${credentials.username.toLowerCase()}:${clientIP}`;
         const rateCheck = await checkRateLimit(identifier);
 
         if (!rateCheck.allowed) {
@@ -187,7 +193,7 @@ export const authOptions: NextAuthOptions = {
         }
 
         // Clear attempts on successful login
-        clearAttempt(identifier);
+        await clearAttempt(identifier);
 
         return {
           id: user.id,

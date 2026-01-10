@@ -44,8 +44,15 @@ const getMangaBySlug = unstable_cache(
         description: true,
         coverImage: true,
         pages: true,
-        authorCredits: true,
+        authorCredits: true, // Keep for backwards compatibility
         authorName: true,
+        author: {
+          select: {
+            id: true,
+            name: true,
+            socialLinks: true,
+          },
+        },
         category: true,
         tags: true,
         viewCount: true,
@@ -111,7 +118,7 @@ export async function generateMetadata({ params }: MangaPageProps) {
   const isSensitive = hasSensitiveTag || hasSensitiveCategory;
 
   // Format title with author name: [Author] - Title
-  const authorName = (manga as any).authorName;
+  const authorName = manga.author?.name || (manga as any).authorName;
   const displayTitle = authorName
     ? `[${authorName}] - ${manga.title}`
     : manga.title;
@@ -308,8 +315,71 @@ export default async function MangaPage({ params }: MangaPageProps) {
                   {manga.title}
                 </Typography>
 
-                {/* Author Credits */}
+                {/* Author Credits - Use new Author.socialLinks or fallback to old authorCredits */}
                 {(() => {
+                  // Try new Author system first
+                  if (manga.author?.socialLinks) {
+                    try {
+                      const links = JSON.parse(manga.author.socialLinks) as {
+                        url: string;
+                        label: string;
+                        icon: string;
+                      }[];
+
+                      if (links.length > 0) {
+                        return (
+                          <Box
+                            sx={{
+                              display: "flex",
+                              flexWrap: "wrap",
+                              gap: 2,
+                              mb: 2,
+                            }}
+                          >
+                            {links.map((link, index) => (
+                              <Chip
+                                key={index}
+                                avatar={
+                                  link.icon ? (
+                                    <Avatar
+                                      src={link.icon}
+                                      alt=""
+                                      sx={{ width: 28, height: 28 }}
+                                    />
+                                  ) : undefined
+                                }
+                                label={link.label || manga.author?.name}
+                                component="a"
+                                href={link.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                clickable
+                                variant="outlined"
+                                sx={{
+                                  height: 36,
+                                  fontSize: "0.9rem",
+                                  borderColor: "rgba(255,255,255,0.2)",
+                                  color: "rgba(255,255,255,0.85)",
+                                  "& .MuiChip-label": {
+                                    px: 1.5,
+                                  },
+                                  "&:hover": {
+                                    borderColor: "rgba(255,255,255,0.5)",
+                                    color: "white",
+                                    bgcolor: "rgba(255,255,255,0.05)",
+                                  },
+                                }}
+                              />
+                            ))}
+                          </Box>
+                        );
+                      }
+                    } catch {
+                      // Parse error, continue to fallback
+                    }
+                  }
+
+                  // Fallback to old authorCredits for backwards compatibility
                   if (!manga.authorCredits) return null;
 
                   try {

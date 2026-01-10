@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { revalidatePath } from 'next/cache';
 
 type RouteParams = {
@@ -35,12 +36,12 @@ export async function GET(request: Request, { params }: RouteParams) {
 
 // PUT to update an author (admin only)
 export async function PUT(request: Request, { params }: RouteParams) {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
   if (!session || session.user?.role?.toUpperCase() !== 'ADMIN') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { name, profileUrl, iconUrl } = await request.json();
+  const { name, profileUrl, socialLinks } = await request.json();
   const { id } = await params;
 
   if (!name || typeof name !== 'string' || name.trim().length === 0) {
@@ -53,7 +54,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
       data: {
         name: name.trim(),
         profileUrl: profileUrl ?? undefined,
-        iconUrl: iconUrl ?? undefined,
+        socialLinks: socialLinks ?? undefined,
       },
     });
     revalidatePath('/admin/categories');
@@ -68,7 +69,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
 // DELETE an author (admin only)
 export async function DELETE(request: Request, { params }: RouteParams) {
-  const session = await getServerSession();
+  const session = await getServerSession(authOptions);
   if (!session || session.user?.role?.toUpperCase() !== 'ADMIN') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

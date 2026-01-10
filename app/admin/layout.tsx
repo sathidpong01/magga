@@ -8,6 +8,7 @@ import HomeIcon from '@mui/icons-material/Home';
 import InboxIcon from '@mui/icons-material/Inbox';
 import CommentIcon from '@mui/icons-material/Comment';
 import CampaignIcon from '@mui/icons-material/Campaign';
+import PersonIcon from '@mui/icons-material/Person';
 
 export default function AdminLayout({
   children,
@@ -20,6 +21,7 @@ export default function AdminLayout({
     { text: 'คอมเมนต์', href: '/admin/comments', icon: <CommentIcon /> },
     { text: 'โฆษณา', href: '/admin/advertisements', icon: <CampaignIcon /> },
     { text: 'หมวดหมู่', href: '/admin/metadata', icon: <CategoryIcon /> },
+    { text: 'ผู้แต่ง', href: '/admin/authors', icon: <PersonIcon /> },
   ];
 
   const bottomItems: SidebarItem[] = [

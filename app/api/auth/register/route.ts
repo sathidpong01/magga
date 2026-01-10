@@ -2,11 +2,20 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { validatePassword } from "@/lib/password-validation";
 
 const registerSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
   email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  password: z.string().superRefine((pwd, ctx) => {
+    const result = validatePassword(pwd);
+    if (!result.isValid) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: result.errors[0] || "Password is too weak",
+      });
+    }
+  }),
 });
 
 export async function POST(req: Request) {

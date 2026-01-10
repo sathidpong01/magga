@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { name, profileUrl, iconUrl } = await request.json();
+  const { name, profileUrl, socialLinks } = await request.json();
 
   if (!name || typeof name !== 'string' || name.trim().length === 0) {
     return NextResponse.json({ error: 'Name is required' }, { status: 400 });
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       data: {
         name: name.trim(),
         profileUrl: profileUrl || null,
-        iconUrl: iconUrl || null,
+        socialLinks: socialLinks || null,
       },
     });
     revalidatePath('/admin/categories');

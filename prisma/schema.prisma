@@ -70,8 +70,8 @@ model Tag {
 model Author {
   id          String            @id @default(cuid())
   name        String            @unique
-  profileUrl  String?           // ลิงก์ไปยังโปรไฟล์ผู้แต่ง
-  iconUrl     String?           // รูป favicon/avatar
+  profileUrl  String?           // ลิงก์หลักไปยังโปรไฟล์ผู้แต่ง
+  socialLinks String?           // JSON array: [{ url: string, label: string, icon: string }]
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
   mangas      Manga[]

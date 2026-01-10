@@ -41,6 +41,12 @@ CREATE UNIQUE INDEX IF NOT EXISTS "Author_name_key" ON "Author"("name");
 CREATE INDEX IF NOT EXISTS "Manga_authorId_idx" ON "Manga"("authorId");
 
 -- =====================================================
+-- STEP 5: Add socialLinks column to Author
+-- =====================================================
+
+ALTER TABLE "Author" ADD COLUMN "socialLinks" TEXT;
+
+-- =====================================================
 -- NOTE: Run commands ONE BY ONE - SQLite will error on 
 -- duplicate column names, just skip those commands.
 -- =====================================================
