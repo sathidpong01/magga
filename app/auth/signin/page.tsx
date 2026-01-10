@@ -18,6 +18,7 @@ import {
   CircularProgress,
   Divider,
 } from "@mui/material";
+import GoogleIcon from "@mui/icons-material/Google";
 import Link from "next/link";
 
 function SignInForm() {
@@ -26,7 +27,7 @@ function SignInForm() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState<"success" | "error">("success");
   const [modalMessage, setModalMessage] = useState("");
-  
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/admin";
@@ -136,17 +137,24 @@ function SignInForm() {
             type="submit"
             fullWidth
             variant="contained"
-            sx={{ mt: 3, mb: 2, bgcolor: "#fbbf24", color: "#000", "&:hover": { bgcolor: "#f59e0b" } }}
+            sx={{
+              mt: 3,
+              mb: 2,
+              bgcolor: "#fbbf24",
+              color: "#000",
+              "&:hover": { bgcolor: "#f59e0b" },
+            }}
           >
             Sign In
           </Button>
 
-          <Divider sx={{ my: 2, borderColor: '#404040' }}>OR</Divider>
+          <Divider sx={{ my: 2, borderColor: "#404040" }}>OR</Divider>
 
           <Button
             fullWidth
             type="button"
             variant="outlined"
+            startIcon={<GoogleIcon />}
             onClick={async () => {
               console.log("Initiating Google Login...");
               try {
@@ -156,18 +164,24 @@ function SignInForm() {
                 console.error("Google Login Error:", error);
               }
             }}
-            sx={{ 
-              mb: 2, 
-              color: '#fafafa', 
-              borderColor: '#404040',
-              '&:hover': { borderColor: '#fbbf24', bgcolor: 'rgba(251, 191, 36, 0.08)' } 
+            sx={{
+              mb: 2,
+              color: "#fafafa",
+              borderColor: "#404040",
+              "&:hover": {
+                borderColor: "#fbbf24",
+                bgcolor: "rgba(251, 191, 36, 0.08)",
+              },
             }}
           >
             Sign in with Google
           </Button>
 
-          <Box sx={{ textAlign: 'center', mt: 2 }}>
-            <Link href="/auth/register" style={{ color: '#fbbf24', textDecoration: 'none' }}>
+          <Box sx={{ textAlign: "center", mt: 2 }}>
+            <Link
+              href="/auth/register"
+              style={{ color: "#fbbf24", textDecoration: "none" }}
+            >
               Don't have an account? Sign Up
             </Link>
           </Box>
@@ -201,9 +215,13 @@ function SignInForm() {
 
 export default function SignIn() {
   return (
-    <Suspense 
+    <Suspense
       fallback={
-        <Container component="main" maxWidth="xs" sx={{ mt: 8, display: 'flex', justifyContent: 'center' }}>
+        <Container
+          component="main"
+          maxWidth="xs"
+          sx={{ mt: 8, display: "flex", justifyContent: "center" }}
+        >
           <CircularProgress sx={{ color: "#fbbf24" }} />
         </Container>
       }
@@ -212,4 +230,3 @@ export default function SignIn() {
     </Suspense>
   );
 }
-

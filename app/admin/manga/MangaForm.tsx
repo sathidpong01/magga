@@ -65,7 +65,12 @@ type PageItem = {
   preview: string;
 };
 
-export default function MangaForm({ manga, categories, tags, authors }: MangaFormProps) {
+export default function MangaForm({
+  manga,
+  categories,
+  tags,
+  authors,
+}: MangaFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -142,12 +147,12 @@ export default function MangaForm({ manga, categories, tags, authors }: MangaFor
     return null;
   });
 
-  // Author Credits State
+  // Author Credits State (uses socialLinks from Author model)
   type AuthorCredit = { url: string; label: string; icon: string };
   const [credits, setCredits] = useState<AuthorCredit[]>(() => {
-    if (!manga?.authorCredits) return [];
+    if (!manga?.author?.socialLinks) return [];
     try {
-      return JSON.parse(manga.authorCredits);
+      return JSON.parse(manga.author.socialLinks);
     } catch {
       return [];
     }
@@ -833,7 +838,8 @@ export default function MangaForm({ manga, categories, tags, authors }: MangaFor
                       const filtered = authorFilter(options, params);
                       const { inputValue } = params;
                       const isExisting = options.some(
-                        (option) => option.name.toLowerCase() === inputValue.toLowerCase()
+                        (option) =>
+                          option.name.toLowerCase() === inputValue.toLowerCase()
                       );
                       if (inputValue !== "" && !isExisting) {
                         filtered.push({
@@ -851,7 +857,8 @@ export default function MangaForm({ manga, categories, tags, authors }: MangaFor
                     options={availableAuthors}
                     getOptionLabel={(option) => {
                       if (typeof option === "string") return option;
-                      if ((option as any).inputValue) return (option as any).inputValue;
+                      if ((option as any).inputValue)
+                        return (option as any).inputValue;
                       return option.name;
                     }}
                     renderOption={(props, option) => {
