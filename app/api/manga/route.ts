@@ -14,7 +14,6 @@ const mangaSchema = z.object({
   coverImage: z.string().url().optional(),
   pages: z.array(z.string().url()).optional(),
   isHidden: z.boolean().optional(),
-  authorCredits: z.string().optional(),
   authorName: z.string().nullish(),
   slug: z
     .string()
@@ -48,7 +47,6 @@ export async function POST(request: Request) {
       coverImage,
       pages,
       isHidden,
-      authorCredits,
       authorName,
       slug,
     } = result.data;
@@ -76,7 +74,6 @@ export async function POST(request: Request) {
           coverImage || "https://via.placeholder.com/300x400.png?text=Cover",
         pages: JSON.stringify(pages || []),
         isHidden: isHidden || false,
-        authorCredits,
         authorName,
       },
     });

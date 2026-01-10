@@ -12,7 +12,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   
   const { id } = await params;
   const data = await request.json();
-  const { title, description, categoryId, authorId, selectedTags, coverImage, pages, isHidden, authorCredits, authorName, slug } = data;
+  const { title, description, categoryId, authorId, selectedTags, coverImage, pages, isHidden, authorName, slug } = data;
 
   if (!title) {
     return NextResponse.json({ error: 'Title is required' }, { status: 400 });
@@ -46,7 +46,6 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         coverImage: coverImage || undefined,
         pages: pages ? JSON.stringify(pages) : undefined,
         isHidden: isHidden,
-        authorCredits,
         authorName,
       },
     });

@@ -44,7 +44,6 @@ const getMangaBySlug = unstable_cache(
         description: true,
         coverImage: true,
         pages: true,
-        authorCredits: true, // Keep for backwards compatibility
         authorName: true,
         author: {
           select: {
@@ -375,71 +374,11 @@ export default async function MangaPage({ params }: MangaPageProps) {
                         );
                       }
                     } catch {
-                      // Parse error, continue to fallback
+                      // Parse error
+                      return null;
                     }
                   }
-
-                  // Fallback to old authorCredits for backwards compatibility
-                  if (!manga.authorCredits) return null;
-
-                  try {
-                    const credits = JSON.parse(manga.authorCredits) as {
-                      url: string;
-                      label: string;
-                      icon: string;
-                    }[];
-
-                    if (credits.length === 0) return null;
-
-                    return (
-                      <Box
-                        sx={{
-                          display: "flex",
-                          flexWrap: "wrap",
-                          gap: 2,
-                          mb: 2,
-                        }}
-                      >
-                        {credits.map((credit, index) => (
-                          <Chip
-                            key={index}
-                            avatar={
-                              credit.icon ? (
-                                <Avatar
-                                  src={credit.icon}
-                                  alt=""
-                                  sx={{ width: 28, height: 28 }}
-                                />
-                              ) : undefined
-                            }
-                            label={credit.label}
-                            component="a"
-                            href={credit.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            clickable
-                            variant="outlined"
-                            sx={{
-                              height: 36,
-                              fontSize: "0.9rem",
-                              borderColor: "rgba(255,255,255,0.2)",
-                              color: "rgba(255,255,255,0.85)",
-                              "& .MuiChip-label": {
-                                px: 1.5,
-                              },
-                              "&:hover": {
-                                borderColor: "rgba(255,255,255,0.5)",
-                                color: "white",
-                                bgcolor: "rgba(255,255,255,0.05)",
-                              },
-                            }}
-                          />
-                        ))}
-                      </Box>
-                    );
-                  } catch {
-                    return null;
-                  }
+                  return null;
                 })()}
 
                 {/* Stats Row */}

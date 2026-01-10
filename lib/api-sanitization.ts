@@ -87,7 +87,7 @@ export function sanitizeManga(manga: Record<string, unknown>) {
     "description",
     "coverImage",
     "pages",
-    "authorCredits",
+    "author",
     "authorName",
     "createdAt",
     "updatedAt",

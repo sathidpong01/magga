@@ -57,8 +57,6 @@ type PageItem = {
   preview: string;
 };
 
-type AuthorCredit = { url: string; label: string; icon: string };
-
 export default function EditSubmissionPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const submissionId = resolvedParams.id;
@@ -95,7 +93,6 @@ export default function EditSubmissionPage({ params }: { params: Promise<{ id: s
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const [pageItems, setPageItems] = useState<PageItem[]>([]);
   const [coverItem, setCoverItem] = useState<PageItem | null>(null);
-  const [credits, setCredits] = useState<AuthorCredit[]>([]);
   const [submissionStatus, setSubmissionStatus] = useState("");
 
   // DnD Sensors
@@ -171,13 +168,6 @@ export default function EditSubmissionPage({ params }: { params: Promise<{ id: s
           })));
         }
         
-        // Set credits
-        if (data.authorCredits) {
-          try {
-            setCredits(JSON.parse(data.authorCredits));
-          } catch {}
-        }
-        
       } catch (err) {
         console.error("Failed to fetch submission:", err);
         setError("Failed to load submission");
@@ -237,18 +227,6 @@ export default function EditSubmissionPage({ params }: { params: Promise<{ id: s
       URL.revokeObjectURL(coverItem.preview);
     }
     setCoverItem(null);
-  };
-
-  const handleAddCredit = () => setCredits([...credits, { url: "", label: "", icon: "" }]);
-  const handleRemoveCredit = (index: number) => {
-    const newCredits = [...credits];
-    newCredits.splice(index, 1);
-    setCredits(newCredits);
-  };
-  const handleCreditChange = (index: number, field: keyof AuthorCredit, value: string) => {
-    const newCredits = [...credits];
-    newCredits[index] = { ...newCredits[index], [field]: value };
-    setCredits(newCredits);
   };
 
   const handleSubmit = async (e: React.FormEvent, submitForReview: boolean = false) => {
@@ -371,7 +349,6 @@ export default function EditSubmissionPage({ params }: { params: Promise<{ id: s
         pages: finalPages,
         categoryId: categoryId || null,
         tagIds: selectedTagIds,
-        authorCredits: JSON.stringify(credits),
         status: submitForReview ? "PENDING" : "DRAFT",
       };
 
@@ -593,68 +570,6 @@ export default function EditSubmissionPage({ params }: { params: Promise<{ id: s
                   </Box>
                 )}
               </Box>
-            </Paper>
-          </Grid>
-
-          {/* Author Credits */}
-          <Grid item xs={12}>
-            <Paper elevation={0} sx={{ p: 3, borderRadius: 1, bgcolor: '#171717' }}>
-              <Typography variant="h6" component="h3" gutterBottom sx={{ mb: 3, fontSize: '1rem', color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 1 }}>
-                Author Credits
-              </Typography>
-              <Stack spacing={2}>
-                {credits.map((credit, index) => (
-                  <Box key={index} sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} sm={5}>
-                        <TextField
-                          label="URL"
-                          value={credit.url}
-                          onChange={(e) => handleCreditChange(index, "url", e.target.value)}
-                          fullWidth
-                          size="small"
-                          variant="filled"
-                          InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
-                        />
-                      </Grid>
-                      <Grid item xs={12} sm={3}>
-                        <TextField
-                          label="Label"
-                          value={credit.label}
-                          onChange={(e) => handleCreditChange(index, "label", e.target.value)}
-                          fullWidth
-                          size="small"
-                          variant="filled"
-                          InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
-                        />
-                      </Grid>
-                      <Grid item xs={10} sm={3}>
-                        <TextField
-                          label="Icon URL"
-                          value={credit.icon}
-                          onChange={(e) => handleCreditChange(index, "icon", e.target.value)}
-                          fullWidth
-                          size="small"
-                          variant="filled"
-                          InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
-                        />
-                      </Grid>
-                      <Grid item xs={2} sm={1} sx={{ display: 'flex', alignItems: 'center' }}>
-                        <IconButton aria-label="Remove credit" color="error" onClick={() => handleRemoveCredit(index)}>
-                          <DeleteIcon />
-                        </IconButton>
-                      </Grid>
-                    </Grid>
-                  </Box>
-                ))}
-                <Button 
-                  variant="outlined" 
-                  onClick={handleAddCredit} 
-                  sx={{ alignSelf: "flex-start", borderRadius: 1, borderColor: 'rgba(255,255,255,0.2)', color: 'text.secondary' }}
-                >
-                  Add Author Credit
-                </Button>
-              </Stack>
             </Paper>
           </Grid>
 

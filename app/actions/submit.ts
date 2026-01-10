@@ -21,7 +21,6 @@ const SubmitMangaSchema = z.object({
   categoryId: z.string().nullable().optional(),
   authorId: z.string().nullable().optional(),
   tagIds: z.array(z.string()).optional(),
-  authorCredits: z.string().optional(),
   status: z.enum(["DRAFT", "PENDING"]).optional().default("PENDING"),
   approvedMangaId: z.string().optional(),
 });
@@ -73,7 +72,6 @@ export async function submitManga(data: z.input<typeof SubmitMangaSchema>) {
     categoryId,
     authorId,
     tagIds,
-    authorCredits,
     status,
     approvedMangaId,
   } = parsed.data;
@@ -132,7 +130,6 @@ export async function submitManga(data: z.input<typeof SubmitMangaSchema>) {
         pages: JSON.stringify(pages),
         categoryId: categoryId || null,
         authorId: authorId || null,
-        authorCredits,
         status: status,
         approvedMangaId: approvedMangaId || null,
         tags: {

@@ -424,7 +424,6 @@ export default function SubmitMangaPage() {
         categoryId: categoryId || null,
         authorId: selectedAuthor?.id || null,
         tagIds: selectedTagIds,
-        authorCredits: JSON.stringify(credits),
       });
 
       if (result.error) {

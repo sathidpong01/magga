@@ -65,7 +65,6 @@ export default function SubmissionDetailPage({
     description: "",
     categoryId: "",
     tagIds: [] as string[],
-    authorCredits: "",
   });
   const [categories, setCategories] = useState<Category[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
@@ -106,7 +105,6 @@ export default function SubmissionDetailPage({
           description: subData.description || "",
           categoryId: subData.categoryId || "",
           tagIds: subData.tags.map((t: any) => t.tagId),
-          authorCredits: subData.authorCredits || "[]",
         });
 
         if (catRes.ok) setCategories(await catRes.json());

@@ -13,7 +13,6 @@ const submissionSchema = z.object({
   categoryId: z.string().nullable().optional(),
   authorId: z.string().nullable().optional(),
   tagIds: z.array(z.string()).optional(),
-  authorCredits: z.string().optional(), // JSON string - for backwards compatibility
   extraMetadata: z.string().optional(), // JSON string
   status: z.enum(["DRAFT", "PENDING"]).optional().default("PENDING"),
   approvedMangaId: z.string().optional(),
@@ -38,7 +37,7 @@ export async function POST(req: Request) {
 
     const { 
       title, slug, description, coverImage, pages, categoryId, authorId, tagIds, 
-      authorCredits, extraMetadata, status, approvedMangaId 
+      extraMetadata, status, approvedMangaId 
     } = validation.data;
 
     // Generate slug if not provided
@@ -100,7 +99,6 @@ export async function POST(req: Request) {
         pages: JSON.stringify(pages),
         categoryId: categoryId || null,
         authorId: authorId || null,
-        authorCredits,
         extraMetadata,
         status: status, // DRAFT or PENDING
         approvedMangaId: approvedMangaId || null,

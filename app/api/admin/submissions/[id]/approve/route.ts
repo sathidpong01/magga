@@ -39,7 +39,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         pages: submission.pages, // Already JSON string
         categoryId: submission.categoryId,
         authorId: submission.authorId,
-        authorCredits: submission.authorCredits,
         isHidden: !publishImmediately,
         tags: {
           connect: submission.tags.map((t: { tagId: string }) => ({ id: t.tagId }))

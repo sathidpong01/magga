@@ -61,7 +61,6 @@ const updateSubmissionSchema = z.object({
   pages: z.array(z.string().url("Invalid page URL")).min(1, "At least one page is required").optional(),
   categoryId: z.string().nullable().optional(),
   tagIds: z.array(z.string()).optional(),
-  authorCredits: z.string().optional(),
   extraMetadata: z.string().optional(),
   status: z.enum(["DRAFT", "PENDING"]).optional(),
 });
@@ -109,7 +108,7 @@ export async function PUT(
 
     const { 
       title, description, coverImage, pages, categoryId, tagIds, 
-      authorCredits, extraMetadata, status 
+      extraMetadata, status 
     } = validation.data;
 
     // Prepare update data
@@ -122,7 +121,6 @@ export async function PUT(
     if (coverImage) updateData.coverImage = coverImage;
     if (pages) updateData.pages = JSON.stringify(pages);
     if (categoryId !== undefined) updateData.categoryId = categoryId;
-    if (authorCredits !== undefined) updateData.authorCredits = authorCredits;
     if (extraMetadata !== undefined) updateData.extraMetadata = extraMetadata;
     
     // If status is changing to PENDING (submitting for review)

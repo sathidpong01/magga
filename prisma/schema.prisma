@@ -19,7 +19,6 @@ model Manga {
   coverWidth    Int? // Image width for CLS prevention
   coverHeight   Int? // Image height for CLS prevention
   pages         String
-  authorCredits String? // JSON string: { url: string, label: string, icon: string }[]
   authorName    String? // ชื่อผู้แต่ง สำหรับ og:title (optional)
   extraMetadata String? // JSON string for flexible metadata
   createdAt     DateTime @default(now())
@@ -148,7 +147,6 @@ model MangaSubmission {
   authorId      String?
   author        Author?              @relation(fields: [authorId], references: [id])
   tags          MangaSubmissionTag[]
-  authorCredits String? // JSON string
   extraMetadata String? // JSON string for flexible metadata
 
   status          String    @default("PENDING") // PENDING, UNDER_REVIEW, APPROVED, REJECTED

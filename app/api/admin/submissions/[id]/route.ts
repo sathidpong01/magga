@@ -42,14 +42,13 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
     const { id } = await params;
     const body = await req.json();
-    const { title, slug, description, categoryId, tagIds, authorCredits, status } = body;
+    const { title, slug, description, categoryId, tagIds, status } = body;
 
     const updateData: any = {
       title,
       slug,
       description,
       categoryId,
-      authorCredits,
     };
 
     if (status) updateData.status = status;
