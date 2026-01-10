@@ -15,6 +15,18 @@ import UpdateIcon from "@mui/icons-material/Update";
 // Static data for changelog
 const changelogData = [
   {
+    date: "2026-01-10",
+    version: "v1.7.0",
+    title: "ระบบจัดการผู้แต่งใหม่",
+    changes: [
+      "เพิ่มระบบจัดการผู้แต่ง (Author Management) แยกจาก Manga",
+      "รองรับหลาย Social Links ต่อผู้แต่ง (Twitter, Pixiv, Facebook, etc.)",
+      "ฟีเจอร์ Auto-fetch ดึงชื่อและไอคอนจากลิงก์อัตโนมัติ",
+      "หน้ามังงะแสดง Social Links ของผู้แต่งแบบใหม่สวยงามขึ้น",
+      "ปรับปรุงโค้ดภายในให้มีประสิทธิภาพยิ่งขึ้น",
+    ],
+  },
+  {
     date: "2026-01-04",
     version: "v1.6.1",
     title: "ปรับปรุงความเร็วในการโหลดหน้าเว็บ",

@@ -71,7 +71,7 @@ _พัฒนาด้วย Next.js 16 (App Router) และระบบจั
   - อัปโหลดรูปภาพหน้าปก (Cover) และเนื้อหา (Pages) ได้โดยตรง (บันทึกลง Cloudflare R2)
   - **New!** **Friendly URLs (Slug):** รองรับ URL แบบชื่อเรื่อง (เช่น `/manga/one-piece`) เพื่อผลลัพธ์ SEO ที่ดีขึ้น
   - **New!** **Author Name Field:** เพิ่มช่องชื่อผู้แต่งสำหรับ og:title format `[ผู้แต่ง] - ชื่อเรื่อง`
-  - **New!** **Author Credits:** ระบบให้เครดิตผู้แต่ง/ผู้แปล พร้อมฟีเจอร์ **Auto-fetch Metadata** ดึงชื่อและไอคอนจากลิงก์ (Facebook/Twitter) อัตโนมัติ
+  - **New!** **Author Management:** ระบบจัดการผู้แต่งแบบ Dedicated พร้อม **Multiple Social Links** รองรับหลายลิงก์ต่อผู้แต่ง พร้อมฟีเจอร์ **Auto-fetch Metadata** ดึงชื่อและไอคอนจากลิงก์อัตโนมัติ
   - **New!** **Resilient Uploads:** ระบบอัปโหลดไฟล์แบบ Non-blocking พร้อม Floating Status และปุ่ม Retry สำหรับไฟล์ที่ล้มเหลว
   - **Auto Compression:** ระบบย่อขนาดรูปภาพ (Max 1920px) และแปลงเป็น WebP อัตโนมัติ ช่วยประหยัดพื้นที่จัดเก็บได้ถึง 80%
 - **Classification Management:** จัดการเพิ่ม/ลบ/แก้ไข หมวดหมู่ และ แท็ก ได้อย่างอิสระ
