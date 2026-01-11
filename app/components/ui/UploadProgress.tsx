@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Box, Paper, Typography, LinearProgress, IconButton, Collapse, Badge, CircularProgress } from '@mui/material';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import CloseIcon from '@mui/icons-material/Close';
@@ -61,7 +61,7 @@ export default function UploadProgress({ files, onCancel, onRetry }: UploadProgr
         sx={{
           bgcolor: '#171717',
           border: '1px solid rgba(255,255,255,0.1)',
-          borderRadius: 2,
+          borderRadius: 1,
           overflow: 'hidden',
           width: '100%',
           transition: 'all 0.3s ease'
@@ -150,7 +150,7 @@ export default function UploadProgress({ files, onCancel, onRetry }: UploadProgr
                       value={file.progress} 
                       sx={{ 
                         height: 4,
-                        borderRadius: 2,
+                        borderRadius: 1,
                         bgcolor: 'rgba(255,255,255,0.1)',
                         '& .MuiLinearProgress-bar': {
                           bgcolor: file.status === 'error' ? '#ef4444' : 

@@ -15,6 +15,7 @@ import {
   Avatar,
   Divider,
   ListItemIcon,
+  Chip,
 } from "@mui/material";
 import Link from "next/link";
 import Image from "next/image";
@@ -50,7 +51,7 @@ export default function Header() {
     setAnchorEl(null);
   };
 
-  const isAdmin = session?.user?.role?.toUpperCase() === "ADMIN";
+  const isAdmin = session?.user?.role === "ADMIN";
 
   return (
     <AppBar
@@ -68,6 +69,24 @@ export default function Header() {
         borderBottom: "none",
       }}
     >
+      {/* Ban Warning Banner - Show on ALL pages */}
+      {(session?.user as any)?.isBanned && (
+        <Box
+          sx={{
+            bgcolor: "#ef4444",
+            color: "white",
+            textAlign: "center",
+            py: 0.5,
+            fontSize: "0.875rem",
+            fontWeight: 600,
+            width: "100%",
+          }}
+        >
+          บัญชีของคุณถูกระงับ:
+          คุณสามารถดูเนื้อหาได้แต่ไม่สามารถแสดงความคิดเห็นหรือโพสต์ได้
+        </Box>
+      )}
+
       <Container maxWidth="xl">
         <Toolbar disableGutters sx={{ height: 70 }}>
           {/* Logo Section */}
@@ -161,16 +180,17 @@ export default function Header() {
             {/* Submit Manga Button - Always render but hide for Admin */}
             <Button
               component={Link}
-              href={session ? "/submit" : "/api/auth/signin"}
+              href={session ? "/dashboard/submit" : "/api/auth/signin"}
               variant="contained"
               startIcon={<CloudUploadIcon />}
               sx={{
-                bgcolor: pathname === "/submit" ? "#f59e0b" : "#fbbf24",
+                bgcolor:
+                  pathname === "/dashboard/submit" ? "#f59e0b" : "#fbbf24",
                 color: "black",
                 fontWeight: 700,
                 "&:hover": { bgcolor: "#f59e0b" },
                 boxShadow:
-                  pathname === "/submit"
+                  pathname === "/dashboard/submit"
                     ? "0 0 0 2px rgba(255,255,255,0.5)"
                     : "none",
                 // Hide for admin but keep space
@@ -185,17 +205,17 @@ export default function Header() {
             {isAdmin && (
               <Button
                 component={Link}
-                href="/admin"
+                href="/dashboard"
                 variant="contained"
                 startIcon={<DashboardIcon />}
                 sx={{
-                  bgcolor: pathname?.startsWith("/admin")
+                  bgcolor: pathname?.startsWith("/dashboard")
                     ? "#dc2626"
                     : "#ef4444",
                   color: "white",
                   fontWeight: 600,
                   "&:hover": { bgcolor: "#dc2626" },
-                  boxShadow: pathname?.startsWith("/admin")
+                  boxShadow: pathname?.startsWith("/dashboard")
                     ? "0 0 0 2px rgba(255,255,255,0.5)"
                     : "none",
                 }}
@@ -270,12 +290,29 @@ export default function Header() {
                   <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
                     {session.user?.name}
                   </Typography>
-                  <Typography
-                    variant="caption"
-                    sx={{ color: "text.secondary" }}
-                  >
-                    {isAdmin ? "Administrator" : "Member"}
-                  </Typography>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{ color: "text.secondary" }}
+                    >
+                      {isAdmin ? "Administrator" : "Member"}
+                    </Typography>
+                    {(session?.user as any)?.isBanned && (
+                      <Chip
+                        label="ระงับการใช้งาน"
+                        size="small"
+                        color="error"
+                        sx={{
+                          height: 20,
+                          fontSize: "0.65rem",
+                          fontWeight: 600,
+                          bgcolor: "rgba(239, 68, 68, 0.1)", // translucent red
+                          color: "#ef4444",
+                          border: "1px solid rgba(239, 68, 68, 0.2)",
+                        }}
+                      />
+                    )}
+                  </Box>
                 </Box>
                 <Divider sx={{ borderColor: "rgba(255,255,255,0.1)" }} />
 
@@ -283,7 +320,7 @@ export default function Header() {
                   <MenuItem
                     onClick={handleMenuClose}
                     component={Link}
-                    href="/submit"
+                    href="/dashboard/submit"
                   >
                     <ListItemIcon>
                       <CloudUploadIcon sx={{ color: "#fbbf24" }} />
@@ -296,12 +333,12 @@ export default function Header() {
                   <MenuItem
                     onClick={handleMenuClose}
                     component={Link}
-                    href="/dashboard"
+                    href="/dashboard/submissions"
                   >
                     <ListItemIcon>
-                      <ListAltIcon sx={{ color: "#60a5fa" }} />
+                      <ListAltIcon sx={{ color: "#8b5cf6" }} />
                     </ListItemIcon>
-                    รายการที่ฝากลง
+                    รายการของฉัน
                   </MenuItem>
                 )}
 
@@ -309,7 +346,7 @@ export default function Header() {
                   <MenuItem
                     onClick={handleMenuClose}
                     component={Link}
-                    href="/admin"
+                    href="/dashboard"
                   >
                     <ListItemIcon>
                       <DashboardIcon sx={{ color: "#ef4444" }} />

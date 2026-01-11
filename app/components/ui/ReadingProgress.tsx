@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { Box, Typography, LinearProgress } from "@mui/material";
@@ -66,11 +66,11 @@ export default function ReadingProgress({
             value={progress}
             sx={{
               height: 4,
-              borderRadius: 2,
+              borderRadius: 1,
               bgcolor: "rgba(255,255,255,0.1)",
               "& .MuiLinearProgress-bar": {
                 bgcolor: "#fbbf24",
-                borderRadius: 2,
+                borderRadius: 1,
               },
             }}
           />

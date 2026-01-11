@@ -70,7 +70,8 @@ export const authOptions: NextAuthOptions = {
       // On initial sign in
       if (user) {
         token.id = user.id;
-        token.role = user.role || "user";
+        token.role = (user.role || "user").toUpperCase();
+        token.isBanned = user.isBanned || false;
       }
 
       // Handle session update
@@ -81,6 +82,25 @@ export const authOptions: NextAuthOptions = {
       }
 
       return token;
+    },
+    async signIn({ user }) {
+      // Redirect based on role after sign in
+      return true; // NextAuth will handle redirect via callbacks
+    },
+    async redirect({ url, baseUrl }) {
+      // If url is relative, make it absolute
+      if (url.startsWith("/")) url = `${baseUrl}${url}`;
+
+      // If redirecting to baseUrl or signin, go to dashboard
+      if (url === baseUrl || url.includes("/auth/signin")) {
+        return `${baseUrl}/dashboard`;
+      }
+
+      // If URL is on same site, allow it
+      if (url.startsWith(baseUrl)) return url;
+
+      // Otherwise, go to dashboard
+      return `${baseUrl}/dashboard`;
     },
     async session({ session, token }) {
       if (session.user && token.id) {
@@ -93,6 +113,7 @@ export const authOptions: NextAuthOptions = {
             name: true,
             username: true,
             image: true,
+            isBanned: true,
           },
         });
 
@@ -105,7 +126,8 @@ export const authOptions: NextAuthOptions = {
         }
 
         session.user.id = userExists.id;
-        session.user.role = userExists.role || "user";
+        session.user.role = (userExists.role || "user").toUpperCase();
+        session.user.isBanned = userExists.isBanned || false;
         // เพิ่มข้อมูล profile
         session.user.name = userExists.name || userExists.username || null;
         session.user.image = userExists.image || null;
@@ -142,10 +164,11 @@ export const authOptions: NextAuthOptions = {
 
         // Rate limiting by username + IP
         const headersList = await headers();
-        const clientIP = headersList.get('x-forwarded-for')?.split(',')[0]?.trim() 
-          || headersList.get('x-real-ip') 
-          || headersList.get('cf-connecting-ip') 
-          || 'unknown';
+        const clientIP =
+          headersList.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+          headersList.get("x-real-ip") ||
+          headersList.get("cf-connecting-ip") ||
+          "unknown";
         const identifier = `login:${credentials.username.toLowerCase()}:${clientIP}`;
         const rateCheck = await checkRateLimit(identifier);
 
@@ -200,6 +223,7 @@ export const authOptions: NextAuthOptions = {
           name: user.username,
           email: user.email,
           role: user.role,
+          isBanned: user.isBanned,
         };
       },
     }),

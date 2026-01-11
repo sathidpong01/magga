@@ -1,15 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireAdmin } from "@/lib/auth-helpers";
 
 // GET - List all users with counts
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.role?.toLowerCase() !== "admin") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const authError = requireAdmin(session);
+    if (authError) return authError;
 
     const users = await prisma.user.findMany({
       select: {
@@ -44,7 +44,7 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user?.role?.toLowerCase() !== "admin") {
+    if (!session || session.user?.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -63,7 +63,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Prevent self-demotion
-    if (userId === session.user.id && role !== "admin") {
+    if (userId === session.user.id && role !== "ADMIN") {
       return NextResponse.json(
         { error: "Cannot demote yourself" },
         { status: 400 }

@@ -2,24 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireAdmin } from "@/lib/auth-helpers";
 
-export async function POST(req: NextRequest) {
+export async function PATCH(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
-    // Check if user is admin
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
+    const authError = requireAdmin(session);
+    if (authError) return authError;
 
     const body = await req.json();
-    const { id, categoryId, tagIds } = body as { 
-      id: string; 
-      categoryId: string | null; 
-      tagIds: string[] 
+    const { id, categoryName, tagNames, authorName } = body as {
+      id: string;
+      categoryName?: string;
+      tagNames?: string[];
+      authorName?: string;
     };
 
     if (!id) {
@@ -29,18 +25,46 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Update manga with new category and tags
+    // Find category by name
+    let categoryId = null;
+    if (categoryName) {
+      const category = await prisma.category.findFirst({
+        where: { name: categoryName },
+      });
+      categoryId = category?.id || null;
+    }
+
+    // Find tags by names
+    const tags =
+      tagNames && tagNames.length > 0
+        ? await prisma.tag.findMany({
+            where: { name: { in: tagNames } },
+          })
+        : [];
+
+    // Find author by name
+    let authorId = null;
+    if (authorName) {
+      const author = await prisma.author.findFirst({
+        where: { name: authorName },
+      });
+      authorId = author?.id || null;
+    }
+
+    // Update manga
     const updatedManga = await prisma.manga.update({
       where: { id },
       data: {
-        categoryId: categoryId || null,
+        categoryId: categoryId,
+        authorId: authorId,
         tags: {
-          set: tagIds.map((tagId) => ({ id: tagId })),
+          set: tags.map((tag) => ({ id: tag.id })),
         },
       },
       include: {
         category: true,
         tags: true,
+        author: true,
       },
     });
 

@@ -1,4 +1,4 @@
-import { Container, Box, Grid, Skeleton } from "@mui/material";
+﻿import { Container, Box, Grid, Skeleton } from "@mui/material";
 import MangaCardSkeleton from "./components/features/manga/MangaCardSkeleton";
 
 export default function HomeLoading() {
@@ -11,7 +11,7 @@ export default function HomeLoading() {
             variant="rectangular" 
             width="100%" 
             height={80}
-            sx={{ bgcolor: "rgba(255, 255, 255, 0.05)", borderRadius: 2 }}
+            sx={{ bgcolor: "rgba(255, 255, 255, 0.05)", borderRadius: 1 }}
           />
         </Box>
 

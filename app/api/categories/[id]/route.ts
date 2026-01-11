@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
-import { getServerSession } from 'next-auth/next';
-import { revalidatePath } from 'next/cache';
+import { NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { revalidatePath } from "next/cache";
 
 type RouteParams = {
   params: Promise<{
@@ -11,16 +12,16 @@ type RouteParams = {
 
 // PUT to update a category
 export async function PUT(request: Request, { params }: RouteParams) {
-  const session = await getServerSession();
-  if (!session || session.user?.role?.toUpperCase() !== 'ADMIN') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const session = await getServerSession(authOptions);
+  if (!session || session.user?.role?.toUpperCase() !== "ADMIN") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { name } = await request.json();
   const { id } = await params;
 
   if (!name) {
-    return NextResponse.json({ error: 'Name is required' }, { status: 400 });
+    return NextResponse.json({ error: "Name is required" }, { status: 400 });
   }
 
   try {
@@ -28,18 +29,21 @@ export async function PUT(request: Request, { params }: RouteParams) {
       where: { id },
       data: { name },
     });
-    revalidatePath('/admin/metadata');
+    revalidatePath("/admin/metadata");
     return NextResponse.json(updatedCategory);
   } catch {
-    return NextResponse.json({ error: 'Failed to update category' }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to update category" },
+      { status: 500 }
+    );
   }
 }
 
 // DELETE a category
 export async function DELETE(request: Request, { params }: RouteParams) {
-  const session = await getServerSession();
-  if (!session || session.user?.role?.toUpperCase() !== 'ADMIN') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const session = await getServerSession(authOptions);
+  if (!session || session.user?.role?.toUpperCase() !== "ADMIN") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { id } = await params;
@@ -48,10 +52,13 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     await prisma.category.delete({
       where: { id },
     });
-    revalidatePath('/admin/metadata');
+    revalidatePath("/admin/metadata");
     return new NextResponse(null, { status: 204 }); // No Content
   } catch {
     // Handle cases where the category is still in use
-    return NextResponse.json({ error: 'Failed to delete category. It might be in use.' }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to delete category. It might be in use." },
+      { status: 500 }
+    );
   }
 }

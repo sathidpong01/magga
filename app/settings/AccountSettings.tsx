@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import {
@@ -143,7 +143,7 @@ export default function AccountSettings({ user, hasPassword }: Props) {
           My Profile
         </Typography>
         
-        <Paper sx={{ p: 3, bgcolor: "#171717", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 2 }}>
+        <Paper sx={{ p: 3, bgcolor: "#171717", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 1 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 3, mb: 4 }}>
             <Avatar
               src={displayImage}
@@ -222,7 +222,7 @@ export default function AccountSettings({ user, hasPassword }: Props) {
           Account Security
         </Typography>
 
-        <Paper sx={{ p: 3, bgcolor: "#171717", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 2 }}>
+        <Paper sx={{ p: 3, bgcolor: "#171717", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 1 }}>
           {/* Email */}
           <Box sx={{ mb: 4 }}>
             <Typography variant="subtitle2" sx={{ mb: 1, color: "#a3a3a3" }}>Email</Typography>

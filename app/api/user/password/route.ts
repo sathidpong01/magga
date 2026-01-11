@@ -5,6 +5,7 @@ import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { validatePassword } from "@/lib/password-validation";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const passwordSchema = z.object({
   currentPassword: z.string().optional(),
@@ -25,6 +26,20 @@ export async function PUT(req: Request) {
 
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limiting: 3 password changes per hour per user
+    const limitCheck = await checkRateLimit(
+      `password:${session.user.email}`,
+      3, // 3 attempts
+      60 * 60 * 1000 // per hour
+    );
+
+    if (!limitCheck.allowed) {
+      return NextResponse.json(
+        { error: "Too many password change attempts. Please try again later." },
+        { status: 429 }
+      );
     }
 
     const body = await req.json();

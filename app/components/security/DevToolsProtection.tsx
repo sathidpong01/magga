@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
@@ -286,7 +286,7 @@ export default function DevToolsProtection() {
               p: 2,
               mb: 4,
               bgcolor: "#0f0f1a",
-              borderRadius: 2,
+              borderRadius: 1,
               border: "1px solid rgba(255, 255, 255, 0.1)",
               textAlign: "left",
             }}
@@ -339,7 +339,7 @@ export default function DevToolsProtection() {
             fontWeight: "bold",
             px: 4,
             py: 1.5,
-            borderRadius: 2,
+            borderRadius: 1,
             "&:hover": {
               bgcolor: "#7c3aed",
             },

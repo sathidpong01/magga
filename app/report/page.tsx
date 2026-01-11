@@ -1,4 +1,4 @@
-import { Container, Typography, Box, Paper, Divider, Alert } from "@mui/material";
+﻿import { Container, Typography, Box, Paper, Divider, Alert } from "@mui/material";
 import { Metadata } from "next";
 import ReportProblemIcon from "@mui/icons-material/ReportProblem";
 import EmailIcon from "@mui/icons-material/Email";
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default function ReportPage() {
   return (
     <Container maxWidth="md" sx={{ py: 6 }}>
-      <Paper sx={{ p: { xs: 3, md: 5 }, bgcolor: '#171717', borderRadius: 2, border: '1px solid rgba(255,255,255,0.08)' }}>
+      <Paper sx={{ p: { xs: 3, md: 5 }, bgcolor: '#171717', borderRadius: 1, border: '1px solid rgba(255,255,255,0.08)' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
           <ReportProblemIcon sx={{ color: '#fbbf24', fontSize: 32 }} />
           <Typography variant="h4" component="h1" fontWeight="bold" sx={{ color: '#fafafa' }}>

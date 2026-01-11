@@ -2,30 +2,26 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../auth/[...nextauth]/route";
 import prisma from "@/lib/prisma";
+import { requireAdmin } from "@/lib/auth-helpers";
 
 // GET /api/admin/comments - Fetch all comments for admin
 export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
-  
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  // Check if admin
-  const userRole = (session.user as { role?: string }).role;
-  if (userRole !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+  const authError = requireAdmin(session);
+  if (authError) return authError;
 
   const { searchParams } = new URL(request.url);
   const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
-  const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20"))); // max 100
+  const limit = Math.min(
+    100,
+    Math.max(1, parseInt(searchParams.get("limit") || "20"))
+  ); // max 100
   const search = searchParams.get("search") || "";
-  
+
   // Whitelist allowed sortBy fields to prevent injection
   const allowedSortFields = ["createdAt", "voteScore"];
-  const sortBy = allowedSortFields.includes(searchParams.get("sortBy") || "") 
-    ? searchParams.get("sortBy")! 
+  const sortBy = allowedSortFields.includes(searchParams.get("sortBy") || "")
+    ? searchParams.get("sortBy")!
     : "createdAt";
   const sortOrder = searchParams.get("sortOrder") === "asc" ? "asc" : "desc";
 
@@ -91,21 +87,24 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error("Error fetching comments:", error);
-    return NextResponse.json({ error: "Failed to fetch comments" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch comments" },
+      { status: 500 }
+    );
   }
 }
 
 // DELETE /api/admin/comments - Bulk delete comments
 export async function DELETE(request: Request) {
   const session = await getServerSession(authOptions);
-  
+
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   // Check if admin
   const userRole = (session.user as { role?: string }).role;
-  if (userRole !== "ADMIN") {
+  if (userRole?.toUpperCase() !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
@@ -114,7 +113,10 @@ export async function DELETE(request: Request) {
     const { commentIds } = body;
 
     if (!Array.isArray(commentIds) || commentIds.length === 0) {
-      return NextResponse.json({ error: "commentIds array is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "commentIds array is required" },
+        { status: 400 }
+      );
     }
 
     // Delete votes first (foreign key constraint)
@@ -135,6 +137,9 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ deleted: count });
   } catch (error) {
     console.error("Error deleting comments:", error);
-    return NextResponse.json({ error: "Failed to delete comments" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to delete comments" },
+      { status: 500 }
+    );
   }
 }

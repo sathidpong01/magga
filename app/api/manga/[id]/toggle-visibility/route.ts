@@ -1,12 +1,15 @@
-import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '../../../auth/[...nextauth]/route';
+import { NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../../../auth/[...nextauth]/route";
 
-export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user?.role?.toUpperCase() !== 'ADMIN') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!session || session.user?.role !== "ADMIN") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { id } = await params;
@@ -19,7 +22,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     });
 
     if (!currentManga) {
-      return NextResponse.json({ error: 'Manga not found' }, { status: 404 });
+      return NextResponse.json({ error: "Manga not found" }, { status: 404 });
     }
 
     // Toggle the visibility
@@ -32,7 +35,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
     return NextResponse.json(updatedManga);
   } catch (error) {
-
-    return NextResponse.json({ error: 'Failed to toggle visibility' }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to toggle visibility" },
+      { status: 500 }
+    );
   }
 }

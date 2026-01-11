@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireAdmin } from "@/lib/auth-helpers";
 
 // GET - ดึงโฆษณาตาม placement (ใช้ all=true สำหรับ admin page เพื่อดึงทั้งหมด)
 export async function GET(request: NextRequest) {
@@ -11,12 +12,12 @@ export async function GET(request: NextRequest) {
     const all = searchParams.get("all") === "true"; // For admin page to show all ads
 
     const where: { isActive?: boolean; placement?: string } = {};
-    
+
     // ถ้าไม่ใช่ all mode ให้ filter เฉพาะ active
     if (!all) {
       where.isActive = true;
     }
-    
+
     if (placement) {
       where.placement = placement;
     }
@@ -40,9 +41,8 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as { role?: string })?.role !== "ADMIN") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const authError = requireAdmin(session);
+    if (authError) return authError;
 
     const body = await request.json();
     const { type, title, imageUrl, linkUrl, content, placement } = body;

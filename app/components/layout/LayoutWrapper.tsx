@@ -6,11 +6,15 @@ import Header from "./Header";
 import Footer from "./Footer";
 import { AdContainer } from "@/app/components/features/ads";
 
-export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
+export default function LayoutWrapper({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
-  const isAdminPage = pathname?.startsWith("/admin");
+  const isDashboardPage = pathname?.startsWith("/dashboard");
 
-  if (isAdminPage) {
+  if (isDashboardPage) {
     return <>{children}</>;
   }
 
@@ -32,4 +36,3 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     </Box>
   );
 }
-

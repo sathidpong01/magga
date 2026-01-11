@@ -1,6 +1,6 @@
 "use server";
 
-import { getServerSession } from "next-auth/next";
+import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import prisma from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -11,16 +11,24 @@ import { z } from "zod";
 // Schema Definitions
 // ============================================================================
 
-const CreateCommentSchema = z.object({
-  mangaId: z.string().min(1, "mangaId is required"),
-  content: z
-    .string()
-    .min(1, "Content is required")
-    .max(500, "ความคิดเห็นต้องไม่เกิน 500 ตัวอักษร"),
-  imageIndex: z.number().optional(),
-  imageUrl: z.string().url().optional().nullable(),
-  parentId: z.string().optional().nullable(),
-});
+const CreateCommentSchema = z
+  .object({
+    mangaId: z.string().min(1, "mangaId is required"),
+    content: z.string().max(500, "ความคิดเห็นต้องไม่เกิน 500 ตัวอักษร"),
+    imageIndex: z.number().optional(),
+    imageUrl: z.string().url().optional().nullable(),
+    parentId: z.string().optional().nullable(),
+  })
+  .refine(
+    (data) => {
+      // Must have either content or image
+      return (data.content && data.content.trim().length > 0) || data.imageUrl;
+    },
+    {
+      message: "ต้องมีข้อความหรือรูปภาพอย่างน้อยหนึ่งอย่าง",
+      path: ["content"],
+    }
+  );
 
 const UpdateCommentSchema = z.object({
   commentId: z.string().min(1),
@@ -58,6 +66,11 @@ export async function createComment(formData: FormData) {
 
   if (!session?.user?.id) {
     return { error: "กรุณาเข้าสู่ระบบก่อนแสดงความคิดเห็น" };
+  }
+
+  // Check if user is banned
+  if ((session.user as any).isBanned) {
+    return { error: "บัญชีของคุณถูกระงับการใช้งาน" };
   }
 
   // Rate limiting: 20 comments per 15 minutes
@@ -269,6 +282,10 @@ export async function voteComment(commentId: string, value: 1 | -1) {
 
   if (!session?.user?.id) {
     return { error: "กรุณาเข้าสู่ระบบก่อนโหวต" };
+  }
+
+  if ((session.user as any).isBanned) {
+    return { error: "บัญชีของคุณถูกระงับการใช้งาน" };
   }
 
   // Rate limiting: 30 votes per 15 minutes

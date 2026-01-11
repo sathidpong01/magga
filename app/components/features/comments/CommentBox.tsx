@@ -17,7 +17,12 @@ import SendIcon from "@mui/icons-material/Send";
 import ImageIcon from "@mui/icons-material/Image";
 import EmojiEmotionsIcon from "@mui/icons-material/EmojiEmotions";
 import CloseIcon from "@mui/icons-material/Close";
-import EmojiPicker, { Theme, EmojiClickData } from "emoji-picker-react";
+import { Theme, EmojiClickData } from "emoji-picker-react";
+import dynamic from "next/dynamic";
+
+import BanNoticeModal from "@/app/components/modals/BanNoticeModal";
+
+const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
 import AuthModal from "@/app/components/features/auth/AuthModal";
 import { createComment } from "@/app/actions/comments";
 
@@ -47,6 +52,7 @@ export default function CommentBox({
     null
   );
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [banModalOpen, setBanModalOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textFieldRef = useRef<HTMLTextAreaElement>(null);
 
@@ -152,8 +158,13 @@ export default function CommentBox({
       handleRemoveImage();
       onCommentCreated?.();
     } catch (error) {
-      console.error("Error posting comment:", error);
-      alert(error instanceof Error ? error.message : "เกิดข้อผิดพลาด");
+      const errMsg = error instanceof Error ? error.message : "เกิดข้อผิดพลาด";
+      if (errMsg === "บัญชีของคุณถูกระงับการใช้งาน") {
+        setBanModalOpen(true);
+      } else {
+        console.error("Error posting comment:", error);
+        alert(errMsg);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -377,6 +388,10 @@ export default function CommentBox({
           </Box>
         </Paper>
       </Box>
+      <BanNoticeModal
+        open={banModalOpen}
+        onClose={() => setBanModalOpen(false)}
+      />
     </Box>
   );
 }

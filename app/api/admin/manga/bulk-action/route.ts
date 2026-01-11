@@ -2,21 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { requireAdmin } from "@/lib/auth-helpers";
 
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
-    // Check if user is admin
-    if (!session?.user || session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
+    const authError = requireAdmin(session);
+    if (authError) return authError;
 
     const body = await req.json();
-    const { ids, action } = body as { ids: string[]; action: "delete" | "show" | "hide" };
+    const { ids, action } = body as {
+      ids: string[];
+      action: "delete" | "show" | "hide";
+    };
 
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
       return NextResponse.json(
@@ -26,10 +24,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!["delete", "show", "hide"].includes(action)) {
-      return NextResponse.json(
-        { error: "Invalid action" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid action" }, { status: 400 });
     }
 
     let result;

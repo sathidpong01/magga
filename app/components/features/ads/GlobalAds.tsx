@@ -6,13 +6,18 @@ import { AdContainer } from "@/app/components/features/ads";
 export default function GlobalAds() {
   const pathname = usePathname();
 
-  // ไม่แสดง ads บนหน้า admin และ submit
-  const isAdminOrSubmit = pathname.startsWith("/admin") || pathname.startsWith("/submit");
-  
+  // ไม่แสดง ads บนหน้า dashboard
+  const isDashboard = pathname.startsWith("/dashboard");
+
   // แสดงเฉพาะหน้าแรก (/) และหน้าอ่านมังงะ (/[mangaId])
   const isHomePage = pathname === "/";
-  const isMangaPage = pathname.match(/^\/[^\/]+$/) && !isAdminOrSubmit;
-  
+  const isMangaPage = pathname.match(/^\/[^\/]+$/) && !isDashboard;
+
+  // Don't show ads on dashboard pages
+  if (isDashboard) {
+    return null;
+  }
+
   const shouldShowAds = isHomePage || isMangaPage;
 
   if (!shouldShowAds) {

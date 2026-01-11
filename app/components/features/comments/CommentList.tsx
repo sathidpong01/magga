@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
@@ -28,6 +28,7 @@ import {
   updateComment,
   deleteComment,
 } from "@/app/actions/comments";
+import BanNoticeModal from "@/app/components/modals/BanNoticeModal";
 
 interface CommentUser {
   id: string;
@@ -81,9 +82,10 @@ function CommentItem({
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [banModalOpen, setBanModalOpen] = useState(false);
 
   const isOwner = session?.user?.id === comment.user.id;
-  const isAdmin = (session?.user as { role?: string })?.role === "admin";
+  const isAdmin = (session?.user as { role?: string })?.role === "ADMIN";
 
   const handleVote = useCallback(
     async (value: 1 | -1) => {
@@ -96,6 +98,10 @@ function CommentItem({
         const result = await voteComment(comment.id, value);
 
         if (result.error) {
+          if (result.error === "บัญชีของคุณถูกระงับการใช้งาน") {
+            setBanModalOpen(true);
+            return;
+          }
           throw new Error(result.error);
         }
 
@@ -127,8 +133,14 @@ function CommentItem({
 
       setIsEditing(false);
       onRefresh();
-    } catch {
-      alert("แก้ไขไม่สำเร็จ");
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : "แก้ไขไม่สำเร็จ";
+      if (errMsg === "บัญชีของคุณถูกระงับการใช้งาน") {
+        setBanModalOpen(true);
+      } else {
+        console.error("Error updating comment:", error);
+        alert(errMsg);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -143,8 +155,14 @@ function CommentItem({
         throw new Error(result.error);
       }
       onRefresh();
-    } catch {
-      alert("ลบไม่สำเร็จ");
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : "ลบไม่สำเร็จ";
+      if (errMsg === "บัญชีของคุณถูกระงับการใช้งาน") {
+        setBanModalOpen(true);
+      } else {
+        console.error("Error deleting comment:", error);
+        alert(errMsg);
+      }
     }
 
     setMenuAnchor(null);
@@ -444,6 +462,10 @@ function CommentItem({
           </Fade>
         </Modal>
       )}
+      <BanNoticeModal
+        open={banModalOpen}
+        onClose={() => setBanModalOpen(false)}
+      />
     </>
   );
 }

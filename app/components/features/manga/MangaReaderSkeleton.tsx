@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Skeleton, Paper, Box, Grid, Container } from "@mui/material";
 
@@ -19,7 +19,7 @@ export default function MangaReaderSkeleton() {
                   width: "100%", 
                   maxWidth: { xs: "240px", md: "100%" },
                   aspectRatio: "2/3",
-                  borderRadius: 2,
+                  borderRadius: 1,
                   bgcolor: "rgba(255, 255, 255, 0.05)"
                 }} 
               />

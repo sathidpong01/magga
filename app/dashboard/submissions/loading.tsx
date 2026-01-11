@@ -1,4 +1,4 @@
-import { Skeleton, Box, Paper, Grid } from "@mui/material";
+﻿import { Skeleton, Box, Paper, Grid } from "@mui/material";
 
 export default function DashboardLoading() {
   return (
@@ -27,7 +27,7 @@ export default function DashboardLoading() {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
                   <Skeleton variant="text" width={200} height={28} sx={{ bgcolor: "rgba(255,255,255,0.05)" }} />
                   <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Skeleton variant="rectangular" width={70} height={24} sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 2 }} />
+                    <Skeleton variant="rectangular" width={70} height={24} sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 1 }} />
                     <Skeleton variant="circular" width={28} height={28} sx={{ bgcolor: "rgba(255,255,255,0.05)" }} />
                     <Skeleton variant="circular" width={28} height={28} sx={{ bgcolor: "rgba(255,255,255,0.05)" }} />
                   </Box>

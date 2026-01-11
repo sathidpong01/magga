@@ -27,6 +27,13 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    if ((session.user as any).isBanned) {
+      return NextResponse.json(
+        { error: "บัญชีของคุณถูกระงับการใช้งาน" },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const { name, username, email } = profileSchema.parse(body);
 
@@ -41,17 +48,23 @@ export async function PUT(req: Request) {
           where: {
             AND: [
               { NOT: { email: session.user.email } }, // Not current user
-              { OR: orConditions }
-            ]
-          }
+              { OR: orConditions },
+            ],
+          },
         });
 
         if (existingUser) {
           if (username && existingUser.username === username) {
-            return NextResponse.json({ error: "Username is already taken" }, { status: 400 });
+            return NextResponse.json(
+              { error: "Username is already taken" },
+              { status: 400 }
+            );
           }
           if (email && existingUser.email === email) {
-            return NextResponse.json({ error: "Email is already taken" }, { status: 400 });
+            return NextResponse.json(
+              { error: "Email is already taken" },
+              { status: 400 }
+            );
           }
         }
       }
@@ -59,7 +72,7 @@ export async function PUT(req: Request) {
 
     const user = await prisma.user.update({
       where: { email: session.user.email },
-      data: { 
+      data: {
         ...(name && { name }),
         ...(username && { username }),
         ...(email && { email }),

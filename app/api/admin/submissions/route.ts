@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth/[...nextauth]/route";
 import prisma from "@/lib/prisma";
@@ -6,7 +6,7 @@ import prisma from "@/lib/prisma";
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== 'ADMIN') {
+    if (!session || session.user.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -19,7 +19,7 @@ export async function GET(req: Request) {
     const skip = (page - 1) * limit;
 
     const where: any = {};
-    if (status && status !== 'ALL') {
+    if (status && status !== "ALL") {
       where.status = status;
     }
     if (search) {
@@ -35,7 +35,7 @@ export async function GET(req: Request) {
         include: {
           user: { select: { name: true, email: true, username: true } },
         },
-        orderBy: { submittedAt: 'desc' },
+        orderBy: { submittedAt: "desc" },
         skip,
         take: limit,
       }),
@@ -51,7 +51,6 @@ export async function GET(req: Request) {
         limit,
       },
     });
-
   } catch (error) {
     console.error("Admin submissions error:", error);
     return NextResponse.json(

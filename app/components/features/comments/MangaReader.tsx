@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   useRef,
@@ -375,7 +375,7 @@ const LazyPageWithComments = forwardRef<HTMLDivElement, LazyPageProps>(
               pointerEvents: "auto", // Inner panel is interactive
               bgcolor: "rgba(10, 10, 10, 0.85)",
               backdropFilter: "blur(8px)",
-              borderRadius: 2,
+              borderRadius: 1,
               border: "1px solid rgba(255,255,255,0.08)",
               zIndex: 100,
             }}

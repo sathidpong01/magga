@@ -320,6 +320,10 @@ export default function SearchFilters({ categories, tags }: Props) {
                         <SearchIcon color="action" sx={{ mr: 1 }} />
                       ),
                     }}
+                    inputProps={{
+                      ...params.inputProps,
+                      id: searchInputId,
+                    }}
                     sx={{
                       "& input": { py: 0.75, fontSize: "0.85rem" },
                       borderBottom: "1px solid",
@@ -432,6 +436,10 @@ export default function SearchFilters({ categories, tags }: Props) {
                     InputProps={{
                       ...params.InputProps,
                       disableUnderline: true,
+                    }}
+                    inputProps={{
+                      ...params.inputProps,
+                      id: tagsInputId,
                     }}
                   />
                 )}

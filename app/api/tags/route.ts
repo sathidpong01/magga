@@ -1,13 +1,15 @@
-import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '../auth/[...nextauth]/route';
-import { revalidatePath } from 'next/cache';
+﻿import { NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../auth/[...nextauth]/route";
+import { revalidatePath } from "next/cache";
+import { requireAdmin } from "@/lib/auth-helpers";
+import { sanitizeInput } from "@/lib/sanitize";
 
 // GET all tags
 export async function GET() {
   const tags = await prisma.tag.findMany({
-    orderBy: { name: 'asc' },
+    orderBy: { name: "asc" },
   });
   return NextResponse.json(tags);
 }
@@ -15,24 +17,24 @@ export async function GET() {
 // POST a new tag
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user?.role?.toUpperCase() !== 'ADMIN') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const authError = requireAdmin(session);
+  if (authError) return authError;
 
   const { name } = await request.json();
+  const sanitizedName = sanitizeInput(name);
 
-  if (!name) {
-    return NextResponse.json({ error: 'Name is required' }, { status: 400 });
+  if (!sanitizedName) {
+    return NextResponse.json({ error: "Name is required" }, { status: 400 });
   }
 
   try {
     const newTag = await prisma.tag.create({
-      data: { name },
+      data: { name: sanitizedName },
     });
-    revalidatePath('/admin/metadata');
-    revalidatePath('/'); // Refresh home page to show new tag
+    revalidatePath("/admin/metadata");
+    revalidatePath("/"); // Refresh home page to show new tag
     return NextResponse.json(newTag, { status: 201 });
   } catch {
-    return NextResponse.json({ error: 'Tag already exists' }, { status: 409 });
+    return NextResponse.json({ error: "Tag already exists" }, { status: 409 });
   }
 }

@@ -10,7 +10,12 @@ export async function authFetch(
   url: string,
   options?: RequestInit
 ): Promise<Response> {
-  const res = await fetch(url, options);
+  // Handle relative URLs by converting to absolute
+  const absoluteUrl = url.startsWith("http")
+    ? url
+    : `${typeof window !== "undefined" ? window.location.origin : ""}${url}`;
+
+  const res = await fetch(absoluteUrl, options);
 
   // Auto logout on 401 Unauthorized (session expired)
   if (res.status === 401) {

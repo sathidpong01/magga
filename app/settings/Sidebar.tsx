@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { Box, List, ListItem, ListItemButton, ListItemIcon, ListItemText, Typography } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
@@ -15,7 +15,7 @@ export default function Sidebar() {
       <List sx={{ mb: 2 }}>
         <ListItem disablePadding>
           <ListItemButton selected sx={{ 
-            borderRadius: 2, 
+            borderRadius: 1, 
             "&.Mui-selected": { bgcolor: "rgba(251, 191, 36, 0.1)", color: "#fbbf24" },
             "&.Mui-selected:hover": { bgcolor: "rgba(251, 191, 36, 0.2)" }
           }}>
@@ -26,7 +26,7 @@ export default function Sidebar() {
           </ListItemButton>
         </ListItem>
         <ListItem disablePadding>
-          <ListItemButton disabled sx={{ borderRadius: 2 }}>
+          <ListItemButton disabled sx={{ borderRadius: 1 }}>
             <ListItemIcon sx={{ minWidth: 40, color: "text.secondary" }}>
               <NotificationsIcon />
             </ListItemIcon>
@@ -34,7 +34,7 @@ export default function Sidebar() {
           </ListItemButton>
         </ListItem>
         <ListItem disablePadding>
-          <ListItemButton disabled sx={{ borderRadius: 2 }}>
+          <ListItemButton disabled sx={{ borderRadius: 1 }}>
             <ListItemIcon sx={{ minWidth: 40, color: "text.secondary" }}>
               <LanguageIcon />
             </ListItemIcon>

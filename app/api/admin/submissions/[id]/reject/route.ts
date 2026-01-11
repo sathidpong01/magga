@@ -3,10 +3,13 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../../../../auth/[...nextauth]/route";
 import prisma from "@/lib/prisma";
 
-export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(
+  req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== 'ADMIN') {
+    if (!session || session.user.role?.toUpperCase() !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -15,26 +18,31 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const { rejectionReason, reviewNote } = body;
 
     if (!rejectionReason) {
-      return NextResponse.json({ error: "Rejection reason is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Rejection reason is required" },
+        { status: 400 }
+      );
     }
 
     await prisma.mangaSubmission.update({
       where: { id },
       data: {
-        status: 'REJECTED',
+        status: "REJECTED",
         reviewedAt: new Date(),
         reviewedBy: session.user.id,
         reviewNote,
-        rejectionReason
-      }
+        rejectionReason,
+      },
     });
 
     // TODO: Schedule file cleanup (Phase 4)
 
     return NextResponse.json({ success: true });
-
   } catch (error) {
     console.error("Reject submission error:", error);
-    return NextResponse.json({ error: "Failed to reject submission" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to reject submission" },
+      { status: 500 }
+    );
   }
 }

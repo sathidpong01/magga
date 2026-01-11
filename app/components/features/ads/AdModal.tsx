@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { Dialog, Box, IconButton } from "@mui/material";
@@ -50,7 +50,7 @@ export default function AdModal({ ad }: AdModalProps) {
           bgcolor: "transparent",
           boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
           overflow: "hidden",
-          borderRadius: 2,
+          borderRadius: 1,
         },
       }}
     >

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
@@ -38,7 +38,7 @@ export default function AgeVerificationModal() {
       aria-describedby="age-verification-description"
       PaperProps={{
         sx: {
-          borderRadius: 2,
+          borderRadius: 1,
           textAlign: "center",
           p: 4,
           maxWidth: "440px",

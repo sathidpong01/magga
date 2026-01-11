@@ -1,4 +1,4 @@
-import { Container, Typography, Box, Paper, Divider } from "@mui/material";
+﻿import { Container, Typography, Box, Paper, Divider } from "@mui/material";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
   return (
     <Container maxWidth="md" sx={{ py: 6 }}>
-      <Paper sx={{ p: { xs: 3, md: 5 }, bgcolor: '#171717', borderRadius: 2, border: '1px solid rgba(255,255,255,0.08)' }}>
+      <Paper sx={{ p: { xs: 3, md: 5 }, bgcolor: '#171717', borderRadius: 1, border: '1px solid rgba(255,255,255,0.08)' }}>
         <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom sx={{ color: '#fafafa' }}>
           นโยบายความเป็นส่วนตัว (Privacy Policy)
         </Typography>

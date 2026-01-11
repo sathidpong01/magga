@@ -1,22 +1,35 @@
-import { Container, Grid } from "@mui/material";
-import DashboardSidebar from "./DashboardSidebar";
+import { Box } from "@mui/material";
+import UnifiedDashboardSidebar from "@/app/components/layout/UnifiedDashboardSidebar";
 
-// Server Component - no "use client"
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={3}>
-          <DashboardSidebar />
-        </Grid>
-        <Grid item xs={12} md={9}>
-          {children}
-        </Grid>
-      </Grid>
-    </Container>
+    <Box
+      sx={{
+        display: "flex",
+        bgcolor: "#0a0a0a",
+        minHeight: "100vh",
+        color: "#fafafa",
+      }}
+    >
+      <UnifiedDashboardSidebar />
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 2.5,
+          bgcolor: "#0a0a0a",
+          backgroundImage: "none",
+          maxWidth: "1200px",
+          mx: "auto",
+          width: "100%",
+        }}
+      >
+        {children}
+      </Box>
+    </Box>
   );
 }

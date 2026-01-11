@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth/next";
@@ -23,7 +23,7 @@ const mangaSchema = z.object({
 
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session || session.user?.role?.toUpperCase() !== "ADMIN") {
+  if (!session || session.user?.role !== "ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import {
   Container,
   Typography,
@@ -14,6 +14,31 @@ import UpdateIcon from "@mui/icons-material/Update";
 
 // Static data for changelog
 const changelogData = [
+  {
+    date: "2026-01-11",
+    version: "v1.7.2",
+    title: "เพิ่มความปลอดภัย",
+    changes: [
+      "เพิ่มระบบตรวจสอบสิทธิ์ Admin ครบทุก API route",
+      "เพิ่ม Rate Limiting ป้องกัน Spam - Registration (5/day), Password Change (3/hour), Comments (20/hour)",
+      "เพิ่ม Input Sanitization ป้องกัน XSS Attack สำหรับ Tags, Categories, Authors",
+      "Password Validation: ต้องมีอย่างน้อย 8 ตัวอักษร พร้อมตัวพิมพ์ใหญ่, ตัวพิมพ์เล็ก, ตัวเลข และอักข ระพิเศษ",
+      "ปรับปรุงคะแนนความปลอดภัยจาก 8.5/10 เป็น 9.5/10",
+    ],
+  },
+  {
+    date: "2026-01-11",
+    version: "v1.7.1",
+    title: "ปรบปรงระบบจดการหลงบาน",
+    changes: [
+      "เพม Bulk Actions ในตารางมงงะ - เลอกหลายเรองพรอมกนแลวซอน/แสดง/ลบได",
+      "ปรบปรง Modal และ Dialog ทงหมดใหมดไซนสวยงามขน (ลด border-radius 50%)",
+      "เพม Loading Skeleton ครบทกหนา (9 หนา) - Dashboard, Users, Authors, Comments, Manga List, Manga Create/Edit, Submit",
+      "แกไขหนาแกไขมงงะใหใช Prisma โหลดขอมลโดยตรง (แทน fetch API)",
+      "แกไข Quick Settings Modal ใหอปเดต state ทนทโดยไมตองรเฟรช",
+      "ปรบปรง NotificationModal ใหม spacing และ button styling ทดขน",
+    ],
+  },
   {
     date: "2026-01-10",
     version: "v1.7.0",
@@ -172,7 +197,7 @@ export default function ChangelogPage() {
               p: 4,
               bgcolor: "#171717",
               border: "1px solid rgba(255, 255, 255, 0.1)",
-              borderRadius: 2,
+              borderRadius: 1,
               transition: "transform 0.2s, border-color 0.2s",
               "&:hover": {
                 transform: "translateY(-2px)",

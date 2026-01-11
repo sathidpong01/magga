@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useSession, signOut } from "next-auth/react";
 import { useState, useEffect, useCallback } from "react";
@@ -142,7 +142,7 @@ export default function SessionExpiryWarning() {
           value={(timeLeft / (WARNING_THRESHOLD_MS / 1000)) * 100}
           sx={{
             height: 4,
-            borderRadius: 2,
+            borderRadius: 1,
             bgcolor: "rgba(255,255,255,0.1)",
             "& .MuiLinearProgress-bar": {
               bgcolor: isUrgent ? "#ef4444" : "#fbbf24",
