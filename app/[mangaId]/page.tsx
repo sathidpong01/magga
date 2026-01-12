@@ -244,7 +244,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
                   width: "100%",
                   maxWidth: { xs: "280px", md: "100%" },
                   aspectRatio: "2/3",
-                  borderRadius: 2,
+                  borderRadius: 1,
                   overflow: "hidden",
                   boxShadow: "0 20px 40px -10px rgba(0,0,0,0.7)",
                   border: "1px solid rgba(255,255,255,0.1)",

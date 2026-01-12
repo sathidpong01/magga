@@ -260,7 +260,7 @@ export default function SubmissionDetailPage({
           p: 3,
           mb: 3,
           bgcolor: "#171717",
-          borderRadius: 2,
+          borderRadius: 1,
           border: "1px solid rgba(255,255,255,0.08)",
         }}
       >
@@ -403,7 +403,7 @@ export default function SubmissionDetailPage({
               p: 3,
               mb: 3,
               bgcolor: "#171717",
-              borderRadius: 2,
+              borderRadius: 1,
               border: "1px solid rgba(255,255,255,0.08)",
             }}
           >
@@ -580,7 +580,7 @@ export default function SubmissionDetailPage({
             sx={{
               p: 3,
               bgcolor: "#171717",
-              borderRadius: 2,
+              borderRadius: 1,
               border: "1px solid rgba(255,255,255,0.08)",
             }}
           >
@@ -667,7 +667,7 @@ export default function SubmissionDetailPage({
               p: 3,
               mb: 3,
               bgcolor: "#171717",
-              borderRadius: 2,
+              borderRadius: 1,
               border: "1px solid rgba(255,255,255,0.08)",
             }}
           >
@@ -730,7 +730,7 @@ export default function SubmissionDetailPage({
             sx={{
               p: 3,
               bgcolor: "#171717",
-              borderRadius: 2,
+              borderRadius: 1,
               border: "1px solid rgba(255,255,255,0.08)",
             }}
           >
@@ -784,7 +784,7 @@ export default function SubmissionDetailPage({
         onClose={() => setApproveOpen(false)}
         maxWidth="sm"
         fullWidth
-        PaperProps={{ sx: { bgcolor: "#171717", borderRadius: 2 } }}
+        PaperProps={{ sx: { bgcolor: "#171717", borderRadius: 1 } }}
       >
         <DialogTitle sx={{ fontWeight: 600 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -850,7 +850,7 @@ export default function SubmissionDetailPage({
         onClose={() => setRejectOpen(false)}
         maxWidth="sm"
         fullWidth
-        PaperProps={{ sx: { bgcolor: "#171717", borderRadius: 2 } }}
+        PaperProps={{ sx: { bgcolor: "#171717", borderRadius: 1 } }}
       >
         <DialogTitle sx={{ fontWeight: 600 }}>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
