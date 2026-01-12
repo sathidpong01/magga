@@ -104,6 +104,7 @@ export default function MangaReader({
         });
 
         const res = await fetch(`/api/comments?${params}`);
+        // Retry logic handled by browser for comments, or add fetchWithRetry import if needed
         if (!res.ok) throw new Error("Failed to fetch");
 
         const data = await res.json();
