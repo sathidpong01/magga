@@ -563,7 +563,6 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
         authorId: finalAuthorId,
         isHidden: saveAsDraft,
         selectedTags: selectedTagIds,
-        authorCredits: JSON.stringify(credits),
         authorName: authorName || null,
       };
 

@@ -314,7 +314,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
                   {manga.title}
                 </Typography>
 
-                {/* Author Credits - Use new Author.socialLinks or fallback to old authorCredits */}
+                {/* Author Social Links from Author model */}
                 {(() => {
                   // Try new Author system first
                   if (manga.author?.socialLinks) {
