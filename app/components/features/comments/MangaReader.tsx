@@ -13,6 +13,7 @@ import { Box, Typography, Divider, CircularProgress } from "@mui/material";
 import CommentBox from "./CommentBox";
 import CommentList from "./CommentList";
 import ReadingProgress from "@/app/components/ui/ReadingProgress";
+import { fetchWithRetry } from "@/lib/fetch-with-retry";
 
 // Page data can be string (legacy) or object with dimensions (new)
 interface PageData {
@@ -103,8 +104,7 @@ export default function MangaReader({
           imageIndex: String(imageIndex),
         });
 
-        const res = await fetch(`/api/comments?${params}`);
-        // Retry logic handled by browser for comments, or add fetchWithRetry import if needed
+        const res = await fetchWithRetry(`/api/comments?${params}`, { retries: 2 });
         if (!res.ok) throw new Error("Failed to fetch");
 
         const data = await res.json();

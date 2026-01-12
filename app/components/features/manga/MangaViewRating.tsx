@@ -5,6 +5,7 @@ import { Box, Typography, Rating, CircularProgress, Snackbar, Alert } from "@mui
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import StarIcon from "@mui/icons-material/Star";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
+import { fetchWithRetry } from "@/lib/fetch-with-retry";
 
 interface MangaViewRatingProps {
   mangaId: string;
@@ -60,8 +61,9 @@ export default function MangaViewRating({
         setFingerprint(visitorId);
 
         // Fetch user's existing rating from server
-        const response = await fetch(
-          `/api/manga/${mangaId}/rating?fingerprint=${visitorId}`
+        const response = await fetchWithRetry(
+          `/api/manga/${mangaId}/rating?fingerprint=${visitorId}`,
+          { retries: 2 }
         );
         
         if (response.ok) {
@@ -119,7 +121,7 @@ export default function MangaViewRating({
     setIsSubmitting(true);
 
     try {
-      const response = await fetch(`/api/manga/${mangaId}/rating`, {
+      const response = await fetchWithRetry(`/api/manga/${mangaId}/rating`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -128,6 +130,7 @@ export default function MangaViewRating({
           rating: newValue,
           fingerprint,
         }),
+        retries: 2,
       });
 
       if (!response.ok) {

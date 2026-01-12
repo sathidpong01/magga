@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useId, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Fuse from "fuse.js";
+import { fetchWithRetry } from "@/lib/fetch-with-retry";
 import {
   Box,
   Paper,
@@ -74,7 +75,7 @@ export default function SearchFilters({ categories, tags }: Props) {
 
       setIsIndexLoading(true);
       try {
-        const res = await fetch("/api/search");
+        const res = await fetchWithRetry("/api/search", { retries: 2 });
         if (res.ok) {
           const data = await res.json();
           setSearchIndex(data);
