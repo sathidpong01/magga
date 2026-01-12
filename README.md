@@ -216,6 +216,7 @@ npm run dev
 - 📋 [DEPLOYMENT_CHECKLIST.md](./DEPLOYMENT_CHECKLIST.md) - Checklist การ deploy
 - 📊 [OPTIMIZATION_SUMMARY.md](./OPTIMIZATION_SUMMARY.md) - สรุปการ optimize
 - ⚙️ [VERCEL_SETUP.md](./VERCEL_SETUP.md) - การตั้งค่า Environment Variables
+- 📐 [LAYOUT_CUSTOMIZATION_GUIDE.md](./LAYOUT_CUSTOMIZATION_GUIDE.md) - คู่มือปรับแต่ง Layout และ UI
 
 ---
 

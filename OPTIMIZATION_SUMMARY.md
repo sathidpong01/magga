@@ -1,7 +1,8 @@
 # 📊 Vercel Optimization Summary
 
-**Date:** 2025-12-08  
+**Date:** 2026-01-12  
 **Project:** Magga Reader  
+**Version:** v1.7.0  
 **Status:** ✅ Complete & Ready to Deploy
 
 ---
@@ -38,7 +39,7 @@ Optimize Magga Reader manga web application for Vercel deployment to:
 
 ---
 
-### 1.5 SEO & Full-text Search (New!)
+### 1.5 SEO & Full-text Search
 
 **Files:** `app/[mangaId]/page.tsx`, `app/api/search/route.ts`, `SearchFilters.tsx`
 
@@ -53,6 +54,23 @@ Optimize Magga Reader manga web application for Vercel deployment to:
 
 - 🔍 Better SEO and social sharing
 - 📝 Smart search with typo tolerance
+
+### 1.6 Author Management System (v1.7.0)
+
+**Files:** `app/admin/authors/AuthorManager.tsx`, `app/api/authors/route.ts`
+
+**Changes:**
+
+- Dedicated Author model with multiple social links
+- Auto-fetch metadata from URLs (label + icon)
+- Author selector in MangaForm
+- Social links display on manga pages
+
+**Impact:**
+
+- 👤 Centralized author management
+- 🔗 Multiple social links per author
+- ✨ Better credit display for creators
 
 ### 2. Static Generation (ISR/SSG)
 
@@ -429,5 +447,5 @@ The Magga Reader application is now:
 
 ---
 
-_Last Updated: 2025-11-26_  
-_Optimization by: AI Assistant_
+_Last Updated: 2026-01-12_  
+_Version: v1.7.0_

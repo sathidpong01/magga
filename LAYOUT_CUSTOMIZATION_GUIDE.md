@@ -657,7 +657,8 @@ border: "1px solid rgba(255, 255, 255, 0.1)";
 1. **Material-UI Spacing:** ใช้ระบบ 8px grid (1 = 8px, 2 = 16px, ฯลฯ)
 2. **Responsive Design:** ใช้ breakpoints (`xs`, `sm`, `md`, `lg`, `xl`) สำหรับ responsive
 3. **Grid System:** ใช้ระบบ 12 คอลัมน์ (12 = 100%, 6 = 50%, 4 = 33.33%, 3 = 25%)
-4. **Border Radius:** ค่า 1 = 4px, 2 = 8px, 3 = 12px, 4 = 16px
+4. **Border Radius:** ค่า 1 = 4px (recommended), 2 = 8px, 3 = 12px, 4 = 16px
+5. **มาตรฐานโปรเจกต์:** ใช้ `borderRadius: 1` เป็นมาตรฐานเพื่อความสม่ำเสมอ
 
 ---
 
@@ -680,4 +681,5 @@ npm run dev
 ---
 
 **สร้างโดย:** Antigravity AI  
-**อัพเดทล่าสุด:** 2025-12-08
+**อัพเดทล่าสุด:** 2026-01-12  
+**Version:** v1.7.0

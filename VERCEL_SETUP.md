@@ -47,11 +47,18 @@ NEXTAUTH_SECRET=your-secret-from-env-local
 
 **⚠️ สำคัญ:** `NEXTAUTH_URL` ต้องเป็น URL ของ production เช่น `https://magga.vercel.app` (ไม่ใช่ localhost)
 
-#### Admin Credentials
+#### Admin Credentials (ถ้าใช้ Credentials Provider)
 
 ```
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD=your-password
+```
+
+#### Google OAuth (ถ้าเปิดใช้ Google Login)
+
+```
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
 ```
 
 #### Cloudflare R2
