@@ -16,7 +16,7 @@ export interface PasswordValidationResult {
 }
 
 const PASSWORD_RULES = {
-  minLength: 12, // Increased from 8 to 12
+  minLength: 8,
   requireUppercase: true,
   requireLowercase: true,
   requireNumber: true,
