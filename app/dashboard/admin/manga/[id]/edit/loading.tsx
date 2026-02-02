@@ -30,28 +30,28 @@ export default function MangaEditLoading() {
               sx={{ bgcolor: "rgba(255,255,255,0.05)", mb: 2, borderRadius: 1 }}
             />
             <Grid container spacing={2}>
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Skeleton
                   variant="rectangular"
                   height={56}
                   sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 1 }}
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Skeleton
                   variant="rectangular"
                   height={120}
                   sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 1 }}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <Skeleton
                   variant="rectangular"
                   height={56}
                   sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 1 }}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <Skeleton
                   variant="rectangular"
                   height={56}

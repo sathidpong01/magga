@@ -50,7 +50,7 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
       </Typography>
       <Grid container spacing={3}>
         {category.mangas.map((manga) => (
-          <Grid item key={manga.id} xs={12} sm={6} md={4} lg={3}>
+          <Grid key={manga.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
             <MangaCard manga={manga} />
           </Grid>
         ))}

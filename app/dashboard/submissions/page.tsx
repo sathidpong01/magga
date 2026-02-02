@@ -88,7 +88,7 @@ export default function MySubmissionsPage() {
 
       if (res.ok) {
         setSubmissions((prev) =>
-          prev.filter((s) => s.id !== selectedSubmission.id)
+          prev.filter((s) => s.id !== selectedSubmission.id),
         );
         setDeleteDialogOpen(false);
         setSelectedSubmission(null);
@@ -200,7 +200,7 @@ export default function MySubmissionsPage() {
       ) : (
         <Grid container spacing={2}>
           {submissions.map((submission) => (
-            <Grid item xs={12} key={submission.id}>
+            <Grid key={submission.id} size={{ xs: 12 }}>
               <Paper
                 sx={{
                   p: 2,
@@ -246,10 +246,10 @@ export default function MySubmissionsPage() {
                           submission.status === "APPROVED"
                             ? "success"
                             : submission.status === "REJECTED"
-                            ? "error"
-                            : submission.status === "UNDER_REVIEW"
-                            ? "warning"
-                            : "default"
+                              ? "error"
+                              : submission.status === "UNDER_REVIEW"
+                                ? "warning"
+                                : "default"
                         }
                         size="small"
                       />

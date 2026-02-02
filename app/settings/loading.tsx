@@ -5,7 +5,7 @@ export default function SettingsLoading() {
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Grid container spacing={3}>
         {/* Tabs skeleton */}
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
             {[1, 2, 3].map((i) => (
               <Skeleton
@@ -20,7 +20,7 @@ export default function SettingsLoading() {
         </Grid>
 
         {/* Form skeleton */}
-        <Grid item xs={12}>
+        <Grid size={{ xs: 12 }}>
           <Paper sx={{ p: 3, bgcolor: "#171717", borderRadius: 1 }}>
             {/* Avatar section */}
             <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 4 }}>

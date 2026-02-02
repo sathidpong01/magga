@@ -46,7 +46,7 @@ export default function AccountSettings({ user, hasPassword }: Props) {
     username: user.username || "",
     email: user.email || "",
   });
-  
+
   // Password state
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
@@ -55,7 +55,10 @@ export default function AccountSettings({ user, hasPassword }: Props) {
   });
   const [showPassword, setShowPassword] = useState(false);
 
-  const [message, setMessage] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
+  const [message, setMessage] = useState<{
+    type: "success" | "error" | "info";
+    text: string;
+  } | null>(null);
   const [loading, setLoading] = useState(false);
   const [openEmailConfirm, setOpenEmailConfirm] = useState(false);
 
@@ -76,7 +79,7 @@ export default function AccountSettings({ user, hasPassword }: Props) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to update profile");
-      
+
       // Update session with new data
       await update({
         name: formData.name,
@@ -99,7 +102,10 @@ export default function AccountSettings({ user, hasPassword }: Props) {
       return;
     }
     if (passwordData.newPassword.length < 6) {
-      setMessage({ type: "error", text: "Password must be at least 6 characters" });
+      setMessage({
+        type: "error",
+        text: "Password must be at least 6 characters",
+      });
       return;
     }
 
@@ -109,14 +115,20 @@ export default function AccountSettings({ user, hasPassword }: Props) {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          currentPassword: hasPassword ? passwordData.currentPassword : undefined,
+          currentPassword: hasPassword
+            ? passwordData.currentPassword
+            : undefined,
           newPassword: passwordData.newPassword,
         }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to update password");
       setMessage({ type: "success", text: "Password updated successfully!" });
-      setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
       if (!hasPassword) window.location.reload();
     } catch (error: any) {
       setMessage({ type: "error", text: error.message });
@@ -142,8 +154,15 @@ export default function AccountSettings({ user, hasPassword }: Props) {
         <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
           My Profile
         </Typography>
-        
-        <Paper sx={{ p: 3, bgcolor: "#171717", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 1 }}>
+
+        <Paper
+          sx={{
+            p: 3,
+            bgcolor: "#171717",
+            border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: 1,
+          }}
+        >
           <Box sx={{ display: "flex", alignItems: "center", gap: 3, mb: 4 }}>
             <Avatar
               src={displayImage}
@@ -151,7 +170,11 @@ export default function AccountSettings({ user, hasPassword }: Props) {
               sx={{ width: 80, height: 80, border: "2px solid #fbbf24" }}
             />
             <Box>
-              <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 0.5 }}>
+              <Typography
+                variant="subtitle1"
+                fontWeight="bold"
+                sx={{ mb: 0.5 }}
+              >
                 Profile Image
               </Typography>
               <Typography variant="caption" color="text.secondary">
@@ -161,13 +184,17 @@ export default function AccountSettings({ user, hasPassword }: Props) {
           </Box>
 
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" sx={{ mb: 1, color: "#a3a3a3" }}>Display Name</Typography>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Typography variant="subtitle2" sx={{ mb: 1, color: "#a3a3a3" }}>
+                Display Name
+              </Typography>
               <TextField
                 fullWidth
                 id="display-name"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 variant="outlined"
                 size="small"
                 inputProps={{ "aria-label": "Display Name" }}
@@ -177,17 +204,21 @@ export default function AccountSettings({ user, hasPassword }: Props) {
                     "& fieldset": { borderColor: "#404040" },
                     "&:hover fieldset": { borderColor: "#fbbf24" },
                     "&.Mui-focused fieldset": { borderColor: "#fbbf24" },
-                  }
+                  },
                 }}
               />
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle2" sx={{ mb: 1, color: "#a3a3a3" }}>Username</Typography>
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Typography variant="subtitle2" sx={{ mb: 1, color: "#a3a3a3" }}>
+                Username
+              </Typography>
               <TextField
                 fullWidth
                 id="username"
                 value={formData.username}
-                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, username: e.target.value })
+                }
                 variant="outlined"
                 size="small"
                 inputProps={{ "aria-label": "Username" }}
@@ -197,18 +228,23 @@ export default function AccountSettings({ user, hasPassword }: Props) {
                     "& fieldset": { borderColor: "#404040" },
                     "&:hover fieldset": { borderColor: "#fbbf24" },
                     "&.Mui-focused fieldset": { borderColor: "#fbbf24" },
-                  }
+                  },
                 }}
               />
             </Grid>
           </Grid>
 
           <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
-            <Button 
-              variant="contained" 
+            <Button
+              variant="contained"
               onClick={handleProfileUpdate}
               disabled={loading}
-              sx={{ bgcolor: "#fbbf24", color: "black", fontWeight: "bold", "&:hover": { bgcolor: "#f59e0b" } }}
+              sx={{
+                bgcolor: "#fbbf24",
+                color: "black",
+                fontWeight: "bold",
+                "&:hover": { bgcolor: "#f59e0b" },
+              }}
             >
               Save Profile
             </Button>
@@ -222,17 +258,28 @@ export default function AccountSettings({ user, hasPassword }: Props) {
           Account Security
         </Typography>
 
-        <Paper sx={{ p: 3, bgcolor: "#171717", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 1 }}>
+        <Paper
+          sx={{
+            p: 3,
+            bgcolor: "#171717",
+            border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: 1,
+          }}
+        >
           {/* Email */}
           <Box sx={{ mb: 4 }}>
-            <Typography variant="subtitle2" sx={{ mb: 1, color: "#a3a3a3" }}>Email</Typography>
+            <Typography variant="subtitle2" sx={{ mb: 1, color: "#a3a3a3" }}>
+              Email
+            </Typography>
             <Grid container spacing={2} alignItems="center">
-              <Grid item xs>
+              <Grid size="grow">
                 <TextField
                   fullWidth
                   id="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
                   variant="outlined"
                   size="small"
                   inputProps={{ "aria-label": "Email Address" }}
@@ -242,22 +289,32 @@ export default function AccountSettings({ user, hasPassword }: Props) {
                       "& fieldset": { borderColor: "#404040" },
                       "&:hover fieldset": { borderColor: "#fbbf24" },
                       "&.Mui-focused fieldset": { borderColor: "#fbbf24" },
-                    }
+                    },
                   }}
                 />
               </Grid>
-              <Grid item>
-                <Button 
-                  variant="outlined" 
+              <Grid>
+                <Button
+                  variant="outlined"
                   onClick={() => {
                     if (formData.email !== user.email) {
                       setOpenEmailConfirm(true);
                     } else {
-                      setMessage({ type: "info", text: "Email has not been changed" });
+                      setMessage({
+                        type: "info",
+                        text: "Email has not been changed",
+                      });
                     }
                   }}
                   disabled={loading}
-                  sx={{ color: "#fbbf24", borderColor: "#fbbf24", "&:hover": { borderColor: "#f59e0b", bgcolor: "rgba(251, 191, 36, 0.1)" } }}
+                  sx={{
+                    color: "#fbbf24",
+                    borderColor: "#fbbf24",
+                    "&:hover": {
+                      borderColor: "#f59e0b",
+                      bgcolor: "rgba(251, 191, 36, 0.1)",
+                    },
+                  }}
                 >
                   Change Email
                 </Button>
@@ -274,31 +331,42 @@ export default function AccountSettings({ user, hasPassword }: Props) {
                 bgcolor: "#171717",
                 border: "1px solid rgba(255,255,255,0.1)",
                 color: "#fafafa",
-              }
+              },
             }}
           >
-            <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <WarningIcon sx={{ color: "#fbbf24" }} />
               Confirm Email Change
             </DialogTitle>
             <DialogContent>
               <DialogContentText sx={{ color: "#a3a3a3" }}>
-                Are you sure you want to change your email address to <strong>{formData.email}</strong>?
-                <br /><br />
-                This may affect your login method if you use Google Sign-In with the old email.
+                Are you sure you want to change your email address to{" "}
+                <strong>{formData.email}</strong>?
+                <br />
+                <br />
+                This may affect your login method if you use Google Sign-In with
+                the old email.
               </DialogContentText>
             </DialogContent>
             <DialogActions>
-              <Button onClick={() => setOpenEmailConfirm(false)} sx={{ color: "#a3a3a3" }}>
+              <Button
+                onClick={() => setOpenEmailConfirm(false)}
+                sx={{ color: "#a3a3a3" }}
+              >
                 Cancel
               </Button>
-              <Button 
+              <Button
                 onClick={() => {
                   setOpenEmailConfirm(false);
                   handleProfileUpdate();
-                }} 
+                }}
                 variant="contained"
-                sx={{ bgcolor: "#fbbf24", color: "black", fontWeight: "bold", "&:hover": { bgcolor: "#f59e0b" } }}
+                sx={{
+                  bgcolor: "#fbbf24",
+                  color: "black",
+                  fontWeight: "bold",
+                  "&:hover": { bgcolor: "#f59e0b" },
+                }}
               >
                 Confirm Change
               </Button>
@@ -308,9 +376,17 @@ export default function AccountSettings({ user, hasPassword }: Props) {
           <Divider sx={{ my: 3, borderColor: "rgba(255,255,255,0.1)" }} />
 
           {/* Password */}
-          <Box component="form" onSubmit={(e) => { e.preventDefault(); handlePasswordUpdate(); }}>
-            <Typography variant="subtitle2" sx={{ mb: 1, color: "#a3a3a3" }}>Password</Typography>
-            
+          <Box
+            component="form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              handlePasswordUpdate();
+            }}
+          >
+            <Typography variant="subtitle2" sx={{ mb: 1, color: "#a3a3a3" }}>
+              Password
+            </Typography>
+
             {hasPassword && (
               <TextField
                 fullWidth
@@ -318,26 +394,49 @@ export default function AccountSettings({ user, hasPassword }: Props) {
                 placeholder="Current Password"
                 type={showPassword ? "text" : "password"}
                 value={passwordData.currentPassword}
-                onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                onChange={(e) =>
+                  setPasswordData({
+                    ...passwordData,
+                    currentPassword: e.target.value,
+                  })
+                }
                 size="small"
                 autoComplete="current-password"
-                sx={{ mb: 2, "& .MuiOutlinedInput-root": { bgcolor: "#262626", "& fieldset": { borderColor: "#404040" } } }}
+                sx={{
+                  mb: 2,
+                  "& .MuiOutlinedInput-root": {
+                    bgcolor: "#262626",
+                    "& fieldset": { borderColor: "#404040" },
+                  },
+                }}
               />
             )}
 
             <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   fullWidth
                   id="new-password"
-                  placeholder={hasPassword ? "New Password" : "Set New Password"}
+                  placeholder={
+                    hasPassword ? "New Password" : "Set New Password"
+                  }
                   type={showPassword ? "text" : "password"}
                   value={passwordData.newPassword}
-                  onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                  onChange={(e) =>
+                    setPasswordData({
+                      ...passwordData,
+                      newPassword: e.target.value,
+                    })
+                  }
                   size="small"
                   autoComplete="new-password"
                   inputProps={{ "aria-label": "New Password" }}
-                  sx={{ "& .MuiOutlinedInput-root": { bgcolor: "#262626", "& fieldset": { borderColor: "#404040" } } }}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      bgcolor: "#262626",
+                      "& fieldset": { borderColor: "#404040" },
+                    },
+                  }}
                   InputProps={{
                     endAdornment: (
                       <InputAdornment position="end">
@@ -345,7 +444,9 @@ export default function AccountSettings({ user, hasPassword }: Props) {
                           onClick={() => setShowPassword(!showPassword)}
                           edge="end"
                           sx={{ color: "#a3a3a3" }}
-                          aria-label={showPassword ? "Hide password" : "Show password"}
+                          aria-label={
+                            showPassword ? "Hide password" : "Show password"
+                          }
                         >
                           {showPassword ? <VisibilityOff /> : <Visibility />}
                         </IconButton>
@@ -354,27 +455,44 @@ export default function AccountSettings({ user, hasPassword }: Props) {
                   }}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   fullWidth
                   id="confirm-password"
                   placeholder="Confirm New Password"
                   type={showPassword ? "text" : "password"}
                   value={passwordData.confirmPassword}
-                  onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                  onChange={(e) =>
+                    setPasswordData({
+                      ...passwordData,
+                      confirmPassword: e.target.value,
+                    })
+                  }
                   size="small"
                   autoComplete="new-password"
-                  sx={{ "& .MuiOutlinedInput-root": { bgcolor: "#262626", "& fieldset": { borderColor: "#404040" } } }}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      bgcolor: "#262626",
+                      "& fieldset": { borderColor: "#404040" },
+                    },
+                  }}
                 />
               </Grid>
             </Grid>
 
             <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
-              <Button 
+              <Button
                 type="submit"
-                variant="outlined" 
+                variant="outlined"
                 disabled={loading}
-                sx={{ color: "#fbbf24", borderColor: "#fbbf24", "&:hover": { borderColor: "#f59e0b", bgcolor: "rgba(251, 191, 36, 0.1)" } }}
+                sx={{
+                  color: "#fbbf24",
+                  borderColor: "#fbbf24",
+                  "&:hover": {
+                    borderColor: "#f59e0b",
+                    bgcolor: "rgba(251, 191, 36, 0.1)",
+                  },
+                }}
               >
                 {hasPassword ? "Change Password" : "Set Password"}
               </Button>

@@ -11,7 +11,7 @@ export default function MangaGridSkeleton({
   return (
     <Grid container spacing={3}>
       {Array.from({ length: count }).map((_, i) => (
-        <Grid item key={i} xs={6} sm={6} md={4} lg={3}>
+        <Grid key={i} size={{ xs: 6, sm: 6, md: 4, lg: 3 }}>
           <MangaCardSkeleton />
         </Grid>
       ))}

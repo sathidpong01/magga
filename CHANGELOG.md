@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.0] - 2026-02-03
+
+### Changed
+
+- **Major Framework Upgrade**: Modernized codebase for Next.js 16 & React 19 compliance
+- **Tailwind CSS v4 Migration**:
+  - Upgraded to v4 engine (Rust-based)
+  - Removed `tailwind.config.ts` in favor of CSS variables
+  - Updated `globals.css` with new syntax
+- **Material UI v7 Migration**:
+  - Upgraded all MUI packages to v7
+  - Refactored `Grid` components to use new `size` prop syntax (replacing legacy `xs`, `md`, `item`)
+- **Performance Optimization**:
+  - Refactored `MangaForm` to use Server Component Data Injection (removed client-side waterfalls)
+  - Improved initial page load for Admin Dashboard and Submit pages
+
+### Fixed
+
+- Fixed all deprecated `Grid` prop warnings
+- Resolved potential "sync-dynamic-apis" errors by adopting `await params` pattern
+
+---
+
 ## [1.7.0] - 2026-01-10
 
 ### Added

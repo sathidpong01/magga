@@ -51,7 +51,7 @@ export default async function AdminPage() {
       </Typography>
       <Grid container spacing={2} sx={{ mb: 3 }}>
         {/* Manga Stats Card */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card
             sx={{
               borderRadius: 1,
@@ -83,7 +83,7 @@ export default async function AdminPage() {
                 </Typography>
               </Box>
               <Grid container spacing={2}>
-                <Grid item xs={4}>
+                <Grid size={{ xs: 4 }}>
                   <Box
                     sx={{
                       p: 2,
@@ -107,7 +107,7 @@ export default async function AdminPage() {
                     </Typography>
                   </Box>
                 </Grid>
-                <Grid item xs={4}>
+                <Grid size={{ xs: 4 }}>
                   <Box
                     sx={{
                       p: 2,
@@ -131,7 +131,7 @@ export default async function AdminPage() {
                     </Typography>
                   </Box>
                 </Grid>
-                <Grid item xs={4}>
+                <Grid size={{ xs: 4 }}>
                   <Box
                     sx={{
                       p: 2,
@@ -161,7 +161,7 @@ export default async function AdminPage() {
         </Grid>
 
         {/* Classification Card */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card
             sx={{
               borderRadius: 1,
@@ -193,7 +193,7 @@ export default async function AdminPage() {
                 </Typography>
               </Box>
               <Grid container spacing={2}>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <Box
                     sx={{
                       p: 2,
@@ -217,7 +217,7 @@ export default async function AdminPage() {
                     </Typography>
                   </Box>
                 </Grid>
-                <Grid item xs={6}>
+                <Grid size={{ xs: 6 }}>
                   <Box
                     sx={{
                       p: 2,
@@ -249,7 +249,7 @@ export default async function AdminPage() {
 
       {/* Users & Community Stats */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card
             sx={{
               borderRadius: 1,
@@ -281,7 +281,7 @@ export default async function AdminPage() {
                 </Typography>
               </Box>
               <Grid container spacing={2}>
-                <Grid item xs={4}>
+                <Grid size={{ xs: 4 }}>
                   <Box
                     sx={{
                       p: 2,
@@ -305,7 +305,7 @@ export default async function AdminPage() {
                     </Typography>
                   </Box>
                 </Grid>
-                <Grid item xs={4}>
+                <Grid size={{ xs: 4 }}>
                   <Box
                     sx={{
                       p: 2,
@@ -329,7 +329,7 @@ export default async function AdminPage() {
                     </Typography>
                   </Box>
                 </Grid>
-                <Grid item xs={4}>
+                <Grid size={{ xs: 4 }}>
                   <Link
                     href="/dashboard/admin/submissions"
                     style={{ textDecoration: "none" }}
@@ -369,7 +369,7 @@ export default async function AdminPage() {
         </Grid>
 
         {/* Top 10 Popular Manga */}
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Card
             sx={{
               borderRadius: 1,

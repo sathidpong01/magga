@@ -9,19 +9,32 @@ export default async function EditMangaPage({
 }) {
   const { id } = await params;
 
-  // Fetch manga with all relations
-  const manga = await prisma.manga.findUnique({
-    where: { id },
-    include: {
-      category: true,
-      tags: true,
-      author: true,
-    },
-  });
+  // Fetch manga handling promises concurrently
+  const [manga, categories, tags, authors] = await Promise.all([
+    prisma.manga.findUnique({
+      where: { id },
+      include: {
+        category: true,
+        tags: true,
+        author: true,
+      },
+    }),
+    prisma.category.findMany({ orderBy: { name: "asc" } }),
+    prisma.tag.findMany({ orderBy: { name: "asc" } }),
+    prisma.author.findMany({ orderBy: { name: "asc" } }),
+  ]);
 
   if (!manga) {
     notFound();
   }
 
-  return <MangaForm manga={manga} mode="admin" />;
+  return (
+    <MangaForm
+      manga={manga}
+      mode="admin"
+      initialCategories={categories}
+      initialTags={tags}
+      initialAuthors={authors}
+    />
+  );
 }

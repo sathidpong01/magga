@@ -61,7 +61,7 @@ const getMangaBySlug = unstable_cache(
     });
   },
   ["manga-by-slug"],
-  { revalidate: 60, tags: ["manga"] }
+  { revalidate: 60, tags: ["manga"] },
 );
 
 // Pre-render top 50 manga at build time for better performance
@@ -109,7 +109,7 @@ export async function generateMetadata({ params }: MangaPageProps) {
     "nsfw",
   ];
   const hasSensitiveTag = manga.tags.some((tag) =>
-    SENSITIVE_KEYWORDS.includes(tag.name.toLowerCase())
+    SENSITIVE_KEYWORDS.includes(tag.name.toLowerCase()),
   );
   const hasSensitiveCategory =
     manga.category &&
@@ -229,10 +229,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
           <Grid container spacing={4}>
             {/* Left: Cover Image */}
             <Grid
-              item
-              xs={12}
-              md={4}
-              lg={3}
+              size={{ xs: 12, md: 4, lg: 3 }}
               sx={{
                 display: "flex",
                 justifyContent: { xs: "center", md: "flex-start" },
@@ -265,10 +262,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
 
             {/* Right: Details */}
             <Grid
-              item
-              xs={12}
-              md={8}
-              lg={9}
+              size={{ xs: 12, md: 8, lg: 9 }}
               sx={{
                 display: "flex",
                 flexDirection: "column",
@@ -282,7 +276,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
                     label={manga.category.name}
                     component="a"
                     href={`/category/${encodeURIComponent(
-                      manga.category.name
+                      manga.category.name,
                     )}`}
                     clickable
                     sx={{

@@ -53,6 +53,9 @@ import {
 type MangaFormProps = {
   manga?: Manga & { tags: Tag[]; author?: Author | null };
   mode: "admin" | "submission";
+  initialCategories: Category[];
+  initialTags: Tag[];
+  initialAuthors: Author[];
 };
 
 type PageItem = {
@@ -62,7 +65,13 @@ type PageItem = {
   preview: string;
 };
 
-export default function MangaForm({ manga, mode }: MangaFormProps) {
+export default function MangaForm({
+  manga,
+  mode,
+  initialCategories = [],
+  initialTags = [],
+  initialAuthors = [],
+}: MangaFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -70,15 +79,15 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
   // Keep track of uploaded URLs to avoid re-uploading
   const [uploadedUrls, setUploadedUrls] = useState<Record<string, string>>({});
 
-  // Data from API
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [tags, setTags] = useState<Tag[]>([]);
-  const [authors, setAuthors] = useState<Author[]>([]);
+  // Data from Server Props
+  const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const [tags, setTags] = useState<Tag[]>(initialTags);
+  const [authors, setAuthors] = useState<Author[]>(initialAuthors);
 
   // Modal State
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [notificationType, setNotificationType] = useState<"success" | "error">(
-    "success"
+    "success",
   );
   const [notificationTitle, setNotificationTitle] = useState("");
   const [notificationMessage, setNotificationMessage] = useState("");
@@ -88,54 +97,24 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
   const [slug, setSlug] = useState(manga?.slug || "");
   const [description, setDescription] = useState(manga?.description || "");
   const [authorName, setAuthorName] = useState(
-    (manga as any)?.authorName || ""
+    (manga as any)?.authorName || "",
   ); // ชื่อผู้แต่ง
   const [categoryId, setCategoryId] = useState(manga?.categoryId || "");
   const [selectedTags, setSelectedTags] = useState<Tag[]>(manga?.tags || []);
 
   // Local state for options to allow immediate updates
-  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
-  const [availableCategories, setAvailableCategories] = useState<Category[]>(
-    []
-  );
-  const [availableAuthors, setAvailableAuthors] = useState<Author[]>([]);
+  const [availableTags, setAvailableTags] = useState<Tag[]>(initialTags);
+  const [availableCategories, setAvailableCategories] =
+    useState<Category[]>(initialCategories);
+  const [availableAuthors, setAvailableAuthors] =
+    useState<Author[]>(initialAuthors);
   const [selectedAuthor, setSelectedAuthor] = useState<Author | null>(
-    manga?.author || null
+    manga?.author || null,
   );
   // Pending author name - will be created on form submit
   const [pendingAuthorName, setPendingAuthorName] = useState<string>("");
 
-  // Fetch data from API
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [catRes, tagRes, authorRes] = await Promise.all([
-          fetch("/api/categories"),
-          fetch("/api/tags"),
-          fetch("/api/authors"),
-        ]);
-
-        if (catRes.ok) {
-          const cats = await catRes.json();
-          setCategories(cats);
-          setAvailableCategories(cats);
-        }
-        if (tagRes.ok) {
-          const tagsData = await tagRes.json();
-          setTags(tagsData);
-          setAvailableTags(tagsData);
-        }
-        if (authorRes.ok) {
-          const authorsData = await authorRes.json();
-          setAuthors(authorsData);
-          setAvailableAuthors(authorsData);
-        }
-      } catch (err) {
-        console.error("Failed to fetch data:", err);
-      }
-    };
-    fetchData();
-  }, []);
+  // Client-side fetching removed - data provided by Server Component props
 
   const filter = createFilterOptions<Tag>();
   const categoryFilter = createFilterOptions<Category>();
@@ -192,7 +171,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -276,7 +255,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
   const handleCreditChange = (
     index: number,
     field: keyof AuthorCredit,
-    value: string
+    value: string,
   ) => {
     const newCredits = [...credits];
     newCredits[index] = { ...newCredits[index], [field]: value };
@@ -287,7 +266,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
     if (!url) return;
     try {
       const res = await authFetch(
-        `/api/metadata?url=${encodeURIComponent(url)}`
+        `/api/metadata?url=${encodeURIComponent(url)}`,
       );
       if (!res.ok) throw new Error("Failed to fetch metadata");
       const data = await res.json();
@@ -347,7 +326,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
 
   const handleSubmitWithDraft = async (
     e: React.FormEvent,
-    saveAsDraft: boolean
+    saveAsDraft: boolean,
   ) => {
     e.preventDefault();
     if (!title || !coverItem) {
@@ -391,7 +370,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
           throw new Error(
             `Failed to create author: ${
               error instanceof Error ? error.message : "Unknown error"
-            }`
+            }`,
           );
         }
       }
@@ -465,8 +444,8 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                   prev.map((f) =>
                     f.id === item.id
                       ? { ...f, progress, status: "uploading" }
-                      : f
-                  )
+                      : f,
+                  ),
                 );
               }
             };
@@ -481,8 +460,8 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     prev.map((f) =>
                       f.id === item.id
                         ? { ...f, progress: 100, status: "completed" }
-                        : f
-                    )
+                        : f,
+                    ),
                   );
                   resolve();
                 } catch (e) {
@@ -491,8 +470,8 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
               } else {
                 setUploadFiles((prev) =>
                   prev.map((f) =>
-                    f.id === item.id ? { ...f, status: "error" } : f
-                  )
+                    f.id === item.id ? { ...f, status: "error" } : f,
+                  ),
                 );
                 reject(new Error("Upload failed"));
               }
@@ -501,8 +480,8 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
             xhr.onerror = () => {
               setUploadFiles((prev) =>
                 prev.map((f) =>
-                  f.id === item.id ? { ...f, status: "error" } : f
-                )
+                  f.id === item.id ? { ...f, status: "error" } : f,
+                ),
               );
               reject(new Error("Network error"));
             };
@@ -616,7 +595,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
       setNotificationMessage(
         manga
           ? `Successfully updated "${title}".`
-          : `Successfully created "${title}".`
+          : `Successfully created "${title}".`,
       );
       setNotificationOpen(true);
     } catch (err) {
@@ -624,7 +603,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
       setNotificationType("error");
       setNotificationTitle("Error");
       setNotificationMessage(
-        err instanceof Error ? err.message : "An unexpected error occurred."
+        err instanceof Error ? err.message : "An unexpected error occurred.",
       );
       setNotificationOpen(true);
     } finally {
@@ -636,8 +615,8 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
     // Reset status to pending for this file
     setUploadFiles((prev) =>
       prev.map((f) =>
-        f.id === fileId ? { ...f, status: "pending", progress: 0 } : f
-      )
+        f.id === fileId ? { ...f, status: "pending", progress: 0 } : f,
+      ),
     );
 
     // Trigger submit again - it will filter and pick up pending/failed files
@@ -657,8 +636,8 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
 
     setUploadFiles((prev) =>
       prev.map((f) =>
-        f.id === fileId ? { ...f, status: "uploading", progress: 0 } : f
-      )
+        f.id === fileId ? { ...f, status: "uploading", progress: 0 } : f,
+      ),
     );
 
     xhr.upload.onprogress = (event) => {
@@ -666,8 +645,8 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
         const progress = (event.loaded / event.total) * 100;
         setUploadFiles((prev) =>
           prev.map((f) =>
-            f.id === fileId ? { ...f, progress, status: "uploading" } : f
-          )
+            f.id === fileId ? { ...f, progress, status: "uploading" } : f,
+          ),
         );
       }
     };
@@ -680,24 +659,26 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
           setUploadedUrls((prev) => ({ ...prev, [fileId]: url }));
           setUploadFiles((prev) =>
             prev.map((f) =>
-              f.id === fileId ? { ...f, progress: 100, status: "completed" } : f
-            )
+              f.id === fileId
+                ? { ...f, progress: 100, status: "completed" }
+                : f,
+            ),
           );
         } catch (e) {
           setUploadFiles((prev) =>
-            prev.map((f) => (f.id === fileId ? { ...f, status: "error" } : f))
+            prev.map((f) => (f.id === fileId ? { ...f, status: "error" } : f)),
           );
         }
       } else {
         setUploadFiles((prev) =>
-          prev.map((f) => (f.id === fileId ? { ...f, status: "error" } : f))
+          prev.map((f) => (f.id === fileId ? { ...f, status: "error" } : f)),
         );
       }
     };
 
     xhr.onerror = () => {
       setUploadFiles((prev) =>
-        prev.map((f) => (f.id === fileId ? { ...f, status: "error" } : f))
+        prev.map((f) => (f.id === fileId ? { ...f, status: "error" } : f)),
       );
     };
 
@@ -712,7 +693,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
   const handleGoToList = () => {
     setNotificationOpen(false);
     router.push(
-      mode === "admin" ? "/dashboard/admin/manga" : "/dashboard/submissions"
+      mode === "admin" ? "/dashboard/admin/manga" : "/dashboard/submissions",
     );
     router.refresh();
   };
@@ -723,8 +704,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
         <Grid container spacing={3}>
           {/* Header / Actions */}
           <Grid
-            item
-            xs={12}
+            size={{ xs: 12 }}
             sx={{
               display: "flex",
               justifyContent: "space-between",
@@ -736,8 +716,8 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
               {manga
                 ? "Edit Manga"
                 : mode === "admin"
-                ? "Create New Manga"
-                : "Submit Manga"}
+                  ? "Create New Manga"
+                  : "Submit Manga"}
             </Typography>
             <Stack direction="row" spacing={2}>
               <Button
@@ -789,16 +769,16 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                 {isSubmitting
                   ? "Saving..."
                   : manga
-                  ? "Update Manga"
-                  : mode === "admin"
-                  ? "Create Manga"
-                  : "Submit"}
+                    ? "Update Manga"
+                    : mode === "admin"
+                      ? "Create Manga"
+                      : "Submit"}
               </Button>
             </Stack>
           </Grid>
 
           {error && (
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
               <Alert severity="error" sx={{ borderRadius: 1 }}>
                 {error}
               </Alert>
@@ -806,7 +786,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
           )}
 
           {/* Left Column: General Info */}
-          <Grid item xs={12} md={7}>
+          <Grid size={{ xs: 12, md: 7 }}>
             <Paper
               elevation={0}
               sx={{ p: 3, borderRadius: 1, bgcolor: "#171717", minHeight: 600 }}
@@ -826,7 +806,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                 General Information
               </Typography>
               <Grid container spacing={3}>
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <TextField
                     label="Title"
                     value={title}
@@ -840,7 +820,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     }}
                   />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <TextField
                     label="Slug"
                     value={slug}
@@ -876,7 +856,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     }}
                   />
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <TextField
                     label="Description"
                     value={description ?? ""}
@@ -891,7 +871,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     }}
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Autocomplete
                     value={
                       pendingAuthorName
@@ -919,7 +899,8 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                       const { inputValue } = params;
                       const isExisting = options.some(
                         (option) =>
-                          option.name.toLowerCase() === inputValue.toLowerCase()
+                          option.name.toLowerCase() ===
+                          inputValue.toLowerCase(),
                       );
                       if (inputValue !== "" && !isExisting) {
                         filtered.push({
@@ -965,7 +946,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     )}
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     label="ชื่อผู้แต่ง (Author Name for OG)"
                     value={authorName}
@@ -983,7 +964,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
 
                 {/* Author Credits - Show only when adding new author */}
                 {pendingAuthorName && (
-                  <Grid item xs={12}>
+                  <Grid size={{ xs: 12 }}>
                     <Paper
                       elevation={0}
                       sx={{
@@ -1049,7 +1030,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                               }}
                             >
                               <Grid container spacing={2}>
-                                <Grid item xs={12}>
+                                <Grid size={{ xs: 12 }}>
                                   <Box
                                     sx={{
                                       display: "flex",
@@ -1064,7 +1045,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                                         handleCreditChange(
                                           index,
                                           "url",
-                                          e.target.value
+                                          e.target.value,
                                         )
                                       }
                                       fullWidth
@@ -1115,7 +1096,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                                     </Tooltip>
                                   </Box>
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
                                   <TextField
                                     label="Label"
                                     value={credit.label}
@@ -1123,7 +1104,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                                       handleCreditChange(
                                         index,
                                         "label",
-                                        e.target.value
+                                        e.target.value,
                                       )
                                     }
                                     fullWidth
@@ -1136,7 +1117,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                                     }}
                                   />
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
                                   <TextField
                                     label="Icon URL"
                                     value={credit.icon}
@@ -1144,7 +1125,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                                       handleCreditChange(
                                         index,
                                         "icon",
-                                        e.target.value
+                                        e.target.value,
                                       )
                                     }
                                     fullWidth
@@ -1166,7 +1147,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                   </Grid>
                 )}
 
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Autocomplete
                     value={
                       availableCategories.find((c) => c.id === categoryId) ||
@@ -1187,7 +1168,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                       const { inputValue } = params;
                       // Suggest the creation of a new value
                       const isExisting = options.some(
-                        (option) => option.name === inputValue
+                        (option) => option.name === inputValue,
                       );
                       if (inputValue !== "" && !isExisting) {
                         filtered.push({
@@ -1238,7 +1219,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     )}
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Autocomplete
                     multiple
                     id="tags-autocomplete"
@@ -1267,7 +1248,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                       // Update state only with valid existing tags
                       // New tags will be added via handleCreateTag
                       const validTags = newValue.filter(
-                        (t) => !(t as any).inputValue && typeof t !== "string"
+                        (t) => !(t as any).inputValue && typeof t !== "string",
                       ) as Tag[];
                       setSelectedTags(validTags);
                     }}
@@ -1276,7 +1257,8 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                       const { inputValue } = params;
                       const isExisting = options.some(
                         (option) =>
-                          option.name.toLowerCase() === inputValue.toLowerCase()
+                          option.name.toLowerCase() ===
+                          inputValue.toLowerCase(),
                       );
                       if (inputValue !== "" && !isExisting) {
                         filtered.push({
@@ -1319,7 +1301,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
           </Grid>
 
           {/* Right Column: Media Assets */}
-          <Grid item xs={12} md={5}>
+          <Grid size={{ xs: 12, md: 5 }}>
             <Paper
               elevation={0}
               sx={{ p: 3, borderRadius: 1, bgcolor: "#171717", height: "100%" }}

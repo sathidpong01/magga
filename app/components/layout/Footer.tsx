@@ -37,7 +37,7 @@ export default function Footer() {
       <Container maxWidth="lg">
         <Grid container spacing={4} alignItems="flex-start">
           {/* Logo & Description */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Box sx={{ mb: 2 }}>
               <Image
                 src="/logo.svg"
@@ -66,9 +66,7 @@ export default function Footer() {
 
           {/* Policy Links */}
           <Grid
-            item
-            xs={12}
-            md={6}
+            size={{ xs: 12, md: 6 }}
             sx={{ textAlign: { xs: "left", md: "right" } }}
           >
             <Typography

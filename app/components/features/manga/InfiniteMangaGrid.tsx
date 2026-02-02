@@ -84,7 +84,7 @@ export default function InfiniteMangaGrid({
           fetchMore();
         }
       },
-      { rootMargin: "200px" }
+      { rootMargin: "200px" },
     );
 
     if (loaderRef.current) {
@@ -147,16 +147,12 @@ export default function InfiniteMangaGrid({
       <Grid container spacing={3} sx={{ minHeight: 400 * 3 }}>
         {itemsWithAds.map((item, index) => (
           <Grid
-            item
             key={
               item.type === "manga"
                 ? item.data.id
                 : `ad-${item.data.id}-${item.index}`
             }
-            xs={6}
-            sm={6}
-            md={4}
-            lg={3}
+            size={{ xs: 6, sm: 6, md: 4, lg: 3 }}
           >
             {item.type === "manga" ? (
               <MangaCard manga={item.data} priority={index < 4} />
