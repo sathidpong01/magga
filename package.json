@@ -9,6 +9,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "postinstall": "prisma generate",
     "db:seed": "prisma db seed",
     "analyze": "ANALYZE=true next build"
   },
