@@ -723,14 +723,13 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
         <Grid container spacing={3}>
           {/* Header / Actions */}
           <Grid
-            item
-            xs={12}
             sx={{
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
               mb: 2,
             }}
+            size={12}
           >
             <Typography variant="h5" component="h2" sx={{ fontWeight: 700 }}>
               {manga
@@ -798,7 +797,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
           </Grid>
 
           {error && (
-            <Grid item xs={12}>
+<Grid  size={12}>
               <Alert severity="error" sx={{ borderRadius: 1 }}>
                 {error}
               </Alert>
@@ -806,7 +805,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
           )}
 
           {/* Left Column: General Info */}
-          <Grid item xs={12} md={7}>
+<Grid   size={{ xs: 12, md: 7 }}>
             <Paper
               elevation={0}
               sx={{ p: 3, borderRadius: 1, bgcolor: "#171717", minHeight: 600 }}
@@ -826,7 +825,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                 General Information
               </Typography>
               <Grid container spacing={3}>
-                <Grid item xs={12}>
+<Grid  size={12}>
                   <TextField
                     label="Title"
                     value={title}
@@ -840,7 +839,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     }}
                   />
                 </Grid>
-                <Grid item xs={12}>
+<Grid  size={12}>
                   <TextField
                     label="Slug"
                     value={slug}
@@ -876,7 +875,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     }}
                   />
                 </Grid>
-                <Grid item xs={12}>
+<Grid  size={12}>
                   <TextField
                     label="Description"
                     value={description ?? ""}
@@ -891,7 +890,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     }}
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
+<Grid   size={{ xs: 12, md: 6 }}>
                   <Autocomplete
                     value={
                       pendingAuthorName
@@ -965,7 +964,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     )}
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
+<Grid   size={{ xs: 12, md: 6 }}>
                   <TextField
                     label="ชื่อผู้แต่ง (Author Name for OG)"
                     value={authorName}
@@ -983,7 +982,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
 
                 {/* Author Credits - Show only when adding new author */}
                 {pendingAuthorName && (
-                  <Grid item xs={12}>
+<Grid  size={12}>
                     <Paper
                       elevation={0}
                       sx={{
@@ -1049,7 +1048,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                               }}
                             >
                               <Grid container spacing={2}>
-                                <Grid item xs={12}>
+<Grid  size={12}>
                                   <Box
                                     sx={{
                                       display: "flex",
@@ -1115,7 +1114,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                                     </Tooltip>
                                   </Box>
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+<Grid   size={{ xs: 12, sm: 6 }}>
                                   <TextField
                                     label="Label"
                                     value={credit.label}
@@ -1136,7 +1135,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                                     }}
                                   />
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+<Grid   size={{ xs: 12, sm: 6 }}>
                                   <TextField
                                     label="Icon URL"
                                     value={credit.icon}
@@ -1166,7 +1165,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                   </Grid>
                 )}
 
-                <Grid item xs={12} md={6}>
+<Grid   size={{ xs: 12, md: 6 }}>
                   <Autocomplete
                     value={
                       availableCategories.find((c) => c.id === categoryId) ||
@@ -1238,7 +1237,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     )}
                   />
                 </Grid>
-                <Grid item xs={12} md={6}>
+<Grid   size={{ xs: 12, md: 6 }}>
                   <Autocomplete
                     multiple
                     id="tags-autocomplete"
@@ -1319,7 +1318,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
           </Grid>
 
           {/* Right Column: Media Assets */}
-          <Grid item xs={12} md={5}>
+<Grid   size={{ xs: 12, md: 5 }}>
             <Paper
               elevation={0}
               sx={{ p: 3, borderRadius: 1, bgcolor: "#171717", height: "100%" }}

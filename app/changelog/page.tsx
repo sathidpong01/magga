@@ -15,6 +15,18 @@ import UpdateIcon from "@mui/icons-material/Update";
 // Static data for changelog
 const changelogData = [
   {
+    date: "2026-02-13",
+    version: "v1.8.0",
+    title: "ปรับปรุงโครงสร้างและประสิทธิภาพ",
+    changes: [
+      "อัปเกรด Tailwind CSS เป็นเวอร์ชัน 4 (เร็วขึ้น, ไฟล์เล็กลง)",
+      "อัปเกรด Material UI เป็นเวอร์ชัน 7 (ใช้ Grid v2 API ใหม่)",
+      "เปลี่ยนระบบเข้ารหัส MD5 เป็น Web Crypto API (ปลอดภัยและรองรับ Edge Runtime)",
+      "ปรับปรุง TypeScript Config และแก้ปัญหา Type Safety ทั้งโปรเจกต์",
+      "เพิ่มประสิทธิภาพการ Build และลดขนาดไฟล์ bundle",
+    ],
+  },
+  {
     date: "2026-01-11",
     version: "v1.7.2",
     title: "เพิ่มความปลอดภัย",

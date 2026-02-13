@@ -12,7 +12,7 @@ export default function DashboardLoading() {
       {/* Submissions Grid */}
       <Grid container spacing={2}>
         {[1, 2, 3, 4].map(i => (
-          <Grid item xs={12} key={i}>
+<Grid  key={i} size={12}>
             <Paper sx={{ p: 2, bgcolor: '#171717', display: 'flex', gap: 2, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 1 }}>
               {/* Cover */}
               <Skeleton 

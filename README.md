@@ -28,8 +28,8 @@ _พัฒนาด้วย Next.js 16 (App Router) และระบบจั
 - **Database:** [Turso (LibSQL)](https://turso.tech/) (ผ่าน [Prisma ORM 7](https://www.prisma.io/))
 - **Storage:** [Cloudflare R2](https://www.cloudflare.com/developer-platform/r2/)
 - **Styling:**
-  - [Tailwind CSS](https://tailwindcss.com/)
-  - [Material UI (MUI)](https://mui.com/) (สำหรับ Component ต่างๆ)
+  - [Tailwind CSS v4](https://tailwindcss.com/)
+  - [Material UI (MUI) v7](https://mui.com/) (สำหรับ Component ต่างๆ)
 - **Authentication:** [NextAuth.js](https://next-auth.js.org/) (Credentials Provider)
 - **Analytics:** [Vercel Analytics](https://vercel.com/analytics)
 - **Image Processing:** [Sharp](https://sharp.pixelplumbing.com/) (Server-side compression & WebP conversion)
@@ -173,25 +173,21 @@ npm run dev
 ### 🚀 Performance Optimizations
 
 - **ISR (Incremental Static Regeneration):**
-
   - Home page: revalidate ทุก 60 วินาที
   - Admin Dashboard: revalidate ทุก 60 วินาที (New!)
   - Manga pages: revalidate ทุก 1 ชั่วโมง + pre-render 50 เรื่องยอดนิยม
   - Category/Tag pages: revalidate ทุก 5 นาที
 
 - **User Experience (UX):**
-
   - **Loading Skeletons:** ใช้ `loading.tsx` เพื่อแสดง Skeleton UI ระหว่างรอข้อมูล (Streaming SSR)
   - **Font Optimization:** ใช้ `next/font` เพื่อลด Layout Shift
 
 - **Image Optimization:**
-
   - WebP/AVIF formats
   - 1 year cache TTL
   - Lazy loading รูปภาพ
 
 - **API Caching:**
-
   - CDN edge caching (60 วินาที)
   - Stale-while-revalidate strategy
 

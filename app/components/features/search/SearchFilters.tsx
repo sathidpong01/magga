@@ -252,7 +252,7 @@ export default function SearchFilters({ categories, tags }: Props) {
         <Box sx={{ mt: 3 }}>
           <Grid container spacing={2}>
             {/* Smart Search with Fuse.js - Top, centered, full width */}
-            <Grid item xs={12}>
+<Grid  size={12}>
               <Typography
                 variant="subtitle2"
                 gutterBottom
@@ -341,7 +341,7 @@ export default function SearchFilters({ categories, tags }: Props) {
             </Grid>
 
             {/* Category */}
-            <Grid item xs={12} sm={6}>
+<Grid   size={{ xs: 12, sm: 6 }}>
               <Typography
                 variant="subtitle2"
                 gutterBottom
@@ -378,7 +378,7 @@ export default function SearchFilters({ categories, tags }: Props) {
             </Grid>
 
             {/* Sorting */}
-            <Grid item xs={12} sm={6}>
+<Grid   size={{ xs: 12, sm: 6 }}>
               <Typography
                 variant="subtitle2"
                 gutterBottom
@@ -412,7 +412,7 @@ export default function SearchFilters({ categories, tags }: Props) {
             </Grid>
 
             {/* Tags - Full width to allow horizontal tag display */}
-            <Grid item xs={12}>
+<Grid  size={12}>
               <Typography
                 variant="subtitle2"
                 gutterBottom
@@ -461,14 +461,13 @@ export default function SearchFilters({ categories, tags }: Props) {
 
             {/* Action Buttons */}
             <Grid
-              item
-              xs={12}
               sx={{
                 display: "flex",
                 justifyContent: "flex-end",
                 gap: 2,
                 mt: 2,
               }}
+              size={12}
             >
               <Button variant="outlined" onClick={handleClearFilters}>
                 Clear

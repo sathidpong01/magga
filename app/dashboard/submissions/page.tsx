@@ -200,7 +200,7 @@ export default function MySubmissionsPage() {
       ) : (
         <Grid container spacing={2}>
           {submissions.map((submission) => (
-            <Grid item xs={12} key={submission.id}>
+<Grid  key={submission.id} size={12}>
               <Paper
                 sx={{
                   p: 2,

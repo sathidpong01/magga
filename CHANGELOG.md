@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.8.0] - 2026-02-13
+
+### Changed
+
+- Upgraded **Tailwind CSS** to v4 (Improved build performance, smaller bundle)
+- Upgraded **MUI (Material UI)** to v7 (Migrated to Grid v2 API)
+- Replaced legacy `md5` library with native Web Crypto API
+- Updated TypeScript configuration to `es2017` target and `bundler` resolution
+- Increased Vercel function timeouts to 30s for complex queries
+
+### Fixed
+
+- Resolved MUI Grid v2 type compatibility issues
+- Fixed ESLint configuration for Next.js 16 (Flat Config)
+- Cleaned up unused dependencies and scripts
+
+---
+
 ## [1.7.0] - 2026-01-10
 
 ### Added

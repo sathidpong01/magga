@@ -229,14 +229,11 @@ export default async function MangaPage({ params }: MangaPageProps) {
           <Grid container spacing={4}>
             {/* Left: Cover Image */}
             <Grid
-              item
-              xs={12}
-              md={4}
-              lg={3}
               sx={{
                 display: "flex",
                 justifyContent: { xs: "center", md: "flex-start" },
               }}
+              size={{ xs: 12, md: 4, lg: 3 }}
             >
               <Box
                 sx={{
@@ -265,15 +262,12 @@ export default async function MangaPage({ params }: MangaPageProps) {
 
             {/* Right: Details */}
             <Grid
-              item
-              xs={12}
-              md={8}
-              lg={9}
               sx={{
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "flex-end",
               }}
+              size={{ xs: 12, md: 8, lg: 9 }}
             >
               <Box>
                 {/* Category Chip */}

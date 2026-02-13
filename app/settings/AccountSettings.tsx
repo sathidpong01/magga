@@ -26,7 +26,7 @@ import {
   DialogActions,
 } from "@mui/material";
 import { useSession } from "next-auth/react";
-import md5 from "md5";
+import { md5Sync } from "@/lib/md5";
 
 interface UserData {
   name: string | null;
@@ -60,7 +60,7 @@ export default function AccountSettings({ user, hasPassword }: Props) {
   const [openEmailConfirm, setOpenEmailConfirm] = useState(false);
 
   // Calculate Gravatar URL
-  const gravatarUrl = `https://www.gravatar.com/avatar/${md5(formData.email.toLowerCase().trim())}?d=mp&s=200`;
+  const gravatarUrl = `https://www.gravatar.com/avatar/${md5Sync(formData.email.toLowerCase().trim())}?d=mp&s=200`;
   const displayImage = user.image || gravatarUrl;
 
   const { data: session, update } = useSession();
@@ -161,7 +161,7 @@ export default function AccountSettings({ user, hasPassword }: Props) {
           </Box>
 
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+<Grid   size={{ xs: 12, md: 6 }}>
               <Typography variant="subtitle2" sx={{ mb: 1, color: "#a3a3a3" }}>Display Name</Typography>
               <TextField
                 fullWidth
@@ -181,7 +181,7 @@ export default function AccountSettings({ user, hasPassword }: Props) {
                 }}
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+<Grid   size={{ xs: 12, md: 6 }}>
               <Typography variant="subtitle2" sx={{ mb: 1, color: "#a3a3a3" }}>Username</Typography>
               <TextField
                 fullWidth
@@ -227,7 +227,7 @@ export default function AccountSettings({ user, hasPassword }: Props) {
           <Box sx={{ mb: 4 }}>
             <Typography variant="subtitle2" sx={{ mb: 1, color: "#a3a3a3" }}>Email</Typography>
             <Grid container spacing={2} alignItems="center">
-              <Grid item xs>
+              <Grid size="grow">
                 <TextField
                   fullWidth
                   id="email"
@@ -246,7 +246,7 @@ export default function AccountSettings({ user, hasPassword }: Props) {
                   }}
                 />
               </Grid>
-              <Grid item>
+              <Grid>
                 <Button 
                   variant="outlined" 
                   onClick={() => {
@@ -326,7 +326,7 @@ export default function AccountSettings({ user, hasPassword }: Props) {
             )}
 
             <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
+<Grid   size={{ xs: 12, md: 6 }}>
                 <TextField
                   fullWidth
                   id="new-password"
@@ -354,7 +354,7 @@ export default function AccountSettings({ user, hasPassword }: Props) {
                   }}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+<Grid   size={{ xs: 12, md: 6 }}>
                 <TextField
                   fullWidth
                   id="confirm-password"

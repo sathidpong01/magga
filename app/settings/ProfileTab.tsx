@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import PersonIcon from "@mui/icons-material/Person";
 import SaveIcon from "@mui/icons-material/Save";
-import md5 from "md5";
+import { md5Sync } from "@/lib/md5";
 
 interface UserData {
   name: string | null;
@@ -36,7 +36,7 @@ export default function ProfileTab({ user }: Props) {
   const [loading, setLoading] = useState(false);
 
   // Calculate Gravatar URL
-  const gravatarUrl = `https://www.gravatar.com/avatar/${md5(formData.email.toLowerCase().trim())}?d=mp&s=200`;
+  const gravatarUrl = `https://www.gravatar.com/avatar/${md5Sync(formData.email.toLowerCase().trim())}?d=mp&s=200`;
   const displayImage = user.image || gravatarUrl;
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -12,7 +12,7 @@ export default function MangaReaderSkeleton() {
         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1, pt: { xs: 4, md: 6 }, pb: { xs: 4, md: 4 } }}>
           <Grid container spacing={4}>
             {/* Left: Cover Image */}
-            <Grid item xs={12} md={4} lg={3} sx={{ display: 'flex', justifyContent: { xs: 'center', md: 'flex-start' } }}>
+            <Grid size={{ xs: 12, md: 4, lg: 3 }} sx={{ display: 'flex', justifyContent: { xs: 'center', md: 'flex-start' } }}>
               <Skeleton 
                 variant="rectangular" 
                 sx={{ 
@@ -26,7 +26,7 @@ export default function MangaReaderSkeleton() {
             </Grid>
 
             {/* Right: Details */}
-            <Grid item xs={12} md={8} lg={9} sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+            <Grid size={{ xs: 12, md: 8, lg: 9 }} sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
               <Box>
                 {/* Category Chip */}
                 <Skeleton variant="rounded" width={80} height={28} sx={{ mb: 2, bgcolor: "rgba(251, 191, 36, 0.2)" }} />

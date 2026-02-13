@@ -396,7 +396,7 @@ export default function SubmissionDetailPage({
 
       <Grid container spacing={3}>
         {/* Left Column */}
-        <Grid item xs={12} lg={8}>
+<Grid   size={{ xs: 12, lg: 8 }}>
           {/* Description Card */}
           <Paper
             sx={{
@@ -479,7 +479,7 @@ export default function SubmissionDetailPage({
                   }}
                 />
                 <Grid container spacing={2}>
-                  <Grid item xs={12} md={6}>
+<Grid   size={{ xs: 12, md: 6 }}>
                     <FormControl fullWidth variant="filled">
                       <InputLabel>หมวดหมู่</InputLabel>
                       <Select
@@ -504,7 +504,7 @@ export default function SubmissionDetailPage({
                       </Select>
                     </FormControl>
                   </Grid>
-                  <Grid item xs={12} md={6}>
+<Grid   size={{ xs: 12, md: 6 }}>
                     <Autocomplete
                       multiple
                       options={tags}
@@ -660,7 +660,7 @@ export default function SubmissionDetailPage({
         </Grid>
 
         {/* Right Column */}
-        <Grid item xs={12} lg={4}>
+<Grid   size={{ xs: 12, lg: 4 }}>
           {/* Submitter Card */}
           <Paper
             sx={{

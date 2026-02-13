@@ -40,7 +40,7 @@ export default function SubmissionDetailLoading() {
 
       <Grid container spacing={3}>
         {/* Left Column */}
-        <Grid item xs={12} lg={8}>
+<Grid   size={{ xs: 12, lg: 8 }}>
           {/* Description Card */}
           <Paper sx={{ p: 3, mb: 3, bgcolor: '#171717', borderRadius: 1, border: '1px solid rgba(255,255,255,0.08)' }}>
             <Skeleton variant="text" width={150} height={32} sx={{ bgcolor: "rgba(255,255,255,0.05)", mb: 2 }} />
@@ -69,7 +69,7 @@ export default function SubmissionDetailLoading() {
         </Grid>
 
         {/* Right Column */}
-        <Grid item xs={12} lg={4}>
+<Grid   size={{ xs: 12, lg: 4 }}>
           {/* Submitter Card */}
           <Paper sx={{ p: 3, mb: 3, bgcolor: '#171717', borderRadius: 1, border: '1px solid rgba(255,255,255,0.08)' }}>
             <Skeleton variant="text" width={100} height={32} sx={{ bgcolor: "rgba(255,255,255,0.05)", mb: 2 }} />
