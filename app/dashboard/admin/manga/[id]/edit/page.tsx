@@ -9,7 +9,7 @@ export default async function EditMangaPage({
 }) {
   const { id } = await params;
 
-  // Fetch manga with all relations
+  // Fetch manga
   const manga = await prisma.manga.findUnique({
     where: { id },
     include: {

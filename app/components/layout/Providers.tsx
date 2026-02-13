@@ -2,8 +2,8 @@
 
 import { SessionProvider } from "next-auth/react";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import CssBaseline from "@mui/material/CssBaseline";
-import { AppRouterCacheProvider } from "@mui/material-nextjs/v14-appRouter";
+import { CssBaseline } from "@mui/material";
+import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 import { ToastProvider } from "@/app/contexts/ToastContext";
 
 // NOTE: Font is already loaded in layout.tsx, use CSS font-family string here
@@ -113,7 +113,7 @@ type Props = {
 
 export const Providers = ({ children }: Props) => {
   return (
-    <AppRouterCacheProvider>
+    <AppRouterCacheProvider options={{ enableCssLayer: true }}>
       <ThemeProvider theme={darkTheme}>
         <CssBaseline />
         <SessionProvider>

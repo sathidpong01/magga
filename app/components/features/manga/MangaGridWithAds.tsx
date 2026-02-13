@@ -2,7 +2,9 @@
 
 import { useMemo } from "react";
 import { Grid } from "@mui/material";
-import MangaCard, { MangaWithDetails } from "@/app/components/features/manga/MangaCard";
+import MangaCard, {
+  MangaWithDetails,
+} from "@/app/components/features/manga/MangaCard";
 import { AdCard } from "@/app/components/features/ads";
 
 interface Ad {

@@ -84,7 +84,7 @@ export default function InfiniteMangaGrid({
           fetchMore();
         }
       },
-      { rootMargin: "200px" }
+      { rootMargin: "200px" },
     );
 
     if (loaderRef.current) {
