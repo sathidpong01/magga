@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { auth } from "@/auth";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -10,7 +9,7 @@ type RouteContext = {
 // PATCH - อัพเดทโฆษณา (Admin only)
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session || (session.user as { role?: string })?.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -36,7 +35,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 // DELETE - ลบโฆษณา (Admin only)
 export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session || (session.user as { role?: string })?.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

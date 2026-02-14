@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 
 type RouteParams = {
@@ -11,7 +10,7 @@ type RouteParams = {
 
 // PATCH /api/comments/[commentId] - Update a comment
 export async function PATCH(request: Request, { params }: RouteParams) {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
   const { commentId } = await params;
   
   if (!session?.user?.id) {
@@ -69,7 +68,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
 // DELETE /api/comments/[commentId] - Delete a comment
 export async function DELETE(request: Request, { params }: RouteParams) {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
   const { commentId } = await params;
   
   if (!session?.user?.id) {
@@ -85,7 +84,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     // Owner or admin can delete
     const isOwner = comment.userId === session.user.id;
-    const isAdmin = (session.user as { role?: string }).role === "admin";
+    const isAdmin = (session.user as { role?: string }).role === "ADMIN";
 
     if (!isOwner && !isAdmin) {
       return NextResponse.json({ error: "You don't have permission to delete this comment" }, { status: 403 });

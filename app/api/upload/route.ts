@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]/route";
+import { auth } from "@/auth";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { checkRateLimit } from "@/lib/rate-limit";
 
@@ -22,7 +21,7 @@ const S3 = new S3Client({
 import sharp from "sharp";
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

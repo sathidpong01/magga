@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { auth } from "@/auth";
 import { requireAdmin } from "@/lib/auth-helpers";
 
 // GET - ดึงโฆษณาตาม placement (ใช้ all=true สำหรับ admin page เพื่อดึงทั้งหมด)
@@ -40,7 +39,7 @@ export async function GET(request: NextRequest) {
 // POST - สร้างโฆษณาใหม่ (Admin only)
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     const authError = requireAdmin(session);
     if (authError) return authError;
 

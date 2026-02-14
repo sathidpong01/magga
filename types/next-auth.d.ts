@@ -1,5 +1,4 @@
-import { DefaultSession, DefaultUser } from "next-auth";
-import { JWT, DefaultJWT } from "next-auth/jwt";
+import { DefaultSession } from "next-auth";
 
 declare module "next-auth" {
   interface Session {
@@ -10,14 +9,14 @@ declare module "next-auth" {
     } & DefaultSession["user"];
   }
 
-  interface User extends DefaultUser {
-    role: string;
-    isBanned: boolean;
+  interface User {
+    role?: string;
+    isBanned?: boolean;
   }
 }
 
-declare module "next-auth/jwt" {
-  interface JWT extends DefaultJWT {
+declare module "@auth/core/jwt" {
+  interface JWT {
     id: string;
     role: string;
     isBanned: boolean;

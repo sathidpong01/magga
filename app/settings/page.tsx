@@ -1,5 +1,4 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { Box, Container } from "@mui/material";
@@ -7,7 +6,7 @@ import Sidebar from "./Sidebar";
 import AccountSettings from "./AccountSettings";
 
 export default async function SettingsPage() {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
   if (!session) {
     redirect("/api/auth/signin?callbackUrl=/settings");

@@ -1,13 +1,12 @@
 ﻿import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { auth } from "@/auth";
 import { requireAdmin } from "@/lib/auth-helpers";
 
 // GET - List all users with counts
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     const authError = requireAdmin(session);
     if (authError) return authError;
 
@@ -43,7 +42,7 @@ export async function GET() {
 // PUT - Update user role
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session || session.user?.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -58,12 +57,14 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    if (!["user", "admin"].includes(role)) {
+    // Normalize role to lowercase for storage
+    const normalizedRole = role.toLowerCase();
+    if (!["user", "admin"].includes(normalizedRole)) {
       return NextResponse.json({ error: "Invalid role" }, { status: 400 });
     }
 
     // Prevent self-demotion
-    if (userId === session.user.id && role !== "ADMIN") {
+    if (userId === session.user.id && normalizedRole !== "admin") {
       return NextResponse.json(
         { error: "Cannot demote yourself" },
         { status: 400 }
@@ -72,7 +73,7 @@ export async function PUT(request: NextRequest) {
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
-      data: { role },
+      data: { role: normalizedRole },
       select: {
         id: true,
         name: true,

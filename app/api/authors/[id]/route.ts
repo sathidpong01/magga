@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { auth } from '@/auth';
 import { revalidatePath } from 'next/cache';
 
 type RouteParams = {
@@ -36,7 +35,7 @@ export async function GET(request: Request, { params }: RouteParams) {
 
 // PUT to update an author (admin only)
 export async function PUT(request: Request, { params }: RouteParams) {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
   if (!session || session.user?.role?.toUpperCase() !== 'ADMIN') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -69,7 +68,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
 // DELETE an author (admin only)
 export async function DELETE(request: Request, { params }: RouteParams) {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
   if (!session || session.user?.role?.toUpperCase() !== 'ADMIN') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

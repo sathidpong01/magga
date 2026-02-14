@@ -1,7 +1,6 @@
 "use server";
 
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -51,7 +50,7 @@ function generateSlug(title: string): string {
  * Handles the final submission after files are uploaded client-side
  */
 export async function submitManga(data: z.input<typeof SubmitMangaSchema>) {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
   if (!session?.user?.id) {
     return { error: "กรุณาเข้าสู่ระบบก่อนส่งผลงาน" };
@@ -168,7 +167,7 @@ export async function submitManga(data: z.input<typeof SubmitMangaSchema>) {
  * Returns existing category if name matches
  */
 export async function createCategory(name: string) {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
   if (!session?.user?.id) {
     return { error: "Unauthorized" };
@@ -213,7 +212,7 @@ export async function createCategory(name: string) {
  * Returns existing tag if name matches
  */
 export async function createTag(name: string) {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
   if (!session?.user?.id) {
     return { error: "Unauthorized" };
@@ -255,7 +254,7 @@ export async function createTag(name: string) {
  * Returns existing author if name matches
  */
 export async function createAuthor(name: string) {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
   if (!session?.user?.id) {
     return { error: "Unauthorized" };

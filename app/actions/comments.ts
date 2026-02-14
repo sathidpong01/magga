@@ -1,7 +1,6 @@
 "use server";
 
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { revalidatePath } from "next/cache";
@@ -62,7 +61,7 @@ async function getMangaSlug(mangaId: string): Promise<string | null> {
  * Create a new comment (Server Action)
  */
 export async function createComment(formData: FormData) {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
   if (!session?.user?.id) {
     return { error: "กรุณาเข้าสู่ระบบก่อนแสดงความคิดเห็น" };
@@ -176,7 +175,7 @@ export async function createComment(formData: FormData) {
  * Update an existing comment (Server Action)
  */
 export async function updateComment(formData: FormData) {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
   if (!session?.user?.id) {
     return { error: "Unauthorized" };
@@ -236,7 +235,7 @@ export async function updateComment(formData: FormData) {
  * Delete a comment (Server Action)
  */
 export async function deleteComment(commentId: string) {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
   if (!session?.user?.id) {
     return { error: "Unauthorized" };
@@ -278,7 +277,7 @@ export async function deleteComment(commentId: string) {
  * Vote on a comment (Server Action)
  */
 export async function voteComment(commentId: string, value: 1 | -1) {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
   if (!session?.user?.id) {
     return { error: "กรุณาเข้าสู่ระบบก่อนโหวต" };
