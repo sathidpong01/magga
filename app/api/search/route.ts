@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { unstable_cache } from "next/cache";
+import Fuse from "fuse.js";
 
 // Cache search index for 5 minutes
 const getSearchIndex = unstable_cache(
@@ -29,7 +30,7 @@ const getSearchIndex = unstable_cache(
       title: manga.title,
       description: (manga.description || "").slice(0, 100),
       coverImage: manga.coverImage,
-      authorName: (manga as any).authorName || "", // Will work after SQL migration
+      authorName: (manga as any).authorName || "",
       category: manga.category?.name || "",
       tags: manga.tags.map((t) => t.name).join(", "),
     }));
@@ -38,18 +39,50 @@ const getSearchIndex = unstable_cache(
   { revalidate: 300, tags: ["search-index"] }
 );
 
-export async function GET() {
+// Fuse.js runs server-side — client sends query, server returns top 10 results
+export async function GET(request: NextRequest) {
   try {
+    const q = request.nextUrl.searchParams.get("q")?.trim();
+
     const searchIndex = await getSearchIndex();
-    return NextResponse.json(searchIndex, {
-      headers: {
-        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
-      },
+
+    // No query — return empty (client should not fetch without query)
+    if (!q || q.length < 2) {
+      return NextResponse.json([], {
+        headers: {
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+        },
+      });
+    }
+
+    // Run Fuse.js on server
+    const fuse = new Fuse(searchIndex, {
+      keys: [
+        { name: "title", weight: 2 },
+        { name: "authorName", weight: 1.5 },
+        { name: "description", weight: 0.5 },
+        { name: "tags", weight: 1 },
+        { name: "category", weight: 0.8 },
+      ],
+      threshold: 0.4,
+      includeScore: true,
+      minMatchCharLength: 2,
     });
-  } catch (error) {
-    console.error("Error fetching search index:", error);
+
+    const results = fuse.search(q, { limit: 10 });
+
     return NextResponse.json(
-      { error: "Failed to fetch search index" },
+      results.map((r) => r.item),
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+        },
+      }
+    );
+  } catch (error) {
+    console.error("Error searching:", error);
+    return NextResponse.json(
+      { error: "Failed to search" },
       { status: 500 }
     );
   }
