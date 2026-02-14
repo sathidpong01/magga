@@ -2,6 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { auth } from "@/auth";
 import { requireAdmin } from "@/lib/auth-helpers";
+import { unstable_cache } from "next/cache";
+
+// Cache active ads for 5 minutes to reduce DB queries
+const getActiveAds = unstable_cache(
+  async () => {
+    return prisma.advertisement.findMany({
+      where: { isActive: true },
+      orderBy: { createdAt: "desc" },
+    });
+  },
+  ["active-advertisements"],
+  { revalidate: 300, tags: ["advertisements"] }
+);
 
 // GET - ดึงโฆษณาตาม placement (ใช้ all=true สำหรับ admin page เพื่อดึงทั้งหมด)
 export async function GET(request: NextRequest) {
@@ -10,23 +23,30 @@ export async function GET(request: NextRequest) {
     const placement = searchParams.get("placement");
     const all = searchParams.get("all") === "true"; // For admin page to show all ads
 
-    const where: { isActive?: boolean; placement?: string } = {};
+    // all=true requires admin auth to prevent leaking inactive ads
+    if (all) {
+      const session = await auth();
+      const authError = requireAdmin(session);
+      if (authError) return authError;
 
-    // ถ้าไม่ใช่ all mode ให้ filter เฉพาะ active
-    if (!all) {
-      where.isActive = true;
+      const ads = await prisma.advertisement.findMany({
+        orderBy: { createdAt: "desc" },
+      });
+      return NextResponse.json(ads);
     }
+
+    // Public: use cached active ads, filter by placement client-side or here
+    let ads = await getActiveAds();
 
     if (placement) {
-      where.placement = placement;
+      ads = ads.filter((ad: any) => ad.placement === placement);
     }
 
-    const ads = await prisma.advertisement.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
+    return NextResponse.json(ads, {
+      headers: {
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+      },
     });
-
-    return NextResponse.json(ads);
   } catch (error) {
     console.error("Error fetching ads:", error);
     return NextResponse.json(

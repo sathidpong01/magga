@@ -1,6 +1,18 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
+const userSelect = {
+  id: true,
+  name: true,
+  username: true,
+  image: true,
+} as const;
+
+const voteSelect = {
+  userId: true,
+  value: true,
+} as const;
+
 // GET /api/comments - Fetch comments for a manga (with pagination)
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -22,39 +34,32 @@ export async function GET(request: Request) {
         imageIndex: imageIndex !== null ? parseInt(imageIndex) : null,
         parentId: null, // Only top-level comments
       },
-      include: {
-        user: {
+      select: {
+        id: true,
+        content: true,
+        imageIndex: true,
+        createdAt: true,
+        updatedAt: true,
+        userId: true,
+        mangaId: true,
+        parentId: true,
+        user: { select: userSelect },
+        votes: { select: voteSelect },
+        replies: {
           select: {
             id: true,
-            name: true,
-            username: true,
-            image: true,
-          },
-        },
-        votes: {
-          select: {
+            content: true,
+            createdAt: true,
+            updatedAt: true,
             userId: true,
-            value: true,
-          },
-        },
-        replies: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                username: true,
-                image: true,
-              },
-            },
-            votes: {
-              select: {
-                userId: true,
-                value: true,
-              },
-            },
+            mangaId: true,
+            parentId: true,
+            imageIndex: true,
+            user: { select: userSelect },
+            votes: { select: voteSelect },
           },
           orderBy: { createdAt: "asc" },
+          take: 20, // Limit replies depth
         },
       },
       orderBy: { createdAt: "desc" },
@@ -67,7 +72,11 @@ export async function GET(request: Request) {
       nextCursor = nextItem?.id ?? null;
     }
 
-    return NextResponse.json({ comments, nextCursor });
+    return NextResponse.json({ comments, nextCursor }, {
+      headers: {
+        "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60",
+      },
+    });
   } catch (error) {
     console.error("Error fetching comments:", error);
     return NextResponse.json(

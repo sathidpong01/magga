@@ -5,6 +5,7 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { CssBaseline } from "@mui/material";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 import { ToastProvider } from "@/app/contexts/ToastContext";
+import { AdsProvider } from "@/app/components/features/ads";
 
 // NOTE: Font is already loaded in layout.tsx, use CSS font-family string here
 // to avoid loading the font twice which causes CLS issues
@@ -117,7 +118,9 @@ export const Providers = ({ children }: Props) => {
       <ThemeProvider theme={darkTheme}>
         <CssBaseline />
         <SessionProvider>
-          <ToastProvider>{children}</ToastProvider>
+          <ToastProvider>
+            <AdsProvider>{children}</AdsProvider>
+          </ToastProvider>
         </SessionProvider>
       </ThemeProvider>
     </AppRouterCacheProvider>

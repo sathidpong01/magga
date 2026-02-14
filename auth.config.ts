@@ -8,6 +8,33 @@ import { headers } from "next/headers";
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
 
+// In-memory cache for session user lookups to reduce Turso DB round-trips
+const SESSION_CACHE_TTL = 60 * 1000; // 60 seconds
+const sessionUserCache = new Map<string, { data: any; expires: number }>();
+
+function getCachedUser(userId: string) {
+  const entry = sessionUserCache.get(userId);
+  if (entry && Date.now() < entry.expires) {
+    return entry.data;
+  }
+  if (entry) sessionUserCache.delete(userId);
+  return null;
+}
+
+function setCachedUser(userId: string, data: any) {
+  sessionUserCache.set(userId, {
+    data,
+    expires: Date.now() + SESSION_CACHE_TTL,
+  });
+  // Evict stale entries periodically (keep cache small)
+  if (sessionUserCache.size > 100) {
+    const now = Date.now();
+    for (const [key, val] of sessionUserCache) {
+      if (now >= val.expires) sessionUserCache.delete(key);
+    }
+  }
+}
+
 async function checkLoginRateLimit(
   identifier: string
 ): Promise<{ allowed: boolean; remaining: number; resetTime?: number }> {
@@ -187,22 +214,33 @@ export default {
     },
     async session({ session, token }) {
       if (session.user && token.id) {
-        // ตรวจสอบว่า user ยังมีอยู่ใน database หรือไม่ และดึงข้อมูลเพิ่มเติม
-        const userExists = await prisma.user.findUnique({
-          where: { id: token.id as string },
-          select: {
-            id: true,
-            role: true,
-            name: true,
-            username: true,
-            image: true,
-            isBanned: true,
-          },
-        });
+        const userId = token.id as string;
+
+        // Check in-memory cache first to avoid Turso round-trip
+        let userExists = getCachedUser(userId);
+
+        if (!userExists) {
+          // ตรวจสอบว่า user ยังมีอยู่ใน database หรือไม่ และดึงข้อมูลเพิ่มเติม
+          userExists = await prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+              id: true,
+              role: true,
+              name: true,
+              username: true,
+              image: true,
+              isBanned: true,
+            },
+          });
+
+          if (userExists) {
+            setCachedUser(userId, userExists);
+          }
+        }
 
         if (!userExists) {
           console.warn(
-            `User ${token.id} not found in database, invalidating session`
+            `User ${userId} not found in database, invalidating session`
           );
           return { ...session, user: undefined };
         }

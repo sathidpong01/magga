@@ -15,6 +15,25 @@ import UpdateIcon from "@mui/icons-material/Update";
 // Static data for changelog
 const changelogData = [
   {
+    date: "2026-02-14",
+    version: "v1.9.0",
+    title: "🚀 ปรับปรุงประสิทธิภาพครั้งใหญ่ (Major Performance Update)",
+    changes: [
+      "Session User Cache: ลดการ query Turso DB 90% ด้วย in-memory TTL cache (60s)",
+      "Lazy Load Layout Components: ลด JS bundle ของหน้าแรก ด้วย dynamic imports (ssr: false)",
+      "Ads Consolidation: รวม 4 API calls เป็น 1 ด้วย AdsProvider context",
+      "Vercel Image CDN: เปิดใช้งานสำหรับ cover images (auto AVIF/resize/edge cache)",
+      "MangaCard Responsive Sizes: แก้ไข sizes attribute ให้ตรงกับ Grid breakpoints",
+      "API Caching: เพิ่ม unstable_cache และ CDN headers ทั่วทุก API endpoints",
+      "View Count Optimization: ลด DB calls และป้องกัน abuse ด้วย IP-based dedup",
+      "PWA Support: เพิ่ม webmanifest และ meta tags สำหรับ mobile app experience",
+      "Font Optimization: ลด font weights จาก 4 เป็น 3 weights",
+      "Mobile UX: ปรับ infinite scroll prefetch distance สำหรับมือถือ",
+      "Security: แก้ไข advertisements auth bypass และเพิ่ม view count protection",
+      "Expected FCP: 1.93s → ~1.2-1.5s, LCP: 3.63s → ~2.0-2.5s",
+    ],
+  },
+  {
     date: "2026-02-13",
     version: "v1.8.0",
     title: "ปรับปรุงโครงสร้างและประสิทธิภาพ",

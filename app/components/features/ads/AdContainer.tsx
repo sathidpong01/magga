@@ -1,38 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { Box } from "@mui/material";
 import AdBanner from "./AdBanner";
 import FloatingAd from "./FloatingAd";
 import AdModal from "./AdModal";
-
-interface Ad {
-  id: string;
-  type: string;
-  title: string;
-  imageUrl: string;
-  linkUrl?: string | null;
-  content?: string | null;
-  placement: string;
-}
+import { useAds } from "./AdsProvider";
 
 interface AdContainerProps {
   placement: "header" | "footer" | "manga-end" | "floating" | "modal";
 }
 
 export default function AdContainer({ placement }: AdContainerProps) {
-  const [ads, setAds] = useState<Ad[]>([]);
-
-  useEffect(() => {
-    fetch(`/api/advertisements?placement=${placement}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setAds(data);
-        }
-      })
-      .catch(console.error);
-  }, [placement]);
+  const { getAdsByPlacement } = useAds();
+  const ads = getAdsByPlacement(placement);
 
   if (ads.length === 0) return null;
 

@@ -52,7 +52,7 @@ function MangaCard({ manga, priority = false }: MangaCardProps) {
             src={manga.coverImage}
             alt={`Cover of ${manga.title}`}
             fill
-            sizes="(max-width: 600px) 100vw, (max-width: 960px) 50vw, 33vw"
+            sizes="(max-width: 600px) 50vw, (max-width: 960px) 33vw, 25vw"
             style={{ objectFit: "cover" }}
             priority={priority}
             placeholder="blur"

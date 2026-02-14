@@ -27,7 +27,7 @@ const getSearchIndex = unstable_cache(
       id: manga.id,
       slug: manga.slug,
       title: manga.title,
-      description: manga.description || "",
+      description: (manga.description || "").slice(0, 100),
       coverImage: manga.coverImage,
       authorName: (manga as any).authorName || "", // Will work after SQL migration
       category: manga.category?.name || "",
@@ -41,7 +41,11 @@ const getSearchIndex = unstable_cache(
 export async function GET() {
   try {
     const searchIndex = await getSearchIndex();
-    return NextResponse.json(searchIndex);
+    return NextResponse.json(searchIndex, {
+      headers: {
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+      },
+    });
   } catch (error) {
     console.error("Error fetching search index:", error);
     return NextResponse.json(
