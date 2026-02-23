@@ -18,6 +18,6 @@ export default withAuth(
   }
 );
 
-export const config = {
+export const proxyConfig = {
   matcher: ["/admin/:path*"],
 };

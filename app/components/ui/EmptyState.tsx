@@ -3,6 +3,7 @@
 import { Box, Typography, Button } from "@mui/material";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
 interface EmptyStateProps {
   title?: string;
@@ -10,16 +11,16 @@ interface EmptyStateProps {
   showClearFilters?: boolean;
 }
 
-export default function EmptyState({
+function EmptyStateContent({
   title = "ไม่พบผลลัพธ์",
   description = "ลองปรับตัวกรองหรือค้นหาด้วยคำอื่น",
   showClearFilters = true,
 }: EmptyStateProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
-  const hasFilters = searchParams.get("search") || 
-                     searchParams.get("categoryId") || 
+
+  const hasFilters = searchParams.get("search") ||
+                     searchParams.get("categoryId") ||
                      searchParams.get("tags");
 
   const handleClearFilters = () => {
@@ -96,5 +97,13 @@ export default function EmptyState({
         </Button>
       )}
     </Box>
+  );
+}
+
+export default function EmptyState(props: EmptyStateProps) {
+  return (
+    <Suspense fallback={<Box sx={{ py: 10 }} />}>
+      <EmptyStateContent {...props} />
+    </Suspense>
   );
 }

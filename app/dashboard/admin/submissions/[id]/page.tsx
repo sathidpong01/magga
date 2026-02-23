@@ -40,6 +40,7 @@ import DescriptionIcon from "@mui/icons-material/Description";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import CategoryIcon from "@mui/icons-material/Category";
 import { authFetch } from "@/lib/auth-fetch";
+import Image from "next/image";
 
 type Category = { id: string; name: string };
 type Tag = { id: string; name: string };
@@ -284,10 +285,12 @@ export default function SubmissionDetailPage({
               boxShadow: "0 4px 20px rgba(0,0,0,0.3)",
             }}
           >
-            <img
+            <Image
               src={submission.coverImage}
               alt={submission.title}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              fill
+              sizes="120px"
+              style={{ objectFit: "cover" }}
             />
           </Box>
 
@@ -620,15 +623,12 @@ export default function SubmissionDetailPage({
                     },
                   }}
                 >
-                  <img
+                  <Image
                     src={url}
                     alt={`หน้า ${idx + 1}`}
+                    fill
+                    sizes="120px"
                     style={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      width: "100%",
-                      height: "100%",
                       objectFit: "cover",
                     }}
                   />
@@ -743,6 +743,8 @@ export default function SubmissionDetailPage({
             <Box
               onClick={() => setPreviewImage(submission.coverImage)}
               sx={{
+                position: "relative",
+                paddingTop: "140%",
                 borderRadius: 1.5,
                 overflow: "hidden",
                 cursor: "pointer",
@@ -750,10 +752,12 @@ export default function SubmissionDetailPage({
                 "&:hover": { transform: "scale(1.02)" },
               }}
             >
-              <img
+              <Image
                 src={submission.coverImage}
                 alt="Cover"
-                style={{ width: "100%", display: "block" }}
+                fill
+                sizes="(max-width: 1200px) 100vw, 33vw"
+                style={{ objectFit: "cover" }}
               />
             </Box>
           </Paper>
@@ -769,11 +773,14 @@ export default function SubmissionDetailPage({
       >
         <Box onClick={() => setPreviewImage(null)} sx={{ cursor: "pointer" }}>
           {previewImage && (
-            <img
-              src={previewImage}
-              alt="Preview"
-              style={{ maxWidth: "90vw", maxHeight: "90vh", borderRadius: 8 }}
-            />
+            <Box sx={{ position: "relative", width: "90vw", height: "90vh", maxWidth: "1200px", maxHeight: "1200px" }}>
+              <Image
+                src={previewImage}
+                alt="Preview"
+                fill
+                style={{ objectFit: "contain", borderRadius: 8 }}
+              />
+            </Box>
           )}
         </Box>
       </Dialog>

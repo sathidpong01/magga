@@ -22,6 +22,7 @@ import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import LinkButton from "@/app/components/ui/LinkButton";
+import Image from "next/image";
 import BanNoticeModal from "@/app/components/modals/BanNoticeModal";
 
 type Submission = {
@@ -220,12 +221,12 @@ export default function MySubmissionsPage() {
                     flexShrink: 0,
                   }}
                 >
-                  <img
+                  <Image
                     src={submission.coverImage}
                     alt={submission.title}
+                    fill
+                    sizes="80px"
                     style={{
-                      width: "100%",
-                      height: "100%",
                       objectFit: "cover",
                     }}
                   />
