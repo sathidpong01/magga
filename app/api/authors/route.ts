@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../auth/[...nextauth]/route";
+import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/lib/auth-helpers";
 import { sanitizeInput } from "@/lib/sanitize";
@@ -16,7 +15,7 @@ export async function GET() {
 
 // POST a new author
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
   const authError = requireAuth(session); // Allow authenticated users to create authors
   if (authError) return authError;
 

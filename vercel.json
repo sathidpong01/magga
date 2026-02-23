@@ -11,7 +11,7 @@
   ],
   "functions": {
     "app/api/**/*.{ts,tsx}": {
-      "maxDuration": 10
+      "maxDuration": 30
     }
   },
   "headers": [

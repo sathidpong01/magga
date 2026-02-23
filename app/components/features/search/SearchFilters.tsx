@@ -1,9 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback, useId, useMemo } from "react";
+import { useState, useEffect, useCallback, useId, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import Fuse from "fuse.js";
-import { fetchWithRetry } from "@/lib/fetch-with-retry";
 import {
   Box,
   Paper,
@@ -56,68 +54,47 @@ export default function SearchFilters({ categories, tags }: Props) {
   // State for filters
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [categoryId, setCategoryId] = useState(
-    searchParams.get("categoryId") || "all",
+    searchParams.get("categoryId") || "all"
   );
   const [sort, setSort] = useState(searchParams.get("sort") || "added");
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
 
-  // Fuse.js search state
-  const [searchIndex, setSearchIndex] = useState<SearchItem[]>([]);
+  // Server-side search state (Fuse.js runs on server, client only receives results)
   const [searchResults, setSearchResults] = useState<SearchItem[]>([]);
   const [inputValue, setInputValue] = useState("");
-  const [isIndexLoading, setIsIndexLoading] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Lazy load search index only when user starts typing (2+ characters)
-  // This defers the API call until needed, improving initial page load
+  // Debounced server-side search
   useEffect(() => {
-    const fetchSearchIndex = async () => {
-      if (isIndexLoading || searchIndex.length > 0) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
 
-      setIsIndexLoading(true);
+    if (inputValue.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    debounceRef.current = setTimeout(async () => {
+      setIsSearching(true);
       try {
-        const res = await fetchWithRetry("/api/search", { retries: 2 });
+        const res = await fetch(`/api/search?q=${encodeURIComponent(inputValue)}`);
         if (res.ok) {
           const data = await res.json();
-          setSearchIndex(data);
+          if (Array.isArray(data)) {
+            setSearchResults(data);
+          }
         }
       } catch (error) {
-        console.error("Failed to fetch search index:", error);
+        console.error("Search failed:", error);
       } finally {
-        setIsIndexLoading(false);
+        setIsSearching(false);
       }
+    }, 300);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-
-    // Only fetch when user types 2+ characters and index is empty
-    if (inputValue.length >= 2 && searchIndex.length === 0) {
-      fetchSearchIndex();
-    }
-  }, [inputValue, searchIndex.length, isIndexLoading]);
-
-  // Create Fuse.js instance
-  const fuse = useMemo(() => {
-    return new Fuse(searchIndex, {
-      keys: [
-        { name: "title", weight: 2 },
-        { name: "authorName", weight: 1.5 },
-        { name: "description", weight: 0.5 },
-        { name: "tags", weight: 1 },
-        { name: "category", weight: 0.8 },
-      ],
-      threshold: 0.4, // Fuzzy tolerance (0 = exact, 1 = match anything)
-      includeScore: true,
-      minMatchCharLength: 2,
-    });
-  }, [searchIndex]);
-
-  // Perform fuzzy search when input changes
-  useEffect(() => {
-    if (inputValue.length >= 2) {
-      const results = fuse.search(inputValue, { limit: 10 });
-      setSearchResults(results.map((r) => r.item));
-    } else {
-      setSearchResults([]);
-    }
-  }, [inputValue, fuse]);
+  }, [inputValue]);
 
   // Initialize selected tags from URL
   useEffect(() => {
@@ -229,8 +206,8 @@ export default function SearchFilters({ categories, tags }: Props) {
                   {sort === "updated"
                     ? "Updated"
                     : sort === "added"
-                      ? "Added"
-                      : "A-Z"}
+                    ? "Added"
+                    : "A-Z"}
                 </Typography>
               </Box>
             </Box>
@@ -252,7 +229,7 @@ export default function SearchFilters({ categories, tags }: Props) {
         <Box sx={{ mt: 3 }}>
           <Grid container spacing={2}>
             {/* Smart Search with Fuse.js - Top, centered, full width */}
-            <Grid size={{ xs: 12 }}>
+<Grid  size={12}>
               <Typography
                 variant="subtitle2"
                 gutterBottom
@@ -341,7 +318,7 @@ export default function SearchFilters({ categories, tags }: Props) {
             </Grid>
 
             {/* Category */}
-            <Grid size={{ xs: 12, sm: 6 }}>
+<Grid   size={{ xs: 12, sm: 6 }}>
               <Typography
                 variant="subtitle2"
                 gutterBottom
@@ -378,7 +355,7 @@ export default function SearchFilters({ categories, tags }: Props) {
             </Grid>
 
             {/* Sorting */}
-            <Grid size={{ xs: 12, sm: 6 }}>
+<Grid   size={{ xs: 12, sm: 6 }}>
               <Typography
                 variant="subtitle2"
                 gutterBottom
@@ -412,7 +389,7 @@ export default function SearchFilters({ categories, tags }: Props) {
             </Grid>
 
             {/* Tags - Full width to allow horizontal tag display */}
-            <Grid size={{ xs: 12 }}>
+<Grid  size={12}>
               <Typography
                 variant="subtitle2"
                 gutterBottom
@@ -461,13 +438,13 @@ export default function SearchFilters({ categories, tags }: Props) {
 
             {/* Action Buttons */}
             <Grid
-              size={{ xs: 12 }}
               sx={{
                 display: "flex",
                 justifyContent: "flex-end",
                 gap: 2,
                 mt: 2,
               }}
+              size={12}
             >
               <Button variant="outlined" onClick={handleClearFilters}>
                 Clear

@@ -28,8 +28,8 @@ _พัฒนาด้วย Next.js 16 (App Router) และระบบจั
 - **Database:** [Turso (LibSQL)](https://turso.tech/) (ผ่าน [Prisma ORM 7](https://www.prisma.io/))
 - **Storage:** [Cloudflare R2](https://www.cloudflare.com/developer-platform/r2/)
 - **Styling:**
-  - [Tailwind CSS](https://tailwindcss.com/)
-  - [Material UI (MUI)](https://mui.com/) (สำหรับ Component ต่างๆ)
+  - [Tailwind CSS v4](https://tailwindcss.com/)
+  - [Material UI (MUI) v7](https://mui.com/) (สำหรับ Component ต่างๆ)
 - **Authentication:** [NextAuth.js](https://next-auth.js.org/) (Credentials Provider)
 - **Analytics:** [Vercel Analytics](https://vercel.com/analytics)
 - **Image Processing:** [Sharp](https://sharp.pixelplumbing.com/) (Server-side compression & WebP conversion)
@@ -170,34 +170,51 @@ npm run dev
 
 โปรเจกต์นี้ได้รับการ optimize พิเศษสำหรับ Vercel deployment เพื่อประสิทธิภาพสูงสุด:
 
-### 🚀 Performance Optimizations
+### 🚀 Performance Optimizations (2026-02-14 Major Update)
 
-- **ISR (Incremental Static Regeneration):**
+**🔥 Critical Performance Fixes (FCP/LCP):**
+- **Session User Cache:** In-memory TTL cache (60s) for session lookups — ~90% fewer Turso DB round-trips
+- **Lazy Load Layout Components:** 6 non-critical client components now lazy-loaded (ssr: false) — reduces initial JS bundle
+- **Ads Consolidation:** 4 parallel ad fetches → 1 via shared `AdsProvider` context — 75% fewer API calls
 
-  - Home page: revalidate ทุก 60 วินาที
-  - Admin Dashboard: revalidate ทุก 60 วินาที (New!)
-  - Manga pages: revalidate ทุก 1 ชั่วโมง + pre-render 50 เรื่องยอดนิยม
-  - Category/Tag pages: revalidate ทุก 5 นาที
+**⚡ Image & Asset Optimization:**
+- **Vercel Image CDN:** Enabled for cover images (auto AVIF/resize/edge cache) while manga pages stay unoptimized for Hobby plan limits
+- **MangaCard Responsive Sizes:** Fixed `sizes` to match Grid breakpoints (50vw/33vw/25vw) — mobile downloads smaller images
+- **MangaReader Fallback:** Added default aspect ratio (900×1273) for legacy data — prevents CLS
+- **Static Asset Caching:** Aggressive cache headers for logo/favicon (1 year immutable)
 
-- **User Experience (UX):**
+**🗄️ API & Database Optimization:**
+- **Advertisements API:** `unstable_cache` (5min) + auth guard for `all=true` + CDN headers
+- **Comments API:** `select` instead of heavy `include` + limit replies depth + CDN headers
+- **View Count API:** Removed redundant `findUnique`, added IP-based dedup (10min) — prevents abuse
+- **Search API:** Truncated descriptions (100 chars) + CDN headers — smaller payload
+- **Rate Limiting:** In-memory cache for login attempts — fewer DB writes
 
-  - **Loading Skeletons:** ใช้ `loading.tsx` เพื่อแสดง Skeleton UI ระหว่างรอข้อมูล (Streaming SSR)
-  - **Font Optimization:** ใช้ `next/font` เพื่อลด Layout Shift
+**📱 Mobile UX Improvements:**
+- **PWA Support:** Complete webmanifest + theme-color meta tags + apple-mobile-web-app-capable
+- **Infinite Scroll:** Increased prefetch distance (200px→400px) for faster mobile loading
+- **Font Optimization:** Reduced weights 4→3 (drop 300) — smaller font downloads
 
-- **Image Optimization:**
+**📊 Expected Performance Gains:**
+| Metric | Before | After (Target) |
+|---|---|---|
+| **FCP** | 1.93s | ~1.2-1.5s |
+| **LCP** | 3.63s | ~2.0-2.5s |
+| **Function Invocations** | High | -60-70% |
+| **Real Experience Score** | 82 | ~90-95 |
 
-  - WebP/AVIF formats
-  - 1 year cache TTL
-  - Lazy loading รูปภาพ
+**🔒 Security Enhancements:**
+- Fixed advertisements `all=true` auth bypass
+- Added view count abuse prevention (IP dedup)
+- Maintained existing security headers and CSP
 
-- **API Caching:**
-
-  - CDN edge caching (60 วินาที)
-  - Stale-while-revalidate strategy
-
-- **Database Optimization:**
-  - Production-optimized Prisma logging
-  - Connection pooling with Turso
+**📋 Previous Optimizations (Retained):**
+- ISR (Incremental Static Regeneration): Home 60s, Manga 1h, Category/Tag 5min
+- Loading Skeletons + Streaming SSR
+- Font optimization with `next/font`
+- Image WebP/AVIF formats + 1-year cache
+- CDN edge caching with stale-while-revalidate
+- Turso connection pooling
 
 ### 📊 Performance Metrics
 

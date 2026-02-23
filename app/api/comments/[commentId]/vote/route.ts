@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../../auth/[...nextauth]/route";
+import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rate-limit";
 
@@ -12,7 +11,7 @@ type RouteParams = {
 
 // POST /api/comments/[commentId]/vote - Vote on a comment
 export async function POST(request: Request, { params }: RouteParams) {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
   const { commentId } = await params;
   
   if (!session?.user?.id) {

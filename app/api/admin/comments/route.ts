@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { auth } from "@/auth";
 import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-helpers";
 
 // GET /api/admin/comments - Fetch all comments for admin
 export async function GET(request: Request) {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
   const authError = requireAdmin(session);
   if (authError) return authError;
 
@@ -96,7 +95,7 @@ export async function GET(request: Request) {
 
 // DELETE /api/admin/comments - Bulk delete comments
 export async function DELETE(request: Request) {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

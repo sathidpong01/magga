@@ -1,0 +1,44 @@
+name: Sync Environment Variables to Vercel
+
+on:
+  push:
+    paths:
+      - '.env.local'
+    branches: [main, develop]
+
+jobs:
+  sync-env:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+        
+      - name: Pull Vercel Environment Variables
+        run: vercel env pull .env.vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          
+      - name: Sync Environment Variables
+        run: |
+          # Read .env.local and sync to Vercel
+          while IFS= read -r line; do
+            if [[ $line == *"="* && ! $line =~ ^# ]]; then
+              key=$(echo "$line" | cut -d'=' -f1)
+              value=$(echo "$line" | cut -d'=' -f2-)
+              echo "Syncing $key..."
+              vercel env add "$key" --value="$value" --environment=production,preview,development
+            fi
+          done < .env.local
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}

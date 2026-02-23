@@ -3,17 +3,12 @@ import { Kanit } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./components/layout/Providers";
 import AgeVerificationModal from "./components/features/auth/AgeVerificationModal";
-import CookieConsent from "./components/features/auth/CookieConsent";
-import SessionExpiryWarning from "./components/features/auth/SessionExpiryWarning";
-import SessionExpiredNotice from "./components/features/auth/SessionExpiredNotice";
-import DevToolsProtection from "./components/security/DevToolsProtection";
-import ConditionalAnalytics from "./components/features/analytics/ConditionalAnalytics";
-import GlobalAds from "./components/features/ads/GlobalAds";
 import ErrorBoundary from "./components/common/ErrorBoundary";
 import LayoutWrapper from "./components/layout/LayoutWrapper";
+import LazyClientComponents from "./components/layout/LazyClientComponents";
 
 const kanit = Kanit({
-  weight: ["300", "400", "500", "700"],
+  weight: ["400", "500", "700"],
   subsets: ["latin", "thai"],
   display: "swap",
 });
@@ -62,8 +57,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="th" suppressHydrationWarning>
       <head>
+        <meta name="theme-color" content="#0a0a0a" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         {/* Preconnect to R2 CDN for faster image loading */}
         <link
           rel="preconnect"
@@ -78,15 +76,10 @@ export default function RootLayout({
         <ErrorBoundary>
           <Providers>
             <AgeVerificationModal />
-            <CookieConsent />
-            <SessionExpiryWarning />
-            <SessionExpiredNotice />
-            <DevToolsProtection />
-            <GlobalAds />
+            <LazyClientComponents />
             <LayoutWrapper>{children}</LayoutWrapper>
           </Providers>
         </ErrorBoundary>
-        <ConditionalAnalytics />
       </body>
     </html>
   );

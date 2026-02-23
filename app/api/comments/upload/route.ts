@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../auth/[...nextauth]/route";
+import { auth } from "@/auth";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { checkRateLimit } from "@/lib/rate-limit";
 import sharp from "sharp";
@@ -22,7 +21,7 @@ const S3 = new S3Client({
 
 // POST /api/comments/upload - Upload image for comment
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
   
   if (!session?.user?.id) {
     return NextResponse.json({ error: "กรุณาเข้าสู่ระบบก่อนอัพโหลดรูป" }, { status: 401 });

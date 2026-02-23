@@ -66,8 +66,8 @@ export default function Footer() {
 
           {/* Policy Links */}
           <Grid
-            size={{ xs: 12, md: 6 }}
             sx={{ textAlign: { xs: "left", md: "right" } }}
+            size={{ xs: 12, md: 6 }}
           >
             <Typography
               variant="subtitle1"

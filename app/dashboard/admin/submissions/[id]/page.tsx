@@ -150,7 +150,7 @@ export default function SubmissionDetailPage({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ reviewNote, publishImmediately }),
-        },
+        }
       );
 
       if (!res.ok) {
@@ -178,7 +178,7 @@ export default function SubmissionDetailPage({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ rejectionReason, reviewNote }),
-        },
+        }
       );
 
       if (!res.ok) throw new Error("Failed to reject");
@@ -329,7 +329,7 @@ export default function SubmissionDetailPage({
                       day: "numeric",
                       hour: "2-digit",
                       minute: "2-digit",
-                    },
+                    }
                   )}
                 </Typography>
               </Box>
@@ -399,7 +399,7 @@ export default function SubmissionDetailPage({
 
       <Grid container spacing={3}>
         {/* Left Column */}
-        <Grid size={{ xs: 12, lg: 8 }}>
+<Grid   size={{ xs: 12, lg: 8 }}>
           {/* Description Card */}
           <Paper
             sx={{
@@ -482,7 +482,7 @@ export default function SubmissionDetailPage({
                   }}
                 />
                 <Grid container spacing={2}>
-                  <Grid size={{ xs: 12, md: 6 }}>
+<Grid   size={{ xs: 12, md: 6 }}>
                     <FormControl fullWidth variant="filled">
                       <InputLabel>หมวดหมู่</InputLabel>
                       <Select
@@ -507,7 +507,7 @@ export default function SubmissionDetailPage({
                       </Select>
                     </FormControl>
                   </Grid>
-                  <Grid size={{ xs: 12, md: 6 }}>
+<Grid   size={{ xs: 12, md: 6 }}>
                     <Autocomplete
                       multiple
                       options={tags}
@@ -660,7 +660,7 @@ export default function SubmissionDetailPage({
         </Grid>
 
         {/* Right Column */}
-        <Grid size={{ xs: 12, lg: 4 }}>
+<Grid   size={{ xs: 12, lg: 4 }}>
           {/* Submitter Card */}
           <Paper
             sx={{
@@ -719,7 +719,7 @@ export default function SubmissionDetailPage({
                     year: "numeric",
                     month: "long",
                     day: "numeric",
-                  },
+                  }
                 )}
               </Typography>
             </Box>

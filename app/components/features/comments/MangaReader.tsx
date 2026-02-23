@@ -333,10 +333,11 @@ const LazyPageWithComments = forwardRef<HTMLDivElement, LazyPageProps>(
           <Image
             src={pageData.url}
             alt={`Page ${imageIndex + 1} of ${mangaTitle}`}
-            // Use dimensions when available (prevents CLS), fallback to 0 for legacy data
-            width={pageData.width || 0}
-            height={pageData.height || 0}
-            sizes="100vw"
+            // Use dimensions when available (prevents CLS), fallback to standard manga ratio for legacy data
+            width={pageData.width || 900}
+            height={pageData.height || 1273}
+            sizes="(max-width: 1000px) 100vw, 1000px"
+            unoptimized
             style={{
               width: "100%",
               height: "auto",

@@ -1,8 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    // Bypass Vercel Image CDN - serve directly from R2 (already optimized by Sharp)
-    unoptimized: true,
+    // Let Vercel Image CDN optimize cover images (auto AVIF, resize, edge cache)
+    // Manga reader pages use per-image unoptimized={true} to stay within Hobby plan limits
+    unoptimized: false,
     remotePatterns: [
       {
         protocol: "https",
@@ -45,6 +46,24 @@ const nextConfig = {
   },
   async headers() {
     return [
+      {
+        source: "/logo.svg",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        source: "/favicon.:ext*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
       {
         source: "/:path*",
         headers: [
