@@ -13,8 +13,16 @@ const kanit = Kanit({
   display: "swap",
 });
 
+const getBaseUrl = () => {
+  let url = process.env.NEXTAUTH_URL || process.env.VERCEL_URL || "https://magga.vercel.app";
+  if (!url.startsWith("http://") && !url.startsWith("https://")) {
+    url = `https://${url}`;
+  }
+  return url;
+};
+
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXTAUTH_URL || "https://magga.vercel.app"),
+  metadataBase: new URL(getBaseUrl()),
   title: "MAGGA - รวมการ์ตูนแนว Furry แปลไทย",
   description:
     "MAGGA - เว็บอ่านโดจินแปลไทย 18+ แนว Furry ที่ครบเครื่องที่สุด รวบรวมมังงะและโดจินชิ Furry สายหมี สายเคโมะ หลากหลายแนว แปลไทยคุณภาพ อ่านฟรีออนไลน์",
