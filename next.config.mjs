@@ -21,11 +21,7 @@ const nextConfig = {
   },
   compress: true,
   poweredByHeader: false,
-  serverExternalPackages: [
-    "@libsql/client",
-    "@prisma/adapter-libsql",
-    "libsql",
-  ],
+  serverExternalPackages: ["@prisma/client", "bcryptjs"],
   experimental: {
     optimizePackageImports: ["@mui/material", "@mui/icons-material"],
     scrollRestoration: true,

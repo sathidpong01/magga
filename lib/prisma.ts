@@ -1,27 +1,24 @@
+import { Pool } from 'pg';
+import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
-import { PrismaLibSql } from '@prisma/adapter-libsql';
+
+const rawUrl = process.env.POSTGRES_PRISMA_URL || '';
+const connectionString = rawUrl.split('?')[0];
+
+const pool = new Pool({ 
+  connectionString,
+  ssl: { rejectUnauthorized: false }
+});
+const adapter = new PrismaPg(pool);
 
 const globalForPrisma = global as unknown as { prisma: PrismaClient };
-
-// Validate required environment variables
-if (!process.env.TURSO_DATABASE_URL) {
-  throw new Error('Missing required environment variable: TURSO_DATABASE_URL');
-}
-if (!process.env.TURSO_AUTH_TOKEN) {
-  throw new Error('Missing required environment variable: TURSO_AUTH_TOKEN');
-}
-
-const adapter = new PrismaLibSql({
-  url: process.env.TURSO_DATABASE_URL.replace('libsql://', 'https://'),
-  authToken: process.env.TURSO_AUTH_TOKEN,
-});
 
 export const prisma =
   globalForPrisma.prisma ||
   new PrismaClient({
     adapter,
-    log: process.env.NODE_ENV === 'production' 
-      ? process.env.ENABLE_QUERY_LOG === 'true' 
+    log: process.env.NODE_ENV === 'production'
+      ? process.env.ENABLE_QUERY_LOG === 'true'
         ? ['error', 'warn']
         : ['error']
       : ['query', 'error', 'warn'],

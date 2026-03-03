@@ -1,6 +1,4 @@
-"use client";
-
-import { signOut } from "next-auth/react";
+import { signOut } from "@/lib/auth-client";
 
 /**
  * Wrapper for fetch that automatically signs out user on 401 (session expired)
@@ -19,23 +17,10 @@ export async function authFetch(
 
   // Auto logout on 401 Unauthorized (session expired)
   if (res.status === 401) {
-    // Check if response is JSON to get error message
-    const contentType = res.headers.get("content-type");
-    let message = "เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่";
-
-    if (contentType?.includes("application/json")) {
-      try {
-        const data = await res.clone().json();
-        if (data.error) message = data.error;
-      } catch {
-        // Ignore parse errors
-      }
+    await signOut();
+    if (typeof window !== "undefined") {
+      window.location.href = `/auth/signin`;
     }
-
-    // Sign out and redirect to login
-    await signOut({
-      callbackUrl: `/auth/signin?error=${encodeURIComponent(message)}`,
-    });
   }
 
   return res;

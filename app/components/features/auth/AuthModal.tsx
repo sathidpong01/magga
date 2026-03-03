@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, signUp, authClient } from "@/lib/auth-client";
 import { useRouter, usePathname } from "next/navigation";
 import {
   Dialog,
@@ -65,15 +65,14 @@ export default function AuthModal({ open, onClose, onSuccess, defaultTab = "sign
     setLoading(true);
 
     try {
-      const result = await signIn("credentials", {
-        redirect: false,
-        username,
+      const result = await signIn.email({
+        email: username.includes("@") ? username : `${username}@placeholder`,
         password,
       });
 
-      if (result?.error) {
-        setError(result.error);
-      } else if (result?.ok) {
+      if (result.error) {
+        setError(result.error.message || "เข้าสู่ระบบไม่สำเร็จ");
+      } else {
         setSuccess("เข้าสู่ระบบสำเร็จ!");
         setTimeout(() => {
           onClose();
@@ -100,37 +99,22 @@ export default function AuthModal({ open, onClose, onSuccess, defaultTab = "sign
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: registerData.username,
-          email: registerData.email,
-          password: registerData.password,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "สมัครสมาชิกไม่สำเร็จ");
-      }
-
-      // Auto login after register
-      const loginRes = await signIn("credentials", {
-        redirect: false,
-        username: registerData.username,
+      const result = await signUp.email({
+        email: registerData.email,
         password: registerData.password,
+        name: registerData.username,
       });
 
-      if (loginRes?.ok) {
-        setSuccess("สมัครสมาชิกและเข้าสู่ระบบสำเร็จ!");
-        setTimeout(() => {
-          onClose();
-          onSuccess?.();
-          router.refresh();
-        }, 1000);
+      if (result.error) {
+        throw new Error(result.error.message || "สมัครสมาชิกไม่สำเร็จ");
       }
+
+      setSuccess("สมัครสมาชิกและเข้าสู่ระบบสำเร็จ!");
+      setTimeout(() => {
+        onClose();
+        onSuccess?.();
+        router.refresh();
+      }, 1000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "สมัครสมาชิกไม่สำเร็จ");
     } finally {
@@ -139,8 +123,7 @@ export default function AuthModal({ open, onClose, onSuccess, defaultTab = "sign
   };
 
   const handleGoogleLogin = () => {
-    // Save current path for callback
-    signIn("google", { callbackUrl: pathname });
+    signIn.social({ provider: "google", callbackURL: "/" });
   };
 
   const textFieldSx = {

@@ -12,6 +12,8 @@ if (process.env.NODE_ENV !== 'production') {
 
 export default defineConfig({
   datasource: {
-    url: process.env.TURSO_DATABASE_URL ?? '',
+    url: process.env.POSTGRES_PRISMA_URL ?? '',
   },
 });
+
+

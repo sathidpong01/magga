@@ -3,7 +3,7 @@
 import CollapsibleSidebar, {
   SidebarItem,
 } from "@/app/components/layout/CollapsibleSidebar";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import AddBoxIcon from "@mui/icons-material/AddBox";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import HomeIcon from "@mui/icons-material/Home";
@@ -17,7 +17,7 @@ import PeopleIcon from "@mui/icons-material/People";
 
 export default function UnifiedDashboardSidebar() {
   const { data: session } = useSession();
-  const isAdmin = session?.user?.role === "ADMIN";
+  const isAdmin = (session?.user as any)?.role === "admin";
   const isBanned = (session?.user as any)?.isBanned;
 
   // Menu items based on role

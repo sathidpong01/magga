@@ -1,6 +1,5 @@
 "use client";
 
-import { SessionProvider } from "next-auth/react";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import { CssBaseline } from "@mui/material";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
@@ -117,11 +116,9 @@ export const Providers = ({ children }: Props) => {
     <AppRouterCacheProvider options={{ enableCssLayer: true }}>
       <ThemeProvider theme={darkTheme}>
         <CssBaseline />
-        <SessionProvider>
-          <ToastProvider>
-            <AdsProvider>{children}</AdsProvider>
-          </ToastProvider>
-        </SessionProvider>
+        <ToastProvider>
+          <AdsProvider>{children}</AdsProvider>
+        </ToastProvider>
       </ThemeProvider>
     </AppRouterCacheProvider>
   );

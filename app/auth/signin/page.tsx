@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, Suspense, useEffect } from "react";
-import { signIn } from "next-auth/react";
+import { signIn } from "@/lib/auth-client";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Container,
@@ -35,18 +35,16 @@ function SignInForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const result = await signIn("credentials", {
-      redirect: false,
-      username,
+    const result = await signIn.email({
+      email: username.includes("@") ? username : `${username}@placeholder`,
       password,
     });
 
-    if (result?.error) {
+    if (result.error) {
       setModalType("error");
-      // Display the actual error message with remaining attempts
-      setModalMessage(result.error);
+      setModalMessage(result.error.message || "Login failed");
       setModalOpen(true);
-    } else if (result?.ok) {
+    } else {
       setModalType("success");
       setModalMessage("Login Successful!");
       setModalOpen(true);
@@ -156,10 +154,8 @@ function SignInForm() {
             variant="outlined"
             startIcon={<GoogleIcon />}
             onClick={async () => {
-              console.log("Initiating Google Login...");
               try {
-                const result = await signIn("google", { callbackUrl });
-                console.log("Google Login Result:", result);
+                await signIn.social({ provider: "google", callbackURL: "/" });
               } catch (error) {
                 console.error("Google Login Error:", error);
               }

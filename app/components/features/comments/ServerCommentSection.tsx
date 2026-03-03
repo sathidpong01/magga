@@ -1,5 +1,6 @@
 import prisma from "@/lib/prisma";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 import CommentInteractions from "./CommentInteractions";
 
 interface ServerCommentSectionProps {
@@ -18,7 +19,7 @@ export default async function ServerCommentSection({
   title = "ความคิดเห็น",
 }: ServerCommentSectionProps) {
   // Get current user session for vote state
-  const session = await auth();
+  const session = await auth.api.getSession({ headers: await headers() });
   const currentUserId = session?.user?.id;
 
   // Fetch comments on server - no client-side JS needed for initial load

@@ -19,7 +19,7 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 import Image from "next/image";
-import { useSession, signOut } from "next-auth/react";
+import { useSession, signOut } from "@/lib/auth-client";
 import MenuIcon from "@mui/icons-material/Menu";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
@@ -51,7 +51,7 @@ export default function Header() {
     setAnchorEl(null);
   };
 
-  const isAdmin = session?.user?.role === "ADMIN";
+  const isAdmin = (session?.user as any)?.role === "admin";
 
   return (
     <AppBar
@@ -180,7 +180,7 @@ export default function Header() {
             {/* Submit Manga Button - Always render but hide for Admin */}
             <Button
               component={Link}
-              href={session ? "/dashboard/submit" : "/api/auth/signin"}
+              href={session ? "/dashboard/submit" : "/auth/signin"}
               variant="contained"
               startIcon={<CloudUploadIcon />}
               sx={{
@@ -389,7 +389,7 @@ export default function Header() {
                 <MenuItem
                   onClick={handleMenuClose}
                   component={Link}
-                  href="/api/auth/signin"
+                  href="/auth/signin"
                 >
                   <ListItemIcon>
                     <PersonIcon sx={{ color: "#fbbf24" }} />

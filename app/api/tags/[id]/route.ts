@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
 type RouteParams = {
@@ -11,8 +11,8 @@ type RouteParams = {
 
 // PUT to update a tag
 export async function PUT(request: Request, { params }: RouteParams) {
-  const session = await auth();
-  if (!session || session.user?.role?.toUpperCase() !== "ADMIN") {
+  const session = await auth.api.getSession({ headers: request.headers });
+  if (!session || (session?.user as any)?.role !== "admin") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -40,8 +40,8 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
 // DELETE a tag
 export async function DELETE(request: Request, { params }: RouteParams) {
-  const session = await auth();
-  if (!session || session.user?.role?.toUpperCase() !== "ADMIN") {
+  const session = await auth.api.getSession({ headers: request.headers });
+  if (!session || (session?.user as any)?.role !== "admin") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

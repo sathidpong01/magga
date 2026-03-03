@@ -11,7 +11,7 @@ import {
   Avatar,
 } from "@mui/material";
 import Link from "next/link";
-import { useSession, signOut } from "next-auth/react";
+import { useSession, signOut } from "@/lib/auth-client";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import LogoutIcon from "@mui/icons-material/Logout";
@@ -66,8 +66,9 @@ export default function CollapsibleSidebar({
     return pathname.startsWith(href);
   };
 
-  const handleSignOut = () => {
-    signOut({ callbackUrl: "/" });
+  const handleSignOut = async () => {
+    await signOut();
+    router.push("/");
   };
 
   // Prevent hydration mismatch

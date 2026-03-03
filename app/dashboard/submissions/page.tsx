@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import {
   Box,
   Typography,
@@ -38,7 +38,7 @@ type Submission = {
 
 export default function MySubmissionsPage() {
   const router = useRouter();
-  const { data: session, status: authStatus } = useSession();
+  const { data: session, isPending: authLoading } = useSession();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -50,14 +50,14 @@ export default function MySubmissionsPage() {
   const isBanned = (session?.user as any)?.isBanned;
 
   useEffect(() => {
-    if (authStatus === "unauthenticated") {
-      router.push("/api/auth/signin?callbackUrl=/dashboard/submissions");
-    } else if (authStatus === "authenticated" && isBanned) {
+    if (!authLoading && !session) {
+      router.push("/auth/signin?callbackUrl=/dashboard/submissions");
+    } else if (!authLoading && session && isBanned) {
       setBanModalOpen(true);
-    } else if (authStatus === "authenticated") {
+    } else if (!authLoading && session) {
       fetchSubmissions();
     }
-  }, [authStatus, isBanned]);
+  }, [authLoading, session, isBanned]);
 
   const fetchSubmissions = async () => {
     try {
@@ -118,8 +118,8 @@ export default function MySubmissionsPage() {
   };
 
   if (
-    authStatus === "loading" ||
-    (authStatus === "authenticated" && !isBanned && loading)
+    authLoading ||
+    (!authLoading && session && !isBanned && loading)
   ) {
     return (
       <Container

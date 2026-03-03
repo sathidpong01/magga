@@ -1,6 +1,6 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { sanitizeInput } from "@/lib/sanitize";
@@ -15,7 +15,7 @@ export async function GET() {
 
 // POST a new category
 export async function POST(request: Request) {
-  const session = await auth();
+  const session = await auth.api.getSession({ headers: request.headers });
   const authError = requireAdmin(session);
   if (authError) return authError;
 

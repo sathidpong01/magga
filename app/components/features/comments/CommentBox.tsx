@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useCallback, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import {
   Box,
   Avatar,
@@ -43,7 +43,7 @@ export default function CommentBox({
   placeholder = "แสดงความคิดเห็น...",
   autoFocus = false,
 }: CommentBoxProps) {
-  const { data: session, status } = useSession();
+  const { data: session, isPending } = useSession();
   const [content, setContent] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -192,7 +192,7 @@ export default function CommentBox({
   // ลดความโค้งมน: 20% ของเดิม (จาก 2-3 เหลือ ~0.5)
   const borderRadius = 0.5;
 
-  if (status === "loading") {
+  if (isPending) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
         <CircularProgress size={24} aria-label="กำลังโหลด" />

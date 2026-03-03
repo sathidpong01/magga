@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { unstable_cache } from "next/cache";
 
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
     // all=true requires admin auth to prevent leaking inactive ads
     if (all) {
-      const session = await auth();
+      const session = await auth.api.getSession({ headers: request.headers });
       const authError = requireAdmin(session);
       if (authError) return authError;
 
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
 // POST - สร้างโฆษณาใหม่ (Admin only)
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
+    const session = await auth.api.getSession({ headers: request.headers });
     const authError = requireAdmin(session);
     if (authError) return authError;
 

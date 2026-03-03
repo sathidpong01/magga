@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rate-limit";
 
@@ -11,7 +11,7 @@ type RouteParams = {
 
 // POST /api/comments/[commentId]/vote - Vote on a comment
 export async function POST(request: Request, { params }: RouteParams) {
-  const session = await auth();
+  const session = await auth.api.getSession({ headers: request.headers });
   const { commentId } = await params;
   
   if (!session?.user?.id) {

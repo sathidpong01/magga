@@ -9,9 +9,10 @@ import {
   Grid,
   Divider,
 } from "@mui/material";
+import { useSession } from "@/lib/auth-client";
 import NextLink from "next/link";
 import Image from "next/image";
-import { useSession, signIn } from "next-auth/react";
+
 
 export default function Footer() {
   const { data: session } = useSession();
@@ -147,7 +148,8 @@ export default function Footer() {
             <Box sx={{ minWidth: 50 }}>
               {!session && (
                 <Button
-                  onClick={() => signIn()}
+                  component={NextLink}
+                  href="/auth/signin"
                   variant="text"
                   size="small"
                   sx={{

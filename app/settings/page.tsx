@@ -1,4 +1,5 @@
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import prisma from "@/lib/prisma";
 import { Box, Container } from "@mui/material";
@@ -6,10 +7,10 @@ import Sidebar from "./Sidebar";
 import AccountSettings from "./AccountSettings";
 
 export default async function SettingsPage() {
-  const session = await auth();
+  const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session) {
-    redirect("/api/auth/signin?callbackUrl=/settings");
+    redirect("/auth/signin?callbackUrl=/settings");
   }
 
   // Fetch user to check if they have a password
@@ -25,7 +26,7 @@ export default async function SettingsPage() {
   });
 
   if (!user) {
-    redirect("/api/auth/signin?callbackUrl=/settings");
+    redirect("/auth/signin?callbackUrl=/settings");
   }
 
   const hasPassword = !!user?.password;

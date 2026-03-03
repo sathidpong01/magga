@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, signUp } from "@/lib/auth-client";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -43,37 +43,29 @@ function RegisterForm() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: formData.username,
-          email: formData.email,
-          password: formData.password,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Registration failed");
-      }
-
-      // Auto login after register
-      const loginRes = await signIn("credentials", {
-        redirect: false,
-        username: formData.username,
+      // Register with Better Auth
+      const res = await signUp.email({
+        name: formData.username,
+        email: formData.email,
         password: formData.password,
       });
 
-      if (loginRes?.ok) {
+      if (res.error) {
+        throw new Error(res.error.message || "Registration failed");
+      }
+
+      // Auto login after register
+      const loginRes = await signIn.email({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (!loginRes.error) {
         router.push(callbackUrl);
         router.refresh();
       } else {
         router.push(
-          `/auth/signin?callbackUrl=${encodeURIComponent(
-            callbackUrl
-          )}&registered=true`
+          `/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}&registered=true`
         );
       }
     } catch (err) {
@@ -84,7 +76,7 @@ function RegisterForm() {
   };
 
   const handleGoogleLogin = () => {
-    signIn("google", { callbackUrl });
+    signIn.social({ provider: "google", callbackURL: "/" });
   };
 
   return (

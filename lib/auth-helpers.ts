@@ -1,4 +1,4 @@
-import { Session } from "next-auth";
+import { Session } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
 /**
@@ -10,7 +10,8 @@ export function requireAdmin(session: Session | null): NextResponse | null {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (session.user?.role !== "ADMIN") {
+  const role = (session.user as any)?.role;
+  if (role !== "admin") {
     return NextResponse.json(
       { error: "Forbidden - Admin access required" },
       { status: 403 }
@@ -41,6 +42,6 @@ export function canModifyResource(
   resourceUserId: string
 ): boolean {
   if (!session) return false;
-  if (session.user?.role === "ADMIN") return true;
+  if ((session.user as any)?.role === "admin") return true;
   return session.user?.id === resourceUserId;
 }

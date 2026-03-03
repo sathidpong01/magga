@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import {
   Dialog,
   DialogTitle,
@@ -13,19 +13,19 @@ import {
 import LogoutIcon from "@mui/icons-material/Logout";
 
 export default function SessionExpiredNotice() {
-  const { status } = useSession();
+  const { data: session, isPending } = useSession();
   const [showNotice, setShowNotice] = useState(false);
   const [wasAuthenticated, setWasAuthenticated] = useState(false);
 
   useEffect(() => {
     // Track if user was previously authenticated
-    if (status === "authenticated") {
+    if (!isPending && session) {
       setWasAuthenticated(true);
       sessionStorage.setItem("wasAuthenticated", "true");
     }
 
     // Check if session expired (was authenticated -> now unauthenticated)
-    if (status === "unauthenticated") {
+    if (!isPending && !session) {
       const previouslyAuth =
         sessionStorage.getItem("wasAuthenticated") === "true";
       if (previouslyAuth || wasAuthenticated) {
@@ -33,7 +33,7 @@ export default function SessionExpiredNotice() {
         sessionStorage.removeItem("wasAuthenticated");
       }
     }
-  }, [status, wasAuthenticated]);
+  }, [session, isPending, wasAuthenticated]);
 
   const handleClose = () => {
     setShowNotice(false);
@@ -41,7 +41,7 @@ export default function SessionExpiredNotice() {
 
   const handleLogin = () => {
     setShowNotice(false);
-    window.location.href = "/api/auth/signin";
+    window.location.href = "/auth/signin";
   };
 
   if (!showNotice) return null;

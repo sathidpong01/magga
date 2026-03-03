@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useState, useCallback } from "react";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import {
   Box,
   Avatar,
@@ -85,7 +85,7 @@ function CommentItem({
   const [banModalOpen, setBanModalOpen] = useState(false);
 
   const isOwner = session?.user?.id === comment.user.id;
-  const isAdmin = (session?.user as { role?: string })?.role === "ADMIN";
+  const isAdmin = (session?.user as { role?: string })?.role === "admin";
 
   const handleVote = useCallback(
     async (value: 1 | -1) => {

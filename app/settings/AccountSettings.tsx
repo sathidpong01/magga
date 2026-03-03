@@ -25,7 +25,7 @@ import {
   DialogContentText,
   DialogActions,
 } from "@mui/material";
-import { useSession } from "next-auth/react";
+import { useSession, updateUser } from "@/lib/auth-client";
 import { md5Sync } from "@/lib/md5";
 
 interface UserData {
@@ -63,7 +63,7 @@ export default function AccountSettings({ user, hasPassword }: Props) {
   const gravatarUrl = `https://www.gravatar.com/avatar/${md5Sync(formData.email.toLowerCase().trim())}?d=mp&s=200`;
   const displayImage = user.image || gravatarUrl;
 
-  const { data: session, update } = useSession();
+  const { data: session } = useSession();
 
   const handleProfileUpdate = async () => {
     setMessage(null);
@@ -77,11 +77,8 @@ export default function AccountSettings({ user, hasPassword }: Props) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to update profile");
       
-      // Update session with new data
-      await update({
-        name: formData.name,
-        email: formData.email,
-      });
+      // Update session with new data (Better Auth)
+      await updateUser({ name: formData.name });
 
       setMessage({ type: "success", text: "Profile updated successfully!" });
       window.location.reload();

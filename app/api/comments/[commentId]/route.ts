@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 
 type RouteParams = {
@@ -10,7 +10,7 @@ type RouteParams = {
 
 // PATCH /api/comments/[commentId] - Update a comment
 export async function PATCH(request: Request, { params }: RouteParams) {
-  const session = await auth();
+  const session = await auth.api.getSession({ headers: request.headers });
   const { commentId } = await params;
   
   if (!session?.user?.id) {
@@ -68,7 +68,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
 // DELETE /api/comments/[commentId] - Delete a comment
 export async function DELETE(request: Request, { params }: RouteParams) {
-  const session = await auth();
+  const session = await auth.api.getSession({ headers: request.headers });
   const { commentId } = await params;
   
   if (!session?.user?.id) {

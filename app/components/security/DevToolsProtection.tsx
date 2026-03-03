@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/lib/auth-client";
 import { Box, Typography, Button, Paper } from "@mui/material";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import HomeIcon from "@mui/icons-material/Home";
@@ -29,7 +29,7 @@ export default function DevToolsProtection() {
   const isDevelopment = process.env.NODE_ENV === "development";
 
   // Skip protection for Admin users
-  const isAdmin = session?.user?.role === "ADMIN";
+  const isAdmin = (session?.user as any)?.role === "admin";
 
   const handleDetection = useCallback(
     (method: string) => {

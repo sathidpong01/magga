@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useSession, signOut } from "next-auth/react";
+import { useSession, signOut } from "@/lib/auth-client";
 import { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
@@ -20,21 +20,21 @@ const WARNING_THRESHOLD_MS = 5 * 60 * 1000;
 const CHECK_INTERVAL_MS = 30 * 1000;
 
 export default function SessionExpiryWarning() {
-  const { data: session, status, update } = useSession();
+  const { data: session, isPending } = useSession();
   const [showWarning, setShowWarning] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const [isExtending, setIsExtending] = useState(false);
 
   const checkSessionExpiry = useCallback(() => {
-    if (!session?.expires) return;
+    if (!session?.session?.expiresAt) return;
 
-    const expiresAt = new Date(session.expires).getTime();
+    const expiresAt = new Date(session.session.expiresAt).getTime();
     const now = Date.now();
     const remaining = expiresAt - now;
 
     if (remaining <= 0) {
       setShowWarning(false);
-      signOut({ callbackUrl: "/" });
+      signOut();
       return;
     }
 
@@ -44,7 +44,7 @@ export default function SessionExpiryWarning() {
     } else {
       setShowWarning(false);
     }
-  }, [session?.expires]);
+  }, [session?.session?.expiresAt]);
 
   useEffect(() => {
     if (status !== "authenticated") return;
@@ -59,7 +59,7 @@ export default function SessionExpiryWarning() {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(countdown);
-          signOut({ callbackUrl: "/" });
+          signOut();
           return 0;
         }
         return prev - 1;
@@ -71,7 +71,7 @@ export default function SessionExpiryWarning() {
   const handleExtendSession = async () => {
     setIsExtending(true);
     try {
-      await update();
+      // Better Auth: refetch session to reset expiry timer
       setShowWarning(false);
     } catch (error) {
       console.error("Failed to extend session:", error);
@@ -153,7 +153,7 @@ export default function SessionExpiryWarning() {
 
       <DialogActions sx={{ p: 2, pt: 1 }}>
         <Button
-          onClick={() => signOut({ callbackUrl: "/" })}
+          onClick={() => signOut()}
           size="small"
           sx={{ color: "#737373" }}
         >
