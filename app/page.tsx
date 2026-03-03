@@ -1,9 +1,18 @@
 import prisma from "@/lib/prisma";
 import { Typography, Box, Container } from "@mui/material";
 import { Suspense } from "react";
-import SearchFilters from "./components/features/search/SearchFilters";
-import StreamingMangaGrid from "./components/features/manga/StreamingMangaGrid";
+import dynamic from "next/dynamic";
 import MangaGridSkeleton from "./components/features/manga/MangaGridSkeleton";
+
+const SearchFilters = dynamic(
+  () => import("./components/features/search/SearchFilters"),
+  { ssr: true }
+);
+
+const StreamingMangaGrid = dynamic(
+  () => import("./components/features/manga/StreamingMangaGrid"),
+  { ssr: true, loading: () => <MangaGridSkeleton count={12} /> }
+);
 import { Prisma } from "@prisma/client";
 import { unstable_cache } from "next/cache";
 
