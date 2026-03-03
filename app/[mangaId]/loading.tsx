@@ -1,5 +1,5 @@
 import { Container, Box } from "@mui/material";
-import MangaReaderSkeleton from "@/app/components/features/manga/MangaReaderSkeleton";
+import { MangaReaderSkeleton } from "./loading-skeletons";
 
 export default function MangaLoading() {
   return (
