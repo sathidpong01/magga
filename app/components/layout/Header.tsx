@@ -366,7 +366,12 @@ export default function Header() {
                   Settings
                 </MenuItem>
 
-                <MenuItem onClick={() => signOut()}>
+                <MenuItem 
+                  onClick={async () => {
+                    sessionStorage.setItem("intent_logout", "true");
+                    await signOut();
+                  }}
+                >
                   <ListItemIcon>
                     <LogoutIcon sx={{ color: "#a3a3a3" }} />
                   </ListItemIcon>

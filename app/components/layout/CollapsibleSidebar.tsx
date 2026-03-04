@@ -67,8 +67,9 @@ export default function CollapsibleSidebar({
   };
 
   const handleSignOut = async () => {
+    sessionStorage.setItem("intent_logout", "true");
     await signOut();
-    router.push("/");
+    window.location.href = "/";
   };
 
   // Prevent hydration mismatch

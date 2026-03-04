@@ -28,9 +28,16 @@ export default function SessionExpiredNotice() {
     if (!isPending && !session) {
       const previouslyAuth =
         sessionStorage.getItem("wasAuthenticated") === "true";
-      if (previouslyAuth || wasAuthenticated) {
+      const intentLogout = sessionStorage.getItem("intent_logout") === "true";
+
+      if ((previouslyAuth || wasAuthenticated) && !intentLogout) {
         setShowNotice(true);
-        sessionStorage.removeItem("wasAuthenticated");
+      }
+      
+      // Clean up storage items
+      sessionStorage.removeItem("wasAuthenticated");
+      if (intentLogout) {
+        sessionStorage.removeItem("intent_logout");
       }
     }
   }, [session, isPending, wasAuthenticated]);
