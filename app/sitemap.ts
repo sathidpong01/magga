@@ -1,28 +1,27 @@
 import { MetadataRoute } from "next";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { manga as mangaTable, categories as categoriesTable, tags as tagsTable } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXTAUTH_URL || "https://magga.vercel.app";
 
   // Get all visible manga slugs
-  const mangas = await prisma.manga.findMany({
-    where: { isHidden: false },
-    select: {
-      slug: true,
-      updatedAt: true,
-    },
-    orderBy: { updatedAt: "desc" },
-  });
+  const mangas = await db
+    .select({ slug: mangaTable.slug, updatedAt: mangaTable.updatedAt })
+    .from(mangaTable)
+    .where(eq(mangaTable.isHidden, false))
+    .orderBy(desc(mangaTable.updatedAt));
 
   // Get all categories
-  const categories = await prisma.category.findMany({
-    select: { name: true },
-  });
+  const categories = await db
+    .select({ name: categoriesTable.name })
+    .from(categoriesTable);
 
   // Get all tags
-  const tags = await prisma.tag.findMany({
-    select: { name: true },
-  });
+  const tags = await db
+    .select({ name: tagsTable.name })
+    .from(tagsTable);
 
   // Manga pages
   const mangaUrls = mangas.map((manga) => ({

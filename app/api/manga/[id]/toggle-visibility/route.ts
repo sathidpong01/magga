@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { manga as mangaTable } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
 export async function PATCH(
@@ -7,7 +9,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth.api.getSession({ headers: request.headers });
-  if (!session || session.user?.role !== "ADMIN") {
+  if (!session || (session.user as any)?.role !== "admin") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -15,22 +17,22 @@ export async function PATCH(
 
   try {
     // Get current manga to toggle its visibility
-    const currentManga = await prisma.manga.findUnique({
-      where: { id },
-      select: { isHidden: true },
-    });
+    const [currentManga] = await db
+      .select({ isHidden: mangaTable.isHidden })
+      .from(mangaTable)
+      .where(eq(mangaTable.id, id))
+      .limit(1);
 
     if (!currentManga) {
       return NextResponse.json({ error: "Manga not found" }, { status: 404 });
     }
 
     // Toggle the visibility
-    const updatedManga = await prisma.manga.update({
-      where: { id },
-      data: {
-        isHidden: !currentManga.isHidden,
-      },
-    });
+    const [updatedManga] = await db
+      .update(mangaTable)
+      .set({ isHidden: !currentManga.isHidden })
+      .where(eq(mangaTable.id, id))
+      .returning();
 
     return NextResponse.json(updatedManga);
   } catch (error) {

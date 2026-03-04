@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { db } from '@/db';
+import { manga as mangaTable } from '@/db/schema';
+import { eq, sql } from 'drizzle-orm';
 
 type RouteParams = {
   params: Promise<{
@@ -53,31 +55,27 @@ export async function POST(
     viewDedup.set(dedupKey, Date.now() + VIEW_DEDUP_TTL);
     cleanViewDedup();
 
-    // Atomic increment — no separate findUnique needed
-    const updatedManga = await prisma.manga.update({
-      where: { id },
-      data: {
-        viewCount: {
-          increment: 1,
-        },
-      },
-      select: {
-        viewCount: true,
-      },
-    });
+    // Atomic increment
+    const [updatedManga] = await db
+      .update(mangaTable)
+      .set({
+        viewCount: sql`${mangaTable.viewCount} + 1`,
+      })
+      .where(eq(mangaTable.id, id))
+      .returning({ viewCount: mangaTable.viewCount });
 
-    return NextResponse.json({
-      viewCount: updatedManga.viewCount,
-    });
-  } catch (error: any) {
-    // Prisma P2025 = record not found
-    if (error?.code === 'P2025') {
+    if (!updatedManga) {
       return NextResponse.json(
         { error: 'Manga not found' },
         { status: 404 }
       );
     }
 
+    return NextResponse.json({
+      viewCount: updatedManga.viewCount,
+    });
+  } catch (error: any) {
+    console.error("View increment error:", error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

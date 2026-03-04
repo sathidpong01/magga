@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/db";
+import { profiles as usersTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
-import prisma from "@/lib/prisma";
+import { eq } from "drizzle-orm";
 
 export async function POST(
   request: NextRequest,
@@ -20,14 +22,15 @@ export async function POST(
   }
 
   try {
-    const user = await prisma.user.update({
-      where: { id },
-      data: {
+    const [user] = await db.update(usersTable)
+      .set({
         banned: true,
+        isBanned: true,
         banReason: banReason,
-        bannedAt: new Date(),
-      },
-    });
+        bannedAt: new Date().toISOString(),
+      })
+      .where(eq(usersTable.id, id))
+      .returning();
 
     return NextResponse.json({ success: true, user });
   } catch (error) {
@@ -53,14 +56,15 @@ export async function DELETE(
   }
 
   try {
-    const user = await prisma.user.update({
-      where: { id },
-      data: {
+    const [user] = await db.update(usersTable)
+      .set({
         banned: false,
+        isBanned: false,
         banReason: null,
         bannedAt: null,
-      },
-    });
+      })
+      .where(eq(usersTable.id, id))
+      .returning();
 
     return NextResponse.json({ success: true, user });
   } catch (error) {

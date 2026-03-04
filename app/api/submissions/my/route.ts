@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { mangaSubmissions as submissionsTable, mangaSubmissionTags as submissionTagsTable } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
-// GET - ดึงรายการฝากลงของ user ที่ login อยู่
 export async function GET() {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
@@ -12,11 +13,9 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const submissions = await prisma.mangaSubmission.findMany({
-      where: {
-        userId: session.user.id,
-      },
-      select: {
+    const submissions = await db.query.mangaSubmissions.findMany({
+      where: eq(submissionsTable.userId, session.user.id),
+      columns: {
         id: true,
         title: true,
         coverImage: true,
@@ -24,13 +23,13 @@ export async function GET() {
         submittedAt: true,
         slug: true,
       },
-      orderBy: { submittedAt: "desc" },
+      orderBy: (s, { desc }) => [desc(s.submittedAt)],
     });
 
     // Map submittedAt to createdAt for frontend consistency
     const formatted = submissions.map((sub) => ({
       ...sub,
-      createdAt: sub.submittedAt.toISOString(),
+      createdAt: sub.submittedAt,
     }));
 
     return NextResponse.json(formatted);

@@ -108,7 +108,7 @@ const nextConfig = {
               // This is an acceptable risk as images cannot execute code (unlike scripts)
               "img-src 'self' data: blob: https:",
               "font-src 'self' data: https://fonts.gstatic.com",
-              "connect-src 'self' https://pub-1f8d25d164134702943300ef6d01fc35.r2.dev https://*.turso.io wss://*.turso.io https://vercel.live https://va.vercel-scripts.com https://accounts.google.com",
+              "connect-src 'self' https://pub-1f8d25d164134702943300ef6d01fc35.r2.dev https://vercel.live https://va.vercel-scripts.com https://accounts.google.com",
               "frame-src 'self' https://vercel.live https://accounts.google.com",
               "object-src 'none'",
               "base-uri 'self'",

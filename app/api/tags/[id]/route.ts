@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { tags as tagsTable } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
@@ -24,10 +26,10 @@ export async function PUT(request: Request, { params }: RouteParams) {
   }
 
   try {
-    const updatedTag = await prisma.tag.update({
-      where: { id },
-      data: { name },
-    });
+    const [updatedTag] = await db.update(tagsTable)
+      .set({ name })
+      .where(eq(tagsTable.id, id))
+      .returning();
     revalidatePath("/admin/metadata");
     return NextResponse.json(updatedTag);
   } catch {
@@ -48,9 +50,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
   const { id } = await params;
 
   try {
-    await prisma.tag.delete({
-      where: { id },
-    });
+    await db.delete(tagsTable).where(eq(tagsTable.id, id));
     revalidatePath("/admin/metadata");
     return new NextResponse(null, { status: 204 }); // No Content
   } catch {

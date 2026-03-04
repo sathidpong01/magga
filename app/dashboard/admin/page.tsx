@@ -1,4 +1,13 @@
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { 
+  manga as mangaTable,
+  categories as categoriesTable,
+  tags as tagsTable,
+  profiles as usersTable,
+  comments as commentsTable,
+  mangaSubmissions as submissionsTable
+} from "@/db/schema";
+import { count, eq, sum, desc } from "drizzle-orm";
 import { Box, Typography, Card, CardContent, Grid, Chip } from "@mui/material";
 import BookIcon from "@mui/icons-material/Book";
 import CategoryIcon from "@mui/icons-material/Category";
@@ -11,28 +20,24 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
   // Stats
-  const totalManga = await prisma.manga.count();
-  const totalCategories = await prisma.category.count();
-  const totalTags = await prisma.tag.count();
-  const draftManga = await prisma.manga.count({ where: { isHidden: true } });
-  const totalUsers = await prisma.user.count();
-  const totalComments = await prisma.comment.count();
-  const pendingSubmissions = await prisma.mangaSubmission.count({
-    where: { status: "PENDING" },
-  });
+  const [{ count: totalManga }] = await db.select({ count: count() }).from(mangaTable);
+  const [{ count: totalCategories }] = await db.select({ count: count() }).from(categoriesTable);
+  const [{ count: totalTags }] = await db.select({ count: count() }).from(tagsTable);
+  const [{ count: draftManga }] = await db.select({ count: count() }).from(mangaTable).where(eq(mangaTable.isHidden, true));
+  const [{ count: totalUsers }] = await db.select({ count: count() }).from(usersTable);
+  const [{ count: totalComments }] = await db.select({ count: count() }).from(commentsTable);
+  const [{ count: pendingSubmissions }] = await db.select({ count: count() }).from(submissionsTable).where(eq(submissionsTable.status, "PENDING"));
 
   // Total views across all manga
-  const viewsAgg = await prisma.manga.aggregate({
-    _sum: { viewCount: true },
-  });
-  const totalViews = viewsAgg._sum.viewCount || 0;
+  const [{ totalViewsAgg }] = await db.select({ totalViewsAgg: sum(mangaTable.viewCount) }).from(mangaTable);
+  const totalViews = Number(totalViewsAgg || 0);
 
   // Top 10 Popular Manga
-  const topManga = await prisma.manga.findMany({
-    where: { isHidden: false },
-    orderBy: { viewCount: "desc" },
-    take: 10,
-    select: {
+  const topManga = await db.query.manga.findMany({
+    where: eq(mangaTable.isHidden, false),
+    orderBy: [desc(mangaTable.viewCount)],
+    limit: 10,
+    columns: {
       id: true,
       title: true,
       slug: true,

@@ -1,8 +1,11 @@
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { categories as categoriesTable, tags as tagsTable, advertisements as adsTable, _mangaTags } from "@/db/schema";
+import { asc, eq, inArray } from "drizzle-orm";
 import { Typography, Box, Container } from "@mui/material";
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import MangaGridSkeleton from "./components/features/manga/MangaGridSkeleton";
+import { unstable_cache } from "next/cache";
 
 const SearchFilters = dynamic(
   () => import("./components/features/search/SearchFilters"),
@@ -13,8 +16,6 @@ const StreamingMangaGrid = dynamic(
   () => import("./components/features/manga/StreamingMangaGrid"),
   { ssr: true, loading: () => <MangaGridSkeleton count={12} /> }
 );
-import { Prisma } from "@prisma/client";
-import { unstable_cache } from "next/cache";
 
 type Props = {
   searchParams: Promise<{
@@ -31,7 +32,7 @@ export const revalidate = 3600;
 // Cache categories for 5 minutes
 const getCategories = unstable_cache(
   async () => {
-    return prisma.category.findMany({ orderBy: { name: "asc" } });
+    return db.query.categories.findMany({ orderBy: [asc(categoriesTable.name)] });
   },
   ["categories"],
   { revalidate: 300, tags: ["categories"] }
@@ -40,9 +41,13 @@ const getCategories = unstable_cache(
 // Cache tags for 5 minutes
 const getTags = unstable_cache(
   async () => {
-    return prisma.tag.findMany({
-      where: { mangas: { some: {} } },
-      orderBy: { name: "asc" },
+    // Tags that are used in at least one manga
+    const usedTagIds = await db.selectDistinct({ id: _mangaTags.b }).from(_mangaTags);
+    const ids = usedTagIds.map(t => t.id);
+    if (ids.length === 0) return [];
+    return db.query.tags.findMany({
+      where: inArray(tagsTable.id, ids),
+      orderBy: [asc(tagsTable.name)],
     });
   },
   ["tags"],
@@ -52,9 +57,9 @@ const getTags = unstable_cache(
 // Cache grid ads for 5 minutes
 const getGridAds = unstable_cache(
   async () => {
-    return prisma.advertisement.findMany({
-      where: { isActive: true, placement: "grid" },
-      select: {
+    return db.query.advertisements.findMany({
+      where: eq(adsTable.isActive, true),
+      columns: {
         id: true,
         type: true,
         title: true,
@@ -80,40 +85,11 @@ export default async function Home({ searchParams }: Props) {
     getGridAds(),
   ]);
 
-  // Build Where Clause
-  const where: Prisma.MangaWhereInput = {
-    isHidden: false,
-  };
-
-  if (search) {
-    where.title = { contains: search };
-  }
-
-  if (categoryId && categoryId !== "all") {
-    where.categoryId = categoryId;
-  }
-
   const tagNameArray = tagNames
     ? Array.isArray(tagNames)
       ? tagNames
       : [tagNames]
     : [];
-
-  if (tagNameArray.length > 0) {
-    where.tags = {
-      some: {
-        name: { in: tagNameArray },
-      },
-    };
-  }
-
-  // Build OrderBy Clause
-  let orderBy: Prisma.MangaOrderByWithRelationInput = { createdAt: "desc" };
-  if (sort === "updated") {
-    orderBy = { updatedAt: "desc" };
-  } else if (sort === "az") {
-    orderBy = { title: "asc" };
-  }
 
   return (
     <Container maxWidth="xl">
@@ -142,13 +118,11 @@ export default async function Home({ searchParams }: Props) {
         {/* Streaming: Manga grid loads progressively while skeleton shows */}
         <Suspense fallback={<MangaGridSkeleton count={12} />}>
           <StreamingMangaGrid
-            where={where}
-            orderBy={orderBy}
-            ads={gridAds}
             search={search}
             categoryId={categoryId}
-            tags={tagNameArray.join(",")}
+            tagNames={tagNameArray}
             sort={sort}
+            ads={gridAds as any}
           />
         </Suspense>
       </Box>

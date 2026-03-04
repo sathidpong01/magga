@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { profiles as usersTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import { eq } from "drizzle-orm";
 
 // DELETE - Delete a user
 export async function DELETE(
@@ -24,13 +26,13 @@ export async function DELETE(
     }
 
     // Check if user exists
-    const user = await prisma.user.findUnique({ where: { id } });
+    const user = await db.query.profiles.findFirst({ where: eq(usersTable.id, id) });
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     // Delete user (cascade will handle related records)
-    await prisma.user.delete({ where: { id } });
+    await db.delete(usersTable).where(eq(usersTable.id, id));
 
     return NextResponse.json({ success: true });
   } catch (error) {

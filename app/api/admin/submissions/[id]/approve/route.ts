@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { 
+  manga as mangaTable,
+  mangaTags as mangaTagsTable,
+  mangaSubmissions as mangaSubmissionsTable 
+} from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 export async function POST(
@@ -9,7 +15,8 @@ export async function POST(
 ) {
   try {
     const session = await auth.api.getSession({ headers: req.headers });
-    if (!session || (session?.user as any)?.role !== "admin") {
+    const userRole = (session?.user as any)?.role;
+    if (!session || (userRole !== "admin" && userRole !== "ADMIN")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -17,64 +24,65 @@ export async function POST(
     const body = await req.json();
     const { reviewNote, publishImmediately } = body;
 
-    // 1. Get Submission
-    const submission = await prisma.mangaSubmission.findUnique({
-      where: { id },
-      include: { tags: true },
-    });
+    const result = await db.transaction(async (tx) => {
+      // 1. Get Submission
+      const submission = await tx.query.mangaSubmissions.findFirst({
+        where: eq(mangaSubmissionsTable.id, id),
+        with: { mangaSubmissionTags: true },
+      });
 
-    if (!submission) {
-      return NextResponse.json(
-        { error: "Submission not found" },
-        { status: 404 }
-      );
-    }
+      if (!submission) {
+        return { error: "Submission not found", status: 404 };
+      }
 
-    if (submission.status === "APPROVED") {
-      return NextResponse.json(
-        { error: "Submission already approved" },
-        { status: 400 }
-      );
-    }
+      if (submission.status === "APPROVED") {
+        return { error: "Submission already approved", status: 400 };
+      }
 
-    // 2. Create Manga Record
-    const manga = await prisma.manga.create({
-      data: {
+      // 2. Create Manga Record
+      const finalSlug = submission.slug || submission.title.toLowerCase().replace(/\s+/g, "-");
+      
+      const [manga] = await tx.insert(mangaTable).values({
         title: submission.title,
-        slug:
-          submission.slug ||
-          submission.title.toLowerCase().replace(/\s+/g, "-"),
+        slug: finalSlug,
         description: submission.description,
         coverImage: submission.coverImage,
-        pages: submission.pages, // Already JSON string
+        pages: submission.pages as any, // Expecting valid json string
         categoryId: submission.categoryId,
         authorId: submission.authorId,
         isHidden: !publishImmediately,
-        tags: {
-          connect: submission.tags.map((t: { tagId: string }) => ({
-            id: t.tagId,
-          })),
-        },
-      },
-    });
+      }).returning({ id: mangaTable.id, slug: mangaTable.slug });
 
-    // 3. Update Submission Status
-    await prisma.mangaSubmission.update({
-      where: { id },
-      data: {
+      if (submission.mangaSubmissionTags && submission.mangaSubmissionTags.length > 0) {
+        await tx.insert(mangaTagsTable).values(
+          submission.mangaSubmissionTags.map((t) => ({
+            mangaId: manga.id,
+            tagId: t.tagId,
+          }))
+        );
+      }
+
+      // 3. Update Submission Status
+      await tx.update(mangaSubmissionsTable).set({
         status: "APPROVED",
-        reviewedAt: new Date(),
+        reviewedAt: new Date().toISOString(),
         reviewedBy: session.user.id,
         reviewNote,
         approvedMangaId: manga.id,
-      },
+      }).where(eq(mangaSubmissionsTable.id, id));
+
+      return { data: manga };
     });
+
+    if (result.error) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
+    }
 
     // 4. Revalidate home page cache to show new manga immediately
     revalidatePath("/");
-    revalidatePath(`/${manga.slug}`);
+    revalidatePath(`/${result.data?.slug}`);
 
-    return NextResponse.json({ success: true, mangaId: manga.id });
+    return NextResponse.json({ success: true, mangaId: result.data?.id });
   } catch (error) {
     console.error("Approve submission error:", error);
     return NextResponse.json(

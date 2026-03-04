@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { db } from "@/db";
+import { mangaSubmissions as submissionsTable, mangaSubmissionTags as submissionTagsTable, userSubmissionLimits as submissionLimitsTable, manga as mangaTable } from "@/db/schema";
+import { eq, and, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import prisma from "@/lib/prisma";
 import { z } from "zod";
 
 const submissionSchema = z.object({
@@ -12,7 +14,7 @@ const submissionSchema = z.object({
   categoryId: z.string().nullable().optional(),
   authorId: z.string().nullable().optional(),
   tagIds: z.array(z.string()).optional(),
-  extraMetadata: z.string().optional(), // JSON string
+  extraMetadata: z.string().optional(),
   status: z.enum(["DRAFT", "PENDING"]).optional().default("PENDING"),
   approvedMangaId: z.string().optional(),
 });
@@ -50,31 +52,34 @@ export async function POST(req: Request) {
         .replace(/\-\-+/g, "-");
     }
 
-    // Ensure slug is unique (check both Manga and MangaSubmission)
-    const existingManga = await prisma.manga.findUnique({ where: { slug: finalSlug } });
+    // Ensure slug is unique
+    const [existingManga] = await db
+      .select({ id: mangaTable.id })
+      .from(mangaTable)
+      .where(eq(mangaTable.slug, finalSlug))
+      .limit(1);
+
     if (existingManga && existingManga.id !== approvedMangaId) {
       finalSlug = `${finalSlug}-${Date.now()}`;
     }
 
-    // Check Rate Limit (Skip for DRAFT updates? Maybe not, to prevent spam)
-    // For now, apply to all creations
+    // Check Rate Limit
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
-    const limit = await prisma.userSubmissionLimit.findUnique({
-      where: { userId: session.user.id }
-    });
+    const [limit] = await db
+      .select()
+      .from(submissionLimitsTable)
+      .where(eq(submissionLimitsTable.userId, session.user.id))
+      .limit(1);
 
     if (limit) {
-      // Check if window expired (reset daily)
-      if (limit.windowStart < today) {
-        await prisma.userSubmissionLimit.update({
-          where: { userId: session.user.id },
-          data: {
-            submissionCount: 0,
-            windowStart: new Date(),
-          }
-        });
+      const windowStart = new Date(limit.windowStart);
+      if (windowStart < today) {
+        await db
+          .update(submissionLimitsTable)
+          .set({ submissionCount: 0, windowStart: new Date().toISOString() })
+          .where(eq(submissionLimitsTable.userId, session.user.id));
       } else if (limit.submissionCount >= 5) {
         return NextResponse.json(
           { error: "Daily submission limit reached (5/5). Please try again tomorrow." },
@@ -82,14 +87,13 @@ export async function POST(req: Request) {
         );
       }
     } else {
-      await prisma.userSubmissionLimit.create({
-        data: { userId: session.user.id }
-      });
+      await db.insert(submissionLimitsTable).values({ userId: session.user.id });
     }
 
     // Create Submission
-    const submission = await prisma.mangaSubmission.create({
-      data: {
+    const [submission] = await db
+      .insert(submissionsTable)
+      .values({
         userId: session.user.id,
         title,
         slug: finalSlug,
@@ -99,24 +103,29 @@ export async function POST(req: Request) {
         categoryId: categoryId || null,
         authorId: authorId || null,
         extraMetadata,
-        status: status, // DRAFT or PENDING
+        status,
         approvedMangaId: approvedMangaId || null,
-        tags: {
-          create: tagIds?.map(tagId => ({
-            tag: { connect: { id: tagId } }
-          }))
-        }
-      }
-    });
+      })
+      .returning();
+
+    // Add tags if any
+    if (tagIds && tagIds.length > 0) {
+      await db.insert(submissionTagsTable).values(
+        tagIds.map((tagId) => ({
+          submissionId: submission.id,
+          tagId,
+        }))
+      );
+    }
 
     // Increment submission count
-    await prisma.userSubmissionLimit.update({
-      where: { userId: session.user.id },
-      data: {
-        submissionCount: { increment: 1 },
-        lastSubmitAt: new Date()
-      }
-    });
+    await db
+      .update(submissionLimitsTable)
+      .set({
+        submissionCount: sql`${submissionLimitsTable.submissionCount} + 1`,
+        lastSubmitAt: new Date().toISOString(),
+      })
+      .where(eq(submissionLimitsTable.userId, session.user.id));
 
     return NextResponse.json({ success: true, submissionId: submission.id });
 

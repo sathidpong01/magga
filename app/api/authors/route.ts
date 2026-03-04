@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { authors as authorsTable } from "@/db/schema";
+import { asc, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/lib/auth-helpers";
@@ -7,8 +9,8 @@ import { sanitizeInput } from "@/lib/sanitize";
 
 // GET all authors
 export async function GET() {
-  const authors = await prisma.author.findMany({
-    orderBy: { name: "asc" },
+  const authors = await db.query.authors.findMany({
+    orderBy: [asc(authorsTable.name)],
   });
   return NextResponse.json(authors);
 }
@@ -27,19 +29,20 @@ export async function POST(request: Request) {
   }
 
   try {
-    const newAuthor = await prisma.author.create({
-      data: {
+    const [newAuthor] = await db
+      .insert(authorsTable)
+      .values({
         name: sanitizedName,
         profileUrl: profileUrl || null,
         socialLinks: socialLinks || null,
-      },
-    });
+      })
+      .returning();
     revalidatePath("/admin/categories");
     revalidatePath("/submit");
     return NextResponse.json(newAuthor, { status: 201 });
   } catch (error: any) {
-    // Handle unique constraint violation
-    if (error.code === "P2002") {
+    // Handle unique constraint violation (Postgres error code 23505)
+    if (error.code === "23505") {
       return NextResponse.json(
         { error: "Author already exists" },
         { status: 409 }

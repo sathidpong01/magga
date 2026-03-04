@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { db } from "@/db";
+import { mangaSubmissions as submissionsTable } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import prisma from "@/lib/prisma";
 
 export async function POST(
   req: Request,
@@ -23,18 +25,16 @@ export async function POST(
       );
     }
 
-    await prisma.mangaSubmission.update({
-      where: { id },
-      data: {
+    await db
+      .update(submissionsTable)
+      .set({
         status: "REJECTED",
-        reviewedAt: new Date(),
+        reviewedAt: new Date().toISOString(),
         reviewedBy: session.user.id,
         reviewNote,
         rejectionReason,
-      },
-    });
-
-    // TODO: Schedule file cleanup (Phase 4)
+      })
+      .where(eq(submissionsTable.id, id));
 
     return NextResponse.json({ success: true });
   } catch (error) {

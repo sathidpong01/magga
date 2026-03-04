@@ -22,7 +22,7 @@ Optimize Magga Reader manga web application for Vercel deployment to:
 
 ### 1. Database Layer
 
-**File:** `lib/prisma.ts`
+**File:** `db/index.ts`
 
 **Changes:**
 
@@ -321,7 +321,7 @@ Route (app)                                 Size  First Load JS  Revalidate  Exp
 ### Immediate (Before Deploy)
 
 1. [ ] Set environment variables in Vercel Dashboard
-2. [ ] Verify Turso database connection
+2. [ ] Verify PostgreSQL database connection
 3. [ ] Verify R2 credentials and CORS
 4. [ ] Push code to Git repository
 
@@ -381,7 +381,7 @@ Route (app)                                 Size  First Load JS  Revalidate  Exp
 
 1. **Multi-size Images** - Upload images in multiple sizes to R2
 2. **Progressive Web App** - Add PWA capabilities
-3. **Database Connection Pool** - Fine-tune Turso settings based on usage
+3. **Database Connection Pool** - Fine-tune PostgreSQL settings based on usage
 
 ### Low Priority
 
@@ -405,7 +405,7 @@ Route (app)                                 Size  First Load JS  Revalidate  Exp
 - [Next.js ISR Documentation](https://nextjs.org/docs/app/building-your-application/data-fetching/incremental-static-regeneration)
 - [Vercel Caching Documentation](https://vercel.com/docs/concepts/edge-network/caching)
 - [Vercel Analytics](https://vercel.com/analytics)
-- [Turso Documentation](https://docs.turso.tech)
+- [PostgreSQL Documentation](https://docs.postgresql.tech)
 
 ---
 

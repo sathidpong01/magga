@@ -18,7 +18,11 @@ import {
   ListItemAvatar,
   Avatar,
 } from "@mui/material";
-import { Category, Tag } from "@prisma/client";
+import type { InferSelectModel } from "drizzle-orm";
+import type { categories, tags } from "@/db/schema";
+
+type Category = InferSelectModel<typeof categories>;
+type Tag = InferSelectModel<typeof tags>;
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import SearchIcon from "@mui/icons-material/Search";

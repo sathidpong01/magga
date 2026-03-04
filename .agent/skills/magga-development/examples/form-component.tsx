@@ -14,7 +14,11 @@ import {
   CircularProgress,
   Box,
 } from "@mui/material";
-import type { Category } from "@prisma/client";
+
+interface Category {
+  id: string;
+  name: string;
+}
 
 interface MangaFormProps {
   categories: Category[];

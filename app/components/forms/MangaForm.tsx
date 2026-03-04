@@ -2,7 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import type { Category, Tag, Manga, Author } from "@prisma/client";
+import type { InferSelectModel } from "drizzle-orm";
+import type { categories, tags, manga as mangaTable, authors } from "@/db/schema";
+
+type Category = InferSelectModel<typeof categories>;
+type Tag = InferSelectModel<typeof tags>;
+type Manga = InferSelectModel<typeof mangaTable>;
+type Author = InferSelectModel<typeof authors>;
 import {
   Box,
   TextField,

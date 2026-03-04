@@ -1,7 +1,9 @@
 "use server";
 
 import { auth } from "@/lib/auth";
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { comments as commentsTable, commentVotes as commentVotesTable, manga as mangaTable } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -21,7 +23,6 @@ const CreateCommentSchema = z
   })
   .refine(
     (data) => {
-      // Must have either content or image
       return (data.content && data.content.trim().length > 0) || data.imageUrl;
     },
     {
@@ -47,10 +48,11 @@ function sanitizeContent(content: string): string {
 }
 
 async function getMangaSlug(mangaId: string): Promise<string | null> {
-  const manga = await prisma.manga.findUnique({
-    where: { id: mangaId },
-    select: { slug: true },
-  });
+  const [manga] = await db
+    .select({ slug: mangaTable.slug })
+    .from(mangaTable)
+    .where(eq(mangaTable.id, mangaId))
+    .limit(1);
   return manga?.slug ?? null;
 }
 
@@ -58,9 +60,6 @@ async function getMangaSlug(mangaId: string): Promise<string | null> {
 // Server Actions
 // ============================================================================
 
-/**
- * Create a new comment (Server Action)
- */
 export async function createComment(formData: FormData) {
   const session = await auth.api.getSession({ headers: await headers() });
 
@@ -68,7 +67,6 @@ export async function createComment(formData: FormData) {
     return { error: "กรุณาเข้าสู่ระบบก่อนแสดงความคิดเห็น" };
   }
 
-  // Check if user is banned
   if ((session.user as any).banned) {
     return { error: "บัญชีของคุณถูกระงับการใช้งาน" };
   }
@@ -85,7 +83,6 @@ export async function createComment(formData: FormData) {
     return { error: `คุณคอมเมนต์เร็วเกินไป กรุณารอ ${waitMins} นาที` };
   }
 
-  // Parse form data
   const rawData = {
     mangaId: formData.get("mangaId") as string,
     content: formData.get("content") as string,
@@ -96,7 +93,6 @@ export async function createComment(formData: FormData) {
     parentId: (formData.get("parentId") as string) || null,
   };
 
-  // Validate
   const parsed = CreateCommentSchema.safeParse(rawData);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message || "ข้อมูลไม่ถูกต้อง" };
@@ -105,7 +101,6 @@ export async function createComment(formData: FormData) {
   const { mangaId, content, imageIndex, imageUrl, parentId } = parsed.data;
 
   try {
-    // Validate imageUrl if provided
     if (imageUrl) {
       const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL;
       if (
@@ -118,51 +113,46 @@ export async function createComment(formData: FormData) {
     }
 
     // Verify manga exists
-    const manga = await prisma.manga.findUnique({
-      where: { id: mangaId },
-      select: { id: true, slug: true, isHidden: true },
-    });
+    const [manga] = await db
+      .select({ id: mangaTable.id, slug: mangaTable.slug, isHidden: mangaTable.isHidden })
+      .from(mangaTable)
+      .where(eq(mangaTable.id, mangaId))
+      .limit(1);
 
     if (!manga) {
       return { error: "Manga not found" };
     }
 
-    // Don't allow comments on hidden manga (unless admin)
     const userRole = (session.user as { role?: string }).role;
-    if (manga.isHidden && userRole !== "ADMIN") {
+    if (manga.isHidden && userRole !== "admin") {
       return { error: "Cannot comment on hidden manga" };
     }
 
     // Verify parent comment if replying
     if (parentId) {
-      const parent = await prisma.comment.findUnique({
-        where: { id: parentId },
-      });
+      const [parent] = await db
+        .select({ id: commentsTable.id })
+        .from(commentsTable)
+        .where(eq(commentsTable.id, parentId))
+        .limit(1);
       if (!parent) {
         return { error: "Parent comment not found" };
       }
     }
 
     // Create comment
-    const comment = await prisma.comment.create({
-      data: {
+    const [comment] = await db
+      .insert(commentsTable)
+      .values({
         content: sanitizeContent(content),
         imageUrl: imageUrl || null,
         mangaId,
         userId: session.user.id,
         imageIndex: imageIndex ?? null,
         parentId: parentId || null,
-      },
-      include: {
-        user: {
-          select: { id: true, name: true, username: true, image: true },
-        },
-        votes: true,
-        replies: true,
-      },
-    });
+      })
+      .returning();
 
-    // Revalidate manga page
     revalidatePath(`/${manga.slug}`);
 
     return { comment };
@@ -172,9 +162,6 @@ export async function createComment(formData: FormData) {
   }
 }
 
-/**
- * Update an existing comment (Server Action)
- */
 export async function updateComment(formData: FormData) {
   const session = await auth.api.getSession({ headers: await headers() });
 
@@ -195,34 +182,29 @@ export async function updateComment(formData: FormData) {
   const { commentId, content } = parsed.data;
 
   try {
-    const comment = await prisma.comment.findUnique({
-      where: { id: commentId },
-      include: { manga: { select: { slug: true } } },
-    });
+    const [comment] = await db
+      .select()
+      .from(commentsTable)
+      .where(eq(commentsTable.id, commentId))
+      .limit(1);
 
     if (!comment) {
       return { error: "Comment not found" };
     }
 
-    // Only owner can edit
     if (comment.userId !== session.user.id) {
       return { error: "You can only edit your own comments" };
     }
 
-    const updated = await prisma.comment.update({
-      where: { id: commentId },
-      data: { content: sanitizeContent(content) },
-      include: {
-        user: {
-          select: { id: true, name: true, username: true, image: true },
-        },
-        votes: true,
-      },
-    });
+    const [updated] = await db
+      .update(commentsTable)
+      .set({ content: sanitizeContent(content) })
+      .where(eq(commentsTable.id, commentId))
+      .returning();
 
-    // Revalidate manga page
-    if (comment.manga?.slug) {
-      revalidatePath(`/${comment.manga.slug}`);
+    const mangaSlug = await getMangaSlug(comment.mangaId);
+    if (mangaSlug) {
+      revalidatePath(`/${mangaSlug}`);
     }
 
     return { comment: updated };
@@ -232,9 +214,6 @@ export async function updateComment(formData: FormData) {
   }
 }
 
-/**
- * Delete a comment (Server Action)
- */
 export async function deleteComment(commentId: string) {
   const session = await auth.api.getSession({ headers: await headers() });
 
@@ -243,28 +222,28 @@ export async function deleteComment(commentId: string) {
   }
 
   try {
-    const comment = await prisma.comment.findUnique({
-      where: { id: commentId },
-      include: { manga: { select: { slug: true } } },
-    });
+    const [comment] = await db
+      .select()
+      .from(commentsTable)
+      .where(eq(commentsTable.id, commentId))
+      .limit(1);
 
     if (!comment) {
       return { error: "Comment not found" };
     }
 
-    // Owner or admin can delete
     const isOwner = comment.userId === session.user.id;
-    const isAdmin = (session.user as { role?: string }).role === "ADMIN";
+    const isAdmin = (session.user as { role?: string }).role === "admin";
 
     if (!isOwner && !isAdmin) {
       return { error: "You don't have permission to delete this comment" };
     }
 
-    await prisma.comment.delete({ where: { id: commentId } });
+    await db.delete(commentsTable).where(eq(commentsTable.id, commentId));
 
-    // Revalidate manga page
-    if (comment.manga?.slug) {
-      revalidatePath(`/${comment.manga.slug}`);
+    const mangaSlug = await getMangaSlug(comment.mangaId);
+    if (mangaSlug) {
+      revalidatePath(`/${mangaSlug}`);
     }
 
     return { success: true };
@@ -274,9 +253,6 @@ export async function deleteComment(commentId: string) {
   }
 }
 
-/**
- * Vote on a comment (Server Action)
- */
 export async function voteComment(commentId: string, value: 1 | -1) {
   const session = await auth.api.getSession({ headers: await headers() });
 
@@ -288,7 +264,6 @@ export async function voteComment(commentId: string, value: 1 | -1) {
     return { error: "บัญชีของคุณถูกระงับการใช้งาน" };
   }
 
-  // Rate limiting: 30 votes per 15 minutes
   const rateLimit = await checkRateLimit(
     `vote:${session.user.id}`,
     30,
@@ -300,77 +275,73 @@ export async function voteComment(commentId: string, value: 1 | -1) {
     return { error: `คุณโหวตเร็วเกินไป กรุณารอ ${waitMins} นาที` };
   }
 
-  // Validate vote value
   if (value !== 1 && value !== -1) {
     return { error: "Vote value must be 1 or -1" };
   }
 
   try {
-    const comment = await prisma.comment.findUnique({
-      where: { id: commentId },
-      include: { manga: { select: { slug: true } } },
-    });
+    const [comment] = await db
+      .select()
+      .from(commentsTable)
+      .where(eq(commentsTable.id, commentId))
+      .limit(1);
 
     if (!comment) {
       return { error: "Comment not found" };
     }
 
-    // Check existing vote
-    const existingVote = await prisma.commentVote.findUnique({
-      where: {
-        commentId_userId: {
-          commentId,
-          userId: session.user.id,
-        },
-      },
-    });
+    const [existingVote] = await db
+      .select()
+      .from(commentVotesTable)
+      .where(
+        and(
+          eq(commentVotesTable.commentId, commentId),
+          eq(commentVotesTable.userId, session.user.id)
+        )
+      )
+      .limit(1);
 
     let newVoteScore = comment.voteScore;
 
     if (existingVote) {
       if (existingVote.value === value) {
-        // Same vote = remove vote
-        await prisma.commentVote.delete({ where: { id: existingVote.id } });
+        await db.delete(commentVotesTable).where(eq(commentVotesTable.id, existingVote.id));
         newVoteScore -= value;
       } else {
-        // Different vote = update (swing of 2)
-        await prisma.commentVote.update({
-          where: { id: existingVote.id },
-          data: { value },
-        });
+        await db
+          .update(commentVotesTable)
+          .set({ value })
+          .where(eq(commentVotesTable.id, existingVote.id));
         newVoteScore += value * 2;
       }
     } else {
-      // New vote
-      await prisma.commentVote.create({
-        data: {
-          commentId,
-          userId: session.user.id,
-          value,
-        },
+      await db.insert(commentVotesTable).values({
+        commentId,
+        userId: session.user.id,
+        value,
       });
       newVoteScore += value;
     }
 
-    // Update cached vote score
-    await prisma.comment.update({
-      where: { id: commentId },
-      data: { voteScore: newVoteScore },
-    });
+    await db
+      .update(commentsTable)
+      .set({ voteScore: newVoteScore })
+      .where(eq(commentsTable.id, commentId));
 
-    // Get user's current vote
-    const userVote = await prisma.commentVote.findUnique({
-      where: {
-        commentId_userId: {
-          commentId,
-          userId: session.user.id,
-        },
-      },
-    });
+    const [userVote] = await db
+      .select()
+      .from(commentVotesTable)
+      .where(
+        and(
+          eq(commentVotesTable.commentId, commentId),
+          eq(commentVotesTable.userId, session.user.id)
+        )
+      )
+      .limit(1);
 
-    // Revalidate manga page
-    if (comment.manga?.slug) {
-      revalidatePath(`/${comment.manga.slug}`);
+    const mangaSlug = await getMangaSlug(comment.mangaId);
+    if (mangaSlug) {
+      revalidatePath(`/${mangaSlug}`);
     }
 
     return {

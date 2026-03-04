@@ -2,7 +2,9 @@
 
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { manga as mangaTable, mangaSubmissions as submissionsTable, mangaSubmissionTags as submissionTagsTable, userSubmissionLimits as submissionLimitsTable, categories as categoriesTable, tags as tagsTable, authors as authorsTable } from "@/db/schema";
+import { eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -46,10 +48,6 @@ function generateSlug(title: string): string {
 // Server Actions
 // ============================================================================
 
-/**
- * Submit a manga (Server Action)
- * Handles the final submission after files are uploaded client-side
- */
 export async function submitManga(data: z.input<typeof SubmitMangaSchema>) {
   const session = await auth.api.getSession({ headers: await headers() });
 
@@ -61,7 +59,6 @@ export async function submitManga(data: z.input<typeof SubmitMangaSchema>) {
     return { error: "บัญชีของคุณถูกระงับการใช้งาน" };
   }
 
-  // Validate input
   const parsed = SubmitMangaSchema.safeParse(data);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message || "ข้อมูลไม่ถูกต้อง" };
@@ -81,13 +78,14 @@ export async function submitManga(data: z.input<typeof SubmitMangaSchema>) {
   } = parsed.data;
 
   try {
-    // Generate slug if not provided
     let finalSlug = slug || generateSlug(title);
 
     // Ensure slug is unique
-    const existingManga = await prisma.manga.findUnique({
-      where: { slug: finalSlug },
-    });
+    const [existingManga] = await db
+      .select({ id: mangaTable.id })
+      .from(mangaTable)
+      .where(eq(mangaTable.slug, finalSlug))
+      .limit(1);
 
     if (existingManga && existingManga.id !== approvedMangaId) {
       finalSlug = `${finalSlug}-${Date.now()}`;
@@ -97,35 +95,32 @@ export async function submitManga(data: z.input<typeof SubmitMangaSchema>) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const limit = await prisma.userSubmissionLimit.findUnique({
-      where: { userId: session.user.id },
-    });
+    const [limit] = await db
+      .select()
+      .from(submissionLimitsTable)
+      .where(eq(submissionLimitsTable.userId, session.user.id))
+      .limit(1);
 
     if (limit) {
-      // Reset if window expired
-      if (limit.windowStart < today) {
-        await prisma.userSubmissionLimit.update({
-          where: { userId: session.user.id },
-          data: {
-            submissionCount: 0,
-            windowStart: new Date(),
-          },
-        });
+      const windowStart = new Date(limit.windowStart);
+      if (windowStart < today) {
+        await db
+          .update(submissionLimitsTable)
+          .set({ submissionCount: 0, windowStart: new Date().toISOString() })
+          .where(eq(submissionLimitsTable.userId, session.user.id));
       } else if (limit.submissionCount >= 5) {
         return {
-          error:
-            "Daily submission limit reached (5/5). Please try again tomorrow.",
+          error: "Daily submission limit reached (5/5). Please try again tomorrow.",
         };
       }
     } else {
-      await prisma.userSubmissionLimit.create({
-        data: { userId: session.user.id },
-      });
+      await db.insert(submissionLimitsTable).values({ userId: session.user.id });
     }
 
     // Create submission
-    const submission = await prisma.mangaSubmission.create({
-      data: {
+    const [submission] = await db
+      .insert(submissionsTable)
+      .values({
         userId: session.user.id,
         title,
         slug: finalSlug,
@@ -134,26 +129,27 @@ export async function submitManga(data: z.input<typeof SubmitMangaSchema>) {
         pages: JSON.stringify(pages),
         categoryId: categoryId || null,
         authorId: authorId || null,
-        status: status,
+        status,
         approvedMangaId: approvedMangaId || null,
-        tags: {
-          create: tagIds?.map((tagId) => ({
-            tag: { connect: { id: tagId } },
-          })),
-        },
-      },
-    });
+      })
+      .returning();
+
+    // Add tags
+    if (tagIds && tagIds.length > 0) {
+      await db.insert(submissionTagsTable).values(
+        tagIds.map((tagId) => ({ submissionId: submission.id, tagId }))
+      );
+    }
 
     // Increment submission count
-    await prisma.userSubmissionLimit.update({
-      where: { userId: session.user.id },
-      data: {
-        submissionCount: { increment: 1 },
-        lastSubmitAt: new Date(),
-      },
-    });
+    await db
+      .update(submissionLimitsTable)
+      .set({
+        submissionCount: sql`${submissionLimitsTable.submissionCount} + 1`,
+        lastSubmitAt: new Date().toISOString(),
+      })
+      .where(eq(submissionLimitsTable.userId, session.user.id));
 
-    // Revalidate submissions page
     revalidatePath("/dashboard/submissions");
 
     return { success: true, submissionId: submission.id };
@@ -163,10 +159,6 @@ export async function submitManga(data: z.input<typeof SubmitMangaSchema>) {
   }
 }
 
-/**
- * Create a new category (Server Action)
- * Returns existing category if name matches
- */
 export async function createCategory(name: string) {
   const session = await auth.api.getSession({ headers: await headers() });
 
@@ -176,14 +168,11 @@ export async function createCategory(name: string) {
 
   const parsed = CreateCategorySchema.safeParse({ name });
   if (!parsed.success) {
-    return {
-      error: parsed.error.issues[0]?.message || "Invalid category name",
-    };
+    return { error: parsed.error.issues[0]?.message || "Invalid category name" };
   }
 
   try {
-    // Check if exists (case-insensitive via lowercase comparison)
-    const allCategories = await prisma.category.findMany();
+    const allCategories = await db.select().from(categoriesTable);
     const existing = allCategories.find(
       (c) => c.name.toLowerCase() === name.trim().toLowerCase()
     );
@@ -192,12 +181,11 @@ export async function createCategory(name: string) {
       return { category: existing };
     }
 
-    // Create new category
-    const category = await prisma.category.create({
-      data: { name: name.trim() },
-    });
+    const [category] = await db
+      .insert(categoriesTable)
+      .values({ name: name.trim() })
+      .returning();
 
-    // Revalidate pages that show categories
     revalidatePath("/submit");
     revalidatePath("/");
 
@@ -208,10 +196,6 @@ export async function createCategory(name: string) {
   }
 }
 
-/**
- * Create a new tag (Server Action)
- * Returns existing tag if name matches
- */
 export async function createTag(name: string) {
   const session = await auth.api.getSession({ headers: await headers() });
 
@@ -224,8 +208,7 @@ export async function createTag(name: string) {
   }
 
   try {
-    // Check if exists (case-insensitive via lowercase comparison)
-    const allTags = await prisma.tag.findMany();
+    const allTags = await db.select().from(tagsTable);
     const existing = allTags.find(
       (t) => t.name.toLowerCase() === name.trim().toLowerCase()
     );
@@ -234,12 +217,11 @@ export async function createTag(name: string) {
       return { tag: existing };
     }
 
-    // Create new tag
-    const tag = await prisma.tag.create({
-      data: { name: name.trim() },
-    });
+    const [tag] = await db
+      .insert(tagsTable)
+      .values({ name: name.trim() })
+      .returning();
 
-    // Revalidate pages that show tags
     revalidatePath("/submit");
     revalidatePath("/");
 
@@ -250,10 +232,6 @@ export async function createTag(name: string) {
   }
 }
 
-/**
- * Create a new author (Server Action)
- * Returns existing author if name matches
- */
 export async function createAuthor(name: string) {
   const session = await auth.api.getSession({ headers: await headers() });
 
@@ -266,8 +244,7 @@ export async function createAuthor(name: string) {
   }
 
   try {
-    // Check if exists (case-insensitive via lowercase comparison)
-    const allAuthors = await prisma.author.findMany();
+    const allAuthors = await db.select().from(authorsTable);
     const existing = allAuthors.find(
       (a) => a.name.toLowerCase() === name.trim().toLowerCase()
     );
@@ -276,12 +253,11 @@ export async function createAuthor(name: string) {
       return { author: existing };
     }
 
-    // Create new author
-    const author = await prisma.author.create({
-      data: { name: name.trim() },
-    });
+    const [author] = await db
+      .insert(authorsTable)
+      .values({ name: name.trim() })
+      .returning();
 
-    // Revalidate pages that show authors
     revalidatePath("/submit");
 
     return { author };

@@ -1,28 +1,28 @@
 // Example: Protected API route with proper error handling and validation
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { manga as mangaTable } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
 
 export async function GET(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth.api.getSession({ headers: await headers() });
 
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const manga = await prisma.manga.findMany({
-      where: {
-        userId: session.user.id,
-      },
-      include: {
+    const manga = await db.query.manga.findMany({
+      where: eq(mangaTable.authorId, session.user.id), // Example: assumes userId maps to authorId
+      with: {
         category: true,
-        tags: true,
+        mangaTags_mangaId: {
+          with: { tag_tagId: true }
+        }
       },
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy: [desc(mangaTable.createdAt)],
     });
 
     return NextResponse.json(manga);
@@ -37,7 +37,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth.api.getSession({ headers: await headers() });
 
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -53,18 +53,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const manga = await prisma.manga.create({
-      data: {
-        title: body.title,
-        description: body.description,
-        categoryId: body.categoryId,
-        userId: session.user.id,
-        status: body.status || "DRAFT",
-      },
-      include: {
-        category: true,
-      },
-    });
+    const [manga] = await db.insert(mangaTable).values({
+      title: body.title,
+      description: body.description,
+      categoryId: body.categoryId,
+      authorId: session.user.id,
+      status: body.status || "DRAFT",
+    }).returning();
 
     return NextResponse.json(manga, { status: 201 });
   } catch (error) {

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { db } from '@/db';
+import { manga as mangaTable, mangaRatings as mangaRatingsTable } from '@/db/schema';
+import { eq, and } from 'drizzle-orm';
 import { createHash } from 'crypto';
 
 type RouteParams = {
@@ -45,9 +47,9 @@ export async function GET(
     const fingerprint = searchParams.get('fingerprint');
 
     // ดึงข้อมูลมังงะ
-    const manga = await prisma.manga.findUnique({
-      where: { id },
-      select: {
+    const manga = await db.query.manga.findFirst({
+      where: eq(mangaTable.id, id),
+      columns: {
         id: true,
         averageRating: true,
         ratingCount: true,
@@ -66,14 +68,12 @@ export async function GET(
     // ถ้ามี fingerprint ให้ตรวจสอบว่าผู้ใช้เคยให้คะแนนหรือไม่
     if (fingerprint) {
       const hashedFingerprint = hashString(fingerprint);
-      const existingRating = await prisma.mangaRating.findUnique({
-        where: {
-          mangaId_fingerprint: {
-            mangaId: id,
-            fingerprint: hashedFingerprint,
-          },
-        },
-        select: {
+      const existingRating = await db.query.mangaRatings.findFirst({
+        where: and(
+          eq(mangaRatingsTable.mangaId, id),
+          eq(mangaRatingsTable.fingerprint, hashedFingerprint)
+        ),
+        columns: {
           rating: true,
         },
       });
@@ -83,7 +83,7 @@ export async function GET(
 
     return NextResponse.json({
       averageRating: manga.averageRating,
-      ratingCount: manga.ratingCount,
+      ratingCount: Number(manga.ratingCount),
       userRating,
     }, {
       headers: {
@@ -91,7 +91,7 @@ export async function GET(
       },
     });
   } catch (error) {
-
+    console.error("Fetch rating error:", error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -127,96 +127,93 @@ export async function POST(
       );
     }
 
-    // ตรวจสอบว่ามังงะมีอยู่จริง
-    const manga = await prisma.manga.findUnique({
-      where: { id },
-      select: { id: true, ratingSum: true, ratingCount: true },
-    });
+    const result = await db.transaction(async (tx) => {
+      // ตรวจสอบว่ามังงะมีอยู่จริง
+      const manga = await tx.query.manga.findFirst({
+        where: eq(mangaTable.id, id),
+        columns: { id: true, ratingSum: true, ratingCount: true },
+      });
 
-    if (!manga) {
-      return NextResponse.json(
-        { error: 'Manga not found' },
-        { status: 404 }
-      );
-    }
+      if (!manga) {
+        return { error: 'Manga not found', status: 404 };
+      }
 
-    // Hash fingerprint และ IP
-    const hashedFingerprint = hashString(fingerprint);
-    const clientIP = getClientIP(request);
-    const hashedIP = hashString(clientIP);
+      // Hash fingerprint และ IP
+      const hashedFingerprint = hashString(fingerprint);
+      const clientIP = getClientIP(request);
+      const hashedIP = hashString(clientIP);
 
-    // ตรวจสอบว่าผู้ใช้เคยให้คะแนนหรือยัง
-    const existingRating = await prisma.mangaRating.findUnique({
-      where: {
-        mangaId_fingerprint: {
-          mangaId: id,
-          fingerprint: hashedFingerprint,
-        },
-      },
-    });
+      // ตรวจสอบว่าผู้ใช้เคยให้คะแนนหรือยัง
+      const existingRating = await tx.query.mangaRatings.findFirst({
+        where: and(
+          eq(mangaRatingsTable.mangaId, id),
+          eq(mangaRatingsTable.fingerprint, hashedFingerprint)
+        ),
+      });
 
-    let newRatingSum: number;
-    let newRatingCount: number;
+      let newRatingSum: number;
+      let newRatingCount: number;
 
-    if (existingRating) {
-      // อัพเดทคะแนนเดิม - คำนวณ delta
-      const delta = rating - existingRating.rating;
-      newRatingSum = manga.ratingSum + delta;
-      newRatingCount = manga.ratingCount; // ไม่เปลี่ยน
+      if (existingRating) {
+        // อัพเดทคะแนนเดิม - คำนวณ delta
+        const delta = rating - existingRating.rating;
+        newRatingSum = Number(manga.ratingSum) + delta;
+        newRatingCount = Number(manga.ratingCount); // ไม่เปลี่ยน
 
-      // อัพเดท MangaRating
-      await prisma.mangaRating.update({
-        where: {
-          mangaId_fingerprint: {
-            mangaId: id,
-            fingerprint: hashedFingerprint,
-          },
-        },
-        data: {
+        // อัพเดท MangaRating
+        await tx.update(mangaRatingsTable).set({
           rating,
           ipAddress: hashedIP, // อัพเดท IP ล่าสุด
-          updatedAt: new Date(),
-        },
-      });
-    } else {
-      // สร้างคะแนนใหม่
-      newRatingSum = manga.ratingSum + rating;
-      newRatingCount = manga.ratingCount + 1;
+          updatedAt: new Date().toISOString(),
+        }).where(
+          and(
+            eq(mangaRatingsTable.mangaId, id),
+            eq(mangaRatingsTable.fingerprint, hashedFingerprint)
+          )
+        );
+      } else {
+        // สร้างคะแนนใหม่
+        newRatingSum = Number(manga.ratingSum) + rating;
+        newRatingCount = Number(manga.ratingCount) + 1;
 
-      // สร้าง MangaRating ใหม่
-      await prisma.mangaRating.create({
-        data: {
+        // สร้าง MangaRating ใหม่
+        await tx.insert(mangaRatingsTable).values({
           mangaId: id,
           fingerprint: hashedFingerprint,
           ipAddress: hashedIP,
           rating,
-        },
-      });
-    }
+        });
+      }
 
-    // คำนวณคะแนนเฉลี่ยใหม่
-    const newAverageRating = newRatingCount > 0 
-      ? newRatingSum / newRatingCount 
-      : 0;
+      // คำนวณคะแนนเฉลี่ยใหม่
+      const newAverageRating = newRatingCount > 0 
+        ? newRatingSum / newRatingCount 
+        : 0;
 
-    // อัพเดทข้อมูลในตาราง Manga
-    await prisma.manga.update({
-      where: { id },
-      data: {
+      // อัพเดทข้อมูลในตาราง Manga
+      await tx.update(mangaTable).set({
         ratingSum: newRatingSum,
         ratingCount: newRatingCount,
         averageRating: newAverageRating,
-      },
+      }).where(eq(mangaTable.id, id));
+
+      return {
+        data: {
+          averageRating: newAverageRating,
+          ratingCount: newRatingCount,
+          userRating: rating,
+          message: existingRating ? 'Rating updated' : 'Rating added',
+        }
+      };
     });
 
-    return NextResponse.json({
-      averageRating: newAverageRating,
-      ratingCount: newRatingCount,
-      userRating: rating,
-      message: existingRating ? 'Rating updated' : 'Rating added',
-    });
+    if (result.error) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
+    }
+
+    return NextResponse.json(result.data);
   } catch (error) {
-
+    console.error("Update rating error:", error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

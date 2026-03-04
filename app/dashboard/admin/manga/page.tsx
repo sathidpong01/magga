@@ -1,4 +1,6 @@
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { manga as mangaTable, categories as categoriesTable, tags as tagsTable, authors as authorsTable } from "@/db/schema";
+import { desc, asc } from "drizzle-orm";
 import { Box, Typography } from "@mui/material";
 import Link from "next/link";
 import MangaDataTable from "./MangaDataTable";
@@ -6,27 +8,34 @@ import MangaDataTable from "./MangaDataTable";
 export const dynamic = "force-dynamic";
 
 export default async function AdminMangaPage() {
-  const mangas = await prisma.manga.findMany({
-    include: {
+  const mangasQuery = await db.query.manga.findMany({
+    with: {
       category: true,
-      tags: true,
+      mangaTags_mangaId: {
+        with: {
+          tag_tagId: true
+        }
+      },
       author: true,
     },
-    orderBy: {
-      createdAt: "desc",
-    },
+    orderBy: [desc(mangaTable.createdAt)],
   });
 
-  const allCategories = await prisma.category.findMany({
-    orderBy: { name: "asc" },
+  const mangas = mangasQuery.map(m => ({
+    ...m,
+    tags: m.mangaTags_mangaId.map((mt: any) => mt.tag_tagId)
+  }));
+
+  const allCategories = await db.query.categories.findMany({
+    orderBy: [asc(categoriesTable.name)],
   });
 
-  const allTags = await prisma.tag.findMany({
-    orderBy: { name: "asc" },
+  const allTags = await db.query.tags.findMany({
+    orderBy: [asc(tagsTable.name)],
   });
 
-  const allAuthors = await prisma.author.findMany({
-    orderBy: { name: "asc" },
+  const allAuthors = await db.query.authors.findMany({
+    orderBy: [asc(authorsTable.name)],
   });
 
   return (

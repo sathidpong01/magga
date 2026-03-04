@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { profiles as usersTable, comments as commentsTable, mangaSubmissions as submissionsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { requireAdmin } from "@/lib/auth-helpers";
+import { eq, desc, sql } from "drizzle-orm";
 
 // GET - List all users with counts
 export async function GET() {
@@ -11,26 +13,32 @@ export async function GET() {
     const authError = requireAdmin(session);
     if (authError) return authError;
 
-    const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        username: true,
-        image: true,
-        role: true,
-        createdAt: true,
-        _count: {
-          select: {
-            comments: true,
-            submissions: true,
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    const usersQuery = await db.select({
+      id: usersTable.id,
+      name: usersTable.name,
+      email: usersTable.email,
+      username: usersTable.username,
+      image: usersTable.image,
+      role: usersTable.role,
+      createdAt: usersTable.createdAt,
+      commentsCount: sql<number>`count(distinct ${commentsTable.id})::int`,
+      submissionsCount: sql<number>`count(distinct ${submissionsTable.id})::int`,
+    })
+      .from(usersTable)
+      .leftJoin(commentsTable, eq(usersTable.id, commentsTable.userId))
+      .leftJoin(submissionsTable, eq(usersTable.id, submissionsTable.userId))
+      .groupBy(usersTable.id)
+      .orderBy(desc(usersTable.createdAt));
 
-    return NextResponse.json(users);
+    const formattedUsers = usersQuery.map(user => ({
+      ...user,
+      _count: {
+        comments: user.commentsCount,
+        submissions: user.submissionsCount
+      }
+    }));
+
+    return NextResponse.json(formattedUsers);
   } catch (error) {
     console.error("Error fetching users:", error);
     return NextResponse.json(
@@ -44,7 +52,7 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
-    if (!session || session.user?.role !== "ADMIN") {
+    if (!session || session.user?.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -72,17 +80,16 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: { role: normalizedRole },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        username: true,
-        role: true,
-      },
-    });
+    const [updatedUser] = await db.update(usersTable)
+      .set({ role: normalizedRole, updatedAt: new Date().toISOString() })
+      .where(eq(usersTable.id, userId))
+      .returning({
+        id: usersTable.id,
+        name: usersTable.name,
+        email: usersTable.email,
+        username: usersTable.username,
+        role: usersTable.role,
+      });
 
     return NextResponse.json(updatedUser);
   } catch (error) {

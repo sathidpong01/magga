@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { profiles as usersTable } from "@/db/schema";
+import { eq, or } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { validatePassword } from "@/lib/password-validation";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { validatePasswordStrength } from "@/lib/validation";
 
 const registerSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
@@ -44,10 +45,11 @@ export async function POST(req: Request) {
     const { username, email, password } = registerSchema.parse(body);
 
     // Check if user exists
-    const existingUser = await prisma.user.findFirst({
-      where: {
-        OR: [{ email }, { username }],
-      },
+    const existingUser = await db.query.profiles.findFirst({
+      where: or(
+        eq(usersTable.email, email),
+        eq(usersTable.username, username)
+      ),
     });
 
     if (existingUser) {
@@ -61,14 +63,13 @@ export async function POST(req: Request) {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Create user
-    const user = await prisma.user.create({
-      data: {
-        username,
-        email,
-        password: hashedPassword,
-        role: "user", // Default role
-      },
-    });
+    const [user] = await db.insert(usersTable).values({
+      id: crypto.randomUUID(),
+      username,
+      email,
+      password: hashedPassword,
+      role: "user", // Default role
+    }).returning();
 
     return NextResponse.json({
       user: {

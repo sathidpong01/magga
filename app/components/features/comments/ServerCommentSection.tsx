@@ -1,4 +1,6 @@
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { comments as commentsTable } from "@/db/schema";
+import { and, eq, isNull, desc, asc, count } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import CommentInteractions from "./CommentInteractions";
@@ -23,72 +25,76 @@ export default async function ServerCommentSection({
   const currentUserId = session?.user?.id;
 
   // Fetch comments on server - no client-side JS needed for initial load
-  const comments = await prisma.comment.findMany({
-    where: {
-      mangaId,
-      imageIndex: imageIndex ?? null,
-      parentId: null, // Only top-level comments
-    },
-    include: {
-      user: {
-        select: {
+  const comments = await db.query.comments.findMany({
+    where: and(
+      eq(commentsTable.mangaId, mangaId),
+      imageIndex !== null
+        ? eq(commentsTable.imageIndex, imageIndex)
+        : isNull(commentsTable.imageIndex),
+      isNull(commentsTable.parentId),
+    ),
+    with: {
+      profile: {
+        columns: {
           id: true,
           name: true,
           username: true,
           image: true,
         },
       },
-      votes: {
-        select: {
+      commentVotes: {
+        columns: {
           userId: true,
           value: true,
         },
       },
-      replies: {
-        include: {
-          user: {
-            select: {
+      comments: {
+        with: {
+          profile: {
+            columns: {
               id: true,
               name: true,
               username: true,
               image: true,
             },
           },
-          votes: {
-            select: {
+          commentVotes: {
+            columns: {
               userId: true,
               value: true,
             },
           },
         },
-        orderBy: { createdAt: "asc" },
+        orderBy: [asc(commentsTable.createdAt)],
       },
     },
-    orderBy: { createdAt: "desc" },
-    take: 20,
+    orderBy: [desc(commentsTable.createdAt)],
+    limit: 20,
   });
 
   // Get total count for display
-  const totalCount = await prisma.comment.count({
-    where: {
-      mangaId,
-      imageIndex: imageIndex ?? null,
-      parentId: null,
-    },
-  });
+  const [{ count: totalCount }] = await db.select({ count: count() }).from(commentsTable).where(
+    and(
+      eq(commentsTable.mangaId, mangaId),
+      imageIndex !== null
+        ? eq(commentsTable.imageIndex, imageIndex)
+        : isNull(commentsTable.imageIndex),
+      isNull(commentsTable.parentId),
+    )
+  );
 
   // Check if there are more comments
   const hasMore = totalCount > comments.length;
 
-  // Serialize dates for client component
+  // Normalize shape for client component (user, votes, replies)
   const serializedComments = comments.map((comment) => ({
     ...comment,
-    createdAt: comment.createdAt.toISOString(),
-    updatedAt: comment.updatedAt.toISOString(),
-    replies: comment.replies.map((reply) => ({
+    user: comment.profile,
+    votes: comment.commentVotes,
+    replies: (comment.comments ?? []).map((reply: any) => ({
       ...reply,
-      createdAt: reply.createdAt.toISOString(),
-      updatedAt: reply.updatedAt.toISOString(),
+      user: reply.profile,
+      votes: reply.commentVotes,
     })),
   }));
 
@@ -97,7 +103,7 @@ export default async function ServerCommentSection({
     <CommentInteractions
       mangaId={mangaId}
       imageIndex={imageIndex}
-      initialComments={serializedComments}
+      initialComments={serializedComments as any}
       initialTotal={totalCount}
       initialHasMore={hasMore}
       title={title}

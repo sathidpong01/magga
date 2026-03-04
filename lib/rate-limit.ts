@@ -1,4 +1,6 @@
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { loginAttempts as loginAttemptsTable } from "@/db/schema";
+import { eq, sql } from "drizzle-orm";
 
 interface RateLimitResult {
   allowed: boolean;
@@ -14,40 +16,53 @@ interface RateLimitResult {
  * @returns RateLimitResult with allowed status and remaining attempts
  */
 export async function checkRateLimit(
-  identifier: string, 
-  limit: number = 5, 
+  identifier: string,
+  limit: number = 5,
   duration: number = 15 * 60 * 1000 // 15 minutes
 ): Promise<RateLimitResult> {
   const now = new Date();
 
   try {
-    const attempt = await prisma.loginAttempt.findUnique({
-      where: { identifier },
-    });
+    const [attempt] = await db
+      .select()
+      .from(loginAttemptsTable)
+      .where(eq(loginAttemptsTable.identifier, identifier))
+      .limit(1);
 
-    if (!attempt || now > attempt.expiresAt) {
+    const expiresAt = attempt ? new Date(attempt.expiresAt) : null;
+
+    if (!attempt || now > expiresAt!) {
       // Reset or create new attempt record
-      await prisma.loginAttempt.upsert({
-        where: { identifier },
-        update: { count: 1, expiresAt: new Date(now.getTime() + duration) },
-        create: { identifier, count: 1, expiresAt: new Date(now.getTime() + duration) },
-      });
+      await db
+        .insert(loginAttemptsTable)
+        .values({
+          identifier,
+          count: 1,
+          expiresAt: new Date(now.getTime() + duration).toISOString(),
+        })
+        .onConflictDoUpdate({
+          target: loginAttemptsTable.identifier,
+          set: {
+            count: 1,
+            expiresAt: new Date(now.getTime() + duration).toISOString(),
+          },
+        });
       return { allowed: true, remaining: limit - 1 };
     }
 
     if (attempt.count >= limit) {
-      return { 
-        allowed: false, 
-        remaining: 0, 
-        resetTime: attempt.expiresAt.getTime() 
+      return {
+        allowed: false,
+        remaining: 0,
+        resetTime: expiresAt!.getTime(),
       };
     }
 
     // Increment count
-    await prisma.loginAttempt.update({
-      where: { identifier },
-      data: { count: { increment: 1 } },
-    });
+    await db
+      .update(loginAttemptsTable)
+      .set({ count: sql`${loginAttemptsTable.count} + 1` })
+      .where(eq(loginAttemptsTable.identifier, identifier));
 
     return { allowed: true, remaining: limit - (attempt.count + 1) };
   } catch (error) {
@@ -63,9 +78,9 @@ export async function checkRateLimit(
  */
 export async function resetRateLimit(identifier: string): Promise<void> {
   try {
-    await prisma.loginAttempt.delete({
-      where: { identifier },
-    });
+    await db
+      .delete(loginAttemptsTable)
+      .where(eq(loginAttemptsTable.identifier, identifier));
   } catch {
     // Ignore if not found
   }

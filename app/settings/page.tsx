@@ -1,7 +1,9 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { profiles as usersTable } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { Box, Container } from "@mui/material";
 import Sidebar from "./Sidebar";
 import AccountSettings from "./AccountSettings";
@@ -14,9 +16,9 @@ export default async function SettingsPage() {
   }
 
   // Fetch user to check if they have a password
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { 
+  const user = await db.query.profiles.findFirst({
+    where: eq(usersTable.id, session.user.id),
+    columns: { 
       name: true,
       username: true,
       email: true,

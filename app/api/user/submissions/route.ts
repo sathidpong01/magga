@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { mangaSubmissions as submissionsTable } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
 
 export async function GET() {
   try {
@@ -10,10 +12,10 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const submissions = await prisma.mangaSubmission.findMany({
-      where: { userId: session.user.id },
-      orderBy: { submittedAt: 'desc' },
-      select: {
+    const submissions = await db.query.mangaSubmissions.findMany({
+      where: eq(submissionsTable.userId, session.user.id),
+      orderBy: [desc(submissionsTable.submittedAt)],
+      columns: {
         id: true,
         title: true,
         slug: true,

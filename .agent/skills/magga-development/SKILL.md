@@ -1,6 +1,6 @@
 ---
 name: magga-development
-description: Comprehensive development guidelines for Magga - a Next.js manga management system with Turso (LibSQL), Prisma ORM, NextAuth, and Material-UI. Use when making changes to the codebase, adding features, fixing bugs, or optimizing performance.
+description: Comprehensive development guidelines for Magga - a Next.js manga management system with Turso (LibSQL), Drizzle ORM, Better Auth, and Material-UI. Use when making changes to the codebase, adding features, fixing bugs, or optimizing performance.
 ---
 
 # Magga Development Skill
@@ -12,8 +12,8 @@ This skill provides guidelines for developing features in the Magga manga manage
 **Magga** is a modern manga management web application built with:
 
 - **Framework**: Next.js 16 (App Router)
-- **Database**: Turso (LibSQL) with Prisma ORM
-- **Authentication**: NextAuth.js
+- **Database**: Turso (LibSQL) with Drizzle ORM
+- **Authentication**: Better Auth
 - **UI Library**: Material-UI (MUI)
 - **Styling**: TailwindCSS
 - **Language**: TypeScript
@@ -57,8 +57,8 @@ Is it a new page?
 
 ```
 Need to modify database?
-├─ Update `prisma/schema.prisma`
-├─ Run `npx prisma migrate dev --name <descriptive-name>`
+├─ Update `db/schema.ts`
+├─ Run `npm run db:generate` and `npm run db:push`
 ├─ Update TypeScript types if needed
 └─ Update affected API endpoints and components
 ```
@@ -96,9 +96,9 @@ When reviewing or creating code, ensure:
 - [ ] Fonts loaded via `next/font`
 - [ ] Metadata properly configured for SEO
 
-### ✅ Database & Prisma
+### ✅ Database & Drizzle
 
-- [ ] Prisma queries include necessary relations
+- [ ] Drizzle queries include necessary relations (use db.query API)
 - [ ] Database connections properly closed
 - [ ] Indexes used for frequently queried fields
 - [ ] Soft deletes considered for important data
@@ -133,18 +133,25 @@ When reviewing or creating code, ensure:
 ### Server Component with Database Query
 
 ```typescript
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { manga as mangaTable } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { notFound } from "next/navigation";
 
 export default async function MangaPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const manga = await prisma.manga.findUnique({
-    where: { id: params.id },
-    include: {
+  const { id } = await params;
+
+  const manga = await db.query.manga.findFirst({
+    where: eq(mangaTable.id, id),
+    with: {
       category: true,
-      tags: true,
+      mangaTags_mangaId: {
+        with: { tag_tagId: true }
+      }
     },
   });
 
@@ -159,13 +166,14 @@ export default async function MangaPage({
 ### Protected API Route
 
 ```typescript
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { db } from "@/db";
+import { manga as mangaTable } from "@/db/schema";
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
+  const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -174,16 +182,14 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     // Validate and process request
-    const result = await prisma.manga.create({
-      data: body,
-    });
+    const [result] = await db.insert(mangaTable).values(body).returning();
 
     return NextResponse.json(result);
   } catch (error) {
     console.error("Error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -264,7 +270,7 @@ d:\magga\
 │   ├── manga/            # Manga-related pages
 │   └── ...
 ├── lib/                  # Utility functions and configurations
-├── prisma/               # Database schema and migrations
+├── db/                   # Database instance and Drizzle schema
 ├── public/               # Static assets
 └── types/                # TypeScript type definitions
 ```
@@ -276,10 +282,10 @@ d:\magga\
 npm run dev                          # Start dev server
 
 # Database
-npx prisma migrate dev              # Create and apply migration
-npx prisma generate                 # Generate Prisma Client
-npx prisma studio                   # Open Prisma Studio
-npx prisma db push                  # Push schema changes (dev only)
+npm run db:generate                 # Generate migrations
+npm run db:migrate                  # Apply migrations
+npm run db:push                     # Push schema changes (for dev/prototyping)
+npm run db:studio                   # Open Drizzle Studio
 
 # Build & Production
 npm run build                       # Build for production
@@ -297,11 +303,11 @@ npm run lint                        # Run ESLint
 
 ### Issue: Database Connection Pool Exhausted
 
-**Solution**: Ensure Prisma client is properly instantiated as a singleton. Check `lib/prisma.ts`.
+**Solution**: Ensure Drizzle client is properly instantiated as a singleton. Check `db/index.ts`.
 
 ### Issue: Session Not Persisting
 
-**Solution**: Verify NextAuth configuration, ensure cookies are set correctly, check environment variables.
+**Solution**: Verify Better Auth configuration in `lib/auth.ts`, ensure cookies are set correctly, check environment variables.
 
 ### Issue: Images Not Loading
 
@@ -314,9 +320,9 @@ npm run lint                        # Run ESLint
 ## Resources
 
 - [Next.js Documentation](https://nextjs.org/docs)
-- [Prisma Documentation](https://www.prisma.io/docs)
+- [Drizzle ORM Documentation](https://orm.drizzle.team/docs/overview)
 - [Material-UI Documentation](https://mui.com/material-ui/getting-started/)
-- [NextAuth.js Documentation](https://next-auth.js.org/)
+- [Better Auth Documentation](https://better-auth.com/)
 - Project-specific guides:
   - `LAYOUT_CUSTOMIZATION_GUIDE.md`
   - `OPTIMIZATION_GUIDE.md`

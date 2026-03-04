@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { advertisements as adsTable } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { unstable_cache } from "next/cache";
@@ -7,9 +9,9 @@ import { unstable_cache } from "next/cache";
 // Cache active ads for 5 minutes to reduce DB queries
 const getActiveAds = unstable_cache(
   async () => {
-    return prisma.advertisement.findMany({
-      where: { isActive: true },
-      orderBy: { createdAt: "desc" },
+    return db.query.advertisements.findMany({
+      where: eq(adsTable.isActive, true),
+      orderBy: [desc(adsTable.createdAt)],
     });
   },
   ["active-advertisements"],
@@ -29,8 +31,8 @@ export async function GET(request: NextRequest) {
       const authError = requireAdmin(session);
       if (authError) return authError;
 
-      const ads = await prisma.advertisement.findMany({
-        orderBy: { createdAt: "desc" },
+      const ads = await db.query.advertisements.findMany({
+        orderBy: [desc(adsTable.createdAt)],
       });
       return NextResponse.json(ads);
     }
@@ -73,16 +75,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const ad = await prisma.advertisement.create({
-      data: {
-        type,
-        title,
-        imageUrl,
-        linkUrl,
-        content,
-        placement,
-      },
-    });
+    const [ad] = await db.insert(adsTable).values({
+      type,
+      title,
+      imageUrl,
+      linkUrl,
+      content,
+      placement,
+    }).returning();
 
     return NextResponse.json(ad, { status: 201 });
   } catch (error) {

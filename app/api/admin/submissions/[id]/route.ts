@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { db } from "@/db";
+import { mangaSubmissions as submissionsTable, mangaSubmissionTags as submissionTagsTable } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import prisma from "@/lib/prisma";
 
 // GET: Fetch submission details
 export async function GET(
@@ -15,11 +17,11 @@ export async function GET(
 
     const { id } = await params;
 
-    const submission = await prisma.mangaSubmission.findUnique({
-      where: { id },
-      include: {
-        user: {
-          select: {
+    const submission = await db.query.mangaSubmissions.findFirst({
+      where: eq(submissionsTable.id, id),
+      with: {
+        profile: {
+          columns: {
             id: true,
             name: true,
             email: true,
@@ -29,7 +31,11 @@ export async function GET(
           },
         },
         category: true,
-        tags: { include: { tag: true } },
+        mangaSubmissionTags: {
+          with: {
+            tag: true,
+          },
+        },
       },
     });
 
@@ -40,7 +46,11 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(submission);
+    return NextResponse.json({
+      ...submission,
+      user: submission.profile,
+      tags: submission.mangaSubmissionTags,
+    });
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to fetch submission" },
@@ -56,7 +66,7 @@ export async function PUT(
 ) {
   try {
     const session = await auth.api.getSession({ headers: req.headers });
-    if (!session || session.user.role !== "ADMIN") {
+    if (!session || (session.user as any)?.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -76,21 +86,25 @@ export async function PUT(
     // Handle Tags Update if provided
     if (tagIds) {
       // Delete existing tags
-      await prisma.mangaSubmissionTag.deleteMany({
-        where: { submissionId: id },
-      });
+      await db
+        .delete(submissionTagsTable)
+        .where(eq(submissionTagsTable.submissionId, id));
       // Create new tags
-      updateData.tags = {
-        create: tagIds.map((tagId: string) => ({
-          tag: { connect: { id: tagId } },
-        })),
-      };
+      if (tagIds.length > 0) {
+        await db.insert(submissionTagsTable).values(
+          tagIds.map((tagId: string) => ({
+            submissionId: id,
+            tagId,
+          }))
+        );
+      }
     }
 
-    const updatedSubmission = await prisma.mangaSubmission.update({
-      where: { id },
-      data: updateData,
-    });
+    const [updatedSubmission] = await db
+      .update(submissionsTable)
+      .set(updateData)
+      .where(eq(submissionsTable.id, id))
+      .returning();
 
     return NextResponse.json(updatedSubmission);
   } catch (error) {

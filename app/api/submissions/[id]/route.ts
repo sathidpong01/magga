@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { db } from "@/db";
+import { mangaSubmissions as submissionsTable, mangaSubmissionTags as submissionTagsTable } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import prisma from "@/lib/prisma";
 import { z } from "zod";
 
 // GET single submission
@@ -16,30 +18,28 @@ export async function GET(
 
     const { id } = await params;
 
-    const submission = await prisma.mangaSubmission.findUnique({
-      where: { id },
-      include: {
-        tags: {
-          include: { tag: true }
+    const submission = await db.query.mangaSubmissions.findFirst({
+      where: eq(submissionsTable.id, id),
+      with: {
+        mangaSubmissionTags: {
+          with: { tag: true },
         },
         category: true,
-      }
+      },
     });
 
     if (!submission) {
       return NextResponse.json({ error: "Submission not found" }, { status: 404 });
     }
 
-    // Only owner can view for editing
     if (submission.userId !== session.user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Transform for frontend
     const result = {
       ...submission,
-      tags: submission.tags.map(t => t.tag),
-      pages: typeof submission.pages === 'string' ? JSON.parse(submission.pages) : submission.pages,
+      tags: submission.mangaSubmissionTags.map((t: any) => t.tag),
+      pages: typeof submission.pages === "string" ? JSON.parse(submission.pages) : submission.pages,
     };
 
     return NextResponse.json(result);
@@ -85,10 +85,11 @@ export async function PUT(
       );
     }
 
-    const submission = await prisma.mangaSubmission.findUnique({
-      where: { id },
-      include: { tags: true }
-    });
+    const [submission] = await db
+      .select()
+      .from(submissionsTable)
+      .where(eq(submissionsTable.id, id))
+      .limit(1);
 
     if (!submission) {
       return NextResponse.json({ error: "Submission not found" }, { status: 404 });
@@ -98,7 +99,7 @@ export async function PUT(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    if (submission.status !== "DRAFT" && submission.status !== "PENDING" && submission.status !== "CHANGE_REQUESTED") {
+    if (submission.status !== "DRAFT" && submission.status !== "PENDING") {
       return NextResponse.json(
         { error: "Cannot edit submission in current status" },
         { status: 400 }
@@ -110,9 +111,8 @@ export async function PUT(
       extraMetadata, status 
     } = validation.data;
 
-    // Prepare update data
     const updateData: any = {
-      updatedAt: new Date(),
+      updatedAt: new Date().toISOString(),
     };
 
     if (title) updateData.title = title;
@@ -122,11 +122,9 @@ export async function PUT(
     if (categoryId !== undefined) updateData.categoryId = categoryId;
     if (extraMetadata !== undefined) updateData.extraMetadata = extraMetadata;
     
-    // If status is changing to PENDING (submitting for review)
     if (status === "PENDING") {
       updateData.status = "PENDING";
-      updateData.submittedAt = new Date(); // Reset submission time? Or keep original? Usually reset for queue.
-      // Clear review data
+      updateData.submittedAt = new Date().toISOString();
       updateData.reviewedAt = null;
       updateData.reviewedBy = null;
       updateData.rejectionReason = null;
@@ -137,22 +135,24 @@ export async function PUT(
 
     // Handle Tags update if provided
     if (tagIds) {
-      // Delete existing tags
-      await prisma.mangaSubmissionTag.deleteMany({
-        where: { submissionId: id }
-      });
-      // Create new tags
-      updateData.tags = {
-        create: tagIds.map(tagId => ({
-          tag: { connect: { id: tagId } }
-        }))
-      };
+      await db
+        .delete(submissionTagsTable)
+        .where(eq(submissionTagsTable.submissionId, id));
+      if (tagIds.length > 0) {
+        await db.insert(submissionTagsTable).values(
+          tagIds.map((tagId) => ({
+            submissionId: id,
+            tagId,
+          }))
+        );
+      }
     }
 
-    const updatedSubmission = await prisma.mangaSubmission.update({
-      where: { id },
-      data: updateData
-    });
+    const [updatedSubmission] = await db
+      .update(submissionsTable)
+      .set(updateData)
+      .where(eq(submissionsTable.id, id))
+      .returning();
 
     return NextResponse.json({ success: true, submission: updatedSubmission });
 
@@ -177,20 +177,20 @@ export async function DELETE(
 
     const { id } = await params;
 
-    const submission = await prisma.mangaSubmission.findUnique({
-      where: { id },
-    });
+    const [submission] = await db
+      .select()
+      .from(submissionsTable)
+      .where(eq(submissionsTable.id, id))
+      .limit(1);
 
     if (!submission) {
       return NextResponse.json({ error: "Submission not found" }, { status: 404 });
     }
 
-    // Only owner can delete
     if (submission.userId !== session.user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    // Can only delete DRAFT or PENDING submissions
     if (submission.status !== "DRAFT" && submission.status !== "PENDING") {
       return NextResponse.json(
         { error: "Cannot delete submission in current status" },
@@ -198,15 +198,14 @@ export async function DELETE(
       );
     }
 
-    // Delete tags first (cascade not set up)
-    await prisma.mangaSubmissionTag.deleteMany({
-      where: { submissionId: id }
-    });
+    // Delete tags first (cascade constraint)
+    await db
+      .delete(submissionTagsTable)
+      .where(eq(submissionTagsTable.submissionId, id));
 
-    // Delete submission
-    await prisma.mangaSubmission.delete({
-      where: { id },
-    });
+    await db
+      .delete(submissionsTable)
+      .where(eq(submissionsTable.id, id));
 
     return NextResponse.json({ success: true });
 

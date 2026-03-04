@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import type { Author } from "@prisma/client";
+import type { InferSelectModel } from "drizzle-orm";
+import type { authors } from "@/db/schema";
+
+type Author = InferSelectModel<typeof authors>;
 import {
   Button,
   TextField,

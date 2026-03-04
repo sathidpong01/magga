@@ -1,78 +1,81 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-
-const userSelect = {
-  id: true,
-  name: true,
-  username: true,
-  image: true,
-} as const;
-
-const voteSelect = {
-  userId: true,
-  value: true,
-} as const;
+import { db } from "@/db";
+import { comments as commentsTable, commentVotes as commentVotesTable, profiles as profilesTable, manga as mangaTable } from "@/db/schema";
+import { eq, isNull, and, desc, asc } from "drizzle-orm";
 
 // GET /api/comments - Fetch comments for a manga (with pagination)
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const mangaId = searchParams.get("mangaId");
-  const imageIndex = searchParams.get("imageIndex");
+  const imageIndexParam = searchParams.get("imageIndex");
   const cursor = searchParams.get("cursor"); // For pagination
-  const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 50); // Default 20, max 50
+  const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 50);
 
   if (!mangaId) {
     return NextResponse.json({ error: "mangaId is required" }, { status: 400 });
   }
 
   try {
-    const comments = await prisma.comment.findMany({
-      take: limit + 1, // Fetch extra to check if more exist
-      ...(cursor && { cursor: { id: cursor }, skip: 1 }), // Skip cursor itself
-      where: {
-        mangaId,
-        imageIndex: imageIndex !== null ? parseInt(imageIndex) : null,
-        parentId: null, // Only top-level comments
-      },
-      select: {
-        id: true,
-        content: true,
-        imageIndex: true,
-        createdAt: true,
-        updatedAt: true,
-        userId: true,
-        mangaId: true,
-        parentId: true,
-        user: { select: userSelect },
-        votes: { select: voteSelect },
-        replies: {
-          select: {
-            id: true,
-            content: true,
-            createdAt: true,
-            updatedAt: true,
-            userId: true,
-            mangaId: true,
-            parentId: true,
-            imageIndex: true,
-            user: { select: userSelect },
-            votes: { select: voteSelect },
+    // Build where conditions for top-level comments
+    const baseConditions = [
+      eq(commentsTable.mangaId, mangaId),
+      isNull(commentsTable.parentId),
+    ];
+
+    if (imageIndexParam !== null) {
+      const imageIndexNum = parseInt(imageIndexParam);
+      baseConditions.push(eq(commentsTable.imageIndex, imageIndexNum));
+    } else {
+      baseConditions.push(isNull(commentsTable.imageIndex));
+    }
+
+    const comments = await db.query.comments.findMany({
+      where: and(...baseConditions),
+      orderBy: [desc(commentsTable.createdAt)],
+      limit: limit + 1,
+      with: {
+        profile: {
+          columns: { id: true, name: true, username: true, image: true },
+        },
+        commentVotes: {
+          columns: { userId: true, value: true },
+        },
+        comments: {
+          // replies
+          orderBy: [asc(commentsTable.createdAt)],
+          limit: 20,
+          with: {
+            profile: {
+              columns: { id: true, name: true, username: true, image: true },
+            },
+            commentVotes: {
+              columns: { userId: true, value: true },
+            },
           },
-          orderBy: { createdAt: "asc" },
-          take: 20, // Limit replies depth
         },
       },
-      orderBy: { createdAt: "desc" },
     });
+
+    // Transform to match expected format
+    const transformed = comments.map((c) => ({
+      ...c,
+      user: c.profile,
+      votes: c.commentVotes,
+      replies: c.comments.map((r: any) => ({
+        ...r,
+        user: r.profile,
+        votes: r.commentVotes,
+      })),
+    }));
 
     // Check if there's more data
     let nextCursor: string | null = null;
-    if (comments.length > limit) {
-      const nextItem = comments.pop(); // Remove extra item
+    if (transformed.length > limit) {
+      const nextItem = transformed.pop();
       nextCursor = nextItem?.id ?? null;
     }
 
-    return NextResponse.json({ comments, nextCursor }, {
+    return NextResponse.json({ comments: transformed, nextCursor }, {
       headers: {
         "Cache-Control": "public, s-maxage=30, stale-while-revalidate=60",
       },

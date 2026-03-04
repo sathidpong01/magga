@@ -1,0 +1,17 @@
+
+> magga@1.9.3 dev
+> next dev
+
+⚠ Port 3000 is in use by process 35336, using available port 3001 instead.
+▲ Next.js 16.1.6 (Turbopack)
+- Local:         http://localhost:3001
+- Network:       http://192.168.1.96:3001
+- Environments: .env.local
+- Experiments (use with caution):
+  · optimizePackageImports
+  ✓ scrollRestoration
+
+✓ Starting...
+⨯ Unable to acquire lock at C:\Users\COM I5 13400\Desktop\magga\.next\dev\lock, is another instance of next dev running?
+  Suggestion: If you intended to restart next dev, terminate the other process, and then try again.
+[?25h

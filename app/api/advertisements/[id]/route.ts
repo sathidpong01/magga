@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { advertisements as adsTable } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
 type RouteContext = {
@@ -10,17 +12,18 @@ type RouteContext = {
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });
-    if (!session || (session.user as { role?: string })?.role !== "ADMIN") {
+    if (!session || (session.user as { role?: string })?.role?.toLowerCase() !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await context.params;
     const body = await request.json();
 
-    const ad = await prisma.advertisement.update({
-      where: { id },
-      data: body,
-    });
+    const updateData = { ...body, updatedAt: new Date().toISOString() };
+    const [ad] = await db.update(adsTable)
+      .set(updateData)
+      .where(eq(adsTable.id, id))
+      .returning();
 
     return NextResponse.json(ad);
   } catch (error) {
@@ -36,15 +39,13 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });
-    if (!session || (session.user as { role?: string })?.role !== "ADMIN") {
+    if (!session || (session.user as { role?: string })?.role?.toLowerCase() !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await context.params;
 
-    await prisma.advertisement.delete({
-      where: { id },
-    });
+    await db.delete(adsTable).where(eq(adsTable.id, id));
 
     return NextResponse.json({ success: true });
   } catch (error) {

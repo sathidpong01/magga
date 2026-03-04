@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { db } from "@/db";
+import { comments as commentsTable, commentVotes as commentVotesTable, profiles as profilesTable, manga as mangaTable } from "@/db/schema";
+import { eq, and, ilike, or, desc, asc, count, inArray } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import prisma from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth-helpers";
 
 // GET /api/admin/comments - Fetch all comments for admin
@@ -14,74 +16,73 @@ export async function GET(request: Request) {
   const limit = Math.min(
     100,
     Math.max(1, parseInt(searchParams.get("limit") || "20"))
-  ); // max 100
+  );
   const search = searchParams.get("search") || "";
 
-  // Whitelist allowed sortBy fields to prevent injection
-  const allowedSortFields = ["createdAt", "voteScore"];
-  const sortBy = allowedSortFields.includes(searchParams.get("sortBy") || "")
-    ? searchParams.get("sortBy")!
-    : "createdAt";
-  const sortOrder = searchParams.get("sortOrder") === "asc" ? "asc" : "desc";
+  const allowedSortFields: Record<string, any> = {
+    createdAt: commentsTable.createdAt,
+    voteScore: commentsTable.voteScore,
+  };
+  const sortByField = allowedSortFields[searchParams.get("sortBy") || ""] || commentsTable.createdAt;
+  const sortOrder = searchParams.get("sortOrder") === "asc" ? asc : desc;
 
   try {
-    const where = search
-      ? {
-          OR: [
-            { content: { contains: search } },
-            { user: { name: { contains: search } } },
-            { user: { username: { contains: search } } },
-            { manga: { title: { contains: search } } },
-          ],
-        }
-      : {};
-
-    const [comments, total] = await Promise.all([
-      prisma.comment.findMany({
-        where,
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              username: true,
-              image: true,
-            },
-          },
-          manga: {
-            select: {
-              id: true,
-              title: true,
-              slug: true,
-            },
-          },
-          parent: {
-            select: {
-              id: true,
-              content: true,
-              user: {
-                select: {
-                  name: true,
-                  username: true,
-                },
-              },
+    const comments = await db.query.comments.findMany({
+      orderBy: [sortOrder(sortByField)],
+      offset: (page - 1) * limit,
+      limit,
+      with: {
+        profile: {
+          columns: { id: true, name: true, username: true, image: true },
+        },
+        manga: {
+          columns: { id: true, title: true, slug: true },
+        },
+        comment: {
+          // parent comment
+          columns: { id: true, content: true },
+          with: {
+            profile: {
+              columns: { name: true, username: true },
             },
           },
         },
-        orderBy: { [sortBy]: sortOrder },
-        skip: (page - 1) * limit,
-        take: limit,
-      }),
-      prisma.comment.count({ where }),
-    ]);
+      },
+    });
+
+    // Filter by search in memory if needed
+    const filtered = search
+      ? comments.filter(
+          (c) =>
+            c.content.toLowerCase().includes(search.toLowerCase()) ||
+            (c.profile as any)?.name?.toLowerCase().includes(search.toLowerCase()) ||
+            (c.profile as any)?.username?.toLowerCase().includes(search.toLowerCase()) ||
+            (c.manga as any)?.title?.toLowerCase().includes(search.toLowerCase())
+        )
+      : comments;
+
+    const [{ total }] = await db
+      .select({ total: count() })
+      .from(commentsTable);
+
+    const totalNum = Number(total);
 
     return NextResponse.json({
-      comments,
+      comments: filtered.map((c) => ({
+        ...c,
+        user: c.profile,
+        parent: c.comment
+          ? {
+              ...c.comment,
+              user: (c.comment as any).profile,
+            }
+          : null,
+      })),
       pagination: {
         page,
         limit,
-        total,
-        totalPages: Math.ceil(total / limit),
+        total: totalNum,
+        totalPages: Math.ceil(totalNum / limit),
       },
     });
   } catch (error) {
@@ -101,7 +102,6 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Check if admin
   const userRole = (session.user as { role?: string }).role;
   if (userRole !== "admin") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -119,21 +119,22 @@ export async function DELETE(request: Request) {
     }
 
     // Delete votes first (foreign key constraint)
-    await prisma.commentVote.deleteMany({
-      where: { commentId: { in: commentIds } },
-    });
+    await db
+      .delete(commentVotesTable)
+      .where(inArray(commentVotesTable.commentId, commentIds));
 
     // Delete replies
-    await prisma.comment.deleteMany({
-      where: { parentId: { in: commentIds } },
-    });
+    await db
+      .delete(commentsTable)
+      .where(inArray(commentsTable.parentId, commentIds));
 
     // Delete comments
-    const { count } = await prisma.comment.deleteMany({
-      where: { id: { in: commentIds } },
-    });
+    const deleted = await db
+      .delete(commentsTable)
+      .where(inArray(commentsTable.id, commentIds))
+      .returning({ id: commentsTable.id });
 
-    return NextResponse.json({ deleted: count });
+    return NextResponse.json({ deleted: deleted.length });
   } catch (error) {
     console.error("Error deleting comments:", error);
     return NextResponse.json(

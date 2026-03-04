@@ -1,6 +1,8 @@
-import MangaForm from "@/app/components/forms/MangaForm";
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { manga as mangaTable, mangaTags as mangaTagsTable } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
+import MangaForm from "@/app/components/forms/MangaForm";
 
 export default async function EditMangaPage({
   params,
@@ -9,19 +11,25 @@ export default async function EditMangaPage({
 }) {
   const { id } = await params;
 
-  // Fetch manga
-  const manga = await prisma.manga.findUnique({
-    where: { id },
-    include: {
+  const mangaData = await db.query.manga.findFirst({
+    where: eq(mangaTable.id, id),
+    with: {
       category: true,
-      tags: true,
       author: true,
+      mangaTags_mangaId: {
+        with: { tag_tagId: true },
+      },
     },
   });
 
-  if (!manga) {
+  if (!mangaData) {
     notFound();
   }
 
-  return <MangaForm manga={manga} mode="admin" />;
+  const manga = {
+    ...mangaData,
+    tags: mangaData.mangaTags_mangaId?.map((mt: any) => mt.tag_tagId) || [],
+  };
+
+  return <MangaForm manga={manga as any} mode="admin" />;
 }

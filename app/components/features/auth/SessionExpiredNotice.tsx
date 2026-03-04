@@ -36,6 +36,7 @@ export default function SessionExpiredNotice() {
       
       // Clean up storage items
       sessionStorage.removeItem("wasAuthenticated");
+      setWasAuthenticated(false); // Fix: also clear component state
       if (intentLogout) {
         sessionStorage.removeItem("intent_logout");
       }

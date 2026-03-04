@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { db } from "@/db";
+import { commentVotes as commentVotesTable, comments as commentsTable } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import prisma from "@/lib/prisma";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 type RouteParams = {
@@ -21,8 +23,8 @@ export async function POST(request: Request, { params }: RouteParams) {
   // Rate limiting: 30 votes per 15 minutes per user
   const rateLimit = await checkRateLimit(
     `vote:${session.user.id}`,
-    30, // max 30 votes
-    15 * 60 * 1000 // per 15 minutes
+    30,
+    15 * 60 * 1000
   );
 
   if (!rateLimit.allowed) {
@@ -36,69 +38,75 @@ export async function POST(request: Request, { params }: RouteParams) {
     const body = await request.json();
     const { value } = body;
 
-    // Validate vote value
     if (value !== 1 && value !== -1) {
       return NextResponse.json({ error: "Vote value must be 1 or -1" }, { status: 400 });
     }
 
     // Check if comment exists
-    const comment = await prisma.comment.findUnique({ where: { id: commentId } });
+    const [comment] = await db
+      .select()
+      .from(commentsTable)
+      .where(eq(commentsTable.id, commentId))
+      .limit(1);
+    
     if (!comment) {
       return NextResponse.json({ error: "Comment not found" }, { status: 404 });
     }
 
     // Check if user already voted
-    const existingVote = await prisma.commentVote.findUnique({
-      where: {
-        commentId_userId: {
-          commentId,
-          userId: session.user.id,
-        },
-      },
-    });
+    const [existingVote] = await db
+      .select()
+      .from(commentVotesTable)
+      .where(
+        and(
+          eq(commentVotesTable.commentId, commentId),
+          eq(commentVotesTable.userId, session.user.id)
+        )
+      )
+      .limit(1);
 
     let newVoteScore = comment.voteScore;
 
     if (existingVote) {
       if (existingVote.value === value) {
         // Same vote = remove vote
-        await prisma.commentVote.delete({ where: { id: existingVote.id } });
+        await db.delete(commentVotesTable).where(eq(commentVotesTable.id, existingVote.id));
         newVoteScore -= value;
       } else {
         // Different vote = update vote (swing of 2)
-        await prisma.commentVote.update({
-          where: { id: existingVote.id },
-          data: { value },
-        });
-        newVoteScore += value * 2; // e.g., from -1 to +1 = +2
+        await db
+          .update(commentVotesTable)
+          .set({ value })
+          .where(eq(commentVotesTable.id, existingVote.id));
+        newVoteScore += value * 2;
       }
     } else {
       // New vote
-      await prisma.commentVote.create({
-        data: {
-          commentId,
-          userId: session.user.id,
-          value,
-        },
+      await db.insert(commentVotesTable).values({
+        commentId,
+        userId: session.user.id,
+        value,
       });
       newVoteScore += value;
     }
 
     // Update cached vote score on comment
-    await prisma.comment.update({
-      where: { id: commentId },
-      data: { voteScore: newVoteScore },
-    });
+    await db
+      .update(commentsTable)
+      .set({ voteScore: newVoteScore })
+      .where(eq(commentsTable.id, commentId));
 
     // Get user's current vote
-    const userVote = await prisma.commentVote.findUnique({
-      where: {
-        commentId_userId: {
-          commentId,
-          userId: session.user.id,
-        },
-      },
-    });
+    const [userVote] = await db
+      .select()
+      .from(commentVotesTable)
+      .where(
+        and(
+          eq(commentVotesTable.commentId, commentId),
+          eq(commentVotesTable.userId, session.user.id)
+        )
+      )
+      .limit(1);
 
     return NextResponse.json({
       voteScore: newVoteScore,

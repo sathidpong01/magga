@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { tags as tagsTable } from "@/db/schema";
+import { asc } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth-helpers";
@@ -7,8 +9,8 @@ import { sanitizeInput } from "@/lib/sanitize";
 
 // GET all tags
 export async function GET() {
-  const tags = await prisma.tag.findMany({
-    orderBy: { name: "asc" },
+  const tags = await db.query.tags.findMany({
+    orderBy: [asc(tagsTable.name)],
   });
   return NextResponse.json(tags);
 }
@@ -27,9 +29,9 @@ export async function POST(request: Request) {
   }
 
   try {
-    const newTag = await prisma.tag.create({
-      data: { name: sanitizedName },
-    });
+    const [newTag] = await db.insert(tagsTable)
+      .values({ name: sanitizedName })
+      .returning();
     revalidatePath("/admin/metadata");
     revalidatePath("/"); // Refresh home page to show new tag
     return NextResponse.json(newTag, { status: 201 });

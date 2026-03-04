@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
+import { db } from "@/db";
+import { mangaSubmissions as submissionsTable, mangaSubmissionTags as submissionTagsTable, profiles as profilesTable } from "@/db/schema";
+import { eq, desc, and, ilike, or, count } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import prisma from "@/lib/prisma";
 
 export async function GET(req: Request) {
   try {
     const session = await auth.api.getSession({ headers: req.headers });
-    if (!session || session.user.role !== "ADMIN") {
+    if (!session || (session.user as any)?.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -15,37 +17,50 @@ export async function GET(req: Request) {
     const limit = parseInt(searchParams.get("limit") || "10");
     const search = searchParams.get("search") || "";
 
-    const skip = (page - 1) * limit;
+    const offset = (page - 1) * limit;
 
-    const where: any = {};
+    const conditions = [];
     if (status && status !== "ALL") {
-      where.status = status;
-    }
-    if (search) {
-      where.OR = [
-        { title: { contains: search } }, // Case insensitive usually depends on DB collation
-        { user: { username: { contains: search } } },
-      ];
+      conditions.push(eq(submissionsTable.status, status));
     }
 
-    const [submissions, total] = await Promise.all([
-      prisma.mangaSubmission.findMany({
-        where,
-        include: {
-          user: { select: { name: true, email: true, username: true } },
+    const submissions = await db.query.mangaSubmissions.findMany({
+      where: conditions.length > 0 ? and(...conditions) : undefined,
+      with: {
+        profile: {
+          columns: { name: true, email: true, username: true },
         },
-        orderBy: { submittedAt: "desc" },
-        skip,
-        take: limit,
-      }),
-      prisma.mangaSubmission.count({ where }),
-    ]);
+      },
+      orderBy: [desc(submissionsTable.submittedAt)],
+      offset,
+      limit,
+    });
+
+    // Filter by search if needed (done in memory for simplicity)
+    const filtered = search
+      ? submissions.filter(
+          (s) =>
+            s.title.toLowerCase().includes(search.toLowerCase()) ||
+            (s.profile as any)?.username?.toLowerCase().includes(search.toLowerCase())
+        )
+      : submissions;
+
+    // Count total
+    const [{ total }] = await db
+      .select({ total: count() })
+      .from(submissionsTable)
+      .where(conditions.length > 0 ? and(...conditions) : undefined);
+
+    const totalNum = Number(total);
 
     return NextResponse.json({
-      submissions,
+      submissions: filtered.map((s) => ({
+        ...s,
+        user: s.profile,
+      })),
       pagination: {
-        total,
-        pages: Math.ceil(total / limit),
+        total: totalNum,
+        pages: Math.ceil(totalNum / limit),
         page,
         limit,
       },

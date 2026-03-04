@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { manga as mangaTable } from "@/db/schema";
+import { eq, inArray } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { requireAdmin } from "@/lib/auth-helpers";
@@ -27,35 +29,38 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid action" }, { status: 400 });
     }
 
-    let result;
+    let count = 0;
 
     switch (action) {
       case "delete":
-        // Delete manga and related data
-        result = await prisma.manga.deleteMany({
-          where: { id: { in: ids } },
-        });
+        const deleted = await db
+          .delete(mangaTable)
+          .where(inArray(mangaTable.id, ids))
+          .returning({ id: mangaTable.id });
+        count = deleted.length;
         break;
       case "show":
-        // Set isHidden to false
-        result = await prisma.manga.updateMany({
-          where: { id: { in: ids } },
-          data: { isHidden: false },
-        });
+        const shown = await db
+          .update(mangaTable)
+          .set({ isHidden: false })
+          .where(inArray(mangaTable.id, ids))
+          .returning({ id: mangaTable.id });
+        count = shown.length;
         break;
       case "hide":
-        // Set isHidden to true
-        result = await prisma.manga.updateMany({
-          where: { id: { in: ids } },
-          data: { isHidden: true },
-        });
+        const hidden = await db
+          .update(mangaTable)
+          .set({ isHidden: true })
+          .where(inArray(mangaTable.id, ids))
+          .returning({ id: mangaTable.id });
+        count = hidden.length;
         break;
     }
 
     return NextResponse.json({
       success: true,
       action,
-      count: result.count,
+      count,
     });
   } catch (error) {
     console.error("Bulk action error:", error);

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { profiles as usersTable } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { validatePassword } from "@/lib/password-validation";
@@ -44,8 +46,8 @@ export async function PUT(req: Request) {
     const body = await req.json();
     const { currentPassword, newPassword } = passwordSchema.parse(body);
 
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
+    const user = await db.query.profiles.findFirst({
+      where: eq(usersTable.email, session.user.email),
     });
 
     if (!user) {
@@ -74,10 +76,9 @@ export async function PUT(req: Request) {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     // Update user
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { password: hashedPassword },
-    });
+    await db.update(usersTable)
+      .set({ password: hashedPassword, updatedAt: new Date().toISOString() })
+      .where(eq(usersTable.id, user.id));
 
     return NextResponse.json({ message: "Password updated successfully" });
   } catch (error) {

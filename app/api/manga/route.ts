@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { manga as mangaTable, mangaTags as mangaTagsTable } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { z } from "zod";
 
@@ -22,7 +24,7 @@ const mangaSchema = z.object({
 
 export async function POST(request: Request) {
   const session = await auth.api.getSession({ headers: request.headers });
-  if (!session || session.user?.role !== "ADMIN") {
+  if (!session || session.user?.role !== "admin") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -51,7 +53,12 @@ export async function POST(request: Request) {
     } = result.data;
 
     // Check if slug exists
-    const existingSlug = await prisma.manga.findUnique({ where: { slug } });
+    const [existingSlug] = await db
+      .select({ id: mangaTable.id })
+      .from(mangaTable)
+      .where(eq(mangaTable.slug, slug))
+      .limit(1);
+
     if (existingSlug) {
       return NextResponse.json(
         { error: "Slug already exists" },
@@ -59,27 +66,37 @@ export async function POST(request: Request) {
       );
     }
 
-    const newManga = await prisma.manga.create({
-      data: {
+    // Create manga
+    const [newManga] = await db
+      .insert(mangaTable)
+      .values({
         title,
         slug,
         description,
-        categoryId,
-        authorId,
-        tags: {
-          connect: selectedTags.map((tagId: string) => ({ id: tagId })),
-        },
-        coverImage:
-          coverImage || "https://via.placeholder.com/300x400.png?text=Cover",
+        categoryId: categoryId || null,
+        authorId: authorId || null,
+        coverImage: coverImage || "https://via.placeholder.com/300x400.png?text=Cover",
         pages: JSON.stringify(pages || []),
         isHidden: isHidden || false,
-        authorName,
-      },
-    });
+        authorName: authorName || null,
+      })
+      .returning();
+
+    // Add tags if any
+    if (selectedTags.length > 0) {
+      await db.insert(mangaTagsTable).values(
+        selectedTags.map((tagId) => ({
+          mangaId: newManga.id,
+          tagId,
+        }))
+      );
+    }
+
     revalidatePath("/admin");
     revalidatePath("/");
     return NextResponse.json(newManga, { status: 201 });
   } catch (error) {
+    console.error("Error creating manga:", error);
     return NextResponse.json(
       { error: "Failed to create manga" },
       { status: 500 }

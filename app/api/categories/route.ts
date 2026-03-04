@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { categories as categoriesTable } from "@/db/schema";
+import { asc } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth-helpers";
@@ -7,8 +9,8 @@ import { sanitizeInput } from "@/lib/sanitize";
 
 // GET all categories
 export async function GET() {
-  const categories = await prisma.category.findMany({
-    orderBy: { name: "asc" },
+  const categories = await db.query.categories.findMany({
+    orderBy: [asc(categoriesTable.name)],
   });
   return NextResponse.json(categories);
 }
@@ -27,9 +29,9 @@ export async function POST(request: Request) {
   }
 
   try {
-    const newCategory = await prisma.category.create({
-      data: { name: sanitizedName },
-    });
+    const [newCategory] = await db.insert(categoriesTable)
+      .values({ name: sanitizedName })
+      .returning();
     revalidatePath("/admin/metadata");
     revalidatePath("/"); // Refresh home page to show new category
     return NextResponse.json(newCategory, { status: 201 });

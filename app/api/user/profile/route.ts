@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { profiles as usersTable } from "@/db/schema";
+import { eq, or, and, ne } from "drizzle-orm";
 import { z } from "zod";
 
 const profileSchema = z.object({
@@ -39,17 +41,15 @@ export async function PUT(req: Request) {
     // Check if username or email is already taken by ANOTHER user
     if (username || email) {
       const orConditions = [];
-      if (username) orConditions.push({ username });
-      if (email) orConditions.push({ email });
+      if (username) orConditions.push(eq(usersTable.username, username));
+      if (email) orConditions.push(eq(usersTable.email, email));
 
       if (orConditions.length > 0) {
-        const existingUser = await prisma.user.findFirst({
-          where: {
-            AND: [
-              { NOT: { email: session.user.email } }, // Not current user
-              { OR: orConditions },
-            ],
-          },
+        const existingUser = await db.query.profiles.findFirst({
+          where: and(
+            ne(usersTable.email, session.user.email),
+            or(...orConditions)
+          ),
         });
 
         if (existingUser) {
@@ -69,14 +69,29 @@ export async function PUT(req: Request) {
       }
     }
 
-    const user = await prisma.user.update({
-      where: { email: session.user.email },
-      data: {
-        ...(name && { name }),
-        ...(username && { username }),
-        ...(email && { email }),
-      },
-    });
+    const updateData: any = {};
+    if (name) updateData.name = name;
+    if (username) updateData.username = username;
+    if (email) updateData.email = email;
+
+    let user;
+    if (Object.keys(updateData).length > 0) {
+      updateData.updatedAt = new Date().toISOString();
+      const [updated] = await db
+        .update(usersTable)
+        .set(updateData)
+        .where(eq(usersTable.email, session.user.email))
+        .returning();
+      user = updated;
+    } else {
+      user = await db.query.profiles.findFirst({
+        where: eq(usersTable.email, session.user.email),
+      });
+    }
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
 
     return NextResponse.json({
       user: {

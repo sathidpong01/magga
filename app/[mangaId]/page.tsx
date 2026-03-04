@@ -1,4 +1,6 @@
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { manga as mangaTable, mangaTags as mangaTagsTable } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import LinkChip from "@/app/components/ui/LinkChip";
 import {
@@ -29,15 +31,15 @@ type MangaPageProps = {
   }>;
 };
 
-// ISR: Revalidate every 1 hour (On-demand revalidation handles immediate updates)
+// ISR: Revalidate every 1 hour
 export const revalidate = 3600;
 
-// Cache manga data to prevent duplicate queries between generateMetadata and MangaPage
+// Cache manga data
 const getMangaBySlug = unstable_cache(
   async (slug: string) => {
-    return prisma.manga.findUnique({
-      where: { slug },
-      select: {
+    return db.query.manga.findFirst({
+      where: eq(mangaTable.slug, slug),
+      columns: {
         id: true,
         slug: true,
         title: true,
@@ -45,18 +47,18 @@ const getMangaBySlug = unstable_cache(
         coverImage: true,
         pages: true,
         authorName: true,
-        author: {
-          select: {
-            id: true,
-            name: true,
-            socialLinks: true,
-          },
-        },
-        category: true,
-        tags: true,
         viewCount: true,
         averageRating: true,
         ratingCount: true,
+      },
+      with: {
+        author: {
+          columns: { id: true, name: true, socialLinks: true },
+        },
+        category: true,
+        mangaTags_mangaId: {
+          with: { tag_tagId: true },
+        },
       },
     });
   },
@@ -64,13 +66,13 @@ const getMangaBySlug = unstable_cache(
   { revalidate: 60, tags: ["manga"] }
 );
 
-// Pre-render top 50 manga at build time for better performance
+// Pre-render top 50 manga at build time
 export async function generateStaticParams() {
-  const topMangas = await prisma.manga.findMany({
-    where: { isHidden: false },
-    select: { slug: true },
-    orderBy: { updatedAt: "desc" },
-    take: 50,
+  const topMangas = await db.query.manga.findMany({
+    where: eq(mangaTable.isHidden, false),
+    columns: { slug: true },
+    orderBy: [desc(mangaTable.updatedAt)],
+    limit: 50,
   });
 
   return topMangas.map((manga) => ({
@@ -87,65 +89,40 @@ export async function generateMetadata({ params }: MangaPageProps) {
     return { title: "Not Found" };
   }
 
-  const manga = await getMangaBySlug(decodedSlug);
+  const mangaData = await getMangaBySlug(decodedSlug);
 
-  if (!manga) {
-    return {
-      title: "Not Found",
-    };
+  if (!mangaData) {
+    return { title: "Not Found" };
   }
 
-  // Check for sensitive content
+  const tags = mangaData.mangaTags_mangaId?.map((mt: any) => mt.tag_tagId) || [];
+
   const SENSITIVE_KEYWORDS = [
-    "18+",
-    "adult",
-    "hentai",
-    "ecchi",
-    "mature",
-    "smut",
-    "yaoi",
-    "yuri",
-    "doujinshi",
-    "nsfw",
+    "18+", "adult", "hentai", "ecchi", "mature", "smut", "yaoi", "yuri", "doujinshi", "nsfw",
   ];
-  const hasSensitiveTag = manga.tags.some((tag) =>
-    SENSITIVE_KEYWORDS.includes(tag.name.toLowerCase())
+  const hasSensitiveTag = tags.some((tag: any) =>
+    SENSITIVE_KEYWORDS.includes(tag?.name?.toLowerCase())
   );
   const hasSensitiveCategory =
-    manga.category &&
-    SENSITIVE_KEYWORDS.includes(manga.category.name.toLowerCase());
+    mangaData.category && SENSITIVE_KEYWORDS.includes(mangaData.category.name.toLowerCase());
   const isSensitive = hasSensitiveTag || hasSensitiveCategory;
 
-  // Format title with author name: [Author] - Title
-  const authorName = manga.author?.name || (manga as any).authorName;
-  const displayTitle = authorName
-    ? `[${authorName}] - ${manga.title}`
-    : manga.title;
-
-  // Use generic description for sensitive content
+  const authorName = mangaData.author?.name || mangaData.authorName;
+  const displayTitle = authorName ? `[${authorName}] - ${mangaData.title}` : mangaData.title;
   const description = isSensitive
-    ? `Read ${manga.title} online at Magga Reader. High quality images and fast loading.`
-    : manga.description;
-
-  // Always use site logo for OG image (safe for all content)
+    ? `Read ${mangaData.title} online at Magga Reader. High quality images and fast loading.`
+    : mangaData.description;
   const ogImage = "/android-chrome-512x512.png";
 
   return {
     title: displayTitle,
-    description: description,
+    description,
     openGraph: {
       title: `${displayTitle} - MAGGA`,
       description: description || "Read your favorite manga online for free.",
-      url: `/${manga.slug}`,
+      url: `/${mangaData.slug}`,
       siteName: "MAGGA",
-      images: [
-        {
-          url: ogImage,
-          width: 512,
-          height: 512,
-          alt: "MAGGA",
-        },
-      ],
+      images: [{ url: ogImage, width: 512, height: 512, alt: "MAGGA" }],
       type: "website",
     },
     twitter: {
@@ -160,7 +137,6 @@ export async function generateMetadata({ params }: MangaPageProps) {
 export default async function MangaPage({ params }: MangaPageProps) {
   const { mangaId } = await params;
 
-  // Safely decode URI, handle malformed URIs
   let decodedSlug: string;
   try {
     decodedSlug = decodeURIComponent(mangaId);
@@ -168,16 +144,20 @@ export default async function MangaPage({ params }: MangaPageProps) {
     notFound();
   }
 
-  // Use cached query (shared with generateMetadata)
-  const manga = await getMangaBySlug(decodedSlug);
+  const mangaData = await getMangaBySlug(decodedSlug);
 
-  if (!manga) {
+  if (!mangaData) {
     notFound();
   }
 
+  const manga = {
+    ...mangaData,
+    tags: mangaData.mangaTags_mangaId?.map((mt: any) => mt.tag_tagId) || [],
+  };
+
   const pages: string[] = (() => {
     if (!manga.pages) return [];
-    if (Array.isArray(manga.pages)) return manga.pages;
+    if (Array.isArray(manga.pages)) return manga.pages as string[];
     try {
       return JSON.parse(manga.pages as unknown as string) as string[];
     } catch {
@@ -197,7 +177,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
             zIndex: 0,
             opacity: 0.3,
             filter: "blur(40px)",
-            transform: "scale(1.1)", // Prevent blur edges
+            transform: "scale(1.1)",
           }}
         >
           <Image
@@ -227,7 +207,6 @@ export default async function MangaPage({ params }: MangaPageProps) {
           }}
         >
           <Grid container spacing={4}>
-            {/* Left: Cover Image */}
             <Grid
               sx={{
                 display: "flex",
@@ -260,7 +239,6 @@ export default async function MangaPage({ params }: MangaPageProps) {
               </Box>
             </Grid>
 
-            {/* Right: Details */}
             <Grid
               sx={{
                 display: "flex",
@@ -270,14 +248,11 @@ export default async function MangaPage({ params }: MangaPageProps) {
               size={{ xs: 12, md: 8, lg: 9 }}
             >
               <Box>
-                {/* Category Chip */}
                 {manga.category && (
                   <Chip
                     label={manga.category.name}
                     component="a"
-                    href={`/category/${encodeURIComponent(
-                      manga.category.name
-                    )}`}
+                    href={`/category/${encodeURIComponent(manga.category.name)}`}
                     clickable
                     sx={{
                       bgcolor: "#fbbf24",
@@ -291,7 +266,6 @@ export default async function MangaPage({ params }: MangaPageProps) {
                   />
                 )}
 
-                {/* Title */}
                 <Typography
                   variant="h2"
                   component="h1"
@@ -300,8 +274,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
                     mb: 1,
                     fontSize: { xs: "2.5rem", md: "3.5rem" },
                     lineHeight: 1.1,
-                    background:
-                      "linear-gradient(135deg, #fbbf24 0%, #38bdf8 100%)",
+                    background: "linear-gradient(135deg, #fbbf24 0%, #38bdf8 100%)",
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor: "transparent",
                     filter: "drop-shadow(0 2px 10px rgba(0,0,0,0.3))",
@@ -310,9 +283,8 @@ export default async function MangaPage({ params }: MangaPageProps) {
                   {manga.title}
                 </Typography>
 
-                {/* Author Social Links from Author model */}
+                {/* Author Social Links */}
                 {(() => {
-                  // Try new Author system first
                   if (manga.author?.socialLinks) {
                     try {
                       const links = JSON.parse(manga.author.socialLinks) as {
@@ -320,27 +292,15 @@ export default async function MangaPage({ params }: MangaPageProps) {
                         label: string;
                         icon: string;
                       }[];
-
                       if (links.length > 0) {
                         return (
-                          <Box
-                            sx={{
-                              display: "flex",
-                              flexWrap: "wrap",
-                              gap: 2,
-                              mb: 2,
-                            }}
-                          >
+                          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 2 }}>
                             {links.map((link, index) => (
                               <Chip
                                 key={index}
                                 avatar={
                                   link.icon ? (
-                                    <Avatar
-                                      src={link.icon}
-                                      alt=""
-                                      sx={{ width: 28, height: 28 }}
-                                    />
+                                    <Avatar src={link.icon} alt="" sx={{ width: 28, height: 28 }} />
                                   ) : undefined
                                 }
                                 label={link.label || manga.author?.name}
@@ -355,9 +315,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
                                   fontSize: "0.9rem",
                                   borderColor: "rgba(255,255,255,0.2)",
                                   color: "rgba(255,255,255,0.85)",
-                                  "& .MuiChip-label": {
-                                    px: 1.5,
-                                  },
+                                  "& .MuiChip-label": { px: 1.5 },
                                   "&:hover": {
                                     borderColor: "rgba(255,255,255,0.5)",
                                     color: "white",
@@ -370,36 +328,23 @@ export default async function MangaPage({ params }: MangaPageProps) {
                         );
                       }
                     } catch {
-                      // Parse error
                       return null;
                     }
                   }
                   return null;
                 })()}
 
-                {/* Stats Row */}
-                <Stack
-                  direction="row"
-                  spacing={3}
-                  alignItems="center"
-                  sx={{ mb: 3, color: "text.secondary" }}
-                >
+                <Stack direction="row" spacing={3} alignItems="center" sx={{ mb: 3, color: "text.secondary" }}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                     <VisibilityIcon sx={{ fontSize: 20 }} />
                     <Typography variant="subtitle1" fontWeight={500}>
-                      {manga.viewCount.toLocaleString()} Views
+                      {Number(manga.viewCount).toLocaleString()} Views
                     </Typography>
                   </Box>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                     <StarIcon sx={{ fontSize: 20, color: "#fbbf24" }} />
-                    <Typography
-                      variant="subtitle1"
-                      fontWeight={500}
-                      sx={{ color: "white" }}
-                    >
-                      {manga.averageRating > 0
-                        ? manga.averageRating.toFixed(1)
-                        : "No rating"}
+                    <Typography variant="subtitle1" fontWeight={500} sx={{ color: "white" }}>
+                      {manga.averageRating > 0 ? manga.averageRating.toFixed(1) : "No rating"}
                     </Typography>
                     <Typography variant="body2" sx={{ opacity: 0.7 }}>
                       ({manga.ratingCount} ratings)
@@ -407,7 +352,6 @@ export default async function MangaPage({ params }: MangaPageProps) {
                   </Box>
                 </Stack>
 
-                {/* Description */}
                 <Typography
                   variant="body1"
                   sx={{
@@ -421,9 +365,8 @@ export default async function MangaPage({ params }: MangaPageProps) {
                   {manga.description}
                 </Typography>
 
-                {/* Tags */}
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 3 }}>
-                  {manga.tags.map((tag) => (
+                  {manga.tags.map((tag: any) => (
                     <LinkChip
                       key={tag.id}
                       label={tag.name}
@@ -442,12 +385,11 @@ export default async function MangaPage({ params }: MangaPageProps) {
                   ))}
                 </Box>
 
-                {/* Rating Component */}
                 <MangaViewRating
                   mangaId={manga.id}
-                  initialViewCount={manga.viewCount}
+                  initialViewCount={Number(manga.viewCount)}
                   initialAverageRating={manga.averageRating}
-                  initialRatingCount={manga.ratingCount}
+                  initialRatingCount={Number(manga.ratingCount)}
                   hideViewCount={true}
                 />
               </Box>
@@ -456,36 +398,22 @@ export default async function MangaPage({ params }: MangaPageProps) {
         </Container>
       </Box>
 
-      {/* Main Content Area */}
       <Container maxWidth="lg" sx={{ mt: 6 }}>
-        {/* Pages / Reader with scroll tracking - Suspense wrapped */}
         <SuspendedMangaReader
           mangaId={manga.id}
           mangaTitle={manga.title}
           pages={pages}
         />
-
-        {/* โฆษณาท้ายหน้าอ่าน */}
         <Box sx={{ mt: 4, maxWidth: "800px", mx: "auto" }}>
           <AdContainer placement="manga-end" />
         </Box>
-
-        {/* General Comments Section - Suspense wrapped */}
-        <Box
-          sx={{
-            mt: 6,
-            maxWidth: "800px",
-            mx: "auto",
-            mr: { xs: "auto", md: "340px" },
-          }}
-        >
+        <Box sx={{ mt: 6, maxWidth: "800px", mx: "auto", mr: { xs: "auto", md: "340px" } }}>
           <Suspense fallback={<CommentSectionSkeleton />}>
             <ServerCommentSection mangaId={manga.id} />
           </Suspense>
         </Box>
       </Container>
 
-      {/* Back to Top Button */}
       <ScrollToTop />
     </Box>
   );

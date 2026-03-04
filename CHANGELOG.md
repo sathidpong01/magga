@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.9.3] - 2026-03-04
+
+### Changed
+
+- Complete migration from **Prisma ORM** to **Drizzle ORM** for better performance, faster type checking, and edge-compatibility.
+- Migrated authentication from **NextAuth.js** to **Better Auth**.
+- Updated `package.json` scripts to use Drizzle Kit (`db:generate`, `db:push`, `db:migrate`, `db:studio`).
+
+### Removed
+
+- Completely removed `prisma`, `@prisma/client` and all related adapter dependencies.
+- Completely removed `next-auth`.
+
+---
+
 ## [1.8.0] - 2026-02-13
 
 ### Changed

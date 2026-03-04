@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
-import { prismaAdapter } from "better-auth/adapters/prisma";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin, username } from "better-auth/plugins";
-import prisma from "./prisma";
+import { db, schema } from "@/db";
 import { randomUUID } from "crypto";
 
 export const auth = betterAuth({
@@ -12,8 +12,15 @@ export const auth = betterAuth({
     process.env.BETTER_AUTH_URL || "",
     process.env.NEXT_PUBLIC_APP_URL || "",
   ].filter(Boolean),
-  database: prismaAdapter(prisma, {
-    provider: "postgresql",
+  database: drizzleAdapter(db, {
+    provider: "pg",
+    schema: {
+      ...schema,
+      user: schema.profiles,
+      session: schema.sessions,
+      account: schema.accounts,
+      verification: schema.verification
+    }
   }),
   emailAndPassword: {
     enabled: true,
@@ -29,6 +36,14 @@ export const auth = betterAuth({
     admin(),
     username(),
   ],
+  rateLimit: {
+    enabled: true,
+    window: 10,
+    max: 100,
+  },
+  account: {
+    storeStateStrategy: "cookie",
+  },
   user: {
     additionalFields: {
       role: {

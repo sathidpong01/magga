@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { Prisma } from "@prisma/client";
+import { db } from "@/db";
+import { manga as mangaTable, categories as categoriesTable, tags as tagsTable, mangaTags as mangaTagsTable } from "@/db/schema";
+import { eq, ilike, and, inArray, desc, asc, count, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 
 const ITEMS_PER_PAGE = 12;
@@ -14,68 +15,102 @@ const getMangasWithPagination = unstable_cache(
     tagNames?: string[],
     sort?: string
   ) => {
-    const skip = (page - 1) * ITEMS_PER_PAGE;
+    const offset = (page - 1) * ITEMS_PER_PAGE;
 
-    // Build Where Clause
-    const where: Prisma.MangaWhereInput = {
-      isHidden: false,
-    };
+    // Build Where conditions
+    const conditions = [eq(mangaTable.isHidden, false)];
 
     if (search) {
-      where.title = { contains: search };
+      conditions.push(ilike(mangaTable.title, `%${search}%`));
     }
 
     if (categoryId && categoryId !== "all") {
-      where.categoryId = categoryId;
-    }
-
-    if (tagNames && tagNames.length > 0) {
-      where.tags = {
-        some: {
-          name: { in: tagNames },
-        },
-      };
+      conditions.push(eq(mangaTable.categoryId, categoryId));
     }
 
     // Build OrderBy
-    let orderBy: Prisma.MangaOrderByWithRelationInput = { createdAt: "desc" };
+    let orderByClause;
     if (sort === "updated") {
-      orderBy = { updatedAt: "desc" };
+      orderByClause = desc(mangaTable.updatedAt);
     } else if (sort === "az") {
-      orderBy = { title: "asc" };
+      orderByClause = asc(mangaTable.title);
+    } else {
+      orderByClause = desc(mangaTable.createdAt);
     }
 
-    // Fetch mangas with count
-    const [mangas, total] = await Promise.all([
-      prisma.manga.findMany({
-        where,
-        orderBy,
-        skip,
-        take: ITEMS_PER_PAGE,
-        select: {
+    // If tag filter exists, get mangaIds that have those tags
+    let filteredMangaIds: string[] | undefined;
+    if (tagNames && tagNames.length > 0) {
+      const tagsRows = await db
+        .select({ id: tagsTable.id })
+        .from(tagsTable)
+        .where(inArray(tagsTable.name, tagNames));
+      const tagIds = tagsRows.map((t) => t.id);
+
+      if (tagIds.length > 0) {
+        const mangaTagRows = await db
+          .select({ mangaId: mangaTagsTable.mangaId })
+          .from(mangaTagsTable)
+          .where(inArray(mangaTagsTable.tagId, tagIds));
+        filteredMangaIds = [...new Set(mangaTagRows.map((r) => r.mangaId))];
+      } else {
+        filteredMangaIds = [];
+      }
+    }
+
+    if (filteredMangaIds !== undefined) {
+      if (filteredMangaIds.length === 0) {
+        return { mangas: [], total: 0, page, totalPages: 0, hasMore: false };
+      }
+      conditions.push(inArray(mangaTable.id, filteredMangaIds));
+    }
+
+    const whereClause = and(...conditions);
+
+    // Fetch mangas and total in parallel
+    const [mangaRows, [{ total }]] = await Promise.all([
+      db.query.manga.findMany({
+        where: whereClause,
+        orderBy: orderByClause,
+        offset,
+        limit: ITEMS_PER_PAGE,
+        columns: {
           id: true,
           slug: true,
           title: true,
           coverImage: true,
           viewCount: true,
           averageRating: true,
+        },
+        with: {
           category: {
-            select: { name: true },
+            columns: { name: true },
           },
-          tags: {
-            select: { id: true, name: true },
+          mangaTags_mangaId: {
+            with: {
+              tag_tagId: {
+                columns: { id: true, name: true },
+              },
+            },
           },
         },
       }),
-      prisma.manga.count({ where }),
+      db.select({ total: count() }).from(mangaTable).where(whereClause),
     ]);
+
+    const mangas = mangaRows.map((m) => ({
+      ...m,
+      tags: m.mangaTags_mangaId.map((mt: any) => mt.tag_tagId),
+    }));
+
+    const totalNum = Number(total);
 
     return {
       mangas,
-      total,
+      total: totalNum,
       page,
-      totalPages: Math.ceil(total / ITEMS_PER_PAGE),
-      hasMore: skip + mangas.length < total,
+      totalPages: Math.ceil(totalNum / ITEMS_PER_PAGE),
+      hasMore: offset + mangas.length < totalNum,
     };
   },
   ["manga-list"],

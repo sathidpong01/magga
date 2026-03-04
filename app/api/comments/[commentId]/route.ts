@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
+import { db } from "@/db";
+import { comments as commentsTable, commentVotes, profiles as profilesTable } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import prisma from "@/lib/prisma";
 
 type RouteParams = {
   params: Promise<{
@@ -25,14 +27,17 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Content is required" }, { status: 400 });
     }
 
-    // Security: จำกัดความยาว content (consistent with POST)
     const MAX_CONTENT_LENGTH = 500;
     if (content.length > MAX_CONTENT_LENGTH) {
       return NextResponse.json({ error: `ความคิดเห็นต้องไม่เกิน ${MAX_CONTENT_LENGTH} ตัวอักษร` }, { status: 400 });
     }
 
     // Find the comment
-    const comment = await prisma.comment.findUnique({ where: { id: commentId } });
+    const [comment] = await db
+      .select()
+      .from(commentsTable)
+      .where(eq(commentsTable.id, commentId))
+      .limit(1);
     
     if (!comment) {
       return NextResponse.json({ error: "Comment not found" }, { status: 404 });
@@ -43,21 +48,16 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "You can only edit your own comments" }, { status: 403 });
     }
 
-    // Security: Sanitize content - ป้องกัน XSS (consistent with POST)
+    // Sanitize content
     const sanitizedContent = content.trim()
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;");
 
-    const updated = await prisma.comment.update({
-      where: { id: commentId },
-      data: { content: sanitizedContent },
-      include: {
-        user: {
-          select: { id: true, name: true, username: true, image: true },
-        },
-        votes: true,
-      },
-    });
+    const [updated] = await db
+      .update(commentsTable)
+      .set({ content: sanitizedContent })
+      .where(eq(commentsTable.id, commentId))
+      .returning();
 
     return NextResponse.json({ comment: updated });
   } catch (error) {
@@ -76,7 +76,11 @@ export async function DELETE(request: Request, { params }: RouteParams) {
   }
 
   try {
-    const comment = await prisma.comment.findUnique({ where: { id: commentId } });
+    const [comment] = await db
+      .select()
+      .from(commentsTable)
+      .where(eq(commentsTable.id, commentId))
+      .limit(1);
     
     if (!comment) {
       return NextResponse.json({ error: "Comment not found" }, { status: 404 });
@@ -84,13 +88,13 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
     // Owner or admin can delete
     const isOwner = comment.userId === session.user.id;
-    const isAdmin = (session.user as { role?: string }).role === "ADMIN";
+    const isAdmin = (session.user as { role?: string }).role === "admin";
 
     if (!isOwner && !isAdmin) {
       return NextResponse.json({ error: "You don't have permission to delete this comment" }, { status: 403 });
     }
 
-    await prisma.comment.delete({ where: { id: commentId } });
+    await db.delete(commentsTable).where(eq(commentsTable.id, commentId));
 
     return NextResponse.json({ success: true });
   } catch (error) {

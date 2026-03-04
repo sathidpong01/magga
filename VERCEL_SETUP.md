@@ -19,33 +19,33 @@
 
 คัดลอกค่าจากไฟล์ `.env.local` ของคุณมาใส่ทีละตัว:
 
-#### Database (Turso)
+#### Database (PostgreSQL)
 
 ```
-TURSO_DATABASE_URL
-TURSO_AUTH_TOKEN
+postgresql_DATABASE_URL
+postgresql_AUTH_TOKEN
 ```
 
-**หมายเหตุ:** ตรวจสอบว่าใช้ชื่อตัวแปรเป็น `TURSO_*` หรือ `DATABASE_*` ให้ตรงกับที่ใช้ใน `lib/prisma.ts`
+**หมายเหตุ:** ตรวจสอบว่าใช้ชื่อตัวแปรเป็น `postgresql_*` หรือ `DATABASE_*` ให้ตรงกับที่ใช้ใน `db/index.ts`
 
 #### Database Migration (New!)
 
-หากอัพเดทจากเวอร์ชันก่อน 2025-12-08 ต้องรัน SQL ใน Turso Console:
+หากอัพเดทจากเวอร์ชันก่อน 2025-12-08 ต้องรัน SQL ใน PostgreSQL Console:
 
 ```sql
 ALTER TABLE "Manga" ADD COLUMN "authorName" TEXT;
 ```
 
-จากนั้นรัน `npx prisma generate` เพื่ออัพเดท Prisma client
+จากนั้นรัน `npx prisma generate` เพื่ออัพเดท Drizzle client
 
-#### NextAuth
+#### Better Auth
 
 ```
-NEXTAUTH_URL=https://your-project-name.vercel.app
-NEXTAUTH_SECRET=your-secret-from-env-local
+BETTER_AUTH_URL=https://your-project-name.vercel.app
+BETTER_AUTH_SECRET=your-secret-from-env-local
 ```
 
-**⚠️ สำคัญ:** `NEXTAUTH_URL` ต้องเป็น URL ของ production เช่น `https://magga.vercel.app` (ไม่ใช่ localhost)
+**⚠️ สำคัญ:** `BETTER_AUTH_URL` ต้องเป็น URL ของ production เช่น `https://magga.vercel.app` (ไม่ใช่ localhost)
 
 #### Admin Credentials (ถ้าใช้ Credentials Provider)
 
@@ -116,7 +116,7 @@ ENABLE_QUERY_LOG=true
 
 ### หากยังมี Error หลัง Deploy
 
-1. **ตรวจสอบชื่อตัวแปร** - ตรวจสอบว่าใช้ `TURSO_DATABASE_URL` หรือ `DATABASE_URL` ให้ตรงกับที่ใช้ในโค้ด
+1. **ตรวจสอบชื่อตัวแปร** - ตรวจสอบว่าใช้ `postgresql_DATABASE_URL` หรือ `DATABASE_URL` ให้ตรงกับที่ใช้ในโค้ด
 2. **ตรวจสอบค่าของตัวแปร** - อย่าลืมใส่เครื่องหมาย quotes ถ้าจำเป็น
 3. **ตรวจสอบ Logs** - ดู Runtime Logs ใน Vercel เพื่อดูข้อผิดพลาดที่เกิดขึ้น
 

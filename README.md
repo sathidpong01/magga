@@ -6,7 +6,7 @@
 
 ![Next.js](https://img.shields.io/badge/Next.js-black?style=for-the-badge&logo=next.js&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
-![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=for-the-badge&logo=prisma&logoColor=white)
+![Drizzle ORM](https://img.shields.io/badge/Drizzle_ORM-C5F74F?style=for-the-badge&logo=drizzle&logoColor=black)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![Turso](https://img.shields.io/badge/Turso-black?style=for-the-badge&logo=turso&logoColor=white)
 ![Cloudflare R2](https://img.shields.io/badge/Cloudflare_R2-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)
@@ -25,12 +25,12 @@ _พัฒนาด้วย Next.js 16 (App Router) และระบบจั
 
 - **Framework:** [Next.js 16](https://nextjs.org/) (App Router)
 - **Language:** [TypeScript](https://www.typescriptlang.org/)
-- **Database:** [Turso (LibSQL)](https://turso.tech/) (ผ่าน [Prisma ORM 7](https://www.prisma.io/))
+- **Database:** [Turso (LibSQL)](https://turso.tech/) (ผ่าน [Drizzle ORM](https://orm.drizzle.team/))
 - **Storage:** [Cloudflare R2](https://www.cloudflare.com/developer-platform/r2/)
 - **Styling:**
   - [Tailwind CSS v4](https://tailwindcss.com/)
   - [Material UI (MUI) v7](https://mui.com/) (สำหรับ Component ต่างๆ)
-- **Authentication:** [NextAuth.js](https://next-auth.js.org/) (Credentials Provider)
+- **Authentication:** [Better Auth](https://better-auth.com/) (Credentials Provider)
 - **Analytics:** [Vercel Analytics](https://vercel.com/analytics)
 - **Image Processing:** [Sharp](https://sharp.pixelplumbing.com/) (Server-side compression & WebP conversion)
 
@@ -137,10 +137,7 @@ R2_PUBLIC_URL="https://pub-xxxxxxxx.r2.dev"
 
 ```bash
 # สร้างตารางใน Database
-npx prisma db push
-
-# (Optional) เพิ่มข้อมูลตัวอย่าง
-npm run db:seed
+npm run db:push
 ```
 
 > **Important:** หากคุณอัปเดตมาจากเวอร์ชันเก่า ต้องรัน SQL Migration เพื่อเพิ่มคอลัมน์ `slug` และ `role`:
@@ -154,7 +151,7 @@ npm run db:seed
 > UPDATE "User" SET "role" = 'ADMIN' WHERE "username" = 'admin'; -- ตัวอย่างการตั้งค่า Admin
 > ```
 
-> **Note:** การตั้งค่า Prisma อยู่ในไฟล์ `prisma.config.ts` (Prisma 7)
+> **Note:** การตั้งค่า Database และ Schema อยู่ในโฟลเดอร์ `db/` และไฟล์ `drizzle.config.ts`
 
 ### 5. รันโปรเจกต์
 
@@ -173,17 +170,20 @@ npm run dev
 ### 🚀 Performance Optimizations (2026-02-14 Major Update)
 
 **🔥 Critical Performance Fixes (FCP/LCP):**
+
 - **Session User Cache:** In-memory TTL cache (60s) for session lookups — ~90% fewer Turso DB round-trips
 - **Lazy Load Layout Components:** 6 non-critical client components now lazy-loaded (ssr: false) — reduces initial JS bundle
 - **Ads Consolidation:** 4 parallel ad fetches → 1 via shared `AdsProvider` context — 75% fewer API calls
 
 **⚡ Image & Asset Optimization:**
+
 - **Vercel Image CDN:** Enabled for cover images (auto AVIF/resize/edge cache) while manga pages stay unoptimized for Hobby plan limits
 - **MangaCard Responsive Sizes:** Fixed `sizes` to match Grid breakpoints (50vw/33vw/25vw) — mobile downloads smaller images
 - **MangaReader Fallback:** Added default aspect ratio (900×1273) for legacy data — prevents CLS
 - **Static Asset Caching:** Aggressive cache headers for logo/favicon (1 year immutable)
 
 **🗄️ API & Database Optimization:**
+
 - **Advertisements API:** `unstable_cache` (5min) + auth guard for `all=true` + CDN headers
 - **Comments API:** `select` instead of heavy `include` + limit replies depth + CDN headers
 - **View Count API:** Removed redundant `findUnique`, added IP-based dedup (10min) — prevents abuse
@@ -191,6 +191,7 @@ npm run dev
 - **Rate Limiting:** In-memory cache for login attempts — fewer DB writes
 
 **📱 Mobile UX Improvements:**
+
 - **PWA Support:** Complete webmanifest + theme-color meta tags + apple-mobile-web-app-capable
 - **Infinite Scroll:** Increased prefetch distance (200px→400px) for faster mobile loading
 - **Font Optimization:** Reduced weights 4→3 (drop 300) — smaller font downloads
@@ -204,11 +205,13 @@ npm run dev
 | **Real Experience Score** | 82 | ~90-95 |
 
 **🔒 Security Enhancements:**
+
 - Fixed advertisements `all=true` auth bypass
 - Added view count abuse prevention (IP dedup)
 - Maintained existing security headers and CSP
 
 **📋 Previous Optimizations (Retained):**
+
 - ISR (Incremental Static Regeneration): Home 60s, Manga 1h, Category/Tag 5min
 - Loading Skeletons + Streaming SSR
 - Font optimization with `next/font`

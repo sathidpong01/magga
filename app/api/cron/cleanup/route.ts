@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { loginAttempts as loginAttemptsTable, mangaSubmissions as submissionsTable } from "@/db/schema";
+import { lt, eq, and } from "drizzle-orm";
 import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
 
 const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
@@ -37,11 +39,12 @@ export async function GET(req: Request) {
 
     // 1. Clean up expired rate limit records (LoginAttempt)
     try {
-      const { count } = await prisma.loginAttempt.deleteMany({
-        where: { expiresAt: { lt: new Date() } },
-      });
-      results.rateLimitsDeleted = count;
-      console.log(`[Cron Cleanup] Deleted ${count} expired rate limit records`);
+      const deleted = await db
+        .delete(loginAttemptsTable)
+        .where(lt(loginAttemptsTable.expiresAt, new Date().toISOString()))
+        .returning({ id: loginAttemptsTable.identifier });
+      results.rateLimitsDeleted = deleted.length;
+      console.log(`[Cron Cleanup] Deleted ${deleted.length} expired rate limit records`);
     } catch (err) {
       console.error("[Cron Cleanup] Rate limit cleanup failed:", err);
     }
@@ -50,12 +53,15 @@ export async function GET(req: Request) {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const oldRejectedSubmissions = await prisma.mangaSubmission.findMany({
-      where: {
-        status: 'REJECTED',
-        updatedAt: { lt: thirtyDaysAgo },
-      }
-    });
+    const oldRejectedSubmissions = await db
+      .select()
+      .from(submissionsTable)
+      .where(
+        and(
+          eq(submissionsTable.status, "REJECTED"),
+          lt(submissionsTable.updatedAt, thirtyDaysAgo.toISOString())
+        )
+      );
 
     if (oldRejectedSubmissions.length > 0) {
       for (const submission of oldRejectedSubmissions) {
@@ -71,9 +77,9 @@ export async function GET(req: Request) {
 
           // Delete files from R2
           for (const url of fileUrls) {
-            if (!url.includes(R2_PUBLIC_URL || '')) continue;
+            if (!url.includes(R2_PUBLIC_URL || "")) continue;
             
-            const key = url.replace(`${R2_PUBLIC_URL}/`, '');
+            const key = url.replace(`${R2_PUBLIC_URL}/`, "");
             
             await S3.send(new DeleteObjectCommand({
               Bucket: R2_BUCKET_NAME,
@@ -82,9 +88,9 @@ export async function GET(req: Request) {
           }
 
           // Delete submission record
-          await prisma.mangaSubmission.delete({
-            where: { id: submission.id }
-          });
+          await db
+            .delete(submissionsTable)
+            .where(eq(submissionsTable.id, submission.id));
 
           results.submissionsDeleted++;
         } catch (err) {

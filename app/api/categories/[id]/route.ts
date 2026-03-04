@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { categories as categoriesTable } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
@@ -24,10 +26,10 @@ export async function PUT(request: Request, { params }: RouteParams) {
   }
 
   try {
-    const updatedCategory = await prisma.category.update({
-      where: { id },
-      data: { name },
-    });
+    const [updatedCategory] = await db.update(categoriesTable)
+      .set({ name })
+      .where(eq(categoriesTable.id, id))
+      .returning();
     revalidatePath("/admin/metadata");
     return NextResponse.json(updatedCategory);
   } catch {
@@ -48,9 +50,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
   const { id } = await params;
 
   try {
-    await prisma.category.delete({
-      where: { id },
-    });
+    await db.delete(categoriesTable).where(eq(categoriesTable.id, id));
     revalidatePath("/admin/metadata");
     return new NextResponse(null, { status: 204 }); // No Content
   } catch {

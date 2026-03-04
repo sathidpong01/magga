@@ -20,14 +20,14 @@
 
 ### 1. Database Optimization
 
-#### Prisma Logging
+#### Database Logging
 
 - **Production**: log เฉพาะ errors เพื่อลด overhead และขนาด logs
 - **Development**: log ทุก queries เพื่อ debugging
 - **Override**: ตั้ง `ENABLE_QUERY_LOG=true` ใน Vercel เพื่อเปิด warning logs
 
 ```typescript
-// lib/prisma.ts
+// db/index.ts
 log: process.env.NODE_ENV === "production"
   ? process.env.ENABLE_QUERY_LOG === "true"
     ? ["error", "warn"]
@@ -57,7 +57,7 @@ export const revalidate = 60; // Revalidate every 60 seconds
 
 export async function generateStaticParams() {
   // Pre-render top 50 manga at build time
-  const topMangas = await prisma.manga.findMany({
+  const topMangas = await db.query.manga.findMany({
     where: { isHidden: false },
     select: { slug: true },
     orderBy: { updatedAt: "desc" },
@@ -220,9 +220,9 @@ Route (app)                              Size     First Load JS
 - Top 50 manga: `●` (SSG - pre-rendered)
 - Manga อื่นๆ: `λ` (On-demand)
 
-### 3. Database Monitoring (Turso)
+### 3. Database Monitoring (PostgreSQL)
 
-เข้า [Turso Dashboard](https://turso.tech/):
+เข้า [PostgreSQL Dashboard](https://supabase.com/):
 
 - **Total Rows Read**: ควรลดลง ~95%
 - **Query Count**: ควรลดลงอย่างมาก
@@ -237,10 +237,10 @@ Route (app)                              Size     First Load JS
 #### Required (มีอยู่แล้ว)
 
 ```bash
-TURSO_DATABASE_URL=libsql://your-database.turso.io
-TURSO_AUTH_TOKEN=your-token
-NEXTAUTH_URL=https://your-domain.vercel.app
-NEXTAUTH_SECRET=your-secret
+postgresql_DATABASE_URL=PostgreSQL://your-database.postgresql.io
+postgresql_AUTH_TOKEN=your-token
+BETTER_AUTH_URL=https://your-domain.vercel.app
+BETTER_AUTH_SECRET=your-secret
 R2_ACCOUNT_ID=your-account-id
 R2_ACCESS_KEY_ID=your-key
 R2_SECRET_ACCESS_KEY=your-secret
@@ -306,7 +306,7 @@ export const revalidate = 60; // Currently 60 seconds
 
 1. ตรวจสอบว่า ISR ทำงาน: ดู response headers → `x-vercel-cache: HIT`
 2. ตรวจสอบ revalidate time
-3. ตรวจสอบใน Turso dashboard
+3. ตรวจสอบใน PostgreSQL dashboard
 
 ### Issue: Images โหลดช้า
 
@@ -335,7 +335,7 @@ export const revalidate = 60; // Currently 60 seconds
 - [ ] ทดสอบ home page (ควร <1s)
 - [ ] ทดสอบ top manga pages (ควร <500ms)
 - [ ] ตรวจสอบ Vercel Analytics (หลัง 24 ชม.)
-- [ ] ตรวจสอบ Turso database metrics
+- [ ] ตรวจสอบ PostgreSQL database metrics
 - [ ] Monitor error rate (<1%)
 
 ### Weekly Monitoring
@@ -386,7 +386,7 @@ export const revalidate = 60; // Currently 60 seconds
 - [Next.js ISR Documentation](https://nextjs.org/docs/app/building-your-application/data-fetching/incremental-static-regeneration)
 - [Vercel Caching Documentation](https://vercel.com/docs/concepts/edge-network/caching)
 - [Core Web Vitals](https://web.dev/vitals/)
-- [Turso Best Practices](https://docs.turso.tech/sdk/ts/reference)
+- [PostgreSQL Best Practices](https://docs.postgresql.tech/sdk/ts/reference)
 
 ---
 

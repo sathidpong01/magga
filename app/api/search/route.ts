@@ -1,27 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { manga as mangaTable } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 import Fuse from "fuse.js";
 
 // Cache search index for 5 minutes
 const getSearchIndex = unstable_cache(
   async () => {
-    const mangas = await prisma.manga.findMany({
-      where: { isHidden: false },
-      select: {
+    const mangas = await db.query.manga.findMany({
+      where: eq(mangaTable.isHidden, false),
+      columns: {
         id: true,
         slug: true,
         title: true,
         description: true,
         coverImage: true,
+        authorName: true,
+      },
+      with: {
         category: {
-          select: { name: true },
+          columns: { name: true },
         },
-        tags: {
-          select: { name: true },
+        mangaTags_mangaId: {
+          with: {
+            tag_tagId: {
+              columns: { name: true },
+            },
+          },
         },
       },
-      orderBy: { updatedAt: "desc" },
+      orderBy: [desc(mangaTable.updatedAt)],
     });
 
     return mangas.map((manga) => ({
@@ -30,9 +39,9 @@ const getSearchIndex = unstable_cache(
       title: manga.title,
       description: (manga.description || "").slice(0, 100),
       coverImage: manga.coverImage,
-      authorName: (manga as any).authorName || "",
+      authorName: manga.authorName || "",
       category: manga.category?.name || "",
-      tags: manga.tags.map((t) => t.name).join(", "),
+      tags: manga.mangaTags_mangaId.map((mt: any) => mt.tag_tagId?.name).filter(Boolean).join(", "),
     }));
   },
   ["search-index"],
