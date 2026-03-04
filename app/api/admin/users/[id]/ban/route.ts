@@ -23,7 +23,7 @@ export async function POST(
     const user = await prisma.user.update({
       where: { id },
       data: {
-        isBanned: true,
+        banned: true,
         banReason: banReason,
         bannedAt: new Date(),
       },
@@ -56,7 +56,7 @@ export async function DELETE(
     const user = await prisma.user.update({
       where: { id },
       data: {
-        isBanned: false,
+        banned: false,
         banReason: null,
         bannedAt: null,
       },
