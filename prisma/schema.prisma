@@ -2,7 +2,7 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
   engineType = "library"
 }
 
@@ -17,28 +17,28 @@ model Manga {
   slug          String   @unique
   title         String   @unique
   description   String?
-  coverImage    String
-  coverWidth    Int? // Image width for CLS prevention
-  coverHeight   Int? // Image height for CLS prevention
+  coverImage    String   @map("cover_image")
+  coverWidth    Int?     @map("cover_width")
+  coverHeight   Int?     @map("cover_height")
   pages         String
-  authorName    String? // ชื่อผู้แต่ง สำหรับ og:title (optional)
-  extraMetadata String? // JSON string for flexible metadata
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  isHidden      Boolean  @default(false)
+  authorName    String?  @map("author_name")
+  extraMetadata String?  @map("extra_metadata")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  isHidden      Boolean  @default(false) @map("is_hidden")
 
   // --- View Count & Rating ---
-  viewCount     Int   @default(0)
-  ratingSum     Int   @default(0)
-  ratingCount   Int   @default(0)
-  averageRating Float @default(0)
+  viewCount     Int   @default(0) @map("view_count")
+  ratingSum     Int   @default(0) @map("rating_sum")
+  ratingCount   Int   @default(0) @map("rating_count")
+  averageRating Float @default(0) @map("average_rating")
 
   // --- ความสัมพันธ์ ---
-  categoryId String?
-  category   Category?        @relation(fields: [categoryId], references: [id])
-  authorId   String?
-  author     Author?          @relation(fields: [authorId], references: [id])
-  tags       Tag[]            @relation
+  categoryId String?   @map("category_id")
+  category   Category? @relation(fields: [categoryId], references: [id])
+  authorId   String?   @map("author_id")
+  author     Author?   @relation(fields: [authorId], references: [id])
+  tags       Tag[]     @relation("MangaTags")
   ratings    MangaRating[]
   submission MangaSubmission?
   comments   Comment[]
@@ -49,6 +49,7 @@ model Manga {
   @@index([viewCount(sort: Desc)])
   @@index([updatedAt(sort: Desc)])
   @@index([isHidden])
+  @@map("manga")
 }
 
 // สำหรับหมวดหมู่
@@ -57,42 +58,48 @@ model Category {
   name        String            @unique
   mangas      Manga[]
   submissions MangaSubmission[]
+
+  @@map("categories")
 }
 
 // สำหรับแท็ก
 model Tag {
   id               String               @id @default(cuid())
   name             String               @unique
-  mangas           Manga[]              @relation
+  mangas           Manga[]              @relation("MangaTags")
   mangaSubmissions MangaSubmissionTag[]
+
+  @@map("tags")
 }
 
 // สำหรับผู้แต่ง
 model Author {
   id          String            @id @default(cuid())
   name        String            @unique
-  profileUrl  String? // ลิงก์หลักไปยังโปรไฟล์ผู้แต่ง
-  socialLinks String? // JSON array: [{ url: string, label: string, icon: string }]
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  profileUrl  String?           @map("profile_url")
+  socialLinks String?           @map("social_links")
+  createdAt   DateTime          @default(now()) @map("created_at")
+  updatedAt   DateTime          @updatedAt @map("updated_at")
   mangas      Manga[]
   submissions MangaSubmission[]
+
+  @@map("authors")
 }
 
 model User {
   id            String    @id @default(cuid())
   name          String?
   email         String?   @unique
-  emailVerified DateTime?
+  emailVerified DateTime? @map("email_verified")
   image         String?
   username      String?   @unique
   password      String?
   role          String    @default("user")
-  isBanned      Boolean   @default(false)
-  banReason     String?
-  bannedAt      DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  isBanned      Boolean   @default(false) @map("is_banned")
+  banReason     String?   @map("ban_reason")
+  bannedAt      DateTime? @map("banned_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
 
   accounts        Account[]
   sessions        Session[]
@@ -100,14 +107,16 @@ model User {
   submissionLimit UserSubmissionLimit?
   comments        Comment[]
   commentVotes    CommentVote[]
+
+  @@map("profiles")
 }
 
 model Account {
   id                String  @id @default(cuid())
-  userId            String
+  userId            String  @map("user_id")
   type              String
   provider          String
-  providerAccountId String
+  providerAccountId String  @map("provider_account_id")
   refresh_token     String?
   access_token      String?
   expires_at        Int?
@@ -119,14 +128,17 @@ model Account {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@map("accounts")
 }
 
 model Session {
   id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
 }
 
 model VerificationToken {
@@ -135,90 +147,99 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+  @@map("verification_tokens")
 }
 
 model MangaSubmission {
   id     String @id @default(cuid())
-  userId String
+  userId String @map("user_id")
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   title         String
   slug          String?
   description   String?
-  coverImage    String
-  pages         String // JSON string
-  categoryId    String?
+  coverImage    String               @map("cover_image")
+  pages         String
+  categoryId    String?              @map("category_id")
   category      Category?            @relation(fields: [categoryId], references: [id])
-  authorId      String?
+  authorId      String?              @map("author_id")
   author        Author?              @relation(fields: [authorId], references: [id])
   tags          MangaSubmissionTag[]
-  extraMetadata String? // JSON string for flexible metadata
+  extraMetadata String?              @map("extra_metadata")
 
-  status          String    @default("PENDING") // PENDING, UNDER_REVIEW, APPROVED, REJECTED
-  submittedAt     DateTime  @default(now())
-  reviewedAt      DateTime?
-  reviewedBy      String?
-  reviewNote      String?
-  rejectionReason String?
+  status          String    @default("PENDING")
+  submittedAt     DateTime  @default(now()) @map("submitted_at")
+  reviewedAt      DateTime? @map("reviewed_at")
+  reviewedBy      String?   @map("reviewed_by")
+  reviewNote      String?   @map("review_note")
+  rejectionReason String?   @map("rejection_reason")
 
-  approvedMangaId String? @unique
+  approvedMangaId String? @unique @map("approved_manga_id")
   approvedManga   Manga?  @relation(fields: [approvedMangaId], references: [id])
 
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([userId])
   @@index([status])
   @@index([submittedAt])
+  @@map("manga_submissions")
 }
 
 model MangaSubmissionTag {
   id           String          @id @default(cuid())
-  submissionId String
+  submissionId String          @map("submission_id")
   submission   MangaSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
-  tagId        String
+  tagId        String          @map("tag_id")
   tag          Tag             @relation(fields: [tagId], references: [id])
 
   @@unique([submissionId, tagId])
+  @@map("manga_submission_tags")
 }
 
 model UserSubmissionLimit {
   id              String   @id @default(cuid())
-  userId          String   @unique
+  userId          String   @unique @map("user_id")
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  submissionCount Int      @default(0)
-  windowStart     DateTime @default(now())
-  lastSubmitAt    DateTime @default(now())
+  submissionCount Int      @default(0) @map("submission_count")
+  windowStart     DateTime @default(now()) @map("window_start")
+  lastSubmitAt    DateTime @default(now()) @map("last_submit_at")
 
   @@index([userId])
+  @@map("user_submission_limits")
 }
 
 // สำหรับเก็บคะแนนของผู้ใช้ (ใช้ Hybrid Approach)
 model MangaRating {
   id          String   @id @default(cuid())
-  mangaId     String
-  fingerprint String // Browser fingerprint (hashed)
-  ipAddress   String? // IP Address สำรอง (hashed)
-  rating      Int // คะแนน 1-5
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  mangaId     String   @map("manga_id")
+  fingerprint String
+  ipAddress   String?  @map("ip_address")
+  rating      Int
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   manga Manga @relation(fields: [mangaId], references: [id], onDelete: Cascade)
 
   @@unique([mangaId, fingerprint])
   @@index([mangaId])
   @@index([fingerprint])
+  @@map("manga_ratings")
 }
 
 model LoginAttempt {
   identifier String   @id
   count      Int      @default(0)
-  expiresAt  DateTime
+  expiresAt  DateTime @map("expires_at")
+
+  @@map("login_attempts")
 }
 
 model SystemConfig {
   key         String  @id
   value       String
   description String?
+
+  @@map("system_config")
 }
 
 // ====== Comment System Models ======
@@ -226,63 +247,67 @@ model SystemConfig {
 // Comment Model - รองรับทั้ง general และ per-image comments
 model Comment {
   id       String  @id @default(cuid())
-  content  String // เนื้อหาคอมเมนต์
-  imageUrl String? // รูปแนบ (optional)
+  content  String
+  imageUrl String? @map("image_url")
 
   // Relationship
-  mangaId String
+  mangaId String @map("manga_id")
   manga   Manga  @relation(fields: [mangaId], references: [id], onDelete: Cascade)
-  userId  String
+  userId  String @map("user_id")
   user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Per-image index (null = general comment, 0-N = specific page)
-  imageIndex Int?
+  imageIndex Int? @map("image_index")
 
   // Parent for nested replies (phase 2)
-  parentId String?
+  parentId String?   @map("parent_id")
   parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies  Comment[] @relation("CommentReplies")
 
   // Vote summary (cached for performance)
-  voteScore Int @default(0)
+  voteScore Int @default(0) @map("vote_score")
 
   votes CommentVote[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([mangaId])
   @@index([mangaId, imageIndex])
   @@index([userId])
+  @@map("comments")
 }
 
 // Vote Model - เก็บ vote แยกเพื่อ track ว่าใครโหวตแล้ว
 model CommentVote {
   id    String @id @default(cuid())
-  value Int // +1 or -1
+  value Int
 
-  commentId String
+  commentId String  @map("comment_id")
   comment   Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
-  userId    String
+  userId    String  @map("user_id")
   user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  createdAt DateTime @default(now())
+  createdAt DateTime @default(now()) @map("created_at")
 
-  @@unique([commentId, userId]) // 1 vote per user per comment
+  @@unique([commentId, userId])
   @@index([commentId])
+  @@map("comment_votes")
 }
 
 // สำหรับโฆษณา/Affiliate/Donation
 model Advertisement {
   id          String   @id @default(cuid())
-  type        String // "affiliate" | "promptpay"
-  title       String // ชื่อสำหรับ admin
-  imageUrl    String // รูป banner
-  linkUrl     String? // ลิงก์ affiliate
-  content     String? // ข้อความเพิ่มเติม / เลข PromptPay
-  placement   String // "grid" | "header" | "footer" | "manga-end" | "floating" | "modal"
-  repeatCount Int      @default(1) // จำนวนครั้งที่แสดงซ้ำ (สำหรับ grid เท่านั้น)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  type        String
+  title       String
+  imageUrl    String   @map("image_url")
+  linkUrl     String?  @map("link_url")
+  content     String?
+  placement   String
+  repeatCount Int      @default(1) @map("repeat_count")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("advertisements")
 }
