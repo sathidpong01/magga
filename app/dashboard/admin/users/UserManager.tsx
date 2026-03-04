@@ -392,7 +392,7 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                           alignItems="center"
                         >
                           <PersonIcon sx={{ fontSize: 16, color: "#a3a3a3" }} />
-                          <span>User</span>
+                          <Typography component="span">User</Typography>
                         </Stack>
                       </MenuItem>
                       <MenuItem value="admin">
@@ -404,7 +404,7 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                           <AdminPanelSettingsIcon
                             sx={{ fontSize: 16, color: "#7c3aed" }}
                           />
-                          <span>Admin</span>
+                          <Typography component="span">Admin</Typography>
                         </Stack>
                       </MenuItem>
                     </Select>

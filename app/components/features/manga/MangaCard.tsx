@@ -118,7 +118,7 @@ function MangaCard({ manga, priority = false }: MangaCardProps) {
                   variant="body2"
                   sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
                 >
-                  <span style={{ color: "#fbbf24" }}>⭐</span>{" "}
+                  <Box component="span" sx={{ color: "#fbbf24" }}>⭐</Box>{" "}
                   {manga.averageRating.toFixed(1)}
                 </Typography>
                 <Typography variant="body2">•</Typography>

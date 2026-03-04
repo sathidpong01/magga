@@ -452,7 +452,7 @@ export default function MangaDataTable({
                       }}
                     />
                   ) : (
-                    <span style={{ color: "#525252" }}>-</span>
+                    <Box component="span" sx={{ color: "#525252" }}>-</Box>
                   )}
                 </TableCell>
 
@@ -661,13 +661,13 @@ export default function MangaDataTable({
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
       >
-        <DialogTitle>ยืนย��นการลบ</DialogTitle>
+        <DialogTitle>ยืนยันการลบ</DialogTitle>
         <DialogContent>
           คุณต้องการลบมังงะ "{mangaToDelete?.title}" ใช่หรือไม่?
           <br />
-          <span style={{ color: "#ef4444", fontWeight: 600 }}>
+          <Box component="span" sx={{ color: "#ef4444", fontWeight: 600 }}>
             การกระทำนี้ไม่สามารถยกเลิกได้
-          </span>
+          </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)}>ยกเลิก</Button>

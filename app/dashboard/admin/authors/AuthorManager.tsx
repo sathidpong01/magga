@@ -426,7 +426,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                         sx={{ flexShrink: 0, pb: 0.5 }}
                       >
                         <Tooltip title="Auto-fetch Title & Icon">
-                          <span>
+                          <Box component="span">
                             <IconButton
                               onClick={() => handleAutoFetch(index)}
                               disabled={!link.url || isFetching === index}
@@ -443,7 +443,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                                 <AutoFixHighIcon fontSize="small" />
                               )}
                             </IconButton>
-                          </span>
+                          </Box>
                         </Tooltip>
                         {socialLinks.length > 1 && (
                           <Tooltip title="ลบช่องทางนี้">
