@@ -21,7 +21,7 @@ const nextConfig = {
   },
   compress: true,
   poweredByHeader: false,
-  serverExternalPackages: ["@prisma/client", "bcryptjs"],
+  serverExternalPackages: ["bcryptjs"],
   experimental: {
     optimizePackageImports: ["@mui/material", "@mui/icons-material"],
     scrollRestoration: true,

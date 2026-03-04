@@ -3,7 +3,7 @@ import postgres from 'postgres';
 import * as schemaRaw from './schema';
 import * as relations from './relations';
 
-const connectionString = process.env.POSTGRES_PRISMA_URL || process.env.POSTGRES_URL_NON_POOLING;
+const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL_NON_POOLING;
 
 if (!connectionString) {
   throw new Error("Missing PostgreSQL connection string.");
