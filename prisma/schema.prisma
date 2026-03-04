@@ -111,32 +111,39 @@ model User {
   @@map("profiles")
 }
 
+// Better Auth Account model
 model Account {
-  id                String  @id @default(cuid())
-  userId            String  @map("user_id")
-  type              String
-  provider          String
-  providerAccountId String  @map("provider_account_id")
-  refresh_token     String?
-  access_token      String?
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?
-  session_state     String?
+  id                    String    @id @default(cuid())
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  userId                String    @map("user_id")
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  idToken               String?   @map("id_token")
+  expiresAt             DateTime? @map("expires_at")
+  password              String?
+  scope                 String?
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([provider, providerAccountId])
+  @@unique([providerId, accountId])
   @@map("accounts")
 }
 
+// Better Auth Session model
 model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique @map("session_token")
-  userId       String   @map("user_id")
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
 }
@@ -150,7 +157,7 @@ model VerificationToken {
   @@map("verification_tokens")
 }
 
-// Better Auth verification model (แยกจาก NextAuth VerificationToken)
+// Better Auth verification model
 model Verification {
   id         String   @id @default(cuid())
   identifier String
@@ -159,6 +166,7 @@ model Verification {
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
 
+  @@unique([identifier])
   @@map("verification")
 }
 
