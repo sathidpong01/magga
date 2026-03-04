@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { admin, username } from "better-auth/plugins";
 import prisma from "./prisma";
+import { randomUUID } from "crypto";
 
 export const auth = betterAuth({
   appName: "Magga",
@@ -52,6 +53,7 @@ export const auth = betterAuth({
   },
   advanced: {
     useSecureCookies: process.env.NODE_ENV === "production",
+    generateId: () => randomUUID(),
   },
   session: {
     expiresIn: 3 * 24 * 60 * 60, // 3 days
