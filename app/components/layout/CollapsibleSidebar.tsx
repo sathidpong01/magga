@@ -15,6 +15,7 @@ import { useSession, signOut } from "@/lib/auth-client";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import LogoutIcon from "@mui/icons-material/Logout";
+import { useToast } from "@/app/contexts/ToastContext";
 
 export interface SidebarItem {
   text: string;
@@ -40,6 +41,7 @@ export default function CollapsibleSidebar({
 }: CollapsibleSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const { showSuccess } = useToast();
   const { data: session } = useSession();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -69,7 +71,9 @@ export default function CollapsibleSidebar({
   const handleSignOut = async () => {
     sessionStorage.setItem("intent_logout", "true");
     await signOut();
-    window.location.href = "/";
+    showSuccess("ออกจากระบบสำเร็จ");
+    router.push("/");
+    router.refresh();
   };
 
   // Prevent hydration mismatch

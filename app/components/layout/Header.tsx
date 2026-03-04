@@ -27,9 +27,11 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import PersonIcon from "@mui/icons-material/Person";
 import SettingsIcon from "@mui/icons-material/Settings";
 import ListAltIcon from "@mui/icons-material/ListAlt";
+import { useToast } from "@/app/contexts/ToastContext";
 
 export default function Header() {
   const { data: session } = useSession();
+  const { showSuccess } = useToast();
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -368,8 +370,10 @@ export default function Header() {
 
                 <MenuItem 
                   onClick={async () => {
+                    handleMenuClose();
                     sessionStorage.setItem("intent_logout", "true");
                     await signOut();
+                    showSuccess("ออกจากระบบสำเร็จ");
                   }}
                 >
                   <ListItemIcon>
