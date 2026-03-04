@@ -57,7 +57,7 @@ export async function submitManga(data: z.input<typeof SubmitMangaSchema>) {
     return { error: "กรุณาเข้าสู่ระบบก่อนส่งผลงาน" };
   }
 
-  if ((session.user as any).isBanned) {
+  if ((session.user as any).banned) {
     return { error: "บัญชีของคุณถูกระงับการใช้งาน" };
   }
 

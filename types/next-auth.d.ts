@@ -5,20 +5,20 @@ declare module "next-auth" {
     user: {
       id: string;
       role: string;
-      isBanned: boolean;
+      banned: boolean;
     } & DefaultSession["user"];
   }
 
   interface User {
     role?: string;
-    isBanned?: boolean;
+    banned?: boolean;
   }
 }
 
-declare module "@auth/core/jwt" {
+declare module "next-auth/jwt" {
   interface JWT {
     id: string;
     role: string;
-    isBanned: boolean;
+    banned: boolean;
   }
 }

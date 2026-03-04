@@ -18,14 +18,14 @@ import PeopleIcon from "@mui/icons-material/People";
 export default function UnifiedDashboardSidebar() {
   const { data: session } = useSession();
   const isAdmin = (session?.user as any)?.role === "admin";
-  const isBanned = (session?.user as any)?.isBanned;
+  const banned = (session?.user as any)?.banned;
 
   // Menu items based on role
   const menuItems: SidebarItem[] = [
     // Regular user items (hidden if admin)
     ...(!isAdmin
       ? [
-          ...(isBanned
+          ...(banned
             ? []
             : [
                 {

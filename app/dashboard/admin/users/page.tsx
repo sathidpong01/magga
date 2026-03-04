@@ -11,7 +11,7 @@ export default async function UsersPage() {
       username: true,
       image: true,
       role: true,
-      isBanned: true,
+      banned: true,
       banReason: true,
       createdAt: true,
       _count: {

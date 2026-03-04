@@ -47,17 +47,17 @@ export default function MySubmissionsPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [banModalOpen, setBanModalOpen] = useState(false);
 
-  const isBanned = (session?.user as any)?.isBanned;
+  const banned = (session?.user as any)?.banned;
 
   useEffect(() => {
     if (!authLoading && !session) {
       router.push("/auth/signin?callbackUrl=/dashboard/submissions");
-    } else if (!authLoading && session && isBanned) {
+    } else if (!authLoading && session && banned) {
       setBanModalOpen(true);
     } else if (!authLoading && session) {
       fetchSubmissions();
     }
-  }, [authLoading, session, isBanned]);
+  }, [authLoading, session, banned]);
 
   const fetchSubmissions = async () => {
     try {
@@ -119,7 +119,7 @@ export default function MySubmissionsPage() {
 
   if (
     authLoading ||
-    (!authLoading && session && !isBanned && loading)
+    (!authLoading && session && !banned && loading)
   ) {
     return (
       <Container
@@ -132,7 +132,7 @@ export default function MySubmissionsPage() {
   }
 
   // Show modal for banned users
-  if (isBanned) {
+  if (banned) {
     return (
       <>
         <Container maxWidth="lg" sx={{ py: 8 }}>

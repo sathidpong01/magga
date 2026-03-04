@@ -69,7 +69,7 @@ export async function createComment(formData: FormData) {
   }
 
   // Check if user is banned
-  if ((session.user as any).isBanned) {
+  if ((session.user as any).banned) {
     return { error: "บัญชีของคุณถูกระงับการใช้งาน" };
   }
 
@@ -284,7 +284,7 @@ export async function voteComment(commentId: string, value: 1 | -1) {
     return { error: "กรุณาเข้าสู่ระบบก่อนโหวต" };
   }
 
-  if ((session.user as any).isBanned) {
+  if ((session.user as any).banned) {
     return { error: "บัญชีของคุณถูกระงับการใช้งาน" };
   }
 

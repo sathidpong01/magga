@@ -49,7 +49,7 @@ type UserWithCounts = {
   username: string | null;
   image: string | null;
   role: string;
-  isBanned: boolean;
+  banned: boolean;
   banReason?: string | null;
   bannedAt?: Date | null;
   createdAt: Date;
@@ -343,7 +343,7 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                             @{user.username}
                           </Typography>
                         )}
-                        {user.isBanned && (
+                        {user.banned && (
                           <Chip
                             label="ระงับการใช้งาน"
                             size="small"
@@ -448,7 +448,7 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                       spacing={1}
                       justifyContent="flex-end"
                     >
-                      {user.isBanned ? (
+                      {user.banned ? (
                         <Tooltip
                           title={`ยกเลิกการระงับ (เหตุผล: ${
                             user.banReason || "-"

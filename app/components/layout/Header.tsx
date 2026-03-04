@@ -72,7 +72,7 @@ export default function Header() {
       }}
     >
       {/* Ban Warning Banner - Show on ALL pages */}
-      {(session?.user as any)?.isBanned && (
+      {(session?.user as any)?.banned && (
         <Box
           sx={{
             bgcolor: "#ef4444",
@@ -299,7 +299,7 @@ export default function Header() {
                     >
                       {isAdmin ? "Administrator" : "Member"}
                     </Typography>
-                    {(session?.user as any)?.isBanned && (
+                    {(session?.user as any)?.banned && (
                       <Chip
                         label="ระงับการใช้งาน"
                         size="small"

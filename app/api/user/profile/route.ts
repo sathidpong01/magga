@@ -26,7 +26,7 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if ((session.user as any).isBanned) {
+    if ((session.user as any).banned) {
       return NextResponse.json(
         { error: "บัญชีของคุณถูกระงับการใช้งาน" },
         { status: 403 }

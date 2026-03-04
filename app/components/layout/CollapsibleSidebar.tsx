@@ -376,7 +376,7 @@ export default function CollapsibleSidebar({
                   >
                     {session.user.email}
                   </Typography>
-                  {(session?.user as any)?.isBanned && (
+                  {(session?.user as any)?.banned && (
                     <Box
                       sx={{
                         mt: 0.5,
