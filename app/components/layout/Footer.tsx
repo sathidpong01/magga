@@ -10,12 +10,18 @@ import {
   Divider,
 } from "@mui/material";
 import { useSession } from "@/lib/auth-client";
+import { useState, useEffect } from "react";
 import NextLink from "next/link";
 import Image from "next/image";
 
 
 export default function Footer() {
   const { data: session } = useSession();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const policyLinks = [
     { label: "นโยบายความเป็นส่วนตัว", href: "/privacy" },
@@ -146,7 +152,7 @@ export default function Footer() {
 
             {/* Sign In button - Reserve fixed width to prevent CLS */}
             <Box sx={{ minWidth: 50 }}>
-              {!session && (
+              {mounted && !session && (
                 <Button
                   component={NextLink}
                   href="/auth/signin"
