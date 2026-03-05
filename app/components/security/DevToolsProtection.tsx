@@ -27,13 +27,16 @@ export default function DevToolsProtection() {
 
   // Skip protection in development mode
   const isDevelopment = process.env.NODE_ENV === "development";
+  
+  // Skip protection for Lighthouse testing
+  const isLighthouseTesting = process.env.NEXT_PUBLIC_LIGHTHOUSE_TESTING === "true";
 
   // Skip protection for Admin users
   const isAdmin = (session?.user as any)?.role === "admin";
 
   const handleDetection = useCallback(
     (method: string) => {
-      if (isAdmin || isDevelopment) return;
+      if (isAdmin || isDevelopment || isLighthouseTesting) return;
 
       const info: DetectionInfo = {
         method,
@@ -60,7 +63,7 @@ export default function DevToolsProtection() {
       // Note: Avoid logging sensitive info to console in production
       // If needed, send to a secure backend API for logging
     },
-    [isAdmin]
+    [isAdmin, isLighthouseTesting]
   );
 
   // Handle back to home - force reload
@@ -69,7 +72,7 @@ export default function DevToolsProtection() {
   };
 
   useEffect(() => {
-    if (isAdmin || isDevelopment) return;
+    if (isAdmin || isDevelopment || isLighthouseTesting) return;
 
     // 1. Block keyboard shortcuts
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -209,10 +212,10 @@ export default function DevToolsProtection() {
       const injectedStyle = document.getElementById("magga-protection-styles");
       if (injectedStyle) injectedStyle.remove();
     };
-  }, [isAdmin, handleDetection]);
+  }, [isAdmin, isLighthouseTesting, handleDetection]);
 
-  // Don't render block screen for admin or in development
-  if (isAdmin || isDevelopment || !isBlocked) return null;
+  // Don't render block screen for admin, development, or Lighthouse testing
+  if (isAdmin || isDevelopment || isLighthouseTesting || !isBlocked) return null;
 
   return (
     <Box

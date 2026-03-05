@@ -70,7 +70,7 @@ export default function NotificationModal({
         ) : (
           <ErrorOutlineIcon color="error" sx={{ fontSize: 28 }} />
         )}
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+        <Typography variant="h6" component="span" sx={{ fontWeight: 600 }}>
           {title}
         </Typography>
       </DialogTitle>

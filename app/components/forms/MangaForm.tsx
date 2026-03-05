@@ -413,7 +413,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
         });
         if (!res.ok) throw new Error("Failed to upload cover image");
         const json = await res.json();
-        finalCoverUrl = json.urls[0];
+        finalCoverUrl = json.urls[0].url;
       } else {
         finalCoverUrl = coverItem.content as string;
       }
