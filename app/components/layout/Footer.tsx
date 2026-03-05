@@ -59,7 +59,7 @@ export default function Footer() {
             <Typography
               variant="body1"
               sx={{
-                color: "#737373",
+                color: "#9a9a9a",
                 fontSize: "0.95rem",
                 lineHeight: 1.8,
                 maxWidth: 450,
@@ -78,6 +78,7 @@ export default function Footer() {
           >
             <Typography
               variant="subtitle1"
+              component="p"
               sx={{
                 color: "#fafafa",
                 fontWeight: 700,
@@ -128,7 +129,7 @@ export default function Footer() {
         >
           <Typography
             variant="body2"
-            sx={{ color: "#525252", fontSize: "0.85rem" }}
+            sx={{ color: "#737373", fontSize: "0.85rem" }}
           >
             Copyright © {new Date().getFullYear()} MAGGA. All rights reserved.
           </Typography>

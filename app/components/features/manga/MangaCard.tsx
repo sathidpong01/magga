@@ -26,7 +26,7 @@ function MangaCard({ manga, priority = false }: MangaCardProps) {
   return (
     <Card
       sx={{
-        height: 400,
+        aspectRatio: "2/3",
         position: "relative",
         borderRadius: 1, // 16px standard
         overflow: "hidden",
@@ -52,9 +52,10 @@ function MangaCard({ manga, priority = false }: MangaCardProps) {
             src={manga.coverImage}
             alt={`Cover of ${manga.title}`}
             fill
-            sizes="(max-width: 600px) 50vw, (max-width: 960px) 33vw, 25vw"
+            sizes="(max-width: 600px) 45vw, (max-width: 960px) 30vw, 20vw"
             style={{ objectFit: "cover" }}
             priority={priority}
+            fetchPriority={priority ? "high" : "auto"}
             placeholder="blur"
             blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAAIAAoDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAAAAUH/8QAIRAAAgIBAwUBAAAAAAAAAAAAAQIDBAAFERITISIxQVH/xAAVAQEBAAAAAAAAAAAAAAAAAAAAAf/EABcRAQEBAQAAAAAAAAAAAAAAAAEAETH/2gAMAwEAAhEDEEA/AM8t6vdmsWJTesSB5GOOTkjbJxR/R9nGMXCu/9k="
           />

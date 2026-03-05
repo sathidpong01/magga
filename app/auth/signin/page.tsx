@@ -24,6 +24,7 @@ import Link from "next/link";
 function SignInForm() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalType, setModalType] = useState<"success" | "error">("success");
   const [modalMessage, setModalMessage] = useState("");
@@ -34,13 +35,15 @@ function SignInForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
 
-    const result = await signIn.email({
-      email: username.includes("@") ? username : `${username}@placeholder`,
-      password,
-    });
+    const result = username.includes("@")
+      ? await signIn.email({ email: username, password })
+      : await (signIn as any).username({ username, password });
 
-    if (result.error) {
+    setIsLoading(false);
+
+    if (result?.error) {
       setModalType("error");
       setModalMessage(result.error.message || "Login failed");
       setModalOpen(true);
@@ -135,15 +138,17 @@ function SignInForm() {
             type="submit"
             fullWidth
             variant="contained"
+            disabled={isLoading}
             sx={{
               mt: 3,
               mb: 2,
               bgcolor: "#fbbf24",
               color: "#000",
               "&:hover": { bgcolor: "#f59e0b" },
+              "&.Mui-disabled": { bgcolor: "#a38520", color: "#555" },
             }}
           >
-            Sign In
+            {isLoading ? <CircularProgress size={22} sx={{ color: "#555" }} /> : "Sign In"}
           </Button>
 
           <Divider sx={{ my: 2, borderColor: "#404040" }}>OR</Divider>

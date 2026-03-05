@@ -212,11 +212,11 @@ export default function Header() {
                 startIcon={<DashboardIcon />}
                 sx={{
                   bgcolor: pathname?.startsWith("/dashboard")
-                    ? "#dc2626"
-                    : "#ef4444",
+                    ? "#991b1b"
+                    : "#b91c1c",
                   color: "white",
                   fontWeight: 600,
-                  "&:hover": { bgcolor: "#dc2626" },
+                  "&:hover": { bgcolor: "#991b1b" },
                   boxShadow: pathname?.startsWith("/dashboard")
                     ? "0 0 0 2px rgba(255,255,255,0.5)"
                     : "none",

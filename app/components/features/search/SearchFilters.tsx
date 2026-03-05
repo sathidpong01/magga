@@ -57,8 +57,8 @@ export default function SearchFilters({ categories, tags }: Props) {
 
   // State for filters
   const [search, setSearch] = useState(searchParams.get("search") || "");
-  const [categoryId, setCategoryId] = useState(
-    searchParams.get("categoryId") || "all"
+  const [category, setCategory] = useState(
+    searchParams.get("category") || "all"
   );
   const [sort, setSort] = useState(searchParams.get("sort") || "added");
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
@@ -127,8 +127,8 @@ export default function SearchFilters({ categories, tags }: Props) {
 
     // Only add params if they differ from defaults
     if (search.trim() !== "") params.set("search", search);
-    if (categoryId && categoryId !== "all")
-      params.set("categoryId", categoryId);
+    if (category && category !== "all")
+      params.set("category", category);
     if (sort && sort !== "added") params.set("sort", sort);
 
     selectedTags.forEach((tag) => params.append("tags", tag.name)); // Use name instead of ID
@@ -139,7 +139,7 @@ export default function SearchFilters({ categories, tags }: Props) {
     } else {
       router.push("/");
     }
-  }, [search, categoryId, sort, selectedTags, router]);
+  }, [search, category, sort, selectedTags, router]);
 
   // Debounce search
   useEffect(() => {
@@ -152,7 +152,7 @@ export default function SearchFilters({ categories, tags }: Props) {
   const handleClearFilters = () => {
     setSearch("");
     setInputValue("");
-    setCategoryId("all");
+    setCategory("all");
     setSort("added");
     setSelectedTags([]);
     router.push("/");
@@ -334,8 +334,8 @@ export default function SearchFilters({ categories, tags }: Props) {
                 select
                 fullWidth
                 id={categorySelectId}
-                value={categoryId}
-                onChange={(e) => setCategoryId(e.target.value)}
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
                 variant="standard"
                 InputProps={{ disableUnderline: true }}
                 SelectProps={{ id: `${categorySelectId}-select` }}
@@ -351,7 +351,7 @@ export default function SearchFilters({ categories, tags }: Props) {
               >
                 <MenuItem value="all">All</MenuItem>
                 {categories.map((cat) => (
-                  <MenuItem key={cat.id} value={cat.id}>
+                  <MenuItem key={cat.id} value={cat.name}>
                     {cat.name}
                   </MenuItem>
                 ))}

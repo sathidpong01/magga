@@ -5,7 +5,7 @@ import { Skeleton, Card, CardContent, Box } from "@mui/material";
 export default function MangaCardSkeleton() {
   return (
     <Card sx={{ 
-      height: 400,
+      aspectRatio: "2/3",
       position: "relative",
       borderRadius: 0.8,
       overflow: "hidden",

@@ -20,7 +20,7 @@ const StreamingMangaGrid = dynamic(
 type Props = {
   searchParams: Promise<{
     search?: string;
-    categoryId?: string;
+    category?: string;
     tags?: string | string[];
     sort?: string;
   }>;
@@ -76,7 +76,7 @@ const getGridAds = unstable_cache(
 
 export default async function Home({ searchParams }: Props) {
   const params = await searchParams;
-  const { search, categoryId, tags: tagNames, sort } = params;
+  const { search, category: categoryName, tags: tagNames, sort } = params;
 
   // Fetch Categories, Tags and Grid Ads in parallel (cached)
   const [categories, tags, gridAds] = await Promise.all([
@@ -84,6 +84,11 @@ export default async function Home({ searchParams }: Props) {
     getTags(),
     getGridAds(),
   ]);
+
+  // Resolve category name → UUID for DB query
+  const categoryId = categoryName
+    ? categories.find((c) => c.name === categoryName)?.id
+    : undefined;
 
   const tagNameArray = tagNames
     ? Array.isArray(tagNames)
