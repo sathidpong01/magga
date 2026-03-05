@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { manga as mangaTable, mangaSubmissions as submissionsTable, mangaSubmissionTags as submissionTagsTable, userSubmissionLimits as submissionLimitsTable, categories as categoriesTable, tags as tagsTable, authors as authorsTable } from "@/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, ilike } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -172,10 +172,11 @@ export async function createCategory(name: string) {
   }
 
   try {
-    const allCategories = await db.select().from(categoriesTable);
-    const existing = allCategories.find(
-      (c) => c.name.toLowerCase() === name.trim().toLowerCase()
-    );
+    const [existing] = await db
+      .select()
+      .from(categoriesTable)
+      .where(ilike(categoriesTable.name, name.trim()))
+      .limit(1);
 
     if (existing) {
       return { category: existing };
@@ -208,10 +209,11 @@ export async function createTag(name: string) {
   }
 
   try {
-    const allTags = await db.select().from(tagsTable);
-    const existing = allTags.find(
-      (t) => t.name.toLowerCase() === name.trim().toLowerCase()
-    );
+    const [existing] = await db
+      .select()
+      .from(tagsTable)
+      .where(ilike(tagsTable.name, name.trim()))
+      .limit(1);
 
     if (existing) {
       return { tag: existing };
@@ -244,10 +246,11 @@ export async function createAuthor(name: string) {
   }
 
   try {
-    const allAuthors = await db.select().from(authorsTable);
-    const existing = allAuthors.find(
-      (a) => a.name.toLowerCase() === name.trim().toLowerCase()
-    );
+    const [existing] = await db
+      .select()
+      .from(authorsTable)
+      .where(ilike(authorsTable.name, name.trim()))
+      .limit(1);
 
     if (existing) {
       return { author: existing };

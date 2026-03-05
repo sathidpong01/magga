@@ -8,7 +8,9 @@ export const loginAttempts = pgTable("login_attempts", {
 	count: integer().default(0).notNull(),
 	expiresAt: timestamp("expires_at", { withTimezone: true, mode: 'date' }).notNull(),
 }, (table) => [
-	pgPolicy("login_attempts_service", { as: "permissive", for: "all", to: ["public"], using: sql`true` }),
+	pgPolicy("login_attempts_select", { as: "permissive", for: "select", to: ["public"], using: sql`true` }),
+	pgPolicy("login_attempts_insert", { as: "permissive", for: "insert", to: ["public"] }),
+	pgPolicy("login_attempts_update", { as: "permissive", for: "update", to: ["public"], using: sql`true` }),
 ]);
 
 export const systemConfig = pgTable("system_config", {
@@ -19,8 +21,8 @@ export const systemConfig = pgTable("system_config", {
 	pgPolicy("system_config_admin_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: sql`(EXISTS ( SELECT 1
    FROM profiles
   WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
-	pgPolicy("system_config_admin_update", { as: "permissive", for: "update", to: ["authenticated"] }),
-	pgPolicy("system_config_admin_write", { as: "permissive", for: "insert", to: ["authenticated"] }),
+	pgPolicy("system_config_admin_update", { as: "permissive", for: "update", to: ["authenticated"], using: sql`(EXISTS ( SELECT 1 FROM profiles WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
+	pgPolicy("system_config_admin_write", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: sql`(EXISTS ( SELECT 1 FROM profiles WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
 	pgPolicy("system_config_select", { as: "permissive", for: "select", to: ["public"] }),
 ]);
 
@@ -51,8 +53,8 @@ export const advertisements = pgTable("advertisements", {
 	pgPolicy("advertisements_admin_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: sql`(EXISTS ( SELECT 1
    FROM profiles
   WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
-	pgPolicy("advertisements_admin_update", { as: "permissive", for: "update", to: ["authenticated"] }),
-	pgPolicy("advertisements_admin_write", { as: "permissive", for: "insert", to: ["authenticated"] }),
+	pgPolicy("advertisements_admin_update", { as: "permissive", for: "update", to: ["authenticated"], using: sql`(EXISTS ( SELECT 1 FROM profiles WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
+	pgPolicy("advertisements_admin_write", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: sql`(EXISTS ( SELECT 1 FROM profiles WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
 	pgPolicy("advertisements_select", { as: "permissive", for: "select", to: ["public"] }),
 	check("advertisements_placement_check", sql`placement = ANY (ARRAY['grid'::text, 'header'::text, 'footer'::text, 'manga-end'::text, 'floating'::text, 'modal'::text])`),
 	check("advertisements_type_check", sql`type = ANY (ARRAY['affiliate'::text, 'promptpay'::text])`),
@@ -121,7 +123,7 @@ export const profiles = pgTable("profiles", {
 	unique("profiles_email_key").on(table.email),
 	unique("profiles_username_key").on(table.username),
 	pgPolicy("Anyone can view profiles", { as: "permissive", for: "select", to: ["public"], using: sql`true` }),
-	pgPolicy("Users can update own profile", { as: "permissive", for: "update", to: ["authenticated"] }),
+	pgPolicy("Users can update own profile", { as: "permissive", for: "update", to: ["authenticated"], using: sql`(id = ( SELECT (auth.uid())::text AS uid))` }),
 	check("profiles_role_check", sql`role = ANY (ARRAY['user'::text, 'admin'::text])`),
 ]);
 
@@ -208,8 +210,8 @@ export const categories = pgTable("categories", {
 	pgPolicy("categories_admin_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: sql`(EXISTS ( SELECT 1
    FROM profiles
   WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
-	pgPolicy("categories_admin_update", { as: "permissive", for: "update", to: ["authenticated"] }),
-	pgPolicy("categories_admin_write", { as: "permissive", for: "insert", to: ["authenticated"] }),
+	pgPolicy("categories_admin_update", { as: "permissive", for: "update", to: ["authenticated"], using: sql`(EXISTS ( SELECT 1 FROM profiles WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
+	pgPolicy("categories_admin_write", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: sql`(EXISTS ( SELECT 1 FROM profiles WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
 	pgPolicy("categories_select", { as: "permissive", for: "select", to: ["public"] }),
 ]);
 
@@ -221,8 +223,8 @@ export const tags = pgTable("tags", {
 	pgPolicy("tags_admin_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: sql`(EXISTS ( SELECT 1
    FROM profiles
   WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
-	pgPolicy("tags_admin_update", { as: "permissive", for: "update", to: ["authenticated"] }),
-	pgPolicy("tags_admin_write", { as: "permissive", for: "insert", to: ["authenticated"] }),
+	pgPolicy("tags_admin_update", { as: "permissive", for: "update", to: ["authenticated"], using: sql`(EXISTS ( SELECT 1 FROM profiles WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
+	pgPolicy("tags_admin_write", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: sql`(EXISTS ( SELECT 1 FROM profiles WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
 	pgPolicy("tags_select", { as: "permissive", for: "select", to: ["public"] }),
 ]);
 
@@ -238,8 +240,8 @@ export const authors = pgTable("authors", {
 	pgPolicy("authors_admin_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: sql`(EXISTS ( SELECT 1
    FROM profiles
   WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
-	pgPolicy("authors_admin_update", { as: "permissive", for: "update", to: ["authenticated"] }),
-	pgPolicy("authors_admin_write", { as: "permissive", for: "insert", to: ["authenticated"] }),
+	pgPolicy("authors_admin_update", { as: "permissive", for: "update", to: ["authenticated"], using: sql`(EXISTS ( SELECT 1 FROM profiles WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
+	pgPolicy("authors_admin_write", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: sql`(EXISTS ( SELECT 1 FROM profiles WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
 	pgPolicy("authors_select", { as: "permissive", for: "select", to: ["public"] }),
 ]);
 
@@ -290,8 +292,8 @@ export const manga = pgTable("manga", {
 	pgPolicy("manga_admin_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: sql`(EXISTS ( SELECT 1
    FROM profiles
   WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
-	pgPolicy("manga_admin_update", { as: "permissive", for: "update", to: ["authenticated"] }),
-	pgPolicy("manga_admin_write", { as: "permissive", for: "insert", to: ["authenticated"] }),
+	pgPolicy("manga_admin_update", { as: "permissive", for: "update", to: ["authenticated"], using: sql`(EXISTS ( SELECT 1 FROM profiles WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
+	pgPolicy("manga_admin_write", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: sql`(EXISTS ( SELECT 1 FROM profiles WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
 	pgPolicy("manga_select", { as: "permissive", for: "select", to: ["public"] }),
 ]);
 
@@ -412,8 +414,8 @@ export const userSubmissionLimits = pgTable("user_submission_limits", {
 	pgPolicy("submission_limits_admin_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: sql`(EXISTS ( SELECT 1
    FROM profiles
   WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
-	pgPolicy("submission_limits_admin_update", { as: "permissive", for: "update", to: ["authenticated"] }),
-	pgPolicy("submission_limits_admin_write", { as: "permissive", for: "insert", to: ["authenticated"] }),
+	pgPolicy("submission_limits_admin_update", { as: "permissive", for: "update", to: ["authenticated"], using: sql`(user_id = ( SELECT (auth.uid())::text AS uid))` }),
+	pgPolicy("submission_limits_admin_write", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: sql`(user_id = ( SELECT (auth.uid())::text AS uid))` }),
 	pgPolicy("submission_limits_select", { as: "permissive", for: "select", to: ["authenticated"] }),
 ]);
 

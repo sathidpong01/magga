@@ -6,22 +6,30 @@ import { eq, desc } from "drizzle-orm";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXTAUTH_URL || "https://magga.vercel.app";
 
-  // Get all visible manga slugs
-  const mangas = await db
-    .select({ slug: mangaTable.slug, updatedAt: mangaTable.updatedAt })
-    .from(mangaTable)
-    .where(eq(mangaTable.isHidden, false))
-    .orderBy(desc(mangaTable.updatedAt));
+  let mangas: { slug: string; updatedAt: string }[] = [];
+  let categories: { name: string }[] = [];
+  let tags: { name: string }[] = [];
 
-  // Get all categories
-  const categories = await db
-    .select({ name: categoriesTable.name })
-    .from(categoriesTable);
+  try {
+    // Get all visible manga slugs
+    mangas = await db
+      .select({ slug: mangaTable.slug, updatedAt: mangaTable.updatedAt })
+      .from(mangaTable)
+      .where(eq(mangaTable.isHidden, false))
+      .orderBy(desc(mangaTable.updatedAt));
 
-  // Get all tags
-  const tags = await db
-    .select({ name: tagsTable.name })
-    .from(tagsTable);
+    // Get all categories
+    categories = await db
+      .select({ name: categoriesTable.name })
+      .from(categoriesTable);
+
+    // Get all tags
+    tags = await db
+      .select({ name: tagsTable.name })
+      .from(tagsTable);
+  } catch (error) {
+    console.error("Sitemap: Failed to fetch data from DB, returning minimal sitemap:", error);
+  }
 
   // Manga pages
   const mangaUrls = mangas.map((manga) => ({

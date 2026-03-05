@@ -69,16 +69,21 @@ const getMangaBySlug = async (slug: string) => {
 
 // Pre-render top 50 manga at build time
 export async function generateStaticParams() {
-  const topMangas = await db.query.manga.findMany({
-    where: eq(mangaTable.isHidden, false),
-    columns: { slug: true },
-    orderBy: [desc(mangaTable.updatedAt)],
-    limit: 50,
-  });
+  try {
+    const topMangas = await db.query.manga.findMany({
+      where: eq(mangaTable.isHidden, false),
+      columns: { slug: true },
+      orderBy: [desc(mangaTable.updatedAt)],
+      limit: 50,
+    });
 
-  return topMangas.map((manga) => ({
-    mangaId: manga.slug,
-  }));
+    return topMangas.map((manga) => ({
+      mangaId: manga.slug,
+    }));
+  } catch (error) {
+    console.error("generateStaticParams: Failed to fetch manga slugs, skipping pre-render:", error);
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }: MangaPageProps) {

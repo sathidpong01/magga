@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { manga as mangaTable, mangaTags as mangaTagsTable, tags as tagsTable } from "@/db/schema";
-import { eq, ilike, asc, desc, and, SQL, inArray } from "drizzle-orm";
+import { eq, ilike, asc, desc, and, SQL, inArray, count } from "drizzle-orm";
 import InfiniteMangaGrid from "./InfiniteMangaGrid";
 
 interface Ad {
@@ -98,7 +98,7 @@ export default async function StreamingMangaGrid({
         },
       },
     }),
-    db.select({ count: db.$count(mangaTable, whereClause) }).from(mangaTable),
+    db.select({ count: count() }).from(mangaTable).where(whereClause),
   ]);
 
   const total = totalResult[0]?.count ?? 0;

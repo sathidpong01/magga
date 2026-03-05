@@ -213,6 +213,7 @@ export default function MySubmissionsPage() {
               >
                 <Box
                   sx={{
+                    position: "relative",
                     width: 80,
                     height: 120,
                     bgcolor: "#333",
