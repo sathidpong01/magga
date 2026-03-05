@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { categories as categoriesTable, tags as tagsTable, advertisements as adsTable, _mangaTags } from "@/db/schema";
+import { categories as categoriesTable, tags as tagsTable, advertisements as adsTable, mangaTags } from "@/db/schema";
 import { asc, eq, inArray } from "drizzle-orm";
 import { Typography, Box, Container } from "@mui/material";
 import { Suspense } from "react";
@@ -42,7 +42,7 @@ const getCategories = unstable_cache(
 const getTags = unstable_cache(
   async () => {
     // Tags that are used in at least one manga
-    const usedTagIds = await db.selectDistinct({ id: _mangaTags.b }).from(_mangaTags);
+    const usedTagIds = await db.selectDistinct({ id: mangaTags.tagId }).from(mangaTags);
     const ids = usedTagIds.map(t => t.id);
     if (ids.length === 0) return [];
     return db.query.tags.findMany({

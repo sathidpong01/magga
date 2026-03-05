@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { manga as mangaTable, _mangaTags, tags as tagsTable } from "@/db/schema";
+import { manga as mangaTable, mangaTags as mangaTagsTable, tags as tagsTable } from "@/db/schema";
 import { eq, ilike, asc, desc, and, SQL, inArray } from "drizzle-orm";
 import InfiniteMangaGrid from "./InfiniteMangaGrid";
 
@@ -53,9 +53,9 @@ export default async function StreamingMangaGrid({
       .where(inArray(tagsTable.name, tagNames));
     const tagIds = tagRows.map(t => t.id);
     if (tagIds.length > 0) {
-      const mangaTagRows = await db.selectDistinct({ mangaId: _mangaTags.a })
-        .from(_mangaTags)
-        .where(inArray(_mangaTags.b, tagIds));
+      const mangaTagRows = await db.selectDistinct({ mangaId: mangaTagsTable.mangaId })
+        .from(mangaTagsTable)
+        .where(inArray(mangaTagsTable.tagId, tagIds));
       mangaIdsWithTags = mangaTagRows.map(r => r.mangaId);
       conditions.push(inArray(mangaTable.id, mangaIdsWithTags.length > 0 ? mangaIdsWithTags : ["none"]));
     }
