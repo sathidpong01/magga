@@ -22,6 +22,7 @@ const nextConfig = {
   compress: true,
   poweredByHeader: false,
   serverExternalPackages: ["bcryptjs"],
+  transpilePackages: ["better-auth"],
   experimental: {
     optimizePackageImports: ["@mui/material", "@mui/icons-material"],
     scrollRestoration: true,

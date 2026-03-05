@@ -34,10 +34,10 @@ type MangaPageProps = {
 // ISR: Revalidate every 1 hour
 export const revalidate = 3600;
 
-// Cache manga data
-const getMangaBySlug = unstable_cache(
-  async (slug: string) => {
-    return db.query.manga.findFirst({
+// Fetch manga data directly
+const getMangaBySlug = async (slug: string) => {
+  try {
+    return await db.query.manga.findFirst({
       where: eq(mangaTable.slug, slug),
       columns: {
         id: true,
@@ -61,10 +61,11 @@ const getMangaBySlug = unstable_cache(
         },
       },
     });
-  },
-  ["manga-by-slug"],
-  { revalidate: 60, tags: ["manga"] }
-);
+  } catch (error) {
+    console.error(`Error fetching manga ${slug}:`, error);
+    return null;
+  }
+};
 
 // Pre-render top 50 manga at build time
 export async function generateStaticParams() {
