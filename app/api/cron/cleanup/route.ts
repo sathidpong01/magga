@@ -41,7 +41,7 @@ export async function GET(req: Request) {
     try {
       const deleted = await db
         .delete(loginAttemptsTable)
-        .where(lt(loginAttemptsTable.expiresAt, new Date().toISOString()))
+        .where(lt(loginAttemptsTable.expiresAt, new Date()))
         .returning({ id: loginAttemptsTable.identifier });
       results.rateLimitsDeleted = deleted.length;
       console.log(`[Cron Cleanup] Deleted ${deleted.length} expired rate limit records`);

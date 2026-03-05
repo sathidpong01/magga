@@ -38,13 +38,13 @@ export async function checkRateLimit(
         .values({
           identifier,
           count: 1,
-          expiresAt: new Date(now.getTime() + duration).toISOString(),
+          expiresAt: new Date(now.getTime() + duration),
         })
         .onConflictDoUpdate({
           target: loginAttemptsTable.identifier,
           set: {
             count: 1,
-            expiresAt: new Date(now.getTime() + duration).toISOString(),
+            expiresAt: new Date(now.getTime() + duration),
           },
         });
       return { allowed: true, remaining: limit - 1 };

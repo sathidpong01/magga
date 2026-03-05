@@ -27,7 +27,7 @@ export async function POST(
         banned: true,
         isBanned: true,
         banReason: banReason,
-        bannedAt: new Date().toISOString(),
+        bannedAt: new Date(),
       })
       .where(eq(usersTable.id, id))
       .returning();

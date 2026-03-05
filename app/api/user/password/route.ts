@@ -77,7 +77,7 @@ export async function PUT(req: Request) {
 
     // Update user
     await db.update(usersTable)
-      .set({ password: hashedPassword, updatedAt: new Date().toISOString() })
+      .set({ password: hashedPassword, updatedAt: new Date() })
       .where(eq(usersTable.id, user.id));
 
     return NextResponse.json({ message: "Password updated successfully" });

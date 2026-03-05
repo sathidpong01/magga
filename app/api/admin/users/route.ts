@@ -81,7 +81,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const [updatedUser] = await db.update(usersTable)
-      .set({ role: normalizedRole, updatedAt: new Date().toISOString() })
+      .set({ role: normalizedRole, updatedAt: new Date() })
       .where(eq(usersTable.id, userId))
       .returning({
         id: usersTable.id,
