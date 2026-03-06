@@ -18,6 +18,7 @@ const profileSchema = z.object({
     (val) => (val === "" ? undefined : val),
     z.string().email("Invalid email address").optional()
   ),
+  commentPreference: z.enum(["sidebar", "bottom", "both", "none"]).optional(),
 });
 
 export async function PUT(req: Request) {
@@ -36,7 +37,7 @@ export async function PUT(req: Request) {
     }
 
     const body = await req.json();
-    const { name, username, email } = profileSchema.parse(body);
+    const { name, username, email, commentPreference } = profileSchema.parse(body);
 
     // Check if username or email is already taken by ANOTHER user
     if (username || email) {
@@ -73,10 +74,11 @@ export async function PUT(req: Request) {
     if (name) updateData.name = name;
     if (username) updateData.username = username;
     if (email) updateData.email = email;
+    if (commentPreference) updateData.commentPreference = commentPreference;
 
     let user;
     if (Object.keys(updateData).length > 0) {
-      updateData.updatedAt = new Date().toISOString();
+      updateData.updatedAt = new Date();
       const [updated] = await db
         .update(usersTable)
         .set(updateData)

@@ -2,11 +2,10 @@
  * Password Validation Utility
  *
  * Requirements:
- * - Minimum 12 characters (increased from 8 for better security)
+ * - Minimum 8 characters
  * - At least 1 uppercase letter
  * - At least 1 lowercase letter
  * - At least 1 number
- * - At least 1 special character
  */
 
 export interface PasswordValidationResult {
@@ -20,7 +19,7 @@ const PASSWORD_RULES = {
   requireUppercase: true,
   requireLowercase: true,
   requireNumber: true,
-  requireSpecial: true,
+  requireSpecial: false,
 };
 
 const SPECIAL_CHARS = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/;
@@ -60,19 +59,19 @@ export function validatePassword(password: string): PasswordValidationResult {
     strengthScore++;
   }
 
-  // Check special character
+  // Check special character (optional)
   if (PASSWORD_RULES.requireSpecial && !SPECIAL_CHARS.test(password)) {
     errors.push(
       "Password must contain at least 1 special character (!@#$%^&*...)"
     );
-  } else {
+  } else if (PASSWORD_RULES.requireSpecial) {
     strengthScore++;
   }
 
   // Determine strength
   let strength: "weak" | "medium" | "strong" = "weak";
-  if (strengthScore >= 5) strength = "strong";
-  else if (strengthScore >= 3) strength = "medium";
+  if (strengthScore >= 4) strength = "strong";
+  else if (strengthScore >= 2) strength = "medium";
 
   return {
     isValid: errors.length === 0,

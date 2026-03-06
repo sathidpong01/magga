@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Box, Typography, IconButton, Tooltip, CircularProgress } from "@mui/material";
 import StarIcon from "@mui/icons-material/Star";
 import StarBorderIcon from "@mui/icons-material/StarBorder";
+import StarHalfIcon from "@mui/icons-material/StarHalf";
 
 interface MangaViewRatingProps {
   mangaId: string;
@@ -11,6 +12,8 @@ interface MangaViewRatingProps {
   initialAverageRating: number;
   initialRatingCount: number;
   hideViewCount?: boolean;
+  hideInteractive?: boolean;
+  hideAverage?: boolean;
 }
 
 export default function MangaViewRating({
@@ -19,6 +22,8 @@ export default function MangaViewRating({
   initialAverageRating,
   initialRatingCount,
   hideViewCount = false,
+  hideInteractive = false,
+  hideAverage = false,
 }: MangaViewRatingProps) {
   const [averageRating, setAverageRating] = useState(initialAverageRating);
   const [ratingCount, setRatingCount] = useState(initialRatingCount);
@@ -80,10 +85,33 @@ export default function MangaViewRating({
 
   const displayRating = hoverRating ?? userRating ?? 0;
 
+  // Render a star icon based on position relative to a fractional value
+  function AverageStar({ position, value }: { position: number; value: number }) {
+    const full = value >= position;
+    const half = !full && value >= position - 0.5;
+    const color = full || half ? "#fbbf24" : "rgba(255,255,255,0.25)";
+    if (full) return <StarIcon sx={{ fontSize: 20, color }} />;
+    if (half) return <StarHalfIcon sx={{ fontSize: 20, color: "#fbbf24" }} />;
+    return <StarBorderIcon sx={{ fontSize: 20, color }} />;
+  }
+
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-      {/* Star rating row */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+      {/* Average rating display (read-only, visual) */}
+      {!hideAverage && <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
+        {[1, 2, 3, 4, 5].map((pos) => (
+          <AverageStar key={pos} position={pos} value={averageRating} />
+        ))}
+        <Typography variant="body2" sx={{ color: "#fbbf24", fontWeight: 700, ml: 0.75 }}>
+          {averageRating > 0 ? averageRating.toFixed(1) : "—"}
+        </Typography>
+        <Typography variant="caption" sx={{ color: "text.secondary", ml: 0.5 }}>
+          ({ratingCount} {ratingCount === 1 ? "rating" : "ratings"})
+        </Typography>
+      </Box>}
+
+      {/* Interactive user rating row */}
+      {!hideInteractive && <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
         {[1, 2, 3, 4, 5].map((star) => (
           <Tooltip key={star} title={`ให้ ${star} ดาว`} placement="top">
             <span>
@@ -95,28 +123,18 @@ export default function MangaViewRating({
                 disabled={isSubmitting || !fingerprint}
                 sx={{ p: 0.25, color: displayRating >= star ? "#fbbf24" : "rgba(255,255,255,0.3)", transition: "color 0.15s" }}
               >
-                {displayRating >= star ? <StarIcon fontSize="small" /> : <StarBorderIcon fontSize="small" />}
+                {displayRating >= star ? <StarIcon sx={{ fontSize: 18 }} /> : <StarBorderIcon sx={{ fontSize: 18 }} />}
               </IconButton>
             </span>
           </Tooltip>
         ))}
         {isSubmitting && <CircularProgress size={14} sx={{ ml: 0.5, color: "#fbbf24" }} />}
-      </Box>
-
-      {/* Stats row */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <Typography variant="body2" sx={{ color: "#fbbf24", fontWeight: 600 }}>
-          {averageRating > 0 ? averageRating.toFixed(1) : "—"}
-        </Typography>
-        <Typography variant="caption" sx={{ color: "text.secondary" }}>
-          ({ratingCount} {ratingCount === 1 ? "rating" : "ratings"})
-        </Typography>
-        {userRating && (
-          <Typography variant="caption" sx={{ color: "#9a9a9a" }}>
-            · คุณให้ {userRating} ดาว
+        {userRating && !isSubmitting && (
+          <Typography variant="caption" sx={{ color: "#9a9a9a", ml: 0.5 }}>
+            คุณให้ {userRating} ดาว
           </Typography>
         )}
-      </Box>
+      </Box>}
     </Box>
   );
 }

@@ -13,7 +13,8 @@ const getMangasWithPagination = unstable_cache(
     search?: string,
     categoryId?: string,
     tagNames?: string[],
-    sort?: string
+    sort?: string,
+    excludeTagIds?: string[]
   ) => {
     const offset = (page - 1) * ITEMS_PER_PAGE;
 
@@ -63,6 +64,18 @@ const getMangasWithPagination = unstable_cache(
         return { mangas: [], total: 0, page, totalPages: 0, hasMore: false };
       }
       conditions.push(inArray(mangaTable.id, filteredMangaIds));
+    }
+
+    // Exclude manga that have any blocked tags
+    if (excludeTagIds && excludeTagIds.length > 0) {
+      const excludedMangaRows = await db
+        .selectDistinct({ mangaId: mangaTagsTable.mangaId })
+        .from(mangaTagsTable)
+        .where(inArray(mangaTagsTable.tagId, excludeTagIds));
+      const excludedMangaIds = excludedMangaRows.map((r) => r.mangaId);
+      if (excludedMangaIds.length > 0) {
+        conditions.push(sql`${mangaTable.id} NOT IN (${sql.join(excludedMangaIds.map(id => sql`${id}`), sql`, `)})`);
+      }
     }
 
     const whereClause = and(...conditions);
@@ -126,13 +139,16 @@ export async function GET(request: Request) {
     const tagsParam = searchParams.get("tags");
     const tagNames = tagsParam ? tagsParam.split(",") : undefined;
     const sort = searchParams.get("sort") || undefined;
+    const excludeTagIdsParam = searchParams.get("excludeTagIds");
+    const excludeTagIds = excludeTagIdsParam ? excludeTagIdsParam.split(",").filter(Boolean) : undefined;
 
     const result = await getMangasWithPagination(
       page,
       search,
       categoryId,
       tagNames,
-      sort
+      sort,
+      excludeTagIds
     );
 
     return NextResponse.json(result, {

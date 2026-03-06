@@ -22,6 +22,9 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ReplyIcon from "@mui/icons-material/Reply";
+import BlockIcon from "@mui/icons-material/Block";
+import PersonIcon from "@mui/icons-material/Person";
+import Link from "next/link";
 import CommentBox from "./CommentBox";
 import {
   voteComment,
@@ -80,12 +83,24 @@ function CommentItem({
     );
   });
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
+  const [otherMenuAnchor, setOtherMenuAnchor] = useState<null | HTMLElement>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [banModalOpen, setBanModalOpen] = useState(false);
+  const [blockSuccess, setBlockSuccess] = useState(false);
 
   const isOwner = session?.user?.id === comment.user.id;
   const isAdmin = (session?.user as { role?: string })?.role === "admin";
+
+  const handleBlockUser = useCallback(async () => {
+    setOtherMenuAnchor(null);
+    const res = await fetch("/api/user/blocked-users", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ blockedUserId: comment.user.id }),
+    });
+    if (res.ok) setBlockSuccess(true);
+  }, [comment.user.id]);
 
   const handleVote = useCallback(
     async (value: 1 | -1) => {
@@ -214,8 +229,11 @@ function CommentItem({
             <Typography variant="caption" sx={{ color: "text.secondary" }}>
               {formatTime(comment.createdAt)}
             </Typography>
+            {blockSuccess && (
+              <Typography variant="caption" sx={{ color: "#5eead4" }}>บล็อกแล้ว</Typography>
+            )}
 
-            {/* Menu for owner/admin */}
+            {/* Owner/admin menu (edit/delete) */}
             {(isOwner || isAdmin) && (
               <>
                 <IconButton
@@ -230,6 +248,7 @@ function CommentItem({
                   anchorEl={menuAnchor}
                   open={Boolean(menuAnchor)}
                   onClose={() => setMenuAnchor(null)}
+                  PaperProps={{ sx: { bgcolor: "#171717", color: "#fafafa", border: "1px solid rgba(255,255,255,0.1)" } }}
                 >
                   {isOwner && (
                     <MenuItem
@@ -243,6 +262,39 @@ function CommentItem({
                   )}
                   <MenuItem onClick={handleDelete}>
                     <DeleteIcon fontSize="small" sx={{ mr: 1 }} /> ลบ
+                  </MenuItem>
+                </Menu>
+              </>
+            )}
+
+            {/* Other user menu (view profile / block) */}
+            {session && !isOwner && !blockSuccess && (
+              <>
+                <IconButton
+                  size="small"
+                  onClick={(e) => setOtherMenuAnchor(e.currentTarget)}
+                  sx={{ ml: isOwner || isAdmin ? 0 : "auto", color: "text.secondary", opacity: 0.5, "&:hover": { opacity: 1 } }}
+                  aria-label="ตัวเลือก"
+                >
+                  <MoreVertIcon fontSize="small" />
+                </IconButton>
+                <Menu
+                  anchorEl={otherMenuAnchor}
+                  open={Boolean(otherMenuAnchor)}
+                  onClose={() => setOtherMenuAnchor(null)}
+                  PaperProps={{ sx: { bgcolor: "#171717", color: "#fafafa", border: "1px solid rgba(255,255,255,0.1)" } }}
+                >
+                  {comment.user.username && (
+                    <MenuItem
+                      component={Link}
+                      href={`/profile/${comment.user.username}`}
+                      onClick={() => setOtherMenuAnchor(null)}
+                    >
+                      <PersonIcon fontSize="small" sx={{ mr: 1, color: "#5eead4" }} /> ดูโปรไฟล์
+                    </MenuItem>
+                  )}
+                  <MenuItem onClick={handleBlockUser} sx={{ color: "#ef4444" }}>
+                    <BlockIcon fontSize="small" sx={{ mr: 1 }} /> บล็อกผู้ใช้นี้
                   </MenuItem>
                 </Menu>
               </>

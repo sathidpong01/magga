@@ -2,10 +2,9 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
-import { profiles as usersTable } from "@/db/schema";
-import { eq } from "drizzle-orm";
-import { Box, Container } from "@mui/material";
-import Sidebar from "./Sidebar";
+import { profiles as usersTable, blockedUsers, blockedTags, accounts } from "@/db/schema";
+import { eq, count } from "drizzle-orm";
+import { Container } from "@mui/material";
 import AccountSettings from "./AccountSettings";
 
 export default async function SettingsPage() {
@@ -15,37 +14,38 @@ export default async function SettingsPage() {
     redirect("/auth/signin?callbackUrl=/settings");
   }
 
-  // Fetch user to check if they have a password
-  const user = await db.query.profiles.findFirst({
-    where: eq(usersTable.id, session.user.id),
-    columns: { 
-      name: true,
-      username: true,
-      email: true,
-      image: true,
-      password: true 
-    },
-  });
+  const [user, blockedUserCount, blockedTagCount, linkedAccounts] = await Promise.all([
+    db.query.profiles.findFirst({
+      where: eq(usersTable.id, session.user.id),
+      columns: {
+        name: true,
+        username: true,
+        email: true,
+        image: true,
+        password: true,
+        commentPreference: true,
+      },
+    }),
+    db.select({ count: count() }).from(blockedUsers).where(eq(blockedUsers.userId, session.user.id)),
+    db.select({ count: count() }).from(blockedTags).where(eq(blockedTags.userId, session.user.id)),
+    db.select({ providerId: accounts.providerId }).from(accounts).where(eq(accounts.userId, session.user.id)),
+  ]);
 
   if (!user) {
     redirect("/auth/signin?callbackUrl=/settings");
   }
 
-  const hasPassword = !!user?.password;
+  const linkedProviders = linkedAccounts.map((a) => a.providerId);
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", gap: 4, flexDirection: { xs: "column", md: "row" } }}>
-        {/* Sidebar */}
-        <Box sx={{ width: { xs: "100%", md: 280 }, flexShrink: 0 }}>
-          <Sidebar />
-        </Box>
-
-        {/* Main Content */}
-        <Box sx={{ flexGrow: 1 }}>
-          <AccountSettings user={user} hasPassword={hasPassword} />
-        </Box>
-      </Box>
+    <Container maxWidth="sm" sx={{ py: 4 }}>
+      <AccountSettings
+        user={user}
+        hasPassword={!!user.password}
+        blockedUserCount={blockedUserCount[0]?.count ?? 0}
+        blockedTagCount={blockedTagCount[0]?.count ?? 0}
+        linkedProviders={linkedProviders}
+      />
     </Container>
   );
 }

@@ -1,6 +1,6 @@
 ---
 name: magga-development
-description: Comprehensive development guidelines for Magga - a Next.js manga management system with Turso (LibSQL), Drizzle ORM, Better Auth, and Material-UI. Use when making changes to the codebase, adding features, fixing bugs, or optimizing performance.
+description: Comprehensive development guidelines for Magga - a Next.js manga management system with Turso (LibSQL), Drizzle ORM, Better Auth, and Material-UI. Features include user profiles, blocking system, comment moderation, avatar uploads, and simplified password requirements. Use when making changes to the codebase, adding features, fixing bugs, or optimizing performance.
 ---
 
 # Magga Development Skill
@@ -13,10 +13,12 @@ This skill provides guidelines for developing features in the Magga manga manage
 
 - **Framework**: Next.js 16 (App Router)
 - **Database**: Turso (LibSQL) with Drizzle ORM
-- **Authentication**: Better Auth
+- **Authentication**: Better Auth (Credentials + Google OAuth)
 - **UI Library**: Material-UI (MUI)
 - **Styling**: TailwindCSS
 - **Language**: TypeScript
+- **Storage**: Cloudflare R2 for images and avatars
+- **Features**: User profiles, blocking system, comment moderation
 
 ## When to Use This Skill
 
@@ -262,12 +264,15 @@ d:\magga\
 │   ├── (auth)/           # Authentication pages
 │   ├── admin/            # Admin dashboard and management
 │   ├── api/              # API routes
+│   │   └── user/         # User-specific APIs (avatar, blocked users/tags, comments)
 │   ├── components/       # React components
 │   │   ├── features/     # Feature-specific components
 │   │   ├── forms/        # Form components
 │   │   ├── layout/       # Layout components
 │   │   └── ui/           # Reusable UI components
 │   ├── manga/            # Manga-related pages
+│   ├── profile/          # User profile pages
+│   ├── settings/         # Account settings
 │   └── ...
 ├── lib/                  # Utility functions and configurations
 ├── db/                   # Database instance and Drizzle schema

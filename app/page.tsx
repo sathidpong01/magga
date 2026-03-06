@@ -98,27 +98,11 @@ export default async function Home({ searchParams }: Props) {
 
   return (
     <Container maxWidth="xl">
-      <Box sx={{ my: 4 }}>
+      <Box sx={{ my: 1 }}>
         {/* Reserve space for SearchFilters to prevent CLS */}
         <Suspense fallback={<Box sx={{ minHeight: 56 }} />}>
           <SearchFilters categories={categories} tags={tags} />
         </Suspense>
-
-        <Typography
-          variant="h3"
-          component="h1"
-          gutterBottom
-          sx={{
-            fontWeight: 800,
-            mb: 4,
-            background: "linear-gradient(135deg, #fbbf24 0%, #38bdf8 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            letterSpacing: "-0.02em",
-          }}
-        >
-          {search ? `Search Results for "${search}"` : "Discover Manga"}
-        </Typography>
 
         {/* Streaming: Manga grid loads progressively while skeleton shows */}
         <Suspense fallback={<MangaGridSkeleton count={12} />}>

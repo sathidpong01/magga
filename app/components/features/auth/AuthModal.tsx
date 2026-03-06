@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { signIn, signUp, authClient } from "@/lib/auth-client";
-import { useRouter, usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
+import { signIn } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
-  DialogTitle,
   DialogContent,
   Box,
   TextField,
@@ -15,47 +14,38 @@ import {
   IconButton,
   CircularProgress,
   Alert,
-  Tabs,
-  Tab,
+  InputAdornment,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import GoogleIcon from "@mui/icons-material/Google";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import Image from "next/image";
+import Link from "next/link";
 
 interface AuthModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess?: () => void;
-  defaultTab?: "signin" | "register";
+  callbackUrl?: string;
 }
 
-export default function AuthModal({ open, onClose, onSuccess, defaultTab = "signin" }: AuthModalProps) {
+export default function AuthModal({ open, onClose, onSuccess, callbackUrl = "/" }: AuthModalProps) {
   const router = useRouter();
-  const pathname = usePathname();
-  const [tab, setTab] = useState<"signin" | "register">(defaultTab);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-
-  // Sign In form
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
-  // Register form
-  const [registerData, setRegisterData] = useState({
-    username: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
-
-  // Reset form when modal opens/closes
   useEffect(() => {
     if (open) {
       setError("");
       setSuccess("");
       setUsername("");
       setPassword("");
-      setRegisterData({ username: "", email: "", password: "", confirmPassword: "" });
+      setShowPassword(false);
     }
   }, [open]);
 
@@ -65,71 +55,36 @@ export default function AuthModal({ open, onClose, onSuccess, defaultTab = "sign
     setLoading(true);
 
     try {
-      const result = await signIn.email({
-        email: username.includes("@") ? username : `${username}@placeholder`,
-        password,
-      });
+      const result = username.includes("@")
+        ? await signIn.email({ email: username, password })
+        : await (signIn as any).username({ username, password });
 
-      if (result.error) {
-        setError(result.error.message || "เข้าสู่ระบบไม่สำเร็จ");
+      if (result?.error) {
+        setError(result.error.message || "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
       } else {
         setSuccess("เข้าสู่ระบบสำเร็จ!");
         setTimeout(() => {
           onClose();
           onSuccess?.();
           router.refresh();
-        }, 1000);
+        }, 800);
       }
-    } catch (err) {
-      setError("เกิดข้อผิดพลาด กรุณาลองใหม่");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    if (registerData.password !== registerData.confirmPassword) {
-      setError("รหัสผ่านไม่ตรงกัน");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const result = await signUp.email({
-        email: registerData.email,
-        password: registerData.password,
-        name: registerData.username,
-      });
-
-      if (result.error) {
-        throw new Error(result.error.message || "สมัครสมาชิกไม่สำเร็จ");
-      }
-
-      setSuccess("สมัครสมาชิกและเข้าสู่ระบบสำเร็จ!");
-      setTimeout(() => {
-        onClose();
-        onSuccess?.();
-        router.refresh();
-      }, 1000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "สมัครสมาชิกไม่สำเร็จ");
+    } catch {
+      setError("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง");
     } finally {
       setLoading(false);
     }
   };
 
   const handleGoogleLogin = () => {
-    signIn.social({ provider: "google", callbackURL: "/" });
+    signIn.social({ provider: "google", callbackURL: callbackUrl });
   };
 
   const textFieldSx = {
     "& .MuiInputLabel-root": { color: "#a3a3a3" },
     "& .MuiOutlinedInput-root": {
       color: "#fafafa",
+      bgcolor: "#262626",
       "& fieldset": { borderColor: "#404040" },
       "&:hover fieldset": { borderColor: "#fbbf24" },
       "&.Mui-focused fieldset": { borderColor: "#fbbf24" },
@@ -142,42 +97,61 @@ export default function AuthModal({ open, onClose, onSuccess, defaultTab = "sign
       onClose={onClose}
       maxWidth="xs"
       fullWidth
+      slotProps={{
+        backdrop: { sx: { backgroundColor: "rgba(0,0,0,0.85)", backdropFilter: "blur(4px)" } },
+      }}
       PaperProps={{
         sx: {
           bgcolor: "#171717",
           color: "#fafafa",
-          borderRadius: 1,
+          borderRadius: 2,
+          border: "1px solid rgba(255,255,255,0.08)",
+          boxShadow: "0 25px 60px rgba(0,0,0,0.6)",
         },
       }}
     >
-      <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", pb: 1 }}>
-        <Typography variant="h6" fontWeight={600}>
-          {tab === "signin" ? "เข้าสู่ระบบ" : "สมัครสมาชิก"}
-        </Typography>
-        <IconButton onClick={onClose} sx={{ color: "#a3a3a3" }}>
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
+      <DialogContent sx={{ p: 0 }}>
+        {/* Header */}
+        <Box sx={{ position: "relative", pt: 4, pb: 2, px: 4, textAlign: "center" }}>
+          <IconButton
+            onClick={onClose}
+            size="small"
+            sx={{ position: "absolute", top: 12, right: 12, color: "#a3a3a3", "&:hover": { color: "#fafafa" } }}
+          >
+            <CloseIcon fontSize="small" />
+          </IconButton>
 
-      <DialogContent>
-        <Tabs
-          value={tab}
-          onChange={(_, v) => { setTab(v); setError(""); setSuccess(""); }}
-          sx={{
-            mb: 2,
-            "& .MuiTab-root": { color: "#a3a3a3" },
-            "& .Mui-selected": { color: "#fbbf24 !important" },
-            "& .MuiTabs-indicator": { bgcolor: "#fbbf24" },
-          }}
-        >
-          <Tab value="signin" label="เข้าสู่ระบบ" />
-          <Tab value="register" label="สมัครสมาชิก" />
-        </Tabs>
+          <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
+            <Image
+              src="/logo.svg"
+              alt="MAGGA"
+              width={90}
+              height={28}
+              style={{ width: "auto", height: "28px" }}
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+            />
+          </Box>
+          <Typography variant="h6" fontWeight={700} sx={{ mb: 0.5 }}>
+            ยินดีต้อนรับกลับ
+          </Typography>
+          <Typography variant="body2" sx={{ color: "#a3a3a3" }}>
+            เข้าสู่ระบบเพื่อเข้าถึงทุกฟีเจอร์
+          </Typography>
+        </Box>
 
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-        {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+        {/* Form */}
+        <Box sx={{ px: 4, pb: 4 }}>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2, bgcolor: "rgba(239,68,68,0.1)", color: "#fca5a5", "& .MuiAlert-icon": { color: "#ef4444" } }}>
+              {error}
+            </Alert>
+          )}
+          {success && (
+            <Alert severity="success" sx={{ mb: 2, bgcolor: "rgba(34,197,94,0.1)", color: "#86efac", "& .MuiAlert-icon": { color: "#22c55e" } }}>
+              {success}
+            </Alert>
+          )}
 
-        {tab === "signin" ? (
           <Box component="form" onSubmit={handleSignIn}>
             <TextField
               margin="normal"
@@ -194,90 +168,81 @@ export default function AuthModal({ open, onClose, onSuccess, defaultTab = "sign
               required
               fullWidth
               label="รหัสผ่าน"
-              type="password"
+              type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               sx={textFieldSx}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                      sx={{ color: "#a3a3a3" }}
+                    >
+                      {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
+
             <Button
               type="submit"
               fullWidth
               variant="contained"
               disabled={loading}
-              sx={{ mt: 2, mb: 2, bgcolor: "#fbbf24", color: "#000", "&:hover": { bgcolor: "#f59e0b" } }}
+              sx={{
+                mt: 2.5,
+                mb: 1.5,
+                py: 1.2,
+                bgcolor: "#fbbf24",
+                color: "#000",
+                fontWeight: 700,
+                fontSize: "0.95rem",
+                borderRadius: 1.5,
+                "&:hover": { bgcolor: "#f59e0b" },
+                "&.Mui-disabled": { bgcolor: "#a38520", color: "#555" },
+              }}
             >
-              {loading ? <CircularProgress size={24} color="inherit" /> : "เข้าสู่ระบบ"}
+              {loading ? <CircularProgress size={22} sx={{ color: "#555" }} /> : "เข้าสู่ระบบ"}
             </Button>
           </Box>
-        ) : (
-          <Box component="form" onSubmit={handleRegister}>
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              label="ชื่อผู้ใช้"
-              autoFocus
-              value={registerData.username}
-              onChange={(e) => setRegisterData({ ...registerData, username: e.target.value })}
-              sx={textFieldSx}
-            />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              label="อีเมล"
-              type="email"
-              value={registerData.email}
-              onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
-              sx={textFieldSx}
-            />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              label="รหัสผ่าน"
-              type="password"
-              value={registerData.password}
-              onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-              sx={textFieldSx}
-            />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              label="ยืนยันรหัสผ่าน"
-              type="password"
-              value={registerData.confirmPassword}
-              onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
-              sx={textFieldSx}
-            />
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              disabled={loading}
-              sx={{ mt: 2, mb: 2, bgcolor: "#fbbf24", color: "#000", "&:hover": { bgcolor: "#f59e0b" } }}
-            >
-              {loading ? <CircularProgress size={24} color="inherit" /> : "สมัครสมาชิก"}
-            </Button>
+
+          <Divider sx={{ my: 2, borderColor: "rgba(255,255,255,0.1)", "& .MuiDivider-wrapper": { color: "#a3a3a3", fontSize: "0.8rem" } }}>
+            หรือ
+          </Divider>
+
+          <Button
+            fullWidth
+            variant="outlined"
+            startIcon={<GoogleIcon />}
+            onClick={handleGoogleLogin}
+            sx={{
+              py: 1.1,
+              color: "#fafafa",
+              borderColor: "rgba(255,255,255,0.15)",
+              borderRadius: 1.5,
+              fontWeight: 500,
+              "&:hover": { borderColor: "#fbbf24", bgcolor: "rgba(251,191,36,0.06)" },
+            }}
+          >
+            ดำเนินการผ่าน Google
+          </Button>
+
+          <Box sx={{ textAlign: "center", mt: 3 }}>
+            <Typography variant="body2" sx={{ color: "#a3a3a3" }}>
+              ยังไม่มีบัญชี?{" "}
+              <Link
+                href="/auth/register"
+                onClick={onClose}
+                style={{ color: "#fbbf24", textDecoration: "none", fontWeight: 600 }}
+              >
+                สมัครสมาชิก
+              </Link>
+            </Typography>
           </Box>
-        )}
-
-        <Divider sx={{ my: 2, borderColor: "#404040" }}>หรือ</Divider>
-
-        <Button
-          fullWidth
-          variant="outlined"
-          startIcon={<GoogleIcon />}
-          onClick={handleGoogleLogin}
-          sx={{
-            color: "#fafafa",
-            borderColor: "#404040",
-            "&:hover": { borderColor: "#fbbf24", bgcolor: "rgba(251, 191, 36, 0.08)" },
-          }}
-        >
-          ดำเนินการผ่าน Google
-        </Button>
+        </Box>
       </DialogContent>
     </Dialog>
   );

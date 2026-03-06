@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { profiles, accounts, sessions, comments, commentVotes, manga, authors, categories, mangaRatings, mangaSubmissions, mangaSubmissionTags, tags, userSubmissionLimits, mangaTags, _mangaTags } from "./schema";
+import { profiles, accounts, sessions, comments, commentVotes, manga, authors, categories, mangaRatings, mangaSubmissions, mangaSubmissionTags, tags, userSubmissionLimits, mangaTags, _mangaTags, blockedUsers, blockedTags } from "./schema";
 
 export const accountsRelations = relations(accounts, ({one}) => ({
 	profile: one(profiles, {
@@ -15,6 +15,9 @@ export const profilesRelations = relations(profiles, ({many}) => ({
 	comments: many(comments),
 	mangaSubmissions: many(mangaSubmissions),
 	userSubmissionLimits: many(userSubmissionLimits),
+	blockedUsers: many(blockedUsers, { relationName: "blockedUsers_userId" }),
+	blockedByUsers: many(blockedUsers, { relationName: "blockedUsers_blockedUserId" }),
+	blockedTags: many(blockedTags),
 }));
 
 export const sessionsRelations = relations(sessions, ({one}) => ({
@@ -131,6 +134,7 @@ export const tagsRelations = relations(tags, ({many}) => ({
 	mangaTags_tagId: many(mangaTags, {
 		relationName: "mangaTags_tagId_tags_id"
 	}),
+	blockedTags: many(blockedTags),
 }));
 
 export const userSubmissionLimitsRelations = relations(userSubmissionLimits, ({one}) => ({
@@ -150,6 +154,30 @@ export const _mangaTagsRelations = relations(_mangaTags, ({one}) => ({
 		fields: [_mangaTags.b],
 		references: [tags.id],
 		relationName: "_mangaTags_b_tags_id"
+	}),
+}));
+
+export const blockedUsersRelations = relations(blockedUsers, ({one}) => ({
+	user: one(profiles, {
+		fields: [blockedUsers.userId],
+		references: [profiles.id],
+		relationName: "blockedUsers_userId",
+	}),
+	blockedUser: one(profiles, {
+		fields: [blockedUsers.blockedUserId],
+		references: [profiles.id],
+		relationName: "blockedUsers_blockedUserId",
+	}),
+}));
+
+export const blockedTagsRelations = relations(blockedTags, ({one}) => ({
+	user: one(profiles, {
+		fields: [blockedTags.userId],
+		references: [profiles.id],
+	}),
+	tag: one(tags, {
+		fields: [blockedTags.tagId],
+		references: [tags.id],
 	}),
 }));
 

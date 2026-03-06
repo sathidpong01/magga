@@ -35,11 +35,29 @@ export default function InfiniteMangaGrid({
   tags,
   sort,
 }: InfiniteMangaGridProps) {
+  const [blockedTagIds, setBlockedTagIds] = useState<string[]>([]);
   const [mangas, setMangas] = useState<MangaWithDetails[]>(initialMangas);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [isLoading, setIsLoading] = useState(false);
   const loaderRef = useRef<HTMLDivElement>(null);
+
+  // Fetch user's blocked tag IDs on mount to filter manga
+  useEffect(() => {
+    fetch("/api/user/blocked-tags")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.blockedTags?.length) {
+          setBlockedTagIds(data.blockedTags.map((t: any) => t.tagId));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Filter out manga that contain any blocked tag, and apply when blocked tags change
+  const filteredMangas = blockedTagIds.length === 0
+    ? mangas
+    : mangas.filter((m) => !m.tags.some((t) => blockedTagIds.includes(t.id)));
 
   // Reset when filters change
   useEffect(() => {
@@ -61,6 +79,7 @@ export default function InfiniteMangaGrid({
         params.set("categoryId", categoryId);
       if (tags) params.set("tags", tags);
       if (sort) params.set("sort", sort);
+      if (blockedTagIds.length > 0) params.set("excludeTagIds", blockedTagIds.join(","));
 
       const res = await fetch(`/api/manga/list?${params}`);
       if (!res.ok) throw new Error("Failed to fetch");
@@ -74,7 +93,7 @@ export default function InfiniteMangaGrid({
     } finally {
       setIsLoading(false);
     }
-  }, [page, hasMore, isLoading, search, categoryId, tags, sort]);
+  }, [page, hasMore, isLoading, search, categoryId, tags, sort, blockedTagIds]);
 
   // Intersection Observer for infinite scroll
   useEffect(() => {
@@ -97,7 +116,7 @@ export default function InfiniteMangaGrid({
   // สร้าง items พร้อม ads แทรก
   const itemsWithAds = (() => {
     if (ads.length === 0) {
-      return mangas.map((manga) => ({ type: "manga" as const, data: manga }));
+      return filteredMangas.map((manga) => ({ type: "manga" as const, data: manga }));
     }
 
     // ขยาย ads ตาม repeatCount
@@ -118,7 +137,7 @@ export default function InfiniteMangaGrid({
     let adIndex = 0;
     let totalIndex = 0;
 
-    while (mangaIndex < mangas.length) {
+    while (mangaIndex < filteredMangas.length) {
       // แทรก ad ที่ตำแหน่ง 9, 19, 29... (ทุกๆ 10 หลังจากเริ่ม)
       if (
         adIndex < expandedAds.length &&
@@ -128,7 +147,7 @@ export default function InfiniteMangaGrid({
         items.push({ type: "ad", data: expandedAds[adIndex], index: adIndex });
         adIndex++;
       } else {
-        items.push({ type: "manga", data: mangas[mangaIndex] });
+        items.push({ type: "manga", data: filteredMangas[mangaIndex] });
         mangaIndex++;
       }
       totalIndex++;
@@ -137,14 +156,14 @@ export default function InfiniteMangaGrid({
     return items;
   })();
 
-  if (mangas.length === 0) {
+  if (filteredMangas.length === 0 && !isLoading) {
     return <EmptyState />;
   }
 
   return (
     <>
       {/* Add minHeight to prevent CLS when grid content loads */}
-      <Grid container spacing={3} sx={{ minHeight: 400 * 3 }}>
+      <Grid container spacing={{ xs: 1.5, sm: 2, md: 3 }} sx={{ minHeight: 400 * 3 }}>
         {itemsWithAds.map((item, index) => (
           <Grid
             key={

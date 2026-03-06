@@ -1,106 +1,216 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Box,
   Typography,
   TextField,
   Button,
-  Avatar,
-  Paper,
-  Divider,
-  Grid,
+  Breadcrumbs,
   Alert,
   IconButton,
   InputAdornment,
-} from "@mui/material";
-import SaveIcon from "@mui/icons-material/Save";
-import Visibility from "@mui/icons-material/Visibility";
-import VisibilityOff from "@mui/icons-material/VisibilityOff";
-import WarningIcon from "@mui/icons-material/Warning";
-import {
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Chip,
+  Avatar,
+  CircularProgress,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogContentText,
   DialogActions,
 } from "@mui/material";
-import { useSession, updateUser } from "@/lib/auth-client";
-import { md5Sync } from "@/lib/md5";
+import PersonIcon from "@mui/icons-material/Person";
+import EmailIcon from "@mui/icons-material/Email";
+import LockIcon from "@mui/icons-material/Lock";
+import BlockIcon from "@mui/icons-material/Block";
+import LocalOfferIcon from "@mui/icons-material/LocalOffer";
+import ChatBubbleIcon from "@mui/icons-material/ChatBubble";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import HomeIcon from "@mui/icons-material/Home";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import WarningIcon from "@mui/icons-material/Warning";
+import React from "react";
+import Link from "next/link";
+import { linkSocial } from "@/lib/auth-client";
+import GoogleIcon from "@mui/icons-material/Google";
+import LinkIcon from "@mui/icons-material/Link";
+import LinkOffIcon from "@mui/icons-material/LinkOff";
+import CommentIcon from "@mui/icons-material/Comment";
+import ViewSidebarIcon from "@mui/icons-material/ViewSidebar";
+import VerticalAlignBottomIcon from "@mui/icons-material/VerticalAlignBottom";
 
 interface UserData {
   name: string | null;
   username: string | null;
   email: string | null;
   image: string | null;
+  commentPreference: string | null;
 }
 
 interface Props {
   user: UserData;
   hasPassword: boolean;
+  blockedUserCount: number;
+  blockedTagCount: number;
+  linkedProviders: string[];
 }
 
-export default function AccountSettings({ user, hasPassword }: Props) {
+const inputSx = {
+  "& .MuiInputLabel-root": { color: "#a3a3a3" },
+  "& .MuiOutlinedInput-root": {
+    color: "#fafafa",
+    bgcolor: "#262626",
+    "& fieldset": { borderColor: "#404040" },
+    "&:hover fieldset": { borderColor: "#fbbf24" },
+    "&.Mui-focused fieldset": { borderColor: "#fbbf24" },
+  },
+};
+
+const accordionSx = {
+  bgcolor: "#171717",
+  border: "1px solid rgba(255,255,255,0.08)",
+  borderRadius: "12px !important",
+  mb: 1,
+  "&:before": { display: "none" },
+  "&.Mui-expanded": { borderColor: "rgba(251,191,36,0.25)" },
+  boxShadow: "none",
+};
+
+const summarySx = {
+  px: 2.5,
+  py: 0.5,
+  minHeight: 64,
+  "& .MuiAccordionSummary-content": { my: 1.5, alignItems: "center", gap: 2 },
+};
+
+function RowIcon({ icon }: { icon: React.ReactNode }) {
+  return (
+    <Box
+      sx={{
+        width: 36,
+        height: 36,
+        borderRadius: 1.5,
+        bgcolor: "rgba(251,191,36,0.08)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexShrink: 0,
+        color: "#fbbf24",
+      }}
+    >
+      {icon}
+    </Box>
+  );
+}
+
+export default function AccountSettings({ user, hasPassword, blockedUserCount, blockedTagCount, linkedProviders }: Props) {
+  const [expanded, setExpanded] = useState<string | false>(false);
+  const [liveBlockedUserCount, setLiveBlockedUserCount] = useState(blockedUserCount);
+  const [liveBlockedTagCount, setLiveBlockedTagCount] = useState(blockedTagCount);
+  const initialCommentPrefs = (): Set<string> => {
+    const raw = user.commentPreference || 'sidebar';
+    return new Set(raw === 'none' ? [] : raw === 'both' ? ['sidebar', 'bottom'] : [raw]);
+  };
+  const [commentPrefs, setCommentPrefs] = useState<Set<string>>(initialCommentPrefs);
+  const [commentPrefSaving, setCommentPrefSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: user.name || "",
     username: user.username || "",
     email: user.email || "",
   });
-  
-  // Password state
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
-  const [showPassword, setShowPassword] = useState(false);
-
-  const [message, setMessage] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [showPwd, setShowPwd] = useState(false);
+  const [loading, setLoading] = useState<string | null>(null);
+  const [message, setMessage] = useState<{ panel: string; type: "success" | "error"; text: string } | null>(null);
   const [openEmailConfirm, setOpenEmailConfirm] = useState(false);
 
-  // Calculate Gravatar URL
-  const gravatarUrl = `https://www.gravatar.com/avatar/${md5Sync(formData.email.toLowerCase().trim())}?d=mp&s=200`;
-  const displayImage = user.image || gravatarUrl;
-
-  const { data: session } = useSession();
-
-  const handleProfileUpdate = async () => {
+  const handleAccordion = (panel: string) => (_: React.SyntheticEvent, isExpanded: boolean) => {
+    setExpanded(isExpanded ? panel : false);
     setMessage(null);
-    setLoading(true);
+  };
+
+  const handleNameUpdate = async () => {
+    setLoading("name");
+    setMessage(null);
     try {
       const res = await fetch("/api/user/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ name: formData.name }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to update profile");
-      
-      // Update session with new data (Better Auth)
-      await updateUser({ name: formData.name });
-
-      setMessage({ type: "success", text: "Profile updated successfully!" });
-      window.location.reload();
-    } catch (error: any) {
-      setMessage({ type: "error", text: error.message });
+      if (!res.ok) throw new Error(data.error || "อัปเดตไม่สำเร็จ");
+      setMessage({ panel: "name", type: "success", text: "อัปเดตชื่อแสดงสำเร็จ" });
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (err: any) {
+      setMessage({ panel: "name", type: "error", text: err.message });
     } finally {
-      setLoading(false);
+      setLoading(null);
     }
   };
 
-  const handlePasswordUpdate = async () => {
+  const handleUsernameUpdate = async () => {
+    setLoading("username");
+    setMessage(null);
+    try {
+      const res = await fetch("/api/user/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: formData.username }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "อัปเดตไม่สำเร็จ");
+      setMessage({ panel: "username", type: "success", text: "อัปเดตชื่อผู้ใช้สำเร็จ" });
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (err: any) {
+      setMessage({ panel: "username", type: "error", text: err.message });
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleEmailUpdate = async () => {
+    setLoading("email");
+    setMessage(null);
+    try {
+      const res = await fetch("/api/user/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: formData.email }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "อัปเดตไม่สำเร็จ");
+      setMessage({ panel: "email", type: "success", text: "อัปเดตอีเมลสำเร็จ" });
+      setTimeout(() => window.location.reload(), 1000);
+    } catch (err: any) {
+      setMessage({ panel: "email", type: "error", text: err.message });
+    } finally {
+      setLoading(null);
+      setOpenEmailConfirm(false);
+    }
+  };
+
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
     setMessage(null);
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setMessage({ type: "error", text: "New passwords do not match" });
+      setMessage({ panel: "password", type: "error", text: "รหัสผ่านไม่ตรงกัน" });
       return;
     }
     if (passwordData.newPassword.length < 6) {
-      setMessage({ type: "error", text: "Password must be at least 6 characters" });
+      setMessage({ panel: "password", type: "error", text: "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร" });
       return;
     }
-
-    setLoading(true);
+    setLoading("password");
     try {
       const res = await fetch("/api/user/password", {
         method: "PUT",
@@ -111,274 +221,617 @@ export default function AccountSettings({ user, hasPassword }: Props) {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to update password");
-      setMessage({ type: "success", text: "Password updated successfully!" });
+      if (!res.ok) throw new Error(data.error || "อัปเดตไม่สำเร็จ");
+      setMessage({ panel: "password", type: "success", text: "เปลี่ยนรหัสผ่านสำเร็จ" });
       setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
-      if (!hasPassword) window.location.reload();
-    } catch (error: any) {
-      setMessage({ type: "error", text: error.message });
+      if (!hasPassword) setTimeout(() => window.location.reload(), 1000);
+    } catch (err: any) {
+      setMessage({ panel: "password", type: "error", text: err.message });
     } finally {
-      setLoading(false);
+      setLoading(null);
     }
   };
 
+  const handleCommentPrefToggle = async (pref: 'sidebar' | 'bottom') => {
+    const next = new Set(commentPrefs);
+    if (next.has(pref)) next.delete(pref); else next.add(pref);
+    setCommentPrefs(next);
+    setCommentPrefSaving(true);
+    const value = next.has('sidebar') && next.has('bottom') ? 'both'
+      : next.has('sidebar') ? 'sidebar'
+      : next.has('bottom') ? 'bottom'
+      : 'none';
+    await fetch("/api/user/profile", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ commentPreference: value }),
+    });
+    setCommentPrefSaving(false);
+  };
+
   return (
-    <Box sx={{ width: "100%" }}>
-      <Typography variant="h5" fontWeight="bold" sx={{ mb: 4 }}>
-        Account Settings
+    <Box>
+      {/* Breadcrumb */}
+      <Breadcrumbs
+        separator={<NavigateNextIcon fontSize="small" sx={{ color: "#a3a3a3" }} />}
+        sx={{ mb: 3 }}
+      >
+        <Link href="/" style={{ display: "flex", alignItems: "center", color: "#fbbf24", textDecoration: "none", fontSize: "0.875rem" }}>
+          <HomeIcon sx={{ fontSize: 16, mr: 0.5 }} />
+          หน้าแรก
+        </Link>
+        {user.username ? (
+          <Link href={`/profile/${user.username}`} style={{ color: "#fbbf24", textDecoration: "none", fontSize: "0.875rem" }}>
+            ฉัน
+          </Link>
+        ) : (
+          <Typography sx={{ color: "#a3a3a3", fontSize: "0.875rem" }}>ฉัน</Typography>
+        )}
+        <Typography sx={{ color: "#fafafa", fontSize: "0.875rem" }}>ตั้งค่าบัญชี</Typography>
+      </Breadcrumbs>
+
+      <Typography variant="h4" fontWeight={700} sx={{ mb: 4 }}>
+        ตั้งค่าบัญชี
       </Typography>
 
-      {message && (
-        <Alert severity={message.type} sx={{ mb: 3 }}>
-          {message.text}
-        </Alert>
-      )}
-
-      {/* My Profile Section */}
-      <Box sx={{ mb: 6 }}>
-        <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
-          My Profile
-        </Typography>
-        
-        <Paper sx={{ p: 3, bgcolor: "#171717", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 1 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 3, mb: 4 }}>
-            <Avatar
-              src={displayImage}
-              alt={formData.name}
-              sx={{ width: 80, height: 80, border: "2px solid #fbbf24" }}
-            />
-            <Box>
-              <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 0.5 }}>
-                Profile Image
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Managed by Gravatar or Google
-              </Typography>
-            </Box>
+      {/* ชื่อแสดง */}
+      <Accordion expanded={expanded === "name"} onChange={handleAccordion("name")} sx={accordionSx}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: "#a3a3a3" }} />} sx={summarySx}>
+          <RowIcon icon={<PersonIcon fontSize="small" />} />
+          <Box>
+            <Typography variant="caption" sx={{ color: "#5eead4", display: "block", lineHeight: 1.3 }}>ชื่อแสดง</Typography>
+            <Typography variant="body1" fontWeight={500}>{user.name || "ยังไม่ได้ตั้งค่า"}</Typography>
           </Box>
-
-          <Grid container spacing={3}>
-<Grid   size={{ xs: 12, md: 6 }}>
-              <Typography variant="subtitle2" sx={{ mb: 1, color: "#a3a3a3" }}>Display Name</Typography>
-              <TextField
-                fullWidth
-                id="display-name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                variant="outlined"
-                size="small"
-                inputProps={{ "aria-label": "Display Name" }}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    bgcolor: "#262626",
-                    "& fieldset": { borderColor: "#404040" },
-                    "&:hover fieldset": { borderColor: "#fbbf24" },
-                    "&.Mui-focused fieldset": { borderColor: "#fbbf24" },
-                  }
-                }}
-              />
-            </Grid>
-<Grid   size={{ xs: 12, md: 6 }}>
-              <Typography variant="subtitle2" sx={{ mb: 1, color: "#a3a3a3" }}>Username</Typography>
-              <TextField
-                fullWidth
-                id="username"
-                value={formData.username}
-                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                variant="outlined"
-                size="small"
-                inputProps={{ "aria-label": "Username" }}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    bgcolor: "#262626",
-                    "& fieldset": { borderColor: "#404040" },
-                    "&:hover fieldset": { borderColor: "#fbbf24" },
-                    "&.Mui-focused fieldset": { borderColor: "#fbbf24" },
-                  }
-                }}
-              />
-            </Grid>
-          </Grid>
-
-          <Box sx={{ mt: 3, display: "flex", justifyContent: "flex-end" }}>
-            <Button 
-              variant="contained" 
-              onClick={handleProfileUpdate}
-              disabled={loading}
-              sx={{ bgcolor: "#fbbf24", color: "black", fontWeight: "bold", "&:hover": { bgcolor: "#f59e0b" } }}
+        </AccordionSummary>
+        <AccordionDetails sx={{ px: 2.5, pb: 2.5 }}>
+          {message?.panel === "name" && (
+            <Alert severity={message.type} sx={{ mb: 2 }}>{message.text}</Alert>
+          )}
+          <TextField
+            fullWidth
+            label="ชื่อแสดง"
+            size="small"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            helperText="ชื่อนี้จะแสดงในโปรไฟล์และความคิดเห็น"
+            sx={inputSx}
+            FormHelperTextProps={{ sx: { color: "#737373" } }}
+          />
+          <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
+            <Button
+              variant="contained"
+              onClick={handleNameUpdate}
+              disabled={loading === "name"}
+              sx={{ bgcolor: "#fbbf24", color: "#000", fontWeight: 700, "&:hover": { bgcolor: "#f59e0b" } }}
             >
-              Save Profile
+              {loading === "name" ? <CircularProgress size={20} sx={{ color: "#555" }} /> : "บันทึก"}
             </Button>
           </Box>
-        </Paper>
-      </Box>
+        </AccordionDetails>
+      </Accordion>
 
-      {/* Account Security Section */}
-      <Box sx={{ mb: 6 }}>
-        <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
-          Account Security
-        </Typography>
-
-        <Paper sx={{ p: 3, bgcolor: "#171717", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 1 }}>
-          {/* Email */}
-          <Box sx={{ mb: 4 }}>
-            <Typography variant="subtitle2" sx={{ mb: 1, color: "#a3a3a3" }}>Email</Typography>
-            <Grid container spacing={2} alignItems="center">
-              <Grid size="grow">
-                <TextField
-                  fullWidth
-                  id="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  variant="outlined"
-                  size="small"
-                  inputProps={{ "aria-label": "Email Address" }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      bgcolor: "#262626",
-                      "& fieldset": { borderColor: "#404040" },
-                      "&:hover fieldset": { borderColor: "#fbbf24" },
-                      "&.Mui-focused fieldset": { borderColor: "#fbbf24" },
-                    }
-                  }}
-                />
-              </Grid>
-              <Grid>
-                <Button 
-                  variant="outlined" 
-                  onClick={() => {
-                    if (formData.email !== user.email) {
-                      setOpenEmailConfirm(true);
-                    } else {
-                      setMessage({ type: "info", text: "Email has not been changed" });
-                    }
-                  }}
-                  disabled={loading}
-                  sx={{ color: "#fbbf24", borderColor: "#fbbf24", "&:hover": { borderColor: "#f59e0b", bgcolor: "rgba(251, 191, 36, 0.1)" } }}
-                >
-                  Change Email
-                </Button>
-              </Grid>
-            </Grid>
+      {/* ชื่อผู้ใช้ */}
+      <Accordion expanded={expanded === "username"} onChange={handleAccordion("username")} sx={accordionSx}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: "#a3a3a3" }} />} sx={summarySx}>
+          <RowIcon icon={<PersonIcon fontSize="small" />} />
+          <Box>
+            <Typography variant="caption" sx={{ color: "#5eead4", display: "block", lineHeight: 1.3 }}>ชื่อผู้ใช้</Typography>
+            <Typography variant="body1" fontWeight={500}>{user.username || "ยังไม่ได้ตั้งค่า"}</Typography>
           </Box>
+        </AccordionSummary>
+        <AccordionDetails sx={{ px: 2.5, pb: 2.5 }}>
+          {message?.panel === "username" && (
+            <Alert severity={message.type} sx={{ mb: 2 }}>{message.text}</Alert>
+          )}
+          <TextField
+            fullWidth
+            label="ชื่อผู้ใช้ใหม่"
+            size="small"
+            value={formData.username}
+            onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+            sx={inputSx}
+          />
+          <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
+            <Button
+              variant="contained"
+              onClick={handleUsernameUpdate}
+              disabled={loading === "username"}
+              sx={{ bgcolor: "#fbbf24", color: "#000", fontWeight: 700, "&:hover": { bgcolor: "#f59e0b" } }}
+            >
+              {loading === "username" ? <CircularProgress size={20} sx={{ color: "#555" }} /> : "บันทึก"}
+            </Button>
+          </Box>
+        </AccordionDetails>
+      </Accordion>
 
-          {/* Email Confirmation Dialog */}
-          <Dialog
-            open={openEmailConfirm}
-            onClose={() => setOpenEmailConfirm(false)}
-            PaperProps={{
-              sx: {
-                bgcolor: "#171717",
-                border: "1px solid rgba(255,255,255,0.1)",
-                color: "#fafafa",
-              }
-            }}
-          >
-            <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <WarningIcon sx={{ color: "#fbbf24" }} />
-              Confirm Email Change
-            </DialogTitle>
-            <DialogContent>
-              <DialogContentText sx={{ color: "#a3a3a3" }}>
-                Are you sure you want to change your email address to <strong>{formData.email}</strong>?
-                <br /><br />
-                This may affect your login method if you use Google Sign-In with the old email.
-              </DialogContentText>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={() => setOpenEmailConfirm(false)} sx={{ color: "#a3a3a3" }}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={() => {
-                  setOpenEmailConfirm(false);
-                  handleProfileUpdate();
-                }} 
-                variant="contained"
-                sx={{ bgcolor: "#fbbf24", color: "black", fontWeight: "bold", "&:hover": { bgcolor: "#f59e0b" } }}
-              >
-                Confirm Change
-              </Button>
-            </DialogActions>
-          </Dialog>
+      {/* อีเมล */}
+      <Accordion expanded={expanded === "email"} onChange={handleAccordion("email")} sx={accordionSx}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: "#a3a3a3" }} />} sx={summarySx}>
+          <RowIcon icon={<EmailIcon fontSize="small" />} />
+          <Box>
+            <Typography variant="caption" sx={{ color: "#5eead4", display: "block", lineHeight: 1.3 }}>อีเมล</Typography>
+            <Typography variant="body1" fontWeight={500}>{user.email || "ยังไม่ได้ตั้งค่า"}</Typography>
+          </Box>
+        </AccordionSummary>
+        <AccordionDetails sx={{ px: 2.5, pb: 2.5 }}>
+          {message?.panel === "email" && (
+            <Alert severity={message.type} sx={{ mb: 2 }}>{message.text}</Alert>
+          )}
+          <TextField
+            fullWidth
+            label="อีเมลใหม่"
+            type="email"
+            size="small"
+            value={formData.email}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            sx={inputSx}
+          />
+          <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
+            <Button
+              variant="contained"
+              onClick={() => formData.email !== user.email ? setOpenEmailConfirm(true) : setMessage({ panel: "email", type: "error", text: "อีเมลยังไม่มีการเปลี่ยนแปลง" })}
+              disabled={loading === "email"}
+              sx={{ bgcolor: "#fbbf24", color: "#000", fontWeight: 700, "&:hover": { bgcolor: "#f59e0b" } }}
+            >
+              เปลี่ยนอีเมล
+            </Button>
+          </Box>
+        </AccordionDetails>
+      </Accordion>
 
-          <Divider sx={{ my: 3, borderColor: "rgba(255,255,255,0.1)" }} />
-
-          {/* Password */}
-          <Box component="form" onSubmit={(e) => { e.preventDefault(); handlePasswordUpdate(); }}>
-            <Typography variant="subtitle2" sx={{ mb: 1, color: "#a3a3a3" }}>Password</Typography>
-            
+      {/* รหัสผ่าน */}
+      <Accordion expanded={expanded === "password"} onChange={handleAccordion("password")} sx={accordionSx}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: "#a3a3a3" }} />} sx={summarySx}>
+          <RowIcon icon={<LockIcon fontSize="small" />} />
+          <Box>
+            <Typography variant="caption" sx={{ color: "#5eead4", display: "block", lineHeight: 1.3 }}>รหัสผ่าน</Typography>
+            <Typography variant="body1" fontWeight={500}>{hasPassword ? "เปลี่ยนรหัสผ่าน" : "ตั้งรหัสผ่าน"}</Typography>
+          </Box>
+        </AccordionSummary>
+        <AccordionDetails sx={{ px: 2.5, pb: 2.5 }}>
+          {message?.panel === "password" && (
+            <Alert severity={message.type} sx={{ mb: 2 }}>{message.text}</Alert>
+          )}
+          <Box component="form" onSubmit={handlePasswordUpdate} sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
             {hasPassword && (
               <TextField
                 fullWidth
-                id="current-password"
-                placeholder="Current Password"
-                type={showPassword ? "text" : "password"}
+                label="รหัสผ่านปัจจุบัน"
+                type={showPwd ? "text" : "password"}
+                size="small"
                 value={passwordData.currentPassword}
                 onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                size="small"
                 autoComplete="current-password"
-                sx={{ mb: 2, "& .MuiOutlinedInput-root": { bgcolor: "#262626", "& fieldset": { borderColor: "#404040" } } }}
+                sx={inputSx}
               />
             )}
-
-            <Grid container spacing={2}>
-<Grid   size={{ xs: 12, md: 6 }}>
-                <TextField
-                  fullWidth
-                  id="new-password"
-                  placeholder={hasPassword ? "New Password" : "Set New Password"}
-                  type={showPassword ? "text" : "password"}
-                  value={passwordData.newPassword}
-                  onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+            <TextField
+              fullWidth
+              label={hasPassword ? "รหัสผ่านใหม่" : "ตั้งรหัสผ่านใหม่"}
+              type={showPwd ? "text" : "password"}
+              size="small"
+              value={passwordData.newPassword}
+              onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+              autoComplete="new-password"
+              sx={inputSx}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton onClick={() => setShowPwd(!showPwd)} edge="end" sx={{ color: "#a3a3a3" }}>
+                      {showPwd ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <TextField
+              fullWidth
+              label="ยืนยันรหัสผ่านใหม่"
+              type={showPwd ? "text" : "password"}
+              size="small"
+              value={passwordData.confirmPassword}
+              onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+              autoComplete="new-password"
+              sx={inputSx}
+            />
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mb: 1 }}>
+              {[
+                { label: "8+ ตัวอักษร", ok: passwordData.newPassword.length >= 8 },
+                { label: "ตัวพิมพ์ใหญ่", ok: /[A-Z]/.test(passwordData.newPassword) },
+                { label: "ตัวพิมพ์เล็ก", ok: /[a-z]/.test(passwordData.newPassword) },
+                { label: "ตัวเลข", ok: /[0-9]/.test(passwordData.newPassword) },
+              ].map((req) => (
+                <Chip
+                  key={req.label}
+                  label={req.label}
                   size="small"
-                  autoComplete="new-password"
-                  inputProps={{ "aria-label": "New Password" }}
-                  sx={{ "& .MuiOutlinedInput-root": { bgcolor: "#262626", "& fieldset": { borderColor: "#404040" } } }}
-                  InputProps={{
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          onClick={() => setShowPassword(!showPassword)}
-                          edge="end"
-                          sx={{ color: "#a3a3a3" }}
-                          aria-label={showPassword ? "Hide password" : "Show password"}
-                        >
-                          {showPassword ? <VisibilityOff /> : <Visibility />}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
+                  variant={req.ok ? "filled" : "outlined"}
+                  sx={{
+                    fontSize: "0.7rem",
+                    height: 22,
+                    ...(req.ok
+                      ? { bgcolor: "rgba(34, 197, 94, 0.15)", color: "#22c55e", border: "1px solid rgba(34, 197, 94, 0.3)" }
+                      : { borderColor: "rgba(255,255,255,0.2)", color: "#737373" }),
                   }}
                 />
-              </Grid>
-<Grid   size={{ xs: 12, md: 6 }}>
-                <TextField
-                  fullWidth
-                  id="confirm-password"
-                  placeholder="Confirm New Password"
-                  type={showPassword ? "text" : "password"}
-                  value={passwordData.confirmPassword}
-                  onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                  size="small"
-                  autoComplete="new-password"
-                  sx={{ "& .MuiOutlinedInput-root": { bgcolor: "#262626", "& fieldset": { borderColor: "#404040" } } }}
-                />
-              </Grid>
-            </Grid>
-
-            <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
-              <Button 
+              ))}
+            </Box>
+            <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+              <Button
                 type="submit"
-                variant="outlined" 
-                disabled={loading}
-                sx={{ color: "#fbbf24", borderColor: "#fbbf24", "&:hover": { borderColor: "#f59e0b", bgcolor: "rgba(251, 191, 36, 0.1)" } }}
+                variant="contained"
+                disabled={loading === "password"}
+                sx={{ bgcolor: "#fbbf24", color: "#000", fontWeight: 700, "&:hover": { bgcolor: "#f59e0b" } }}
               >
-                {hasPassword ? "Change Password" : "Set Password"}
+                {loading === "password" ? <CircularProgress size={20} sx={{ color: "#555" }} /> : hasPassword ? "เปลี่ยนรหัสผ่าน" : "ตั้งรหัสผ่าน"}
               </Button>
             </Box>
           </Box>
-        </Paper>
-      </Box>
+        </AccordionDetails>
+      </Accordion>
+
+      {/* บัญชีที่เชื่อมต่อ */}
+      <Accordion expanded={expanded === "linked"} onChange={handleAccordion("linked")} sx={accordionSx}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: "#a3a3a3" }} />} sx={summarySx}>
+          <RowIcon icon={<LinkIcon fontSize="small" />} />
+          <Box>
+            <Typography variant="caption" sx={{ color: "#5eead4", display: "block", lineHeight: 1.3 }}>บัญชีที่เชื่อมต่อ</Typography>
+            <Typography variant="body1" fontWeight={500}>
+              {linkedProviders.includes("google") ? "เชื่อมต่อ Google แล้ว" : "เชื่อมต่อกับ Google"}
+            </Typography>
+          </Box>
+        </AccordionSummary>
+        <AccordionDetails sx={{ px: 2.5, pb: 2.5 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2, bgcolor: "#262626", borderRadius: 1.5 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <GoogleIcon sx={{ color: linkedProviders.includes("google") ? "#4285F4" : "#a3a3a3", fontSize: 28 }} />
+              <Box>
+                <Typography variant="body2" fontWeight={600}>Google</Typography>
+                <Typography variant="caption" sx={{ color: "#a3a3a3" }}>
+                  {linkedProviders.includes("google") ? "เชื่อมต่อแล้ว — สามารถใช้เข้าสู่ระบบได้" : "ยังไม่ได้เชื่อมต่อ"}
+                </Typography>
+              </Box>
+            </Box>
+            {linkedProviders.includes("google") ? (
+              <Chip label="เชื่อมต่อแล้ว" size="small" sx={{ bgcolor: "rgba(66,133,244,0.15)", color: "#4285F4", border: "1px solid rgba(66,133,244,0.3)" }} />
+            ) : (
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={<LinkIcon fontSize="small" />}
+                onClick={async () => {
+                  await linkSocial({ provider: "google", callbackURL: "/settings" });
+                }}
+                sx={{ color: "#fbbf24", borderColor: "rgba(251,191,36,0.4)", "&:hover": { borderColor: "#fbbf24", bgcolor: "rgba(251,191,36,0.06)" } }}
+              >
+                เชื่อมต่อ
+              </Button>
+            )}
+          </Box>
+          {linkedProviders.includes("google") && (
+            <Typography variant="caption" sx={{ color: "#a3a3a3", display: "block", mt: 1.5 }}>
+              บัญชี Google เชื่อมต่ออยู่แล้ว การเข้าสู่ระบบครั้งต่อไปสามารถใช้ Google ได้โดยไม่ต้องใส่รหัสผ่าน
+            </Typography>
+          )}
+        </AccordionDetails>
+      </Accordion>
+
+      {/* ความคิดเห็น */}
+      <Accordion expanded={expanded === "comments"} onChange={handleAccordion("comments")} sx={accordionSx}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: "#a3a3a3" }} />} sx={summarySx}>
+          <RowIcon icon={<ChatBubbleIcon fontSize="small" />} />
+          <Box>
+            <Typography variant="caption" sx={{ color: "#5eead4", display: "block", lineHeight: 1.3 }}>ความคิดเห็นการ์ตูน</Typography>
+            <Typography variant="body1" fontWeight={500}>
+              {commentPrefs.size === 0 ? "ซ่อนทั้งหมด"
+                : commentPrefs.size === 2 ? "แสดงทั้งสองแบบ"
+                : commentPrefs.has("sidebar") ? "แสดงข้างรูป (ทีละหน้า)"
+                : "แสดงท้ายเรื่อง"}
+            </Typography>
+          </Box>
+        </AccordionSummary>
+        <AccordionDetails sx={{ px: 2.5, pb: 2.5 }}>
+          <Typography variant="body2" sx={{ color: "#a3a3a3", mb: 2 }}>
+            เลือกว่าจะให้แสดงกล่องความคิดเห็นแบบใดบ้าง (กดซ้ำเพื่อซ่อน)
+          </Typography>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+            {([
+              { value: "sidebar", label: "ข้างรูป (ทีละหน้า)", desc: "แสดงความคิดเห็นข้างรูปแต่ละหน้า", Icon: ViewSidebarIcon },
+              { value: "bottom", label: "ท้ายเรื่อง", desc: "แสดงความคิดเห็นรวมที่ท้ายบท", Icon: VerticalAlignBottomIcon },
+            ] as const).map(({ value, label, desc, Icon }) => {
+              const active = commentPrefs.has(value);
+              return (
+                <Box
+                  key={value}
+                  onClick={() => handleCommentPrefToggle(value)}
+                  sx={{
+                    display: "flex", alignItems: "center", gap: 2, p: 1.5,
+                    bgcolor: active ? "rgba(251,191,36,0.08)" : "#262626",
+                    border: `1px solid ${active ? "rgba(251,191,36,0.4)" : "rgba(255,255,255,0.06)"}`,
+                    borderRadius: 1.5, cursor: "pointer",
+                    "&:hover": { bgcolor: "rgba(251,191,36,0.06)" },
+                  }}
+                >
+                  <Icon sx={{ color: active ? "#fbbf24" : "#a3a3a3", fontSize: 22 }} />
+                  <Box sx={{ flexGrow: 1 }}>
+                    <Typography variant="body2" fontWeight={600}>{label}</Typography>
+                    <Typography variant="caption" sx={{ color: "#a3a3a3" }}>{desc}</Typography>
+                  </Box>
+                  {commentPrefSaving
+                    ? <CircularProgress size={16} sx={{ color: "#fbbf24" }} />
+                    : active
+                      ? <Chip label="ใช้งานอยู่" size="small" sx={{ height: 20, fontSize: "0.7rem", bgcolor: "rgba(251,191,36,0.15)", color: "#fbbf24" }} />
+                      : <Chip label="ซ่อน" size="small" sx={{ height: 20, fontSize: "0.7rem", bgcolor: "rgba(255,255,255,0.05)", color: "#737373" }} />
+                  }
+                </Box>
+              );
+            })}
+          </Box>
+        </AccordionDetails>
+      </Accordion>
+
+      {/* ผู้ใช้ที่บล็อก */}
+      <Accordion expanded={expanded === "blocked-users"} onChange={handleAccordion("blocked-users")} sx={accordionSx}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: "#a3a3a3" }} />} sx={summarySx}>
+          <RowIcon icon={<BlockIcon fontSize="small" />} />
+          <Box sx={{ flexGrow: 1 }}>
+            <Typography variant="caption" sx={{ color: "#5eead4", display: "block", lineHeight: 1.3 }}>ผู้ใช้ที่บล็อก</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Typography variant="body1" fontWeight={500}>จัดการผู้ใช้ที่บล็อก</Typography>
+              {liveBlockedUserCount > 0 && (
+                <Chip label={liveBlockedUserCount} size="small" sx={{ height: 20, fontSize: "0.7rem", bgcolor: "rgba(255,255,255,0.08)", color: "#a3a3a3" }} />
+              )}
+            </Box>
+          </Box>
+        </AccordionSummary>
+        <AccordionDetails sx={{ px: 2.5, pb: 2.5 }}>
+          <BlockedUsersPanel onCountChange={setLiveBlockedUserCount} />
+        </AccordionDetails>
+      </Accordion>
+
+      {/* แท็กที่บล็อก */}
+      <Accordion expanded={expanded === "blocked-tags"} onChange={handleAccordion("blocked-tags")} sx={accordionSx}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: "#a3a3a3" }} />} sx={summarySx}>
+          <RowIcon icon={<LocalOfferIcon fontSize="small" />} />
+          <Box sx={{ flexGrow: 1 }}>
+            <Typography variant="caption" sx={{ color: "#5eead4", display: "block", lineHeight: 1.3 }}>แท็กที่บล็อก</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Typography variant="body1" fontWeight={500}>จัดการแท็กที่บล็อก</Typography>
+              {liveBlockedTagCount > 0 && (
+                <Chip label={liveBlockedTagCount} size="small" sx={{ height: 20, fontSize: "0.7rem", bgcolor: "rgba(255,255,255,0.08)", color: "#a3a3a3" }} />
+              )}
+            </Box>
+          </Box>
+        </AccordionSummary>
+        <AccordionDetails sx={{ px: 2.5, pb: 2.5 }}>
+          <BlockedTagsPanel onCountChange={setLiveBlockedTagCount} />
+        </AccordionDetails>
+      </Accordion>
+
+      {/* Email Confirmation Dialog */}
+      <Dialog
+        open={openEmailConfirm}
+        onClose={() => setOpenEmailConfirm(false)}
+        PaperProps={{ sx: { bgcolor: "#171717", border: "1px solid rgba(255,255,255,0.1)", color: "#fafafa" } }}
+      >
+        <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <WarningIcon sx={{ color: "#fbbf24" }} />
+          ยืนยันการเปลี่ยนอีเมล
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ color: "#a3a3a3" }}>
+            ต้องการเปลี่ยนอีเมลเป็น <strong style={{ color: "#fafafa" }}>{formData.email}</strong> ใช่หรือไม่?
+            <br /><br />
+            การเปลี่ยนอีเมลอาจส่งผลต่อการเข้าสู่ระบบด้วย Google หากใช้อีเมลเดิม
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenEmailConfirm(false)} sx={{ color: "#a3a3a3" }}>ยกเลิก</Button>
+          <Button
+            onClick={handleEmailUpdate}
+            variant="contained"
+            disabled={loading === "email"}
+            sx={{ bgcolor: "#fbbf24", color: "#000", fontWeight: 700, "&:hover": { bgcolor: "#f59e0b" } }}
+          >
+            {loading === "email" ? <CircularProgress size={18} sx={{ color: "#555" }} /> : "ยืนยัน"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Box>
+  );
+}
+
+function BlockedUsersPanel({ onCountChange }: { onCountChange?: (n: number) => void }) {
+  const [blockedList, setBlockedList] = useState<any[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
+  const [removing, setRemoving] = useState<string | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/user/blocked-users");
+        if (res.ok) {
+          const data = await res.json();
+          const list = data.blockedUsers || [];
+          setBlockedList(list);
+          onCountChange?.(list.length);
+        }
+      } finally {
+        setLoadingData(false);
+      }
+    })();
+  }, []);
+
+  const handleUnblock = async (blockedUserId: string) => {
+    setRemoving(blockedUserId);
+    await fetch(`/api/user/blocked-users?blockedUserId=${blockedUserId}`, { method: "DELETE" });
+    setBlockedList((prev) => prev.filter((u) => u.blockedUserId !== blockedUserId));
+    onCountChange?.(blockedList.length - 1);
+    setRemoving(null);
+  };
+
+  if (loadingData) {
+    return <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}><CircularProgress size={24} sx={{ color: "#fbbf24" }} /></Box>;
+  }
+
+  if (blockedList.length === 0) {
+    return <Typography variant="body2" sx={{ color: "#a3a3a3" }}>ยังไม่มีผู้ใช้ที่บล็อก</Typography>;
+  }
+
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+      {blockedList.map((item) => (
+        <Box
+          key={item.id}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1.5,
+            p: 1.5,
+            bgcolor: "#262626",
+            borderRadius: 1.5,
+          }}
+        >
+          <Avatar
+            src={item.blockedUser?.image}
+            alt={item.blockedUser?.name}
+            sx={{ width: 32, height: 32, bgcolor: "#404040", fontSize: "0.875rem" }}
+          >
+            {(item.blockedUser?.name || "?").charAt(0).toUpperCase()}
+          </Avatar>
+          <Box sx={{ flexGrow: 1 }}>
+            <Typography variant="body2" fontWeight={500}>{item.blockedUser?.name || "ผู้ใช้"}</Typography>
+            {item.blockedUser?.username && (
+              <Typography variant="caption" sx={{ color: "#a3a3a3" }}>@{item.blockedUser.username}</Typography>
+            )}
+          </Box>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => handleUnblock(item.blockedUserId)}
+            disabled={removing === item.blockedUserId}
+            sx={{ color: "#ef4444", borderColor: "rgba(239,68,68,0.3)", "&:hover": { borderColor: "#ef4444", bgcolor: "rgba(239,68,68,0.08)" }, minWidth: 80 }}
+          >
+            {removing === item.blockedUserId ? <CircularProgress size={14} /> : "ยกเลิกบล็อก"}
+          </Button>
+        </Box>
+      ))}
+    </Box>
+  );
+}
+
+function BlockedTagsPanel({ onCountChange }: { onCountChange?: (n: number) => void }) {
+  const [blockedList, setBlockedList] = useState<any[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
+  const [removing, setRemoving] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+
+  const [allTags, setAllTags] = useState<any[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [tagsRes, blockedRes] = await Promise.all([
+          fetch("/api/tags"),
+          fetch("/api/user/blocked-tags"),
+        ]);
+        if (tagsRes.ok) setAllTags(await tagsRes.json());
+        if (blockedRes.ok) {
+          const data = await blockedRes.json();
+          const list = data.blockedTags || [];
+          setBlockedList(list);
+          onCountChange?.(list.length);
+        }
+      } finally {
+        setLoadingData(false);
+      }
+    })();
+  }, []);
+
+  const handleSearch = (q: string) => {
+    setSearch(q);
+    if (!q.trim()) { setSearchResults([]); return; }
+    const lower = q.toLowerCase();
+    setSearchResults(allTags.filter((t) => t.name.toLowerCase().includes(lower)));
+  };
+
+  const handleBlockTag = async (tagId: string, tagName: string) => {
+    const res = await fetch("/api/user/blocked-tags", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tagId }),
+    });
+    if (res.ok) {
+      setBlockedList((prev) => [...prev, { id: Date.now().toString(), tagId, tag: { name: tagName } }]);
+      onCountChange?.(blockedList.length + 1);
+      setSearch("");
+      setSearchResults([]);
+    }
+  };
+
+  const handleUnblock = async (tagId: string) => {
+    setRemoving(tagId);
+    await fetch(`/api/user/blocked-tags?tagId=${tagId}`, { method: "DELETE" });
+    setBlockedList((prev) => prev.filter((t) => t.tagId !== tagId));
+    onCountChange?.(blockedList.length - 1);
+    setRemoving(null);
+  };
+
+  if (loadingData) {
+    return <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}><CircularProgress size={24} sx={{ color: "#fbbf24" }} /></Box>;
+  }
+
+  return (
+    <Box>
+      <TextField
+        fullWidth
+        size="small"
+        label="ค้นหาแท็กที่ต้องการบล็อก"
+        value={search}
+        onChange={(e) => handleSearch(e.target.value)}
+        sx={{ ...inputSx, mb: 1.5 }}
+      />
+      {searchResults.length > 0 && (
+        <Box sx={{ bgcolor: "#262626", borderRadius: 1.5, mb: 2, overflow: "hidden" }}>
+          {searchResults.slice(0, 8).map((tag) => (
+            <Box
+              key={tag.id}
+              onClick={() => handleBlockTag(tag.id, tag.name)}
+              sx={{
+                px: 2, py: 1,
+                cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                "&:hover": { bgcolor: "rgba(251,191,36,0.08)" },
+              }}
+            >
+              <Typography variant="body2">{tag.name}</Typography>
+              <Typography variant="caption" sx={{ color: "#5eead4" }}>+ บล็อก</Typography>
+            </Box>
+          ))}
+        </Box>
+      )}
+
+      {blockedList.length === 0 ? (
+        <Typography variant="body2" sx={{ color: "#a3a3a3" }}>ยังไม่มีแท็กที่บล็อก</Typography>
+      ) : (
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+          {blockedList.map((item) => (
+            <Chip
+              key={item.id}
+              label={item.tag?.name || item.tagId}
+              onDelete={() => handleUnblock(item.tagId)}
+              deleteIcon={removing === item.tagId ? <CircularProgress size={14} /> : undefined}
+              sx={{
+                bgcolor: "rgba(255,255,255,0.06)",
+                color: "#fafafa",
+                border: "1px solid rgba(255,255,255,0.1)",
+                "& .MuiChip-deleteIcon": { color: "#a3a3a3", "&:hover": { color: "#ef4444" } },
+              }}
+            />
+          ))}
+        </Box>
+      )}
     </Box>
   );
 }

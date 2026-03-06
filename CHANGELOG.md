@@ -2,6 +2,57 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.9.4] - 2026-03-07
+
+### Fixed
+
+- **Display & Links**: Fixed multiple UI issues across the application
+  - Moved manga tags from standalone box to top row next to category badge
+  - Fixed header profile link navigation to correct user profile URL
+  - Resolved scroll-behavior smooth warning by adding data-scroll-behavior attribute
+  - Redesigned star rating display: 5-star visual with partial fills in stats row
+  - Reduced social URL chips spacing for cleaner layout
+
+- **Profile Management**: Enhanced user profile functionality
+  - Added "ชื่อแสดง" (display name) field in account settings
+  - Fixed username/profile update API error (updatedAt Date object issue)
+  - Profile pages now support lookup by both username and user ID
+
+- **Comment System**: Improved comment display preferences
+  - Changed from radio selection to independent toggles for comment placement
+  - Users can now show/hide "ข้างรูป (ทีละหน้า)" and "ท้ายเรื่อง" independently
+  - Added support for 'both' and 'none' comment preference states
+
+- **Account Settings**: Simplified password requirements
+  - Reduced password requirements to: 8+ chars, uppercase, lowercase, numbers
+  - Removed special character requirement
+  - Added real-time password requirements badge showing validation status
+
+### Added
+
+- **User Profile Pages**: Complete user profile system
+  - `/profile/[username]` pages with user info, stats, and action links
+  - Avatar upload functionality with preview and Cloudflare R2 storage
+  - "My Comments" page to view all user's comments
+  - Profile breadcrumb navigation with fallback to user ID
+
+- **Blocking System**: Enhanced moderation features
+  - Block/unblock users and tags from account settings
+  - Filter manga list to exclude items with blocked tags
+  - Real-time count updates for blocked items
+
+- **Comment Moderation**: Block user dropdown in comments
+  - Quick block/unblock options next to usernames in comments
+  - Profile view links for blocked users
+
+### Changed
+
+- Updated MangaViewRating component with flexible hideInteractive/hideAverage props
+- Improved error handling for setState-in-render issues
+- Enhanced UI consistency across settings panels
+
+---
+
 ## [1.9.3] - 2026-03-04
 
 ### Changed

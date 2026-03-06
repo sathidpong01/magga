@@ -22,7 +22,7 @@ interface MangaCardProps {
   priority?: boolean;
 }
 
-function MangaCard({ manga, priority = false }: MangaCardProps) {
+const MangaCard = ({ manga, priority = false }: MangaCardProps) => {
   return (
     <Card
       sx={{
@@ -30,16 +30,11 @@ function MangaCard({ manga, priority = false }: MangaCardProps) {
         position: "relative",
         borderRadius: 1, // 16px standard
         overflow: "hidden",
-        boxShadow:
-          "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
         transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
         "&:hover": {
           transform: "translateY(-4px)",
-          boxShadow:
-            "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
         },
-        bgcolor: "#171717",
-        border: "1px solid rgba(255,255,255,0.05)",
+        bgcolor: "#000000",
       }}
     >
       <CardActionArea
@@ -68,17 +63,16 @@ function MangaCard({ manga, priority = false }: MangaCardProps) {
             }}
           />
         </Box>
-        <Box
-          sx={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            p: 3,
-            color: "white",
-          }}
-        >
-          {manga.category && (
+        {/* Category chip - top-right */}
+        {manga.category && (
+          <Box
+            sx={{
+              position: "absolute",
+              top: 8,
+              right: 8,
+              zIndex: 2,
+            }}
+          >
             <Chip
               label={manga.category.name}
               size="small"
@@ -86,32 +80,44 @@ function MangaCard({ manga, priority = false }: MangaCardProps) {
                 bgcolor: "#fbbf24",
                 color: "black",
                 fontWeight: "bold",
-                mb: 1,
                 height: 20,
                 fontSize: "0.7rem",
               }}
             />
-          )}
+          </Box>
+        )}
+
+        <Box
+          sx={{
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            p: 1.5,
+            color: "white",
+          }}
+        >
           <Typography
-            variant="h5"
+            variant="body1"
             component="h2"
             fontWeight={600}
             sx={{
-              mb: 0.5,
+              mb: 0.125,
               textShadow: "0 2px 4px rgba(0,0,0,0.8)", // Stronger shadow
               overflow: "hidden",
               textOverflow: "ellipsis",
               display: "-webkit-box",
               WebkitLineClamp: 2,
               WebkitBoxOrient: "vertical",
-              lineHeight: 1.2,
+              lineHeight: 1.1,
+              fontSize: "0.95rem",
               color: "#fff",
             }}
           >
             {manga.title}
           </Typography>
           <Box
-            sx={{ display: "flex", alignItems: "center", gap: 1, opacity: 0.9 }}
+            sx={{ display: "flex", alignItems: "center", gap: 0.5, opacity: 0.9 }}
           >
             {manga.averageRating > 0 && (
               <>

@@ -119,6 +119,7 @@ export const profiles = pgTable("profiles", {
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'date' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'date' }).defaultNow().notNull(),
 	banned: boolean().default(false),
+	commentPreference: text("comment_preference").default('sidebar').notNull(),
 }, (table) => [
 	unique("profiles_email_key").on(table.email),
 	unique("profiles_username_key").on(table.username),
@@ -440,6 +441,38 @@ export const _mangaTags = pgTable("_MangaTags", {
   WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
 	pgPolicy("_MangaTags_admin_write", { as: "permissive", for: "insert", to: ["authenticated"] }),
 	pgPolicy("_MangaTags_select", { as: "permissive", for: "select", to: ["public"] }),
+]);
+
+export const blockedUsers = pgTable("blocked_users", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	userId: text("user_id").notNull(),
+	blockedUserId: text("blocked_user_id").notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'date' }).defaultNow().notNull(),
+}, (table) => [
+	index("idx_blocked_users_user").using("btree", table.userId.asc().nullsLast()),
+	index("idx_blocked_users_blocked").using("btree", table.blockedUserId.asc().nullsLast()),
+	foreignKey({ columns: [table.userId], foreignColumns: [profiles.id], name: "blocked_users_user_id_fkey" }).onDelete("cascade"),
+	foreignKey({ columns: [table.blockedUserId], foreignColumns: [profiles.id], name: "blocked_users_blocked_user_id_fkey" }).onDelete("cascade"),
+	unique("blocked_users_user_id_blocked_user_id_key").on(table.userId, table.blockedUserId),
+	pgPolicy("blocked_users_select", { as: "permissive", for: "select", to: ["authenticated"], using: sql`user_id = (SELECT auth.uid()::text)` }),
+	pgPolicy("blocked_users_insert", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: sql`user_id = (SELECT auth.uid()::text)` }),
+	pgPolicy("blocked_users_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: sql`user_id = (SELECT auth.uid()::text)` }),
+]);
+
+export const blockedTags = pgTable("blocked_tags", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	userId: text("user_id").notNull(),
+	tagId: uuid("tag_id").notNull(),
+	createdAt: timestamp("created_at", { withTimezone: true, mode: 'date' }).defaultNow().notNull(),
+}, (table) => [
+	index("idx_blocked_tags_user").using("btree", table.userId.asc().nullsLast()),
+	index("idx_blocked_tags_tag").using("btree", table.tagId.asc().nullsLast()),
+	foreignKey({ columns: [table.userId], foreignColumns: [profiles.id], name: "blocked_tags_user_id_fkey" }).onDelete("cascade"),
+	foreignKey({ columns: [table.tagId], foreignColumns: [tags.id], name: "blocked_tags_tag_id_fkey" }).onDelete("cascade"),
+	unique("blocked_tags_user_id_tag_id_key").on(table.userId, table.tagId),
+	pgPolicy("blocked_tags_select", { as: "permissive", for: "select", to: ["authenticated"], using: sql`user_id = (SELECT auth.uid()::text)` }),
+	pgPolicy("blocked_tags_insert", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: sql`user_id = (SELECT auth.uid()::text)` }),
+	pgPolicy("blocked_tags_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: sql`user_id = (SELECT auth.uid()::text)` }),
 ]);
 
 export const mangaTags = pgTable("manga_tags", {

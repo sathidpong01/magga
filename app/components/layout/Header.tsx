@@ -28,6 +28,7 @@ import PersonIcon from "@mui/icons-material/Person";
 import SettingsIcon from "@mui/icons-material/Settings";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import { useToast } from "@/app/contexts/ToastContext";
+import AuthModal from "@/app/components/features/auth/AuthModal";
 
 export default function Header() {
   const { data: session } = useSession();
@@ -35,6 +36,7 @@ export default function Header() {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
 
   // Handle Scroll Effect
   useEffect(() => {
@@ -56,6 +58,7 @@ export default function Header() {
   const isAdmin = (session?.user as any)?.role === "admin";
 
   return (
+    <>
     <AppBar
       position="sticky"
       elevation={0}
@@ -226,17 +229,15 @@ export default function Header() {
               </Button>
             )}
 
-            {/* Profile / Menu - Reserve space with placeholder */}
+            {/* Profile / Login area */}
             <Box
               sx={{
-                width: 40,
-                height: 40,
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center",
+                justifyContent: "flex-end",
               }}
             >
-              {session && (
+              {session ? (
                 <IconButton
                   onClick={handleMenuOpen}
                   aria-label="Open user menu"
@@ -253,6 +254,19 @@ export default function Header() {
                     {session.user?.name?.charAt(0) || <PersonIcon />}
                   </Avatar>
                 </IconButton>
+              ) : (
+                <Button
+                  variant="outlined"
+                  onClick={() => setAuthModalOpen(true)}
+                  sx={{
+                    color: "#fafafa",
+                    borderColor: "rgba(255,255,255,0.2)",
+                    fontWeight: 600,
+                    "&:hover": { borderColor: "#fbbf24", color: "#fbbf24", bgcolor: "rgba(251,191,36,0.06)" },
+                  }}
+                >
+                  เข้าสู่ระบบ
+                </Button>
               )}
             </Box>
           </Box>
@@ -360,12 +374,23 @@ export default function Header() {
                 <MenuItem
                   onClick={handleMenuClose}
                   component={Link}
+                  href={`/profile/${(session?.user as any)?.username || session?.user?.id || ""}`}
+                >
+                  <ListItemIcon>
+                    <PersonIcon sx={{ color: "#5eead4" }} />
+                  </ListItemIcon>
+                  หน้าโปรไฟล์
+                </MenuItem>
+
+                <MenuItem
+                  onClick={handleMenuClose}
+                  component={Link}
                   href="/settings"
                 >
                   <ListItemIcon>
                     <SettingsIcon sx={{ color: "#fbbf24" }} />
                   </ListItemIcon>
-                  Settings
+                  ตั้งค่าบัญชี
                 </MenuItem>
 
                 <MenuItem 
@@ -379,7 +404,7 @@ export default function Header() {
                   <ListItemIcon>
                     <LogoutIcon sx={{ color: "#a3a3a3" }} />
                   </ListItemIcon>
-                  Sign Out
+                  ออกจากระบบ
                 </MenuItem>
               </Box>
             ) : (
@@ -396,14 +421,12 @@ export default function Header() {
                 </MenuItem>
                 <Divider sx={{ borderColor: "rgba(255,255,255,0.1)" }} />
                 <MenuItem
-                  onClick={handleMenuClose}
-                  component={Link}
-                  href="/auth/signin"
+                  onClick={() => { handleMenuClose(); setAuthModalOpen(true); }}
                 >
                   <ListItemIcon>
                     <PersonIcon sx={{ color: "#fbbf24" }} />
                   </ListItemIcon>
-                  Sign In
+                  เข้าสู่ระบบ
                 </MenuItem>
               </Box>
             )}
@@ -411,5 +434,11 @@ export default function Header() {
         </Toolbar>
       </Container>
     </AppBar>
+
+    <AuthModal
+      open={authModalOpen}
+      onClose={() => setAuthModalOpen(false)}
+    />
+    </>
   );
 }

@@ -30,7 +30,7 @@ _พัฒนาด้วย Next.js 16 (App Router) และระบบจั
 - **Styling:**
   - [Tailwind CSS v4](https://tailwindcss.com/)
   - [Material UI (MUI) v7](https://mui.com/) (สำหรับ Component ต่างๆ)
-- **Authentication:** [Better Auth](https://better-auth.com/) (Credentials Provider)
+- **Authentication:** [Better Auth](https://better-auth.com/) (Credentials + Google OAuth)
 - **Analytics:** [Vercel Analytics](https://vercel.com/analytics)
 - **Image Processing:** [Sharp](https://sharp.pixelplumbing.com/) (Server-side compression & WebP conversion)
 
@@ -60,6 +60,16 @@ _พัฒนาด้วย Next.js 16 (App Router) และระบบจั
   - แสดงความคิดเห็นท้ายเรื่อง พร้อมระบบ Reply, Vote, และแนบรูปภาพ
   - **New!** **Image Lightbox:** กดรูปในคอมเมนต์เพื่อขยายดูแบบ Fullscreen (ไม่ redirect ไปยัง URL)
   - **New!** **Server-First Comments:** Comments ถูก render จาก Server โดยตรง ลด JavaScript ฝั่ง Client
+  - **New!** **Comment Placement:** เลือกแสดงความคิดเห็นข้างรูป (ทีละหน้า) หรือท้ายเรื่อง แบบอิสระ
+- **User Profiles:**
+  - **New!** **Profile Pages:** `/profile/[username]` แสดงข้อมูลผู้ใช้, สถิติ, และประวัติความคิดเห็น
+  - **New!** **Avatar Upload:** อัปโหลดรูปโปรไฟล์พร้อม preview และบันทึกลง Cloudflare R2
+  - **New!** **Display Name:** ตั้งชื่อแสดงที่ปรากฏในโปรไฟล์และความคิดเห็น
+  - **New!** **My Comments:** ดูความคิดเห็นทั้งหมดของผู้ใช้ในหน้าโปรไฟล์
+- **Blocking & Moderation:**
+  - **New!** **Block Users:** บล็อกผู้ใช้จากโปรไฟล์หรือความคิดเห็น ป้องกันการเห็นเนื้อหา
+  - **New!** **Block Tags:** กรองมังงะที่มีแท็กที่ไม่ต้องการออกจากหน้าแรก
+  - **New!** **Quick Block Dropdown:** ปุ่มบล็อกถัดจากชื่อผู้ใช้ในความคิดเห็น
 - **Custom 404 Page:** หน้าแจ้งเตือนเมื่อไม่พบเนื้อหา ดีไซน์สวยงามเข้ากับธีมมังงะ
 
 ### ⚙️ ระบบหลังบ้าน (Admin Panel)
@@ -84,7 +94,7 @@ _พัฒนาด้วย Next.js 16 (App Router) และระบบจั
   - **New!** **Admin Authorization:** ระบบตรวจสอบสิทธิ์ Admin ครบทุก API route (requireAdmin helper)
   - **New!** **Rate Limiting:** ป้องกัน Brute Force และ Spam (Login, Registration, Password Change, Comments)
   - **New!** **Input Sanitization:** ป้องกัน XSS Attack สำหรับ Tags, Categories, Authors, Comments
-  - **New!** **Password Strength:** ต้องมีอย่างน้อย 8 ตัวอักษร, ตัวพิมพ์ใหญ่, ตัวพิมพ์เล็ก, ตัวเลข และอักขระพิเศษ
+  - **New!** **Password Strength:** ต้องมีอย่างน้อย 8 ตัวอักษร, ตัวพิมพ์ใหญ่, ตัวพิมพ์เล็ก และตัวเลข (ไม่ต้องมีอักขระพิเศษ)
   - **New!** **ZAP Security Audit:** ผ่านการตรวจสอบความปลอดภัยด้วย OWASP ZAP
   - **New!** **DevTools Protection:** ระบบตรวจจับและป้องกัน DevTools เพื่อป้องกันการขโมยข้อมูล
   - **New!** **Policy Pages:** หน้านโยบายความเป็นส่วนตัว, ข้อตกลงในการใช้งาน และรายงานการละเมิด (DMCA)
@@ -121,9 +131,13 @@ npm install
 # Database (Turso / LibSQL)
 TURSO_DATABASE_URL="libsql://..."
 
-# NextAuth Configuration
-NEXTAUTH_URL="http://localhost:3000"
-NEXTAUTH_SECRET="your-super-secret-key-change-me"
+# Better Auth Configuration
+BETTER_AUTH_SECRET="your-super-secret-key-change-me"
+BETTER_AUTH_URL="http://localhost:3000"
+
+# Google OAuth (Optional)
+GOOGLE_CLIENT_ID="your-google-client-id"
+GOOGLE_CLIENT_SECRET="your-google-client-secret"
 
 # Cloudflare R2 Storage
 R2_ACCOUNT_ID="your-account-id"

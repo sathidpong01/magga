@@ -15,4 +15,5 @@ export const {
   useSession,
   getSession,
   updateUser,
+  linkSocial,
 } = authClient;

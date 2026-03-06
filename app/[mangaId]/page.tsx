@@ -254,23 +254,44 @@ export default async function MangaPage({ params }: MangaPageProps) {
               size={{ xs: 12, md: 8, lg: 9 }}
             >
               <Box>
-                {manga.category && (
-                  <Chip
-                    label={manga.category.name}
-                    component="a"
-                    href={`/category/${encodeURIComponent(manga.category.name)}`}
-                    clickable
-                    sx={{
-                      bgcolor: "#fbbf24",
-                      color: "black",
-                      fontWeight: "bold",
-                      mb: 2,
-                      fontSize: "0.85rem",
-                      height: 28,
-                      "&:hover": { bgcolor: "#f59e0b" },
-                    }}
-                  />
-                )}
+                {/* Category + Tags top row */}
+                <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1, mb: 2 }}>
+                  {manga.category && (
+                    <Chip
+                      label={manga.category.name}
+                      component="a"
+                      href={`/category/${encodeURIComponent(manga.category.name)}`}
+                      clickable
+                      sx={{
+                        bgcolor: "#fbbf24",
+                        color: "black",
+                        fontWeight: "bold",
+                        fontSize: "0.85rem",
+                        height: 28,
+                        "&:hover": { bgcolor: "#f59e0b" },
+                      }}
+                    />
+                  )}
+                  {manga.tags?.map((tag: any) => (
+                    <LinkChip
+                      key={tag.id}
+                      label={tag.name}
+                      href={`/tag/${encodeURIComponent(tag.name)}`}
+                      size="small"
+                      sx={{
+                        height: 28,
+                        backgroundColor: "rgba(56, 189, 248, 0.1)",
+                        color: "#38bdf8",
+                        border: "1px solid rgba(56, 189, 248, 0.3)",
+                        fontSize: "0.82rem",
+                        "&:hover": {
+                          backgroundColor: "rgba(56, 189, 248, 0.2)",
+                          borderColor: "#38bdf8",
+                        },
+                      }}
+                    />
+                  ))}
+                </Box>
 
                 <Typography
                   variant="h2"
@@ -300,7 +321,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
                       }[];
                       if (links.length > 0) {
                         return (
-                          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2, mb: 2 }}>
+                          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
                             {links.map((link, index) => (
                               <Chip
                                 key={index}
@@ -347,15 +368,14 @@ export default async function MangaPage({ params }: MangaPageProps) {
                       {Number(manga.viewCount).toLocaleString()} Views
                     </Typography>
                   </Box>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                    <StarIcon sx={{ fontSize: 20, color: "#fbbf24" }} />
-                    <Typography variant="subtitle1" fontWeight={500} sx={{ color: "white" }}>
-                      {manga.averageRating > 0 ? manga.averageRating.toFixed(1) : "No rating"}
-                    </Typography>
-                    <Typography variant="body2" sx={{ opacity: 0.7 }}>
-                      ({manga.ratingCount} ratings)
-                    </Typography>
-                  </Box>
+                  <MangaViewRating
+                    mangaId={manga.id}
+                    initialViewCount={Number(manga.viewCount)}
+                    initialAverageRating={manga.averageRating}
+                    initialRatingCount={Number(manga.ratingCount)}
+                    hideViewCount={true}
+                    hideInteractive
+                  />
                 </Stack>
 
                 <Typography
@@ -371,33 +391,15 @@ export default async function MangaPage({ params }: MangaPageProps) {
                   {manga.description}
                 </Typography>
 
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 3 }}>
-                  {manga.tags.map((tag: any) => (
-                    <LinkChip
-                      key={tag.id}
-                      label={tag.name}
-                      href={`/tag/${encodeURIComponent(tag.name)}`}
-                      sx={{
-                        backgroundColor: "rgba(56, 189, 248, 0.1)",
-                        color: "#38bdf8",
-                        border: "1px solid rgba(56, 189, 248, 0.3)",
-                        fontSize: "0.85rem",
-                        "&:hover": {
-                          backgroundColor: "rgba(56, 189, 248, 0.2)",
-                          borderColor: "#38bdf8",
-                        },
-                      }}
-                    />
-                  ))}
-                </Box>
-
                 <MangaViewRating
                   mangaId={manga.id}
                   initialViewCount={Number(manga.viewCount)}
                   initialAverageRating={manga.averageRating}
                   initialRatingCount={Number(manga.ratingCount)}
                   hideViewCount={true}
+                  hideAverage
                 />
+
               </Box>
             </Grid>
           </Grid>
