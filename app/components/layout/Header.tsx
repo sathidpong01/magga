@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import {
   AppBar,
@@ -28,10 +28,11 @@ import PersonIcon from "@mui/icons-material/Person";
 import SettingsIcon from "@mui/icons-material/Settings";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import { useToast } from "@/app/contexts/ToastContext";
-import AuthModal from "@/app/components/features/auth/AuthModal";
+import dynamic from "next/dynamic";
+const AuthModal = dynamic(() => import("@/app/components/features/auth/AuthModal"), { ssr: false });
 
 export default function Header() {
-  const { data: session } = useSession();
+  const { data: session, isPending } = useSession();
   const { showSuccess } = useToast();
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
@@ -237,7 +238,16 @@ export default function Header() {
                 justifyContent: "flex-end",
               }}
             >
-              {session ? (
+              {isPending ? (
+                <Box
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: "50%",
+                    bgcolor: "rgba(255,255,255,0.08)",
+                  }}
+                />
+              ) : session ? (
                 <IconButton
                   onClick={handleMenuOpen}
                   aria-label="Open user menu"
@@ -300,7 +310,15 @@ export default function Header() {
             transformOrigin={{ horizontal: "right", vertical: "top" }}
             anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
           >
-            {session ? (
+            {isPending ? (
+              <Box sx={{ px: 2, py: 2, display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box sx={{ width: 32, height: 32, borderRadius: "50%", bgcolor: "rgba(255,255,255,0.08)" }} />
+                <Box>
+                  <Box sx={{ width: 80, height: 12, borderRadius: 1, bgcolor: "rgba(255,255,255,0.08)", mb: 0.5 }} />
+                  <Box sx={{ width: 50, height: 10, borderRadius: 1, bgcolor: "rgba(255,255,255,0.05)" }} />
+                </Box>
+              </Box>
+            ) : session ? (
               <Box>
                 <Box sx={{ px: 2, py: 1.5 }}>
                   <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>

@@ -23,6 +23,7 @@ import ServerCommentSection from "@/app/components/features/comments/ServerComme
 import { Suspense } from "react";
 import { AdContainer } from "@/app/components/features/ads";
 import ScrollToTop from "@/app/components/ui/ScrollToTop";
+import ShareButton from "@/app/components/ui/ShareButton";
 import { unstable_cache } from "next/cache";
 
 type MangaPageProps = {
@@ -171,8 +172,55 @@ export default async function MangaPage({ params }: MangaPageProps) {
     }
   })();
 
+  const baseUrl = process.env.NEXTAUTH_URL || "https://magga.vercel.app";
+  const authorName = manga.author?.name || manga.authorName;
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ComicStory",
+    name: manga.title,
+    url: `${baseUrl}/${manga.slug}`,
+    image: manga.coverImage,
+    description: manga.description || undefined,
+    author: authorName
+      ? { "@type": "Person", name: authorName }
+      : undefined,
+    genre: [
+      manga.category?.name,
+      ...manga.tags.map((t: any) => t.name),
+    ].filter(Boolean),
+    numberOfPages: pages.length,
+    inLanguage: "th",
+    isAccessibleForFree: true,
+    publisher: {
+      "@type": "Organization",
+      name: "MAGGA",
+      url: baseUrl,
+      logo: { "@type": "ImageObject", url: `${baseUrl}/android-chrome-512x512.png` },
+    },
+    aggregateRating:
+      Number(manga.ratingCount) > 0
+        ? {
+            "@type": "AggregateRating",
+            ratingValue: manga.averageRating,
+            ratingCount: Number(manga.ratingCount),
+            bestRating: 5,
+            worstRating: 1,
+          }
+        : undefined,
+    interactionStatistic: {
+      "@type": "InteractionCounter",
+      interactionType: "https://schema.org/ReadAction",
+      userInteractionCount: Number(manga.viewCount),
+    },
+  };
+
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#0a0a0a", pb: 8 }}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       {/* Hero / Header Section with Blurred Background */}
       <Box sx={{ position: "relative", overflow: "hidden", mb: -4 }}>
         {/* Background Image Layer */}
@@ -188,7 +236,8 @@ export default async function MangaPage({ params }: MangaPageProps) {
         >
           <Image
             src={manga.coverImage}
-            alt=""
+            alt={`Background of ${manga.title}`}
+            role="presentation"
             fill
             style={{ objectFit: "cover" }}
             priority
@@ -376,6 +425,9 @@ export default async function MangaPage({ params }: MangaPageProps) {
                     hideViewCount={true}
                     hideInteractive
                   />
+                  <Box sx={{ ml: "auto !important" }}>
+                    <ShareButton title={manga.title} slug={manga.slug} />
+                  </Box>
                 </Stack>
 
                 <Typography

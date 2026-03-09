@@ -142,7 +142,7 @@ export default function MangaReader({
   return (
     <Box sx={{ position: "relative" }}>
       {/* Reading Progress Indicator */}
-      <ReadingProgress currentPage={currentPage} totalPages={pages.length} />
+      <ReadingProgress mangaId={mangaId} currentPage={currentPage} totalPages={pages.length} pageRefs={pageRefs} />
 
       <Box
         sx={{

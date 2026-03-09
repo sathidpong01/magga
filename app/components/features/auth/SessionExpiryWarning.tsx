@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useSession, signOut } from "@/lib/auth-client";
+import { useSession, signOut, getSession } from "@/lib/auth-client";
 import { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
@@ -47,11 +47,11 @@ export default function SessionExpiryWarning() {
   }, [session?.session?.expiresAt]);
 
   useEffect(() => {
-    if (status !== "authenticated") return;
+    if (isPending || !session) return;
     checkSessionExpiry();
     const interval = setInterval(checkSessionExpiry, CHECK_INTERVAL_MS);
     return () => clearInterval(interval);
-  }, [status, checkSessionExpiry]);
+  }, [isPending, session, checkSessionExpiry]);
 
   useEffect(() => {
     if (!showWarning) return;
@@ -71,10 +71,13 @@ export default function SessionExpiryWarning() {
   const handleExtendSession = async () => {
     setIsExtending(true);
     try {
-      // Better Auth: refetch session to reset expiry timer
+      // Better Auth: refetch session to reset expiry timer on the server
+      await getSession({ query: { disableCookieCache: true } });
       setShowWarning(false);
     } catch (error) {
-      console.error("Failed to extend session:", error);
+      if (process.env.NODE_ENV !== "production") {
+        console.error("Failed to extend session:", error);
+      }
     } finally {
       setIsExtending(false);
     }

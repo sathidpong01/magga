@@ -73,6 +73,10 @@ export const auth = betterAuth({
   session: {
     expiresIn: 3 * 24 * 60 * 60, // 3 days
     updateAge: 24 * 60 * 60,      // refresh every 24h
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60, // 5 minutes — short enough to pick up bans/role changes
+    },
   },
 });
 
