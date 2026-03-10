@@ -2,8 +2,6 @@ import type { Metadata } from "next";
 import { Kanit } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./components/layout/Providers";
-import dynamic from "next/dynamic";
-const AgeVerificationModal = dynamic(() => import("./components/features/auth/AgeVerificationModal"), { ssr: false });
 import ErrorBoundary from "./components/common/ErrorBoundary";
 import LayoutWrapper from "./components/layout/LayoutWrapper";
 import LazyClientComponents from "./components/layout/LazyClientComponents";
@@ -84,7 +82,6 @@ export default function RootLayout({
       <body className={kanit.className}>
         <ErrorBoundary>
           <Providers>
-            <AgeVerificationModal />
             <LazyClientComponents />
             <LayoutWrapper>{children}</LayoutWrapper>
           </Providers>
