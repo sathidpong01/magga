@@ -1,9 +1,11 @@
 ---
 name: magga-development
-description: Comprehensive development guidelines for Magga - a Next.js manga management system with Turso (LibSQL), Drizzle ORM, Better Auth, and Material-UI. Features include user profiles, blocking system, comment moderation, avatar uploads, and simplified password requirements. Use when making changes to the codebase, adding features, fixing bugs, or optimizing performance.
+description: Comprehensive development guidelines for Magga - a Next.js manga management system with PostgreSQL, Drizzle ORM, Better Auth, and Material-UI v7. Features include user profiles, blocking system, comment moderation, avatar uploads. Use when making changes to the codebase, adding features, fixing bugs, or optimizing performance.
 ---
 
 # Magga Development Skill
+
+> **Note:** Additional rules are defined in `AGENTS.md` at the project root. Always read `AGENTS.md` before making changes.
 
 This skill provides guidelines for developing features in the Magga manga management system.
 
@@ -11,19 +13,23 @@ This skill provides guidelines for developing features in the Magga manga manage
 
 **Magga** is a modern manga management web application built with:
 
-- **Framework**: Next.js 16 (App Router)
-- **Database**: Turso (LibSQL) with Drizzle ORM
-- **Authentication**: Better Auth (Credentials + Google OAuth)
-- **UI Library**: Material-UI (MUI)
-- **Styling**: TailwindCSS
-- **Language**: TypeScript
-- **Storage**: Cloudflare R2 for images and avatars
-- **Features**: User profiles, blocking system, comment moderation
+| Stack | Version |
+|-------|---------|
+| **Framework** | Next.js 16.1.6 (App Router) |
+| **Database** | PostgreSQL via `pg` + `postgres` drivers |
+| **ORM** | Drizzle ORM 0.45.1 |
+| **Authentication** | Better Auth 1.5.3 (Credentials + Google OAuth) |
+| **UI Library** | Material-UI (MUI) v7.3.8 |
+| **Styling** | Tailwind CSS v4 |
+| **Language** | TypeScript 5.9 |
+| **Storage** | Cloudflare R2 (images & avatars via `@aws-sdk/client-s3`) |
+| **Deployment** | Vercel Hobby Plan |
+
+> ⚠️ **Vercel Hobby Limits**: Max 60s execution per Serverless Function. No background jobs. Free plan = 1 project. Keep Edge Functions lightweight.
 
 ## When to Use This Skill
 
 Use this skill when:
-
 - Adding new features to Magga
 - Fixing bugs or issues
 - Optimizing performance
@@ -59,8 +65,8 @@ Is it a new page?
 
 ```
 Need to modify database?
-├─ Update `db/schema.ts`
-├─ Run `npm run db:generate` and `npm run db:push`
+├─ Update `db/schema.ts` (PostgreSQL dialect)
+├─ Run `npm run db:generate` then `npm run db:migrate`
 ├─ Update TypeScript types if needed
 └─ Update affected API endpoints and components
 ```
@@ -71,15 +77,13 @@ Need to modify database?
 Creating new API endpoint?
 ├─ Create route.ts in `app/api/<endpoint>/`
 ├─ Implement proper HTTP methods (GET, POST, PUT, DELETE)
-├─ Add authentication check using `getServerSession`
-├─ Validate request body/params
+├─ Add authentication check using Better Auth session
+├─ Validate request body/params with Zod
 ├─ Handle errors gracefully
 └─ Return appropriate status codes and data
 ```
 
 ## Code Review Checklist
-
-When reviewing or creating code, ensure:
 
 ### ✅ General Best Practices
 
@@ -89,32 +93,33 @@ When reviewing or creating code, ensure:
 - [ ] Console.logs removed (except for debugging purposes)
 - [ ] Accessibility considerations (ARIA labels, semantic HTML)
 
-### ✅ Next.js Specific
+### ✅ Next.js 16+ Specific
 
 - [ ] Server Components used by default
-- [ ] Client Components marked with 'use client'
-- [ ] Dynamic routes properly typed (params are awaited in Next.js 16)
+- [ ] Client Components marked with `'use client'`
+- [ ] `params` and `searchParams` are **awaited** (async in Next.js 15+)
+- [ ] `cookies()` and `headers()` are **awaited**
 - [ ] Images use `next/image` with proper sizing
 - [ ] Fonts loaded via `next/font`
 - [ ] Metadata properly configured for SEO
 
 ### ✅ Database & Drizzle
 
-- [ ] Drizzle queries include necessary relations (use db.query API)
-- [ ] Database connections properly closed
+- [ ] Drizzle queries include necessary relations (use `db.query` API)
 - [ ] Indexes used for frequently queried fields
-- [ ] Soft deletes considered for important data
 - [ ] Migrations have descriptive names
+- [ ] No N+1 queries — use `.with()` for relations
+- [ ] Use `db.transaction()` for multi-step writes
 
 ### ✅ Authentication & Security
 
-- [ ] Routes protected with authentication checks
+- [ ] Routes protected with Better Auth session checks
 - [ ] Role-based access control (RBAC) implemented where needed
 - [ ] Input sanitization for user-provided data
 - [ ] CSRF protection enabled
 - [ ] Sensitive data not exposed in client components
 
-### ✅ UI/UX
+### ✅ UI/UX (MUI v7)
 
 - [ ] Responsive design (mobile, tablet, desktop)
 - [ ] Loading states with skeletons
@@ -124,11 +129,11 @@ When reviewing or creating code, ensure:
 
 ### ✅ Performance
 
-- [ ] Static pages use ISR (Incremental Static Regeneration) when appropriate
+- [ ] Static pages use ISR when appropriate
 - [ ] Dynamic imports for heavy components
-- [ ] Images optimized (next/image with proper sizes)
+- [ ] Images optimized (`next/image` with proper sizes)
 - [ ] Database queries optimized (no N+1 queries)
-- [ ] Caching strategies implemented
+- [ ] API routes stay under 60s (Vercel Hobby limit)
 
 ## Common Patterns
 
@@ -145,7 +150,7 @@ export default async function MangaPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
+  const { id } = await params; // Must await in Next.js 15+
 
   const manga = await db.query.manga.findFirst({
     where: eq(mangaTable.id, id),
@@ -157,9 +162,7 @@ export default async function MangaPage({
     },
   });
 
-  if (!manga) {
-    notFound();
-  }
+  if (!manga) notFound();
 
   return <MangaDetail manga={manga} />;
 }
@@ -183,88 +186,55 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    // Validate and process request
     const [result] = await db.insert(mangaTable).values(body).returning();
-
     return NextResponse.json(result);
   } catch (error) {
     console.error("Error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 ```
 
-### Form Component with Validation
+### Form Component with React 19 Patterns
 
 ```typescript
 "use client";
 
-import { useState } from "react";
+import { useActionState } from "react";
 import { useRouter } from "next/navigation";
 import { TextField, Button } from "@mui/material";
 
 export default function MangaForm() {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const router = useRouter();
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    try {
-      const formData = new FormData(e.currentTarget);
+  const [state, action, pending] = useActionState(
+    async (prevState: unknown, formData: FormData) => {
       const response = await fetch("/api/manga", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(Object.fromEntries(formData)),
       });
-
-      if (!response.ok) throw new Error("Failed to create manga");
-
+      if (!response.ok) return { error: "Failed to create manga" };
       router.push("/admin/manga");
       router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
-    } finally {
-      setLoading(false);
-    }
-  };
+      return { success: true };
+    },
+    null
+  );
 
-  return <form onSubmit={handleSubmit}>{/* Form fields */}</form>;
+  return <form action={action}>{/* Form fields */}</form>;
 }
 ```
-
-## Testing Guidelines
-
-### Before Committing
-
-1. Run `npm run build` to ensure no build errors
-2. Test the feature in development mode
-3. Check for TypeScript errors
-4. Verify database migrations work correctly
-5. Test authentication flows if applicable
-
-### Deployment to Vercel
-
-1. Ensure environment variables are set in Vercel
-2. Database connection strings configured
-3. Run migrations on production database
-4. Test critical flows after deployment
 
 ## File Organization
 
 ```
-d:\magga\
+magga/
+├── AGENTS.md             # Project rules (read this first!)
 ├── app/
-│   ├── (auth)/           # Authentication pages
+│   ├── (auth)/           # Authentication pages (login, register)
 │   ├── admin/            # Admin dashboard and management
 │   ├── api/              # API routes
-│   │   └── user/         # User-specific APIs (avatar, blocked users/tags, comments)
+│   │   └── user/         # User-specific APIs (avatar, blocked, comments)
 │   ├── components/       # React components
 │   │   ├── features/     # Feature-specific components
 │   │   ├── forms/        # Form components
@@ -272,10 +242,13 @@ d:\magga\
 │   │   └── ui/           # Reusable UI components
 │   ├── manga/            # Manga-related pages
 │   ├── profile/          # User profile pages
-│   ├── settings/         # Account settings
-│   └── ...
-├── lib/                  # Utility functions and configurations
-├── db/                   # Database instance and Drizzle schema
+│   └── settings/         # Account settings
+├── db/                   # Drizzle instance + schema (PostgreSQL)
+│   ├── index.ts          # Singleton db connection
+│   └── schema.ts         # Table definitions
+├── lib/                  # Utility functions
+│   ├── auth.ts           # Better Auth config
+│   └── rate-limit.ts     # Rate limiting
 ├── public/               # Static assets
 └── types/                # TypeScript type definitions
 ```
@@ -284,51 +257,51 @@ d:\magga\
 
 ```bash
 # Development
-npm run dev                          # Start dev server
+npm run dev                # Start dev server
 
-# Database
-npm run db:generate                 # Generate migrations
-npm run db:migrate                  # Apply migrations
-npm run db:push                     # Push schema changes (for dev/prototyping)
-npm run db:studio                   # Open Drizzle Studio
+# Database (PostgreSQL + Drizzle)
+npm run db:generate        # Generate migration files
+npm run db:migrate         # Apply migrations to DB
+npm run db:push            # Push schema (dev/prototyping only)
+npm run db:studio          # Open Drizzle Studio UI
 
 # Build & Production
-npm run build                       # Build for production
-npm start                           # Start production server
+npm run build              # Build for production
+npm start                  # Start production server
 
 # Code Quality
-npm run lint                        # Run ESLint
+npm run lint               # Run ESLint
 ```
 
 ## Common Issues & Solutions
 
 ### Issue: Hydration Mismatch
+**Solution**: Ensure server and client render the same content. Use `suppressHydrationWarning` or wrap dynamic content in Client Components.
 
-**Solution**: Ensure server and client render the same content. Use `suppressHydrationWarning` if needed, or wrap dynamic content in Client Components.
-
-### Issue: Database Connection Pool Exhausted
-
-**Solution**: Ensure Drizzle client is properly instantiated as a singleton. Check `db/index.ts`.
+### Issue: `params` / `cookies()` / `headers()` not awaited
+**Solution**: All these APIs are async in Next.js 15+. Always `await` them.
+```typescript
+const { id } = await params;
+const cookieStore = await cookies();
+const headersList = await headers();
+```
 
 ### Issue: Session Not Persisting
-
-**Solution**: Verify Better Auth configuration in `lib/auth.ts`, ensure cookies are set correctly, check environment variables.
-
-### Issue: Images Not Loading
-
-**Solution**: Configure `next.config.mjs` with proper image domains. Use `next/image` component.
+**Solution**: Verify Better Auth config in `lib/auth.ts`, check `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` env vars, ensure cookies are set correctly.
 
 ### Issue: Build Errors on Vercel
+**Solution**: Run `npm run build` locally first. Check TypeScript errors, verify all env vars are set in Vercel dashboard.
 
-**Solution**: Check TypeScript errors locally first, ensure all dependencies are in package.json, verify environment variables.
+### Issue: API Route Timeout on Vercel Hobby
+**Solution**: Hobby plan has 60s max execution. Avoid long-running operations. Move heavy tasks to async patterns or reduce data processing.
+
+### Issue: Database Connection Pool Exhausted
+**Solution**: Ensure Drizzle client is a singleton in `db/index.ts`. Avoid creating new connections per request.
 
 ## Resources
 
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Drizzle ORM Documentation](https://orm.drizzle.team/docs/overview)
-- [Material-UI Documentation](https://mui.com/material-ui/getting-started/)
-- [Better Auth Documentation](https://better-auth.com/)
-- Project-specific guides:
-  - `LAYOUT_CUSTOMIZATION_GUIDE.md`
-  - `OPTIMIZATION_GUIDE.md`
-  - `VERCEL_SETUP.md`
+- [Next.js Docs](https://nextjs.org/docs)
+- [Drizzle ORM Docs](https://orm.drizzle.team/docs/overview)
+- [MUI v7 Docs](https://mui.com/material-ui/getting-started/)
+- [Better Auth Docs](https://better-auth.com/docs)
+- [Vercel Hobby Plan Limits](https://vercel.com/docs/limits/overview)
