@@ -207,7 +207,7 @@ npm run dev
 **📱 Mobile UX Improvements:**
 
 - **PWA Support:** Complete webmanifest + theme-color meta tags + apple-mobile-web-app-capable
-- **Infinite Scroll:** Increased prefetch distance (200px→400px) for faster mobile loading
+- **Load More Button:** Replaced auto infinite scroll with manual "Load More" button for better UX control
 - **Font Optimization:** Reduced weights 4→3 (drop 300) — smaller font downloads
 
 **📊 Expected Performance Gains:**

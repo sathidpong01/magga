@@ -8,15 +8,83 @@ import {
   mangaSubmissions as submissionsTable
 } from "@/db/schema";
 import { count, eq, sum, desc } from "drizzle-orm";
-import { Box, Typography, Card, CardContent, Grid, Chip } from "@mui/material";
+import { Box, Typography, Grid, Chip, Divider } from "@mui/material";
 import BookIcon from "@mui/icons-material/Book";
 import CategoryIcon from "@mui/icons-material/Category";
+import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import PeopleIcon from "@mui/icons-material/People";
+import CommentIcon from "@mui/icons-material/Comment";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import InboxIcon from "@mui/icons-material/Inbox";
+import EditNoteIcon from "@mui/icons-material/EditNote";
 import Link from "next/link";
 
 // Dynamic rendering for real-time data
 export const dynamic = "force-dynamic";
+
+function StatCard({
+  label,
+  value,
+  icon,
+  color,
+  href,
+}: {
+  label: string;
+  value: string | number;
+  icon: React.ReactNode;
+  color: string;
+  href?: string;
+}) {
+  const content = (
+    <Box
+      sx={{
+        p: 2,
+        bgcolor: "#171717",
+        border: "1px solid rgba(255,255,255,0.08)",
+        borderRadius: 0.75,
+        display: "flex",
+        alignItems: "center",
+        gap: 2,
+        transition: "border-color 0.2s",
+        ...(href && {
+          "&:hover": { borderColor: color, cursor: "pointer" },
+        }),
+      }}
+    >
+      <Box
+        sx={{
+          p: 1,
+          borderRadius: 0.75,
+          bgcolor: `${color}15`,
+          color,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {icon}
+      </Box>
+      <Box>
+        <Typography variant="h5" sx={{ fontWeight: 700, color: "#fafafa", lineHeight: 1.2 }}>
+          {typeof value === "number" ? value.toLocaleString() : value}
+        </Typography>
+        <Typography variant="caption" sx={{ color: "#a3a3a3" }}>
+          {label}
+        </Typography>
+      </Box>
+    </Box>
+  );
+
+  if (href) {
+    return (
+      <Link href={href} style={{ textDecoration: "none" }}>
+        {content}
+      </Link>
+    );
+  }
+  return content;
+}
 
 export default async function AdminPage() {
   // Stats
@@ -47,423 +115,166 @@ export default async function AdminPage() {
 
   return (
     <Box>
-      {/* Quick Access */}
-      <Typography
-        variant="h6"
-        sx={{ mb: 2, fontWeight: 600, color: "#fafafa" }}
-      >
-        ทางลัด
+      <Typography variant="h5" sx={{ fontWeight: 700, color: "#fafafa", mb: 0.5 }}>
+        ภาพรวม
       </Typography>
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        {/* Manga Stats Card */}
-<Grid   size={{ xs: 12, md: 6 }}>
-          <Card
-            sx={{
-              borderRadius: 1,
-              boxShadow: "none",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              background: "linear-gradient(135deg, #171717 0%, #1a1a2e 100%)",
-              p: 1,
-            }}
-          >
-            <CardContent>
-              <Box
-                sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}
-              >
-                <Box
-                  sx={{
-                    p: 1,
-                    borderRadius: 1,
-                    bgcolor: "rgba(251, 191, 36, 0.15)",
-                    color: "#fbbf24",
-                  }}
-                >
-                  <BookIcon fontSize="small" />
-                </Box>
-                <Typography
-                  variant="subtitle1"
-                  sx={{ fontWeight: 600, color: "#fafafa" }}
-                >
-                  Manga
-                </Typography>
-              </Box>
-              <Grid container spacing={2}>
-<Grid  size={4}>
-                  <Box
-                    sx={{
-                      p: 2,
-                      borderRadius: 1,
-                      bgcolor: "rgba(96, 165, 250, 0.1)",
-                      border: "1px solid rgba(96, 165, 250, 0.2)",
-                      textAlign: "center",
-                    }}
-                  >
-                    <Typography
-                      variant="h4"
-                      sx={{ fontWeight: 700, color: "#60a5fa" }}
-                    >
-                      {totalManga}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ color: "#a3a3a3", mt: 0.5 }}
-                    >
-                      เผยแพร่แล้ว
-                    </Typography>
-                  </Box>
-                </Grid>
-<Grid  size={4}>
-                  <Box
-                    sx={{
-                      p: 2,
-                      borderRadius: 1,
-                      bgcolor: "rgba(251, 191, 36, 0.1)",
-                      border: "1px solid rgba(251, 191, 36, 0.2)",
-                      textAlign: "center",
-                    }}
-                  >
-                    <Typography
-                      variant="h4"
-                      sx={{ fontWeight: 700, color: "#fbbf24" }}
-                    >
-                      {draftManga}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ color: "#a3a3a3", mt: 0.5 }}
-                    >
-                      ฉบับร่าง
-                    </Typography>
-                  </Box>
-                </Grid>
-<Grid  size={4}>
-                  <Box
-                    sx={{
-                      p: 2,
-                      borderRadius: 1,
-                      bgcolor: "rgba(74, 222, 128, 0.1)",
-                      border: "1px solid rgba(74, 222, 128, 0.2)",
-                      textAlign: "center",
-                    }}
-                  >
-                    <Typography
-                      variant="h4"
-                      sx={{ fontWeight: 700, color: "#4ade80" }}
-                    >
-                      {totalViews.toLocaleString()}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ color: "#a3a3a3", mt: 0.5 }}
-                    >
-                      ผู้เข้าชมรวม
-                    </Typography>
-                  </Box>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-        </Grid>
+      <Typography variant="body2" sx={{ color: "#a3a3a3", mb: 3 }}>
+        สถิติและข้อมูลสรุปของระบบ
+      </Typography>
 
-        {/* Classification Card */}
-<Grid   size={{ xs: 12, md: 6 }}>
-          <Card
-            sx={{
-              borderRadius: 1,
-              boxShadow: "none",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              background: "linear-gradient(135deg, #171717 0%, #1e1a2e 100%)",
-              p: 1,
-            }}
-          >
-            <CardContent>
-              <Box
-                sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}
-              >
-                <Box
-                  sx={{
-                    p: 1,
-                    borderRadius: 1,
-                    bgcolor: "rgba(167, 139, 250, 0.15)",
-                    color: "#a78bfa",
-                  }}
-                >
-                  <CategoryIcon fontSize="small" />
-                </Box>
-                <Typography
-                  variant="subtitle1"
-                  sx={{ fontWeight: 600, color: "#fafafa" }}
-                >
-                  หมวดหมู่
-                </Typography>
-              </Box>
-              <Grid container spacing={2}>
-<Grid  size={6}>
-                  <Box
-                    sx={{
-                      p: 2,
-                      borderRadius: 1,
-                      bgcolor: "rgba(167, 139, 250, 0.1)",
-                      border: "1px solid rgba(167, 139, 250, 0.2)",
-                      textAlign: "center",
-                    }}
-                  >
-                    <Typography
-                      variant="h4"
-                      sx={{ fontWeight: 700, color: "#a78bfa" }}
-                    >
-                      {totalCategories}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ color: "#a3a3a3", mt: 0.5 }}
-                    >
-                      หมวดหมู่
-                    </Typography>
-                  </Box>
-                </Grid>
-<Grid  size={6}>
-                  <Box
-                    sx={{
-                      p: 2,
-                      borderRadius: 1,
-                      bgcolor: "rgba(244, 114, 182, 0.1)",
-                      border: "1px solid rgba(244, 114, 182, 0.2)",
-                      textAlign: "center",
-                    }}
-                  >
-                    <Typography
-                      variant="h4"
-                      sx={{ fontWeight: 700, color: "#f472b6" }}
-                    >
-                      {totalTags}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ color: "#a3a3a3", mt: 0.5 }}
-                    >
-                      แท็ก
-                    </Typography>
-                  </Box>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
+      {/* Stats Grid */}
+      <Grid container spacing={1.5} sx={{ mb: 3 }}>
+        <Grid size={{ xs: 6, sm: 4, md: 3 }}>
+          <StatCard
+            label="มังงะทั้งหมด"
+            value={totalManga}
+            icon={<BookIcon fontSize="small" />}
+            color="#60a5fa"
+            href="/dashboard/admin/manga"
+          />
+        </Grid>
+        <Grid size={{ xs: 6, sm: 4, md: 3 }}>
+          <StatCard
+            label="ฉบับร่าง"
+            value={draftManga}
+            icon={<EditNoteIcon fontSize="small" />}
+            color="#fbbf24"
+            href="/dashboard/admin/manga"
+          />
+        </Grid>
+        <Grid size={{ xs: 6, sm: 4, md: 3 }}>
+          <StatCard
+            label="เข้าชมรวม"
+            value={totalViews}
+            icon={<VisibilityIcon fontSize="small" />}
+            color="#4ade80"
+          />
+        </Grid>
+        <Grid size={{ xs: 6, sm: 4, md: 3 }}>
+          <StatCard
+            label="รออนุมัติ"
+            value={pendingSubmissions}
+            icon={<InboxIcon fontSize="small" />}
+            color="#fb923c"
+            href="/dashboard/admin/submissions"
+          />
+        </Grid>
+        <Grid size={{ xs: 6, sm: 4, md: 3 }}>
+          <StatCard
+            label="ผู้ใช้"
+            value={totalUsers}
+            icon={<PeopleIcon fontSize="small" />}
+            color="#22d3ee"
+            href="/dashboard/admin/users"
+          />
+        </Grid>
+        <Grid size={{ xs: 6, sm: 4, md: 3 }}>
+          <StatCard
+            label="ความคิดเห็น"
+            value={totalComments}
+            icon={<CommentIcon fontSize="small" />}
+            color="#a855f7"
+            href="/dashboard/admin/comments"
+          />
+        </Grid>
+        <Grid size={{ xs: 6, sm: 4, md: 3 }}>
+          <StatCard
+            label="หมวดหมู่"
+            value={totalCategories}
+            icon={<CategoryIcon fontSize="small" />}
+            color="#a78bfa"
+            href="/dashboard/admin/metadata"
+          />
+        </Grid>
+        <Grid size={{ xs: 6, sm: 4, md: 3 }}>
+          <StatCard
+            label="แท็ก"
+            value={totalTags}
+            icon={<LocalOfferIcon fontSize="small" />}
+            color="#f472b6"
+            href="/dashboard/admin/metadata"
+          />
         </Grid>
       </Grid>
 
-      {/* Users & Community Stats */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-<Grid   size={{ xs: 12, md: 6 }}>
-          <Card
-            sx={{
-              borderRadius: 1,
-              boxShadow: "none",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              background: "linear-gradient(135deg, #171717 0%, #1a1e2e 100%)",
-              p: 1,
-            }}
-          >
-            <CardContent>
-              <Box
-                sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}
-              >
-                <Box
-                  sx={{
-                    p: 1,
-                    borderRadius: 1,
-                    bgcolor: "rgba(34, 211, 238, 0.15)",
-                    color: "#22d3ee",
-                  }}
-                >
-                  <PeopleIcon fontSize="small" />
-                </Box>
-                <Typography
-                  variant="subtitle1"
-                  sx={{ fontWeight: 600, color: "#fafafa" }}
-                >
-                  ผู้ใช้ & ชุมชน
-                </Typography>
-              </Box>
-              <Grid container spacing={2}>
-<Grid  size={4}>
-                  <Box
-                    sx={{
-                      p: 2,
-                      borderRadius: 1,
-                      bgcolor: "rgba(34, 211, 238, 0.1)",
-                      border: "1px solid rgba(34, 211, 238, 0.2)",
-                      textAlign: "center",
-                    }}
-                  >
-                    <Typography
-                      variant="h4"
-                      sx={{ fontWeight: 700, color: "#22d3ee" }}
-                    >
-                      {totalUsers}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ color: "#a3a3a3", mt: 0.5 }}
-                    >
-                      ผู้ใช้
-                    </Typography>
-                  </Box>
-                </Grid>
-<Grid  size={4}>
-                  <Box
-                    sx={{
-                      p: 2,
-                      borderRadius: 1,
-                      bgcolor: "rgba(168, 85, 247, 0.1)",
-                      border: "1px solid rgba(168, 85, 247, 0.2)",
-                      textAlign: "center",
-                    }}
-                  >
-                    <Typography
-                      variant="h4"
-                      sx={{ fontWeight: 700, color: "#a855f7" }}
-                    >
-                      {totalComments}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ color: "#a3a3a3", mt: 0.5 }}
-                    >
-                      ความคิดเห็น
-                    </Typography>
-                  </Box>
-                </Grid>
-<Grid  size={4}>
-                  <Link
-                    href="/dashboard/admin/submissions"
-                    style={{ textDecoration: "none" }}
-                  >
-                    <Box
-                      sx={{
-                        p: 2,
-                        borderRadius: 1,
-                        bgcolor: "rgba(251, 146, 60, 0.1)",
-                        border: "1px solid rgba(251, 146, 60, 0.2)",
-                        textAlign: "center",
-                        display: "block",
-                        transition: "all 0.2s",
-                        "&:hover": {
-                          bgcolor: "rgba(251, 146, 60, 0.2)",
-                        },
-                      }}
-                    >
-                      <Typography
-                        variant="h4"
-                        sx={{ fontWeight: 700, color: "#fb923c" }}
-                      >
-                        {pendingSubmissions}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{ color: "#a3a3a3", mt: 0.5 }}
-                      >
-                        รออนุมัติ
-                      </Typography>
-                    </Box>
-                  </Link>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
-        </Grid>
+      <Divider sx={{ borderColor: "rgba(255,255,255,0.06)", mb: 3 }} />
 
-        {/* Top 10 Popular Manga */}
-<Grid   size={{ xs: 12, md: 6 }}>
-          <Card
+      {/* Top 10 Popular Manga */}
+      <Box
+        sx={{
+          bgcolor: "#171717",
+          border: "1px solid rgba(255,255,255,0.08)",
+          borderRadius: 0.75,
+          p: 2.5,
+        }}
+      >
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+          <Box
             sx={{
-              borderRadius: 1,
-              boxShadow: "none",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              background: "linear-gradient(135deg, #171717 0%, #2e1a1a 100%)",
               p: 1,
+              borderRadius: 0.75,
+              bgcolor: "rgba(239, 68, 68, 0.1)",
+              color: "#ef4444",
+              display: "flex",
             }}
           >
-            <CardContent>
+            <TrendingUpIcon fontSize="small" />
+          </Box>
+          <Typography variant="subtitle1" sx={{ fontWeight: 600, color: "#fafafa" }}>
+            Top 10 ยอดนิยม
+          </Typography>
+        </Box>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+          {topManga.map((manga, index) => (
+            <Link
+              key={manga.id}
+              href={`/${manga.slug}`}
+              style={{ textDecoration: "none" }}
+            >
               <Box
-                sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  py: 1,
+                  px: 1.5,
+                  borderRadius: 0.5,
+                  "&:hover": { bgcolor: "rgba(255,255,255,0.04)" },
+                }}
               >
-                <Box
-                  sx={{
-                    p: 1,
-                    borderRadius: 1,
-                    bgcolor: "rgba(239, 68, 68, 0.15)",
-                    color: "#ef4444",
-                  }}
-                >
-                  <TrendingUpIcon fontSize="small" />
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, minWidth: 0 }}>
+                  <Chip
+                    label={`#${index + 1}`}
+                    size="small"
+                    sx={{
+                      bgcolor: index < 3 ? "rgba(251, 191, 36, 0.15)" : "rgba(255,255,255,0.06)",
+                      color: index < 3 ? "#fbbf24" : "#737373",
+                      fontWeight: 600,
+                      fontSize: "0.7rem",
+                      height: 22,
+                      borderRadius: 0.5,
+                    }}
+                  />
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: "#e5e5e5",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {manga.title}
+                  </Typography>
                 </Box>
-                <Typography
-                  variant="subtitle1"
-                  sx={{ fontWeight: 600, color: "#fafafa" }}
-                >
-                  Top 10 ยอดนิยม
+                <Typography variant="caption" sx={{ color: "#737373", flexShrink: 0, ml: 2 }}>
+                  {manga.viewCount.toLocaleString()} views
                 </Typography>
               </Box>
-              <Box sx={{ maxHeight: 180, overflow: "auto" }}>
-                {topManga.map((manga, index) => (
-                  <Link
-                    key={manga.id}
-                    href={`/${manga.slug}`}
-                    style={{ textDecoration: "none" }}
-                  >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        py: 0.75,
-                        px: 1,
-                        borderRadius: 0.5,
-                        "&:hover": { bgcolor: "rgba(255,255,255,0.05)" },
-                      }}
-                    >
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                      >
-                        <Chip
-                          label={`#${index + 1}`}
-                          size="small"
-                          sx={{
-                            bgcolor:
-                              index < 3
-                                ? "rgba(251, 191, 36, 0.2)"
-                                : "rgba(255,255,255,0.1)",
-                            color: index < 3 ? "#fbbf24" : "#a3a3a3",
-                            fontWeight: 600,
-                            fontSize: "0.7rem",
-                            height: 20,
-                          }}
-                        />
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            color: "#fafafa",
-                            maxWidth: 180,
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {manga.title}
-                        </Typography>
-                      </Box>
-                      <Typography variant="caption" sx={{ color: "#a3a3a3" }}>
-                        {manga.viewCount.toLocaleString()} views
-                      </Typography>
-                    </Box>
-                  </Link>
-                ))}
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+            </Link>
+          ))}
+        </Box>
+      </Box>
     </Box>
   );
 }

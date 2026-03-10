@@ -172,7 +172,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
     }
   })();
 
-  const baseUrl = process.env.NEXTAUTH_URL || "https://magga.vercel.app";
+  const baseUrl = process.env.BETTER_AUTH_URL || "https://magga.vercel.app";
   const authorName = manga.author?.name || manga.authorName;
 
   const jsonLd = {
@@ -303,43 +303,53 @@ export default async function MangaPage({ params }: MangaPageProps) {
               size={{ xs: 12, md: 8, lg: 9 }}
             >
               <Box>
-                {/* Category + Tags top row */}
-                <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1, mb: 2 }}>
-                  {manga.category && (
-                    <Chip
-                      label={manga.category.name}
-                      component="a"
-                      href={`/category/${encodeURIComponent(manga.category.name)}`}
-                      clickable
-                      sx={{
-                        bgcolor: "#fbbf24",
-                        color: "black",
-                        fontWeight: "bold",
-                        fontSize: "0.85rem",
-                        height: 28,
-                        "&:hover": { bgcolor: "#f59e0b" },
-                      }}
-                    />
-                  )}
-                  {manga.tags?.map((tag: any) => (
-                    <LinkChip
-                      key={tag.id}
-                      label={tag.name}
-                      href={`/tag/${encodeURIComponent(tag.name)}`}
-                      size="small"
-                      sx={{
-                        height: 28,
-                        backgroundColor: "rgba(56, 189, 248, 0.1)",
-                        color: "#38bdf8",
-                        border: "1px solid rgba(56, 189, 248, 0.3)",
-                        fontSize: "0.82rem",
-                        "&:hover": {
-                          backgroundColor: "rgba(56, 189, 248, 0.2)",
-                          borderColor: "#38bdf8",
-                        },
-                      }}
-                    />
-                  ))}
+                {/* Category + Tags */}
+                <Box sx={{ mb: 2 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "#737373", fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase", mb: 0.75, display: "block" }}
+                  >
+                    หมวดหมู่ / แท็ก
+                  </Typography>
+                  <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1 }}>
+                    {manga.category && (
+                      <Chip
+                        label={manga.category.name}
+                        component="a"
+                        href={`/category/${encodeURIComponent(manga.category.name)}`}
+                        clickable
+                        sx={{
+                          bgcolor: "#fbbf24",
+                          color: "black",
+                          fontWeight: "bold",
+                          fontSize: "0.85rem",
+                          height: 28,
+                          borderRadius: 0.75,
+                          "&:hover": { bgcolor: "#f59e0b" },
+                        }}
+                      />
+                    )}
+                    {manga.tags?.map((tag: any) => (
+                      <LinkChip
+                        key={tag.id}
+                        label={tag.name}
+                        href={`/tag/${encodeURIComponent(tag.name)}`}
+                        size="small"
+                        sx={{
+                          height: 28,
+                          borderRadius: 0.75,
+                          backgroundColor: "rgba(56, 189, 248, 0.1)",
+                          color: "#38bdf8",
+                          border: "1px solid rgba(56, 189, 248, 0.3)",
+                          fontSize: "0.82rem",
+                          "&:hover": {
+                            backgroundColor: "rgba(56, 189, 248, 0.2)",
+                            borderColor: "#38bdf8",
+                          },
+                        }}
+                      />
+                    ))}
+                  </Box>
                 </Box>
 
                 <Typography
@@ -350,9 +360,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
                     mb: 1,
                     fontSize: { xs: "2.5rem", md: "3.5rem" },
                     lineHeight: 1.1,
-                    background: "linear-gradient(135deg, #fbbf24 0%, #38bdf8 100%)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
+                    color: "#fafafa",
                     filter: "drop-shadow(0 2px 10px rgba(0,0,0,0.3))",
                   }}
                 >
@@ -388,6 +396,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
                                 variant="outlined"
                                 sx={{
                                   height: 36,
+                                  borderRadius: 0.75,
                                   fontSize: "0.9rem",
                                   borderColor: "rgba(255,255,255,0.2)",
                                   color: "rgba(255,255,255,0.85)",
@@ -410,7 +419,8 @@ export default async function MangaPage({ params }: MangaPageProps) {
                   return null;
                 })()}
 
-                <Stack direction="row" spacing={3} alignItems="center" sx={{ mb: 3, color: "text.secondary" }}>
+                {/* Stats row */}
+                <Stack direction="row" spacing={3} alignItems="center" sx={{ mb: 2, color: "text.secondary" }}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                     <VisibilityIcon sx={{ fontSize: 20 }} />
                     <Typography variant="subtitle1" fontWeight={500}>
@@ -430,27 +440,38 @@ export default async function MangaPage({ params }: MangaPageProps) {
                   </Box>
                 </Stack>
 
-                <Typography
-                  variant="body1"
-                  sx={{
-                    fontSize: "1.1rem",
-                    lineHeight: 1.7,
-                    color: "rgba(255,255,255,0.8)",
-                    maxWidth: "800px",
-                    mb: 4,
-                  }}
-                >
-                  {manga.description}
-                </Typography>
+                {manga.description && (
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      fontSize: "1.1rem",
+                      lineHeight: 1.7,
+                      color: "rgba(255,255,255,0.8)",
+                      maxWidth: "800px",
+                      mb: 3,
+                    }}
+                  >
+                    {manga.description}
+                  </Typography>
+                )}
 
-                <MangaViewRating
-                  mangaId={manga.id}
-                  initialViewCount={Number(manga.viewCount)}
-                  initialAverageRating={manga.averageRating}
-                  initialRatingCount={Number(manga.ratingCount)}
-                  hideViewCount={true}
-                  hideAverage
-                />
+                {/* Interactive Rating */}
+                <Box sx={{ mb: 1 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "#737373", fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase", mb: 0.5, display: "block" }}
+                  >
+                    ให้คะแนนเรื่องนี้
+                  </Typography>
+                  <MangaViewRating
+                    mangaId={manga.id}
+                    initialViewCount={Number(manga.viewCount)}
+                    initialAverageRating={manga.averageRating}
+                    initialRatingCount={Number(manga.ratingCount)}
+                    hideViewCount={true}
+                    hideAverage
+                  />
+                </Box>
 
               </Box>
             </Grid>

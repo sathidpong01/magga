@@ -1,8 +1,9 @@
 # 📊 Vercel Optimization Summary
 
-**Date:** 2026-01-12  
+**Date:** 2026-03-10  
 **Project:** Magga Reader  
-**Version:** v1.7.0  
+**Version:** v1.9.5  
+**Tech Stack:** Next.js 16 · Drizzle ORM · Better Auth · Supabase Postgres · MUI v7 · Tailwind v4  
 **Status:** ✅ Complete & Ready to Deploy
 
 ---
@@ -373,7 +374,7 @@ Route (app)                                 Size  First Load JS  Revalidate  Exp
 
 ### High Priority
 
-1. **Rate Limiting** - Protect API routes from abuse
+1. ~~**Rate Limiting** - Protect API routes from abuse~~ ✅ Done (v1.9.3)
 2. **Webhook Revalidation** - On-demand cache clearing when content updates
 3. **Edge Runtime** - Migrate suitable API routes to edge
 
@@ -405,7 +406,9 @@ Route (app)                                 Size  First Load JS  Revalidate  Exp
 - [Next.js ISR Documentation](https://nextjs.org/docs/app/building-your-application/data-fetching/incremental-static-regeneration)
 - [Vercel Caching Documentation](https://vercel.com/docs/concepts/edge-network/caching)
 - [Vercel Analytics](https://vercel.com/analytics)
-- [PostgreSQL Documentation](https://docs.postgresql.tech)
+- [Supabase Documentation](https://supabase.com/docs)
+- [Drizzle ORM Documentation](https://orm.drizzle.team/)
+- [Better Auth Documentation](https://better-auth.com/)
 
 ---
 
@@ -447,5 +450,5 @@ The Magga Reader application is now:
 
 ---
 
-_Last Updated: 2026-01-12_  
-_Version: v1.7.0_
+_Last Updated: 2026-03-10_  
+_Version: v1.9.5_

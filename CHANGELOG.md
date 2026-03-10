@@ -1,258 +1,217 @@
-# Changelog
+# ประวัติการอัปเดต (Changelog)
 
-All notable changes to this project will be documented in this file.
+การเปลี่ยนแปลงทั้งหมดของเว็บไซต์จะถูกบันทึกไว้ในหน้านี้
+
+## [1.9.5] - 2026-03-10
+
+### ปรับปรุง
+
+- **หน้าแดชบอร์ด (Dashboard):** ออกแบบใหม่ให้ดูสะอาดและทันสมัยขึ้น
+  - แสดงสถิติทั้งหมดในตารางเดียวกัน เข้าใจง่าย กดเข้าหน้าจัดการได้เลย
+  - ลดสีไล่ระดับ ใช้พื้นหลังเรียบง่ายแทน
+  - ปรับลดความโค้งมนของกล่องข้อมูลให้ดูเป็นมืออาชีพมากขึ้น
+
+- **ปุ่มโหลดเพิ่มเติม:** เปลี่ยนจากระบบโหลดอัตโนมัติเมื่อเลื่อนจอ เป็นปุ่ม "โหลดเพิ่มเติม" ที่กดเองได้
+  - ช่วยประหยัดอินเทอร์เน็ตของผู้ชม
+  - แสดงสถานะกำลังโหลดชัดเจนด้วยไอคอนหมุน
+
+- **หน้าอ่านมังงะ:** เพิ่มหัวเรื่องให้แต่ละส่วนชัดเจนขึ้น
+  - หมวดหมู่และแท็กมีป้ายกำกับ "หมวดหมู่ / แท็ก" ด้านบน
+  - ระบบให้คะแนนดาว แยกชัดเจนระหว่าง "คะแนนเฉลี่ย" กับส่วนสำหรับ "ให้คะแนนเรื่องนี้"
+  - เปลี่ยนชื่อเรื่องให้อ่านง่ายขึ้น
+
+### แก้ไข
+
+- **ตั้งค่าระบบ:** แก้ไขการเชื่อมต่อระบบบัญชีผู้ใช้ให้สมบูรณ์
+
+---
 
 ## [1.9.4] - 2026-03-07
 
-### Fixed
+### แก้ไข (Fixed)
 
-- **Display & Links**: Fixed multiple UI issues across the application
-  - Moved manga tags from standalone box to top row next to category badge
-  - Fixed header profile link navigation to correct user profile URL
-  - Resolved scroll-behavior smooth warning by adding data-scroll-behavior attribute
-  - Redesigned star rating display: 5-star visual with partial fills in stats row
-  - Reduced social URL chips spacing for cleaner layout
+- **การแสดงผลและลิงก์**: แก้ไขปัญหาการแสดงผลหลายจุด
+  - ย้ายแท็กมังงะไปรวมกับหมวดหมู่ด้านบน เพื่อความสวยงาม
+  - แก้ไขลิงก์โปรไฟล์ในแถบเมนูด้านบนให้ถูกต้อง
+  - ปรับการออกแบบดาวให้แสดงผลครึ่งดวงได้ชัดเจนขึ้นในส่วนของสถิติ
+  - ลดระยะห่างระหว่างปุ่มโซเชียลมีเดียให้ดูเรียบร้อยขึ้น
 
-- **Profile Management**: Enhanced user profile functionality
-  - Added "ชื่อแสดง" (display name) field in account settings
-  - Fixed username/profile update API error (updatedAt Date object issue)
-  - Profile pages now support lookup by both username and user ID
+- **การจัดการโปรไฟล์**: ปรับปรุงระบบโปรไฟล์ผู้ใช้
+  - เพิ่มช่อง "ชื่อแสดง" (Display name) ในหน้าตั้งค่าบัญชี
+  - แก้ไขข้อผิดพลาดในการอัปเดตข้อมูลผู้ใช้
+  - หน้าโปรไฟล์รองรับการค้นหาด้วยทั้งชื่อผู้ใช้และรหัสผู้ใช้
 
-- **Comment System**: Improved comment display preferences
-  - Changed from radio selection to independent toggles for comment placement
-  - Users can now show/hide "ข้างรูป (ทีละหน้า)" and "ท้ายเรื่อง" independently
-  - Added support for 'both' and 'none' comment preference states
+- **ระบบความคิดเห็น**: ปรับปรุงการตั้งค่าการแสดงความคิดเห็น
+  - ผู้ใช้สามารถเปิด/ปิดการแสดงความคิดเห็น "ข้างรูป" และ "ท้ายเรื่อง" ได้อย่างอิสระ
 
-- **Account Settings**: Simplified password requirements
-  - Reduced password requirements to: 8+ chars, uppercase, lowercase, numbers
-  - Removed special character requirement
-  - Added real-time password requirements badge showing validation status
+### เพิ่มเติม (Added)
 
-### Added
+- **หน้าโปรไฟล์ผู้ใช้**: ระบบหน้าโปรไฟล์แบบสมบูรณ์
+  - ผู้ใช้สามารถอัปโหลดรูปประจำตัว (Avatar) ได้
+  - หน้าต่าง "ความคิดเห็นของฉัน" เพื่อดูประวัติการคอมเมนต์ของตัวเอง
 
-- **User Profile Pages**: Complete user profile system
-  - `/profile/[username]` pages with user info, stats, and action links
-  - Avatar upload functionality with preview and Cloudflare R2 storage
-  - "My Comments" page to view all user's comments
-  - Profile breadcrumb navigation with fallback to user ID
+- **ระบบบล็อก (Blocking)**: เพิ่มระบบความปลอดภัยและการจัดการเนื้อหา
+  - ผู้ใช้สามารถบล็อก/เลิกบล็อกผู้ใช้คนอื่นและแท็กที่ไม่ต้องการได้ในหน้าการตั้งค่า
+  - ระบบจะซ่อนมังงะที่มีแท็กที่ถูกบล็อกออกจากหน้าแรกอัตโนมัติ
 
-- **Blocking System**: Enhanced moderation features
-  - Block/unblock users and tags from account settings
-  - Filter manga list to exclude items with blocked tags
-  - Real-time count updates for blocked items
+- **การจัดการความคิดเห็น**: เมนูบล็อกผู้ใช้ในความคิดเห็น
+  - เพิ่มปุ่มลัดสำหรับบล็อก/เลิกบล็อก ถัดจากชื่อผู้ใช้ในกล่องความคิดเห็น
 
-- **Comment Moderation**: Block user dropdown in comments
-  - Quick block/unblock options next to usernames in comments
-  - Profile view links for blocked users
+### ปรับปรุง (Changed)
 
-### Changed
-
-- Updated MangaViewRating component with flexible hideInteractive/hideAverage props
-- Improved error handling for setState-in-render issues
-- Enhanced UI consistency across settings panels
+- อัปเดตส่วนแสดงคะแนนมังงะให้ปรับแต่งการแสดงผลได้มากขึ้น
+- เพิ่มความเสถียรในการทำงานของระบบโดยรวม
 
 ---
 
 ## [1.9.3] - 2026-03-04
 
-### Changed
+### ปรับปรุง (Changed)
 
-- Complete migration from **Prisma ORM** to **Drizzle ORM** for better performance, faster type checking, and edge-compatibility.
-- Migrated authentication from **NextAuth.js** to **Better Auth**.
-- Updated `package.json` scripts to use Drizzle Kit (`db:generate`, `db:push`, `db:migrate`, `db:studio`).
-
-### Removed
-
-- Completely removed `prisma`, `@prisma/client` and all related adapter dependencies.
-- Completely removed `next-auth`.
+- **ระบบฐานข้อมูล**: ปรับปรุงระบบหลังบ้านทั้งหมดเพื่อความรวดเร็วและรองรับการทำงานในอนาคต ทำให้โหลดข้อมูลได้ไวขึ้น
+- **ระบบสมาชิก**: อัปเกรดระบบเข้าสู่ระบบให้มีความปลอดภัยและทันสมัยมากขึ้น
 
 ---
 
 ## [1.8.0] - 2026-02-13
 
-### Changed
+### ปรับปรุง (Changed)
 
-- Upgraded **Tailwind CSS** to v4 (Improved build performance, smaller bundle)
-- Upgraded **MUI (Material UI)** to v7 (Migrated to Grid v2 API)
-- Replaced legacy `md5` library with native Web Crypto API
-- Updated TypeScript configuration to `es2017` target and `bundler` resolution
-- Increased Vercel function timeouts to 30s for complex queries
+- อัปเกรดระบบดีไซน์ให้เว็บไซต์โหลดเร็วขึ้นและไฟล์มีขนาดเล็กลง
+- ปรับปรุงการเข้ารหัสเพื่อความปลอดภัยที่สูงขึ้น
+- ขยายเวลาการทำงานของระบบเพื่อรองรับข้อมูลที่ใหญ่ขึ้น
 
-### Fixed
+### แก้ไข (Fixed)
 
-- Resolved MUI Grid v2 type compatibility issues
-- Fixed ESLint configuration for Next.js 16 (Flat Config)
-- Cleaned up unused dependencies and scripts
+- แก้ไขปัญหาการแสดงผลและลบโค้ดที่ไม่จำเป็นออก
 
 ---
 
 ## [1.7.0] - 2026-01-10
 
-### Added
+### เพิ่มเติม (Added)
 
-- **Author Management System**: Dedicated `Author` model with `socialLinks` field
-- Multiple social links per author (Twitter, Pixiv, Facebook, etc.)
-- Auto-fetch metadata from URLs (label + icon extraction)
-- Author selector in MangaForm with create-on-fly capability
+- **ระบบจัดการผู้แต่ง**: เพิ่มข้อมูลช่องทางติดตามผู้แต่ง (Twitter, Pixiv, Facebook)
+- ระบบดึงข้อมูลจากลิงก์อัตโนมัติ (เช่น โลโก้และชื่อเว็บ)
 
-### Changed
+### ปรับปรุง (Changed)
 
-- Manga pages now display author social links from `Author.socialLinks`
-- Removed deprecated `authorCredits` field from `Manga` and `MangaSubmission` models
-- Updated admin AuthorManager with modern UI (rounded buttons, better spacing)
-- Standardized `borderRadius: 1` across all MUI components
-
-### Removed
-
-- `authorCredits` field from Prisma schema
-- `iconUrl` field from Author model
-- Old migration files (`author_migration.sql`, `migration-view-rating.txt`)
-- `normalize-uploads.ts` utility script
+- หน้ามังงะแสดงลิงก์ช่องทางติดตามผู้แต่ง
+- ปรับปรุงหน้าจัดการหลังบ้านให้ใช้งานง่ายและสวยงามขึ้น
+- ปรับความโค้งมนของปุ่มต่างๆ ให้เป็นมาตรฐานเดียวกัน
 
 ---
 
 ## [1.6.1] - 2026-01-04
 
-### Fixed
+### แก้ไข (Fixed)
 
-- Improved manga page load performance
-- Reduced layout shifting during page load
-- General rendering performance improvements
+- หน้าอ่านมังงะโหลดเร็วขึ้น
+- ลดการกระตุกของหน้าจอระหว่างโหลดเนื้อหา
 
 ---
 
 ## [1.6.0] - 2026-01-01
 
-### Added
+### เพิ่มเติม (Added)
 
-- Image lightbox for comment images (fullscreen preview)
-- Streaming SSR with React Suspense
-- Server-first comments rendering
+- ระบบขยายรูปภาพในช่องความคิดเห็น (แตะรูปเพื่อดูเต็มจอ)
+- ระบบโหลดเนื้อหาหลักก่อนและทยอยโหลดส่วนอื่นตามมา
 
-### Changed
+### ปรับปรุง (Changed)
 
-- Comments system rewritten for better performance
-- Homepage and manga pages load faster with optimized queries
+- เขียนระบบความคิดเห็นใหม่ทั้งหมดให้ทำงานเร็วขึ้น
 
 ---
 
 ## [1.5.0] - 2025-12-26
 
-### Added
+### เพิ่มเติม (Added)
 
-- Empty state UI when no manga matches filters
-- Infinite scroll for manga listing
-- Toast notifications for success/error states
-- Reading progress indicator
-- Cookie consent modal
+- แสดงข้อความเมื่อไม่พบผลลัพธ์การค้นหา
+- แสดงสถานะการโหลดเมื่อเลื่อนหน้าจอลงมา
+- แถบบอกเปอร์เซ็นต์การอ่านในหน้ามังงะ
+- หน้าต่างแจ้งเตือนการเก็บข้อมูล (Cookie consent)
 
-### Changed
+### ปรับปรุง (Changed)
 
-- Mobile grid layout: 2 cards per row
-- Improved hover animations
-
-### Fixed
-
-- Layout shifting issues during page load
+- ปรับเลย์เอาต์บนมือถือให้แสดงผล 2 เรื่องต่อแถว
+- เพิ่มแอนิเมชันเมื่อนำเมาส์ชี้
 
 ---
 
 ## [1.4.1] - 2025-12-08
 
-### Fixed
+### แก้ไข (Fixed)
 
-- Security vulnerability patches
-- Author icon display issues
+- เพิ่มมาตรการความปลอดภัย
+- แก้ไขการแสดงรูปภาพไอคอนผู้แต่ง
 
 ---
 
 ## [1.4.0] - 2025-12-05
 
-### Added
+### เพิ่มเติม (Added)
 
-- Privacy Policy page (Thai)
-- Terms of Service page (Thai)
-- DMCA Report page
-- Redesigned Footer
+- หน้านโยบายความเป็นส่วนตัวและข้อตกลงการใช้งานภาษาไทย
+- หน้าติดต่อและรายงานการละเมิด
+- ปรับปรุงส่วนท้ายของเว็บไซต์ (Footer) ใหม่
 
 ---
 
 ## [1.3.1] - 2025-12-04
 
-### Added
+### เพิ่มเติม (Added)
 
-- Real-time upload progress indicator (floating status)
-- Retry button for failed uploads
-
-### Changed
-
-- Improved error messages for better UX
-
-### Security
-
-- Updated security measures
+- แถบแสดงสถานะอัปโหลดรูปภาพแบบเรียลไทม์
+- ปุ่มกดอัปโหลดซ้ำหากเกิดข้อผิดพลาด
 
 ---
 
 ## [1.3.0] - 2025-12-02
 
-### Added
+### เพิ่มเติม (Added)
 
-- "Submit Manga" button in header
-- Sticky transparent header with scroll effect
+- ปุ่ม "ฝากลงมังงะ" ที่เมนูด้านบน
+- เมนูด้านบนแบบโปร่งใสที่เปลี่ยนสีเมื่อเลื่อนจอ
 
-### Changed
+### ปรับปรุง (Changed)
 
-- Redesigned manga cards with modern styling
-- Simplified Footer design
+- ออกแบบการ์ดมังงะใหม่ให้ทันสมัยขึ้น
 
 ---
 
 ## [1.2.0] - 2025-11-28
 
-### Changed
+### ปรับปรุง (Changed)
 
-- Improved overall responsiveness
-- Enhanced image loading stability
-
-### Fixed
-
-- Minor bug fixes
+- ทำให้หน้าเว็บรองรับอุปกรณ์ทุกขนาดได้ดีขึ้น
+- ปรับปรุงการโหลดรูปภาพให้เสถียรขึ้น
 
 ---
 
 ## [1.1.0] - 2025-11-25
 
-### Changed
+### ปรับปรุง (Changed)
 
-- Modern UI redesign with Neutral Dark theme
-- Reorganized layout structure
-- Improved page load performance
+- ดีไซน์ใหม่ในธีม "Neutral Dark" เพื่อให้อ่านสบายตา
+- โหลดหน้าเว็บเร็วขึ้น
 
 ---
 
 ## [1.0.5] - 2025-11-24
 
-### Added
+### แก้ไข (Fixed)
 
-- Blur effect behind age verification modal
-
-### Fixed
-
-- Mobile display issues on some devices
-- General performance improvements
+- แก้ไขปัญหาการแสดงผลในมือถือบางรุ่น
 
 ---
 
 ## [1.0.0] - 2025-11-20
 
-### Added
+### เพิ่มเติม (Added)
 
-- Initial public release
-- Manga reading with vertical scroll
-- Search and filter functionality
-- Responsive design (mobile, tablet, desktop)
-- Admin panel for manga management
-- User authentication system
-- Cloudflare R2 image storage
-- Turso (LibSQL) database
+- เปิดตัวเว็บไซต์ในเวอร์ชันแรก
+- ระบบอ่านมังงะแบบเลื่อนขึ้นลง
+- ระบบค้นหาและตัวกรอง
+- ระบบสมาชิกและส่งมังงะเข้าระบบ

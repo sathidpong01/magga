@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import { Grid, Box, CircularProgress } from "@mui/material";
+import { useState, useEffect, useCallback } from "react";
+import { Grid, Box, Button, CircularProgress } from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import MangaCard, { MangaWithDetails } from "./MangaCard";
 import { AdCard } from "@/app/components/features/ads";
 import EmptyState from "@/app/components/ui/EmptyState";
@@ -40,7 +41,6 @@ export default function InfiniteMangaGrid({
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [isLoading, setIsLoading] = useState(false);
-  const loaderRef = useRef<HTMLDivElement>(null);
 
   // Fetch user's blocked tag IDs on mount to filter manga
   useEffect(() => {
@@ -94,24 +94,6 @@ export default function InfiniteMangaGrid({
       setIsLoading(false);
     }
   }, [page, hasMore, isLoading, search, categoryId, tags, sort, blockedTagIds]);
-
-  // Intersection Observer for infinite scroll
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasMore && !isLoading) {
-          fetchMore();
-        }
-      },
-      { rootMargin: "400px" },
-    );
-
-    if (loaderRef.current) {
-      observer.observe(loaderRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, [fetchMore, hasMore, isLoading]);
 
   // สร้าง items พร้อม ads แทรก
   const itemsWithAds = (() => {
@@ -182,18 +164,42 @@ export default function InfiniteMangaGrid({
         ))}
       </Grid>
 
-      {/* Infinite scroll trigger */}
-      <Box
-        ref={loaderRef}
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          py: 4,
-          minHeight: 60,
-        }}
-      >
-        {isLoading && <CircularProgress size={32} sx={{ color: "#fbbf24" }} />}
-      </Box>
+      {/* Load More button */}
+      {hasMore && (
+        <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+          <Button
+            variant="outlined"
+            onClick={fetchMore}
+            disabled={isLoading}
+            startIcon={
+              isLoading ? (
+                <CircularProgress size={18} sx={{ color: "#fbbf24" }} />
+              ) : (
+                <ExpandMoreIcon />
+              )
+            }
+            sx={{
+              borderColor: "rgba(251, 191, 36, 0.4)",
+              color: "#fbbf24",
+              borderRadius: 0.75,
+              px: 4,
+              py: 1,
+              textTransform: "none",
+              fontWeight: 600,
+              "&:hover": {
+                borderColor: "#fbbf24",
+                bgcolor: "rgba(251, 191, 36, 0.08)",
+              },
+              "&.Mui-disabled": {
+                borderColor: "rgba(255,255,255,0.1)",
+                color: "rgba(255,255,255,0.3)",
+              },
+            }}
+          >
+            {isLoading ? "กำลังโหลด..." : "โหลดเพิ่มเติม"}
+          </Button>
+        </Box>
+      )}
     </>
   );
 }

@@ -2,7 +2,9 @@
 
 คู่มือการ optimize และ monitor โปรเจค Magga Reader บน Vercel
 
-## 🚀 การปรับปรุงที่ทำไปแล้ว (v1.7.0)
+> **Tech Stack:** Next.js 16 · Drizzle ORM · Better Auth · Supabase Postgres · Cloudflare R2 · MUI v7 · Tailwind v4
+
+## 🚀 การปรับปรุงที่ทำไปแล้ว (v1.9.5)
 
 ### 0. SEO & Search (New!)
 
@@ -220,9 +222,9 @@ Route (app)                              Size     First Load JS
 - Top 50 manga: `●` (SSG - pre-rendered)
 - Manga อื่นๆ: `λ` (On-demand)
 
-### 3. Database Monitoring (PostgreSQL)
+### 3. Database Monitoring (Supabase Postgres)
 
-เข้า [PostgreSQL Dashboard](https://supabase.com/):
+เข้า [Supabase Dashboard](https://supabase.com/dashboard):
 
 - **Total Rows Read**: ควรลดลง ~95%
 - **Query Count**: ควรลดลงอย่างมาก
@@ -237,8 +239,7 @@ Route (app)                              Size     First Load JS
 #### Required (มีอยู่แล้ว)
 
 ```bash
-postgresql_DATABASE_URL=PostgreSQL://your-database.postgresql.io
-postgresql_AUTH_TOKEN=your-token
+DATABASE_URL=postgres://your-database.supabase.co
 BETTER_AUTH_URL=https://your-domain.vercel.app
 BETTER_AUTH_SECRET=your-secret
 R2_ACCOUNT_ID=your-account-id
@@ -386,7 +387,8 @@ export const revalidate = 60; // Currently 60 seconds
 - [Next.js ISR Documentation](https://nextjs.org/docs/app/building-your-application/data-fetching/incremental-static-regeneration)
 - [Vercel Caching Documentation](https://vercel.com/docs/concepts/edge-network/caching)
 - [Core Web Vitals](https://web.dev/vitals/)
-- [PostgreSQL Best Practices](https://docs.postgresql.tech/sdk/ts/reference)
+- [Supabase Documentation](https://supabase.com/docs)
+- [Drizzle ORM Documentation](https://orm.drizzle.team/)
 
 ---
 
