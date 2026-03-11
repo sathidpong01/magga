@@ -29,6 +29,8 @@ import {
   Card,
   Skeleton,
   Pagination,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
@@ -410,6 +412,8 @@ function PlacementPreview({
 const ITEMS_PER_PAGE = 10;
 
 export default function AdvertisementsPage() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [ads, setAds] = useState<Advertisement[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingAd, setEditingAd] = useState<Advertisement | null>(null);
@@ -609,107 +613,212 @@ export default function AdvertisementsPage() {
           justifyContent: "space-between",
           alignItems: "center",
           mb: 3,
+          gap: 1,
+          flexWrap: "wrap",
         }}
       >
-        <Typography variant="h5" fontWeight={600}>
+        <Typography variant="h5" fontWeight={600} sx={{ fontSize: { xs: "1.2rem", md: "1.5rem" } }}>
           จัดการโฆษณา
         </Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => handleOpenDialog()}
+          size={isMobile ? "small" : "medium"}
         >
           เพิ่มโฆษณา
         </Button>
       </Box>
 
-      <TableContainer component={Paper} sx={{ bgcolor: "#171717" }}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>รูป</TableCell>
-              <TableCell>ชื่อ</TableCell>
-              <TableCell>ประเภท</TableCell>
-              <TableCell>ตำแหน่ง</TableCell>
-              <TableCell>เปิดใช้งาน</TableCell>
-              <TableCell align="right">จัดการ</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {paginatedAds.map((ad) => (
-              <TableRow key={ad.id}>
-                <TableCell>
-                  <Box
+      {/* Mobile: Card layout */}
+      {isMobile ? (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+          {paginatedAds.map((ad) => (
+            <Paper
+              key={ad.id}
+              sx={{
+                bgcolor: "#171717",
+                border: "1px solid rgba(255,255,255,0.08)",
+                borderRadius: 1,
+                overflow: "hidden",
+              }}
+            >
+              <Box sx={{ display: "flex", gap: 1.5, p: 1.5 }}>
+                <Box
+                  sx={{
+                    width: 64,
+                    height: 64,
+                    position: "relative",
+                    borderRadius: 0.5,
+                    overflow: "hidden",
+                    flexShrink: 0,
+                  }}
+                >
+                  <Image
+                    src={ad.imageUrl}
+                    alt={ad.title}
+                    fill
+                    sizes="64px"
+                    style={{ objectFit: "cover" }}
+                  />
+                </Box>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography
+                    variant="body2"
                     sx={{
-                      width: 60,
-                      height: 60,
-                      position: "relative",
-                      borderRadius: 0.5,
+                      fontWeight: 600,
+                      color: "#fafafa",
+                      mb: 0.5,
                       overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
                     }}
                   >
-                    <Image
-                      src={ad.imageUrl}
-                      alt={ad.title}
-                      fill
-                      sizes="60px"
-                      style={{ objectFit: "cover" }}
+                    {ad.title}
+                  </Typography>
+                  <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", mb: 1 }}>
+                    <Chip
+                      label={
+                        TYPES.find((t) => t.value === ad.type)?.label || ad.type
+                      }
+                      size="small"
+                      sx={{ height: 20, fontSize: "0.7rem" }}
+                    />
+                    <Chip
+                      label={
+                        PLACEMENTS.find((p) => p.value === ad.placement)?.label ||
+                        ad.placement
+                      }
+                      size="small"
+                      color="primary"
+                      variant="outlined"
+                      sx={{ height: 20, fontSize: "0.7rem" }}
                     />
                   </Box>
-                </TableCell>
-                <TableCell>{ad.title}</TableCell>
-                <TableCell>
-                  <Chip
-                    label={
-                      TYPES.find((t) => t.value === ad.type)?.label || ad.type
-                    }
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>
-                  <Chip
-                    label={
-                      PLACEMENTS.find((p) => p.value === ad.placement)?.label ||
-                      ad.placement
-                    }
-                    size="small"
-                    color="primary"
-                    variant="outlined"
-                  />
-                </TableCell>
-                <TableCell>
-                  <Switch
-                    checked={ad.isActive}
-                    onChange={() => handleToggleActive(ad)}
-                  />
-                </TableCell>
-                <TableCell align="right">
-                  <IconButton
-                    onClick={() => handleOpenDialog(ad)}
-                    aria-label="แก้ไข"
-                  >
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton
-                    onClick={() => handleOpenDeleteDialog(ad)}
-                    color="error"
-                    aria-label="ลบ"
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-            {ads.length === 0 && (
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <Switch
+                      checked={ad.isActive}
+                      onChange={() => handleToggleActive(ad)}
+                      size="small"
+                    />
+                    <Box>
+                      <IconButton
+                        onClick={() => handleOpenDialog(ad)}
+                        size="small"
+                        aria-label="แก้ไข"
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                      <IconButton
+                        onClick={() => handleOpenDeleteDialog(ad)}
+                        size="small"
+                        color="error"
+                        aria-label="ลบ"
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
+            </Paper>
+          ))}
+          {ads.length === 0 && (
+            <Box sx={{ py: 4, textAlign: "center" }}>
+              <Typography color="text.secondary">ยังไม่มีโฆษณา</Typography>
+            </Box>
+          )}
+        </Box>
+      ) : (
+        /* Desktop: Table layout */
+        <TableContainer component={Paper} sx={{ bgcolor: "#171717" }}>
+          <Table>
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                  <Typography color="text.secondary">ยังไม่มีโฆษณา</Typography>
-                </TableCell>
+                <TableCell>รูป</TableCell>
+                <TableCell>ชื่อ</TableCell>
+                <TableCell>ประเภท</TableCell>
+                <TableCell>ตำแหน่ง</TableCell>
+                <TableCell>เปิดใช้งาน</TableCell>
+                <TableCell align="right">จัดการ</TableCell>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {paginatedAds.map((ad) => (
+                <TableRow key={ad.id}>
+                  <TableCell>
+                    <Box
+                      sx={{
+                        width: 60,
+                        height: 60,
+                        position: "relative",
+                        borderRadius: 0.5,
+                        overflow: "hidden",
+                      }}
+                    >
+                      <Image
+                        src={ad.imageUrl}
+                        alt={ad.title}
+                        fill
+                        sizes="60px"
+                        style={{ objectFit: "cover" }}
+                      />
+                    </Box>
+                  </TableCell>
+                  <TableCell>{ad.title}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={
+                        TYPES.find((t) => t.value === ad.type)?.label || ad.type
+                      }
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={
+                        PLACEMENTS.find((p) => p.value === ad.placement)?.label ||
+                        ad.placement
+                      }
+                      size="small"
+                      color="primary"
+                      variant="outlined"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Switch
+                      checked={ad.isActive}
+                      onChange={() => handleToggleActive(ad)}
+                    />
+                  </TableCell>
+                  <TableCell align="right">
+                    <IconButton
+                      onClick={() => handleOpenDialog(ad)}
+                      aria-label="แก้ไข"
+                    >
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton
+                      onClick={() => handleOpenDeleteDialog(ad)}
+                      color="error"
+                      aria-label="ลบ"
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {ads.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
+                    <Typography color="text.secondary">ยังไม่มีโฆษณา</Typography>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
       {/* Pagination */}
       {totalPages > 1 && (
@@ -729,10 +838,11 @@ export default function AdvertisementsPage() {
         onClose={handleCloseDialog}
         maxWidth="md"
         fullWidth
+        fullScreen={isMobile}
       >
         <DialogTitle>{editingAd ? "แก้ไขโฆษณา" : "เพิ่มโฆษณา"}</DialogTitle>
         <DialogContent>
-          <Box sx={{ display: "flex", gap: 3, mt: 1 }}>
+          <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 3, mt: 1 }}>
             {/* Left: Form */}
             <Box sx={{ flex: 1 }}>
               {error && (
@@ -869,7 +979,7 @@ export default function AdvertisementsPage() {
             </Box>
 
             {/* Right: Preview */}
-            <Box sx={{ width: 280, flexShrink: 0 }}>
+            <Box sx={{ width: { xs: "100%", md: 280 }, flexShrink: 0 }}>
               <Typography variant="subtitle2" sx={{ mb: 1.5 }}>
                 ตัวอย่างการแสดงผล
               </Typography>

@@ -20,7 +20,8 @@ export default function DashboardLayout({
         component="main"
         sx={{
           flexGrow: 1,
-          p: 2.5,
+          p: { xs: 2, md: 2.5 },
+          pt: { xs: `${56 + 16}px`, md: 2.5 },
           bgcolor: "#0a0a0a",
           backgroundImage: "none",
           maxWidth: "1200px",

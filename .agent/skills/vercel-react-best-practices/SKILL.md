@@ -4,7 +4,7 @@ description: Core performance and modernization guidelines for Next.js 16+ and R
 license: MIT
 metadata:
   author: vercel
-  version: "2.0.0"
+  version: "2.1.0"
 ---
 
 # Next.js 16 & React 19 Best Practices
@@ -28,14 +28,16 @@ Reference these guidelines when:
 | **CRITICAL** | **Next.js 16 Core** | Async APIs (`await params`), Data Cache (`unstable_cache`), Server Actions (`useActionState`) |
 | **CRITICAL** | **React 19**        | Unwrapping Promises (`use`), Instant Feedback (`useOptimistic`), Compiler                     |
 | **HIGH**     | **Server Perf**     | Streaming, Parallel Fetching (`Promise.all`), Non-blocking (`after`)                          |
+| **HIGH**     | **Vercel Hobby**    | Max 60s execution, no background jobs, optimize cold starts                                   |
 | **MEDIUM**   | **Client Perf**     | URL State (`nuqs`), Fetching (`SWR`)                                                          |
 | **MEDIUM**   | **Bundle & CSS**    | Tailwind v4, Package Optimization                                                             |
 
-## Key Changes in v2.0 (Feb 2026)
+## Key Changes in v2.1 (Mar 2026)
 
 - **Async Request APIs**: `params`, `searchParams`, `headers`, `cookies` are now async.
 - **React 19 Primitives**: New hooks replace legacy patterns (`useFormState` -> `useActionState`).
 - **Data Caching**: `unstable_cache` is the standard for localized persistence.
 - **React Compiler**: Manual `useMemo`/`useCallback` largely deprecated.
+- **AGENTS.md Support**: Antigravity now reads both `AGENTS.md` and `GEMINI.md` for project rules.
 
-> **Full Documentation**: See `AGENTS.md` for detailed code examples and anti-patterns.
+> **Full Documentation**: See `AGENTS.md` or `GEMINI.md` for detailed code examples and anti-patterns.

@@ -14,7 +14,7 @@ See [file-conventions.md](./file-conventions.md) for:
 - Project structure and special files
 - Route segments (dynamic, catch-all, groups)
 - Parallel and intercepting routes
-- Middleware rename in v16 (middleware → proxy)
+- Middleware file: middleware.ts (filename unchanged in Next.js 16)
 
 ## RSC Boundaries
 
