@@ -4,23 +4,16 @@
 
 ## [1.9.6] - 2026-03-11
 
-### ปรับปรุงประสิทธิภาพ (Performance)
+### 🚀 การอัปเกรดประสิทธิภาพหลัก (Core Performance Optimizations)
 
-- **ระบบค้นหา:** เปลี่ยนจาก Fuse.js (โหลดทั้งตาราง) เป็น PostgreSQL Full-Text Search ใช้ tsvector + GIN index ที่มีอยู่แล้ว พร้อม ILIKE fallback สำหรับภาษาไทย
-- **ระบบนับยอดวิว:** เปลี่ยนจาก In-memory Map (หายทุกครั้งที่ function จบ) เป็น DB-level dedup ด้วยตาราง `manga_views` ที่ persist ข้าม serverless instances
-- **ระบบ Rate Limiting:** ลด DB queries จาก 2 เหลือ 1 ต่อ check ด้วย SQL upsert + RETURNING
-- **Cron Cleanup:** เปลี่ยนจากลบไฟล์ R2 ทีละไฟล์เป็น batch delete (สูงสุด 1,000 ไฟล์ต่อ request)
-- **R2 Client:** รวม S3Client ที่ซ้ำซ้อนเป็น shared utility (`lib/r2.ts`)
-
-### ปรับปรุงฐานข้อมูล (Database)
-
-- ลบตาราง `_MangaTags` (legacy Prisma) ที่ซ้ำกับ `manga_tags`
-- เปลี่ยนคอลัมน์ `manga.pages` จาก `text` เป็น `jsonb` (ไม่ต้อง JSON.parse ที่ application layer)
-- สร้างตาราง `manga_views` สำหรับ view count dedup
-
-### ลบออก (Removed)
-
-- ลบ dependency `fuse.js` ที่ไม่ได้ใช้แล้ว
+- **Search API (FTS):** เปลี่ยนระบบค้นหาจากการใช้ `Fuse.js` (ที่ต้องโหลดข้อมูลทั้งตารางเข้าหน่วยความจำ) เป็น **PostgreSQL Full-Text Search (FTS)** พร้อมด้วย ILIKE fallback เพื่อรองรับทั้งภาษาอังกฤษและไทยอย่างมีประสิทธิภาพ
+- **View Count Dedup แบบ Persistent:** เปลี่ยนระบบป้องกันการปั๊มยอดวิวจาก In-memory Map (ที่ทำงานไม่ถูกต้องบน Serverless) เป็นการใช้ตารางในฐานข้อมูล `manga_views` จัดการผ่าน `UPSERT` ที่แม่นยำกว่า
+- **Rate Limiting ไวขึ้น 2 เท่า:** ปรับ Logic ของ Rate Limit ให้เหลือเพียง **1 SQL Query (UPSERT)** แทนการดึงข้อมูล 2 รอบ
+- **Batch Cron Cleanup:** ปรับปรุง Cron job สำหรับลบรูปภาพเก่าๆ ใน Cloudflare R2 ให้เป็นแบบ **Batch Delete (`DeleteObjectsCommand`)** (ลบได้สูงสุดครั้งละ 1,000 ไฟล์) พร้อมๆ กับการลบข้อมูลใน Database แบบ Batch ประหยัดเวลาและลดปัญหา Timeout
+- **เพิ่มประสิทธิภาพฐานข้อมูล:** 
+  - ลบตาราง `_MangaTags` เวอร์ชันเก่าที่ซ้ำซ้อนกับ `manga_tags`
+  - เปลียน Data Type ของ `manga.pages` จาก `text` เป็น `jsonb` ทำให้ประหยัดเวลา CPU ที่ไม่ต้องรัน `JSON.parse` ทุกครั้ง
+- **Shared S3Client Utility:** สร้าง `lib/r2.ts` เพื่อจัดการ S3 Client ไม่ให้เกิดการสร้าง connection ซ้ำซ้อนในแต่ละระบบย่อย
 
 ---
 

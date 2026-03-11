@@ -25,7 +25,7 @@ _พัฒนาด้วย Next.js 16 (App Router) และระบบจั
 
 - **Framework:** [Next.js 16](https://nextjs.org/) (App Router)
 - **Language:** [TypeScript](https://www.typescriptlang.org/)
-- **Database:** [PostgreSQL](https://www.postgresql.org/) (ผ่าน [Supabase](https://supabase.com/) + [Drizzle ORM](https://orm.drizzle.team/))
+- **Database:** [Turso (LibSQL)](https://turso.tech/) (ผ่าน [Drizzle ORM](https://orm.drizzle.team/))
 - **Storage:** [Cloudflare R2](https://www.cloudflare.com/developer-platform/r2/)
 - **Styling:**
   - [Tailwind CSS v4](https://tailwindcss.com/)
@@ -49,7 +49,7 @@ _พัฒนาด้วย Next.js 16 (App Router) และระบบจั
 - **Home Page:** แสดงรายการมังงะทั้งหมด พร้อมระบบค้นหา (Search)
 - **Filters & Sort:** กรองมังงะตาม หมวดหมู่ (Category), แท็ก (Tag) และเรียงลำดับตามวันที่อัปเดต/วันที่เพิ่ม/ชื่อเรื่อง
   - _New!_ **Smart Auto-Filter:** ระบบกรองอัตโนมัติที่ฉลาดขึ้น ป้องกันการโหลดซ้ำซ้อน (Infinite Loop) และลดภาระ Server
-  - _New!_ **PostgreSQL Full-Text Search:** ค้นหาด้วย tsvector + GIN index รองรับทั้งภาษาอังกฤษ (FTS) และภาษาไทย (ILIKE fallback) พร้อม Autocomplete dropdown
+  - _New!_ **PostgreSQL Full-Text Search (FTS):** ระบบค้นหาประสิทธิภาพสูงด้วย tsvector และ GIN index (รองรับ ILIKE สำหรับภาษาไทย) ไม่ง้อแรมฝั่ง Server
 - **Reader:** หน้าอ่านการ์ตูนแบบเลื่อนลง (Vertical Scroll)
   - _New!_ **Lazy Loading:** โหลดรูปภาพเมื่อเลื่อนลงมาถึง ช่วยให้หน้าเว็บโหลดเร็วขึ้นมาก
   - **Responsive Design:** รองรับการใช้งานทั้งบนมือถือ แท็บเล็ต และเดสก์ท็อป
@@ -128,8 +128,8 @@ npm install
 สร้างไฟล์ `.env` ที่ root directory และกำหนดค่าดังนี้:
 
 ```env
-# Database (PostgreSQL via Supabase)
-DATABASE_URL="postgresql://..."
+# Database (Turso / LibSQL)
+TURSO_DATABASE_URL="libsql://..."
 
 # Better Auth Configuration
 BETTER_AUTH_SECRET="your-super-secret-key-change-me"
@@ -198,11 +198,10 @@ npm run dev
 
 **🗄️ API & Database Optimization:**
 
+- **Core Analytics & Logic:** Rate Limiting ตอนนี้ใช้ UPSERT Query ตัวเดียวลด Latency กึ่งหนึ่ง, View Counts ใช้ตารางแบบ persistent เพื่อ Dedup และ Cron Job Cleanup จัดการลบข้อมูลใน R2 แบบ Batch ขนาดใหญ่เพื่อป้องกัน Timeout
 - **Advertisements API:** `unstable_cache` (5min) + auth guard for `all=true` + CDN headers
 - **Comments API:** `select` instead of heavy `include` + limit replies depth + CDN headers
-- **View Count API:** DB-level IP dedup (manga_views table) — persistent ข้าม serverless instances
-- **Search API:** PostgreSQL Full-Text Search (tsvector + GIN index) — ไม่โหลดทั้ง table เข้า memory
-- **Rate Limiting:** Single SQL upsert query — ลด round-trips 50%
+- **Search API:** เปลี่ยนจาก Fuse.js เป็น PostgreSQL FTS ดึงข้อมูลทีละ 10 เรื่องผ่าน GIN index ลดการใช้ Memory ลงมหาศาล
 
 **📱 Mobile UX Improvements:**
 
@@ -231,7 +230,7 @@ npm run dev
 - Font optimization with `next/font`
 - Image WebP/AVIF formats + 1-year cache
 - CDN edge caching with stale-while-revalidate
-- Supabase PostgreSQL connection pooling
+- Turso connection pooling
 
 ### 📊 Performance Metrics
 
@@ -269,7 +268,7 @@ npm run dev
   - [ ] **ประวัติการอ่าน (History):** บันทึกตอนที่อ่านล่าสุดอัตโนมัติ
   - [ ] **รายการโปรด (Bookmarks):** กดติดตามมังงะที่ชอบเพื่อรับการแจ้งเตือน
 - [x] **SEO & Open Graph:** ปรับปรุง SEO และเพิ่ม Open Graph Tags พร้อม Author Name format `[ผู้แต่ง] - ชื่อเรื่อง` และ JSON-LD Structured Data
-- [x] **PostgreSQL Full-Text Search:** ระบบค้นหาด้วย tsvector + GIN index รองรับทั้ง English FTS และ ILIKE fallback สำหรับภาษาไทย
+- [x] **Full-text Search:** ระบบค้นหาประสิทธิภาพสูงด้วย PostgreSQL FTS แทนที่ Fuse.js เดิม
 - [x] **Social Login:** เพิ่มระบบล็อกอินผ่าน Google เพื่อความสะดวกของผู้ใช้งาน (Facebook Coming Soon)
 
 ---
