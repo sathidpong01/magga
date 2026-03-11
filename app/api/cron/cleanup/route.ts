@@ -1,23 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { loginAttempts as loginAttemptsTable, mangaSubmissions as submissionsTable } from "@/db/schema";
-import { lt, eq, and } from "drizzle-orm";
-import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
-
-const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
-const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
-const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
-const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME;
-const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL;
-
-const S3 = new S3Client({
-  region: "auto",
-  endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: R2_ACCESS_KEY_ID || "",
-    secretAccessKey: R2_SECRET_ACCESS_KEY || "",
-  },
-});
+import { lt, eq, and, inArray } from "drizzle-orm";
+import { DeleteObjectsCommand } from "@aws-sdk/client-s3";
+import { r2Client, R2_BUCKET, R2_PUBLIC_URL } from "@/lib/r2";
 
 export async function GET(req: Request) {
   // Verify secret to prevent unauthorized calls (supports both query param and header)
@@ -34,7 +20,7 @@ export async function GET(req: Request) {
     const results = {
       rateLimitsDeleted: 0,
       submissionsDeleted: 0,
-      submissionErrors: 0,
+      r2FilesDeleted: 0,
     };
 
     // 1. Clean up expired rate limit records (LoginAttempt)
@@ -64,40 +50,49 @@ export async function GET(req: Request) {
       );
 
     if (oldRejectedSubmissions.length > 0) {
+      // Collect ALL R2 keys to delete in a single batch
+      const allKeys: string[] = [];
+
       for (const submission of oldRejectedSubmissions) {
+        if (submission.coverImage?.includes(R2_PUBLIC_URL || "")) {
+          allKeys.push(submission.coverImage.replace(`${R2_PUBLIC_URL}/`, ""));
+        }
         try {
-          // Extract file keys from URLs
-          const fileUrls: string[] = [];
-          if (submission.coverImage) fileUrls.push(submission.coverImage);
-          
-          try {
-            const pages = JSON.parse(submission.pages as string);
-            if (Array.isArray(pages)) fileUrls.push(...pages);
-          } catch {}
-
-          // Delete files from R2
-          for (const url of fileUrls) {
-            if (!url.includes(R2_PUBLIC_URL || "")) continue;
-            
-            const key = url.replace(`${R2_PUBLIC_URL}/`, "");
-            
-            await S3.send(new DeleteObjectCommand({
-              Bucket: R2_BUCKET_NAME,
-              Key: key
-            }));
+          const pages = JSON.parse(submission.pages as string);
+          if (Array.isArray(pages)) {
+            allKeys.push(
+              ...pages
+                .filter((url: string) => url.includes(R2_PUBLIC_URL || ""))
+                .map((url: string) => url.replace(`${R2_PUBLIC_URL}/`, ""))
+            );
           }
+        } catch { /* skip unparseable pages */ }
+      }
 
-          // Delete submission record
-          await db
-            .delete(submissionsTable)
-            .where(eq(submissionsTable.id, submission.id));
-
-          results.submissionsDeleted++;
+      // Batch delete R2 files in chunks of 1000 (API limit)
+      for (let i = 0; i < allKeys.length; i += 1000) {
+        const chunk = allKeys.slice(i, i + 1000);
+        try {
+          await r2Client.send(
+            new DeleteObjectsCommand({
+              Bucket: R2_BUCKET,
+              Delete: { Objects: chunk.map((Key) => ({ Key })) },
+            })
+          );
+          results.r2FilesDeleted += chunk.length;
         } catch (err) {
-          console.error(`Failed to cleanup submission ${submission.id}:`, err);
-          results.submissionErrors++;
+          console.error(`[Cron Cleanup] R2 batch delete failed for chunk ${i}:`, err);
         }
       }
+
+      // Batch delete all submission records
+      const ids = oldRejectedSubmissions.map((s) => s.id);
+      await db.delete(submissionsTable).where(inArray(submissionsTable.id, ids));
+      results.submissionsDeleted = ids.length;
+
+      console.log(
+        `[Cron Cleanup] Deleted ${results.submissionsDeleted} submissions, ${results.r2FilesDeleted} R2 files`
+      );
     }
 
     return NextResponse.json({ 

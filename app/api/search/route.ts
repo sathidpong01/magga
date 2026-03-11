@@ -1,61 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { manga as mangaTable } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
-import { unstable_cache } from "next/cache";
-import Fuse from "fuse.js";
+import { eq, and, sql } from "drizzle-orm";
 
-// Cache search index for 5 minutes
-const getSearchIndex = unstable_cache(
-  async () => {
-    const mangas = await db.query.manga.findMany({
-      where: eq(mangaTable.isHidden, false),
-      columns: {
-        id: true,
-        slug: true,
-        title: true,
-        description: true,
-        coverImage: true,
-        authorName: true,
-      },
-      with: {
-        category: {
-          columns: { name: true },
-        },
-        mangaTags_mangaId: {
-          with: {
-            tag_tagId: {
-              columns: { name: true },
-            },
-          },
-        },
-      },
-      orderBy: [desc(mangaTable.updatedAt)],
-    });
-
-    return mangas.map((manga) => ({
-      id: manga.id,
-      slug: manga.slug,
-      title: manga.title,
-      description: (manga.description || "").slice(0, 100),
-      coverImage: manga.coverImage,
-      authorName: manga.authorName || "",
-      category: manga.category?.name || "",
-      tags: manga.mangaTags_mangaId.map((mt: any) => mt.tag_tagId?.name).filter(Boolean).join(", "),
-    }));
-  },
-  ["search-index"],
-  { revalidate: 300, tags: ["search-index"] }
-);
-
-// Fuse.js runs server-side — client sends query, server returns top 10 results
+/**
+ * GET /api/search?q=<query>
+ * Uses PostgreSQL full-text search (tsvector + GIN index) instead of Fuse.js.
+ * Falls back to ILIKE for short queries or non-English text (e.g., Thai).
+ */
 export async function GET(request: NextRequest) {
   try {
     const q = request.nextUrl.searchParams.get("q")?.trim();
 
-    const searchIndex = await getSearchIndex();
-
-    // No query — return empty (client should not fetch without query)
+    // No query — return empty
     if (!q || q.length < 2) {
       return NextResponse.json([], {
         headers: {
@@ -64,30 +21,75 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Run Fuse.js on server
-    const fuse = new Fuse(searchIndex, {
-      keys: [
-        { name: "title", weight: 2 },
-        { name: "authorName", weight: 1.5 },
-        { name: "description", weight: 0.5 },
-        { name: "tags", weight: 1 },
-        { name: "category", weight: 0.8 },
-      ],
-      threshold: 0.4,
-      includeScore: true,
-      minMatchCharLength: 2,
-    });
+    // Try FTS first, fall back to ILIKE for non-Latin text (Thai, etc.)
+    const hasLatinChars = /[a-zA-Z]/.test(q);
 
-    const results = fuse.search(q, { limit: 10 });
+    let results;
 
-    return NextResponse.json(
-      results.map((r) => r.item),
-      {
-        headers: {
-          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+    if (hasLatinChars) {
+      // PostgreSQL FTS with GIN index — fast for English text
+      results = await db.query.manga.findMany({
+        where: and(
+          eq(mangaTable.isHidden, false),
+          sql`${mangaTable.fts} @@ plainto_tsquery('english', ${q})`
+        ),
+        orderBy: sql`ts_rank(${mangaTable.fts}, plainto_tsquery('english', ${q})) DESC`,
+        limit: 10,
+        columns: {
+          id: true,
+          slug: true,
+          title: true,
+          description: true,
+          coverImage: true,
+          authorName: true,
         },
-      }
-    );
+        with: {
+          category: {
+            columns: { name: true },
+          },
+        },
+      });
+    }
+
+    // Fall back to ILIKE if FTS returned nothing or query is non-Latin
+    if (!results || results.length === 0) {
+      results = await db.query.manga.findMany({
+        where: and(
+          eq(mangaTable.isHidden, false),
+          sql`(${mangaTable.title} ILIKE ${'%' + q + '%'} OR ${mangaTable.authorName} ILIKE ${'%' + q + '%'})`
+        ),
+        limit: 10,
+        columns: {
+          id: true,
+          slug: true,
+          title: true,
+          description: true,
+          coverImage: true,
+          authorName: true,
+        },
+        with: {
+          category: {
+            columns: { name: true },
+          },
+        },
+      });
+    }
+
+    const mapped = results.map((manga) => ({
+      id: manga.id,
+      slug: manga.slug,
+      title: manga.title,
+      description: (manga.description || "").slice(0, 100),
+      coverImage: manga.coverImage,
+      authorName: manga.authorName || "",
+      category: manga.category?.name || "",
+    }));
+
+    return NextResponse.json(mapped, {
+      headers: {
+        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+      },
+    });
   } catch (error) {
     console.error("Error searching:", error);
     return NextResponse.json(

@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { profiles, accounts, sessions, comments, commentVotes, manga, authors, categories, mangaRatings, mangaSubmissions, mangaSubmissionTags, tags, userSubmissionLimits, mangaTags, _mangaTags, blockedUsers, blockedTags } from "./schema";
+import { profiles, accounts, sessions, comments, commentVotes, manga, authors, categories, mangaRatings, mangaSubmissions, mangaSubmissionTags, tags, userSubmissionLimits, mangaTags, blockedUsers, blockedTags, mangaViews } from "./schema";
 
 export const accountsRelations = relations(accounts, ({one}) => ({
 	profile: one(profiles, {
@@ -70,9 +70,7 @@ export const mangaRelations = relations(manga, ({one, many}) => ({
 	}),
 	mangaRatings: many(mangaRatings),
 	mangaSubmissions: many(mangaSubmissions),
-	_mangaTags_a: many(_mangaTags, {
-		relationName: "_mangaTags_a_manga_id"
-	}),
+	mangaViews: many(mangaViews),
 	mangaTags_mangaId: many(mangaTags, {
 		relationName: "mangaTags_mangaId_manga_id"
 	}),
@@ -128,9 +126,6 @@ export const mangaSubmissionTagsRelations = relations(mangaSubmissionTags, ({one
 
 export const tagsRelations = relations(tags, ({many}) => ({
 	mangaSubmissionTags: many(mangaSubmissionTags),
-	_mangaTags_b: many(_mangaTags, {
-		relationName: "_mangaTags_b_tags_id"
-	}),
 	mangaTags_tagId: many(mangaTags, {
 		relationName: "mangaTags_tagId_tags_id"
 	}),
@@ -144,16 +139,10 @@ export const userSubmissionLimitsRelations = relations(userSubmissionLimits, ({o
 	}),
 }));
 
-export const _mangaTagsRelations = relations(_mangaTags, ({one}) => ({
-	manga_a: one(manga, {
-		fields: [_mangaTags.a],
+export const mangaViewsRelations = relations(mangaViews, ({one}) => ({
+	manga: one(manga, {
+		fields: [mangaViews.mangaId],
 		references: [manga.id],
-		relationName: "_mangaTags_a_manga_id"
-	}),
-	tag_b: one(tags, {
-		fields: [_mangaTags.b],
-		references: [tags.id],
-		relationName: "_mangaTags_b_tags_id"
 	}),
 }));
 

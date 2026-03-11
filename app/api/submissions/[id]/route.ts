@@ -39,7 +39,7 @@ export async function GET(
     const result = {
       ...submission,
       tags: submission.mangaSubmissionTags.map((t: any) => t.tag),
-      pages: typeof submission.pages === "string" ? JSON.parse(submission.pages) : submission.pages,
+      pages: submission.pages,
     };
 
     return NextResponse.json(result);

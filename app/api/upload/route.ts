@@ -1,22 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { checkRateLimit } from "@/lib/rate-limit";
-
-const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
-const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
-const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
-const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME;
-const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL;
-
-const S3 = new S3Client({
-  region: "auto",
-  endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: R2_ACCESS_KEY_ID || "",
-    secretAccessKey: R2_SECRET_ACCESS_KEY || "",
-  },
-});
+import { r2Client, R2_BUCKET, R2_PUBLIC_URL } from "@/lib/r2";
 
 import sharp from "sharp";
 
@@ -177,9 +163,9 @@ export async function POST(request: Request) {
         )}`;
         const key = `uploads/${year}/${month}/${mangaId}/${safeName}`;
 
-        await S3.send(
+        await r2Client.send(
           new PutObjectCommand({
-            Bucket: R2_BUCKET_NAME,
+            Bucket: R2_BUCKET,
             Key: key,
             Body: imageData,
             ContentType: contentType,

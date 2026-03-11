@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -152,14 +152,6 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
     if (!manga?.pages) return [];
     let initialPages: string[] = [];
     if (Array.isArray(manga.pages)) initialPages = manga.pages as string[];
-    else if (typeof manga.pages === "string") {
-      try {
-        const parsed = JSON.parse(manga.pages);
-        if (Array.isArray(parsed)) initialPages = parsed;
-      } catch {
-        initialPages = [];
-      }
-    }
 
     return initialPages.map((url, index) => ({
       id: `existing-${index}-${Date.now()}`,

@@ -1,6 +1,5 @@
 import { db } from "@/db";
-import { loginAttempts as loginAttemptsTable } from "@/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
 interface RateLimitResult {
   allowed: boolean;
@@ -9,7 +8,7 @@ interface RateLimitResult {
 }
 
 /**
- * Check rate limit for a given identifier
+ * Check rate limit for a given identifier using a single DB query (upsert + RETURNING).
  * @param identifier - Unique identifier (e.g., "login:ip", "upload:userId")
  * @param limit - Maximum number of attempts allowed
  * @param duration - Duration in milliseconds before reset (default: 15 minutes)
@@ -20,51 +19,36 @@ export async function checkRateLimit(
   limit: number = 5,
   duration: number = 15 * 60 * 1000 // 15 minutes
 ): Promise<RateLimitResult> {
-  const now = new Date();
-
   try {
-    const [attempt] = await db
-      .select()
-      .from(loginAttemptsTable)
-      .where(eq(loginAttemptsTable.identifier, identifier))
-      .limit(1);
+    const durationInterval = `${Math.floor(duration / 1000)} seconds`;
+    const result = await db.execute(sql`
+      INSERT INTO login_attempts (identifier, count, expires_at)
+      VALUES (${identifier}, 1, NOW() + ${durationInterval}::interval)
+      ON CONFLICT (identifier) DO UPDATE SET
+        count = CASE 
+          WHEN login_attempts.expires_at < NOW() THEN 1
+          ELSE login_attempts.count + 1
+        END,
+        expires_at = CASE
+          WHEN login_attempts.expires_at < NOW() THEN NOW() + ${durationInterval}::interval
+          ELSE login_attempts.expires_at
+        END
+      RETURNING count, expires_at
+    `);
 
-    const expiresAt = attempt ? new Date(attempt.expiresAt) : null;
-
-    if (!attempt || now > expiresAt!) {
-      // Reset or create new attempt record
-      await db
-        .insert(loginAttemptsTable)
-        .values({
-          identifier,
-          count: 1,
-          expiresAt: new Date(now.getTime() + duration),
-        })
-        .onConflictDoUpdate({
-          target: loginAttemptsTable.identifier,
-          set: {
-            count: 1,
-            expiresAt: new Date(now.getTime() + duration),
-          },
-        });
-      return { allowed: true, remaining: limit - 1 };
+    const row = result[0] as { count: number; expires_at: string } | undefined;
+    if (!row) {
+      return { allowed: true, remaining: limit };
     }
 
-    if (attempt.count >= limit) {
-      return {
-        allowed: false,
-        remaining: 0,
-        resetTime: expiresAt!.getTime(),
-      };
-    }
+    const count = Number(row.count);
+    const expiresAt = new Date(row.expires_at).getTime();
 
-    // Increment count
-    await db
-      .update(loginAttemptsTable)
-      .set({ count: sql`${loginAttemptsTable.count} + 1` })
-      .where(eq(loginAttemptsTable.identifier, identifier));
-
-    return { allowed: true, remaining: limit - (attempt.count + 1) };
+    return {
+      allowed: count <= limit,
+      remaining: Math.max(0, limit - count),
+      resetTime: count > limit ? expiresAt : undefined,
+    };
   } catch (error) {
     console.error("Rate limit check failed:", error);
     // Allow on error to prevent blocking legitimate users
@@ -78,9 +62,9 @@ export async function checkRateLimit(
  */
 export async function resetRateLimit(identifier: string): Promise<void> {
   try {
-    await db
-      .delete(loginAttemptsTable)
-      .where(eq(loginAttemptsTable.identifier, identifier));
+    await db.execute(sql`
+      DELETE FROM login_attempts WHERE identifier = ${identifier}
+    `);
   } catch {
     // Ignore if not found
   }

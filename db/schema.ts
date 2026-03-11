@@ -1,4 +1,4 @@
-import { pgTable, pgPolicy, text, integer, timestamp, unique, check, uuid, boolean, foreignKey, index, bigint, doublePrecision, primaryKey, customType } from "drizzle-orm/pg-core"
+import { pgTable, pgPolicy, text, integer, timestamp, unique, check, uuid, boolean, foreignKey, index, bigint, doublePrecision, primaryKey, customType, jsonb } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 const tsvector = customType<{ data: string }>({ dataType() { return 'tsvector'; } });
@@ -254,7 +254,7 @@ export const manga = pgTable("manga", {
 	coverImage: text("cover_image").notNull(),
 	coverWidth: integer("cover_width"),
 	coverHeight: integer("cover_height"),
-	pages: text().notNull(),
+	pages: jsonb().notNull(),
 	authorName: text("author_name"),
 	extraMetadata: text("extra_metadata"),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
@@ -420,27 +420,19 @@ export const userSubmissionLimits = pgTable("user_submission_limits", {
 	pgPolicy("submission_limits_select", { as: "permissive", for: "select", to: ["authenticated"] }),
 ]);
 
-export const _mangaTags = pgTable("_MangaTags", {
-	a: uuid("A").notNull(),
-	b: uuid("B").notNull(),
+export const mangaViews = pgTable("manga_views", {
+	mangaId: uuid("manga_id").notNull(),
+	ipHash: text("ip_hash").notNull(),
+	viewedAt: timestamp("viewed_at", { withTimezone: true, mode: 'date' }).defaultNow().notNull(),
 }, (table) => [
-	index().using("btree", table.b.asc().nullsLast().op("uuid_ops")),
+	index("idx_manga_views_viewed_at").using("btree", table.viewedAt.asc().nullsLast()),
 	foreignKey({
-			columns: [table.a],
+			columns: [table.mangaId],
 			foreignColumns: [manga.id],
-			name: "_MangaTags_A_fkey"
-		}).onUpdate("cascade").onDelete("cascade"),
-	foreignKey({
-			columns: [table.b],
-			foreignColumns: [tags.id],
-			name: "_MangaTags_B_fkey"
-		}).onUpdate("cascade").onDelete("cascade"),
-	primaryKey({ columns: [table.a, table.b], name: "_MangaTags_pkey"}),
-	pgPolicy("_MangaTags_admin_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: sql`(EXISTS ( SELECT 1
-   FROM profiles
-  WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
-	pgPolicy("_MangaTags_admin_write", { as: "permissive", for: "insert", to: ["authenticated"] }),
-	pgPolicy("_MangaTags_select", { as: "permissive", for: "select", to: ["public"] }),
+			name: "manga_views_manga_id_fkey"
+		}).onDelete("cascade"),
+	primaryKey({ columns: [table.mangaId, table.ipHash], name: "manga_views_pkey"}),
+	pgPolicy("manga_views_all", { as: "permissive", for: "all", to: ["public"], using: sql`true` }),
 ]);
 
 export const blockedUsers = pgTable("blocked_users", {

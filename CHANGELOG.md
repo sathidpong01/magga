@@ -2,6 +2,28 @@
 
 การเปลี่ยนแปลงทั้งหมดของเว็บไซต์จะถูกบันทึกไว้ในหน้านี้
 
+## [1.9.6] - 2026-03-11
+
+### ปรับปรุงประสิทธิภาพ (Performance)
+
+- **ระบบค้นหา:** เปลี่ยนจาก Fuse.js (โหลดทั้งตาราง) เป็น PostgreSQL Full-Text Search ใช้ tsvector + GIN index ที่มีอยู่แล้ว พร้อม ILIKE fallback สำหรับภาษาไทย
+- **ระบบนับยอดวิว:** เปลี่ยนจาก In-memory Map (หายทุกครั้งที่ function จบ) เป็น DB-level dedup ด้วยตาราง `manga_views` ที่ persist ข้าม serverless instances
+- **ระบบ Rate Limiting:** ลด DB queries จาก 2 เหลือ 1 ต่อ check ด้วย SQL upsert + RETURNING
+- **Cron Cleanup:** เปลี่ยนจากลบไฟล์ R2 ทีละไฟล์เป็น batch delete (สูงสุด 1,000 ไฟล์ต่อ request)
+- **R2 Client:** รวม S3Client ที่ซ้ำซ้อนเป็น shared utility (`lib/r2.ts`)
+
+### ปรับปรุงฐานข้อมูล (Database)
+
+- ลบตาราง `_MangaTags` (legacy Prisma) ที่ซ้ำกับ `manga_tags`
+- เปลี่ยนคอลัมน์ `manga.pages` จาก `text` เป็น `jsonb` (ไม่ต้อง JSON.parse ที่ application layer)
+- สร้างตาราง `manga_views` สำหรับ view count dedup
+
+### ลบออก (Removed)
+
+- ลบ dependency `fuse.js` ที่ไม่ได้ใช้แล้ว
+
+---
+
 ## [1.9.5] - 2026-03-11
 
 ### ปรับปรุงและแก้ไขข้อผิดพลาด

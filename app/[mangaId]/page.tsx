@@ -165,11 +165,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
   const pages: string[] = (() => {
     if (!manga.pages) return [];
     if (Array.isArray(manga.pages)) return manga.pages as string[];
-    try {
-      return JSON.parse(manga.pages as unknown as string) as string[];
-    } catch {
-      return [];
-    }
+    return [];
   })();
 
   const baseUrl = process.env.BETTER_AUTH_URL || "https://magga.vercel.app";
