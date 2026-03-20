@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
@@ -110,13 +110,13 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
 
       if (!response.ok) {
         const res = await response.json();
-        throw new Error(res.error || "อัปเดตไม่สำเร็จ");
+        throw new Error(res.error || "Update failed.");
       }
 
-      showSuccess("อัปเดต role สำเร็จ");
+      showSuccess("Role updated successfully.");
       router.refresh();
     } catch (err) {
-      showError(err instanceof Error ? err.message : "เกิดข้อผิดพลาด");
+      showError(err instanceof Error ? err.message : "An error occurred.");
     } finally {
       setIsLoading(false);
     }
@@ -139,15 +139,15 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
 
       if (!response.ok) {
         const res = await response.json();
-        throw new Error(res.error || "ลบไม่สำเร็จ");
+        throw new Error(res.error || "Delete failed.");
       }
 
       setDeleteDialogOpen(false);
       setUserToDelete(null);
-      showSuccess("ลบผู้ใช้เรียบร้อย");
+      showSuccess("User deleted successfully.");
       router.refresh();
     } catch (err) {
-      showError(err instanceof Error ? err.message : "ไม่สามารถลบผู้ใช้ได้");
+      showError(err instanceof Error ? err.message : "Failed to delete user.");
       setDeleteDialogOpen(false);
     } finally {
       setIsLoading(false);
@@ -171,14 +171,14 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
         body: JSON.stringify({ banReason }),
       });
 
-      if (!response.ok) throw new Error("ระงับการใช้งานไม่สำเร็จ");
+      if (!response.ok) throw new Error("Failed to ban user.");
 
-      showSuccess(`ระงับการใช้งาน ${userToBan.name} เรียบร้อย`);
+      showSuccess(`Account ${userToBan.name} has been suspended.`);
       router.refresh();
       setBanDialogOpen(false);
       setUserToBan(null);
     } catch (err) {
-      showError("เกิดข้อผิดพลาดในการระงับการใช้งาน");
+      showError("An error occurred while suspending the account.");
     } finally {
       setIsLoading(false);
     }
@@ -193,19 +193,19 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
         method: "DELETE",
       });
 
-      if (!response.ok) throw new Error("ยกเลิกการระงับไม่สำเร็จ");
+      if (!response.ok) throw new Error("Failed to unban user.");
 
-      showSuccess(`ยกเลิกการระงับ ${user.name} เรียบร้อย`);
+      showSuccess(`Suspension lifted for ${user.name}.`);
       router.refresh();
     } catch (err) {
-      showError("เกิดข้อผิดพลาดในการยกเลิก");
+      showError("An error occurred while lifting the suspension.");
     } finally {
       setIsLoading(false);
     }
   };
 
   const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString("th-TH", {
+    return new Date(date).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -217,11 +217,11 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
       {/* Filters Section */}
       <Paper
         sx={{
-          p: 3,
+          p: 2.5,
           mb: 3,
-          bgcolor: "#171717",
-          borderRadius: 1,
-          border: "1px solid #262626",
+          bgcolor: "#141414",
+          borderRadius: 1.25,
+          border: "1px solid rgba(255,255,255,0.06)",
         }}
       >
         <Stack
@@ -233,38 +233,48 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
             id="search-users"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="ค้นหาชื่อ, อีเมล, หรือ username..."
+            placeholder="SEARCH BY NAME, EMAIL, OR USERNAME..."
             size="small"
             sx={{
               flex: 1,
               "& .MuiOutlinedInput-root": {
-                bgcolor: "#262626",
+                bgcolor: "#0B0B0B",
                 borderRadius: 1,
+                "& fieldset": { borderColor: "rgba(255,255,255,0.06)" },
+                "&.Mui-focused fieldset": { borderColor: "#FABF06" },
               },
             }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon sx={{ color: "#525252" }} />
+                  <SearchIcon sx={{ color: "#a3a3a3", fontSize: 20 }} />
                 </InputAdornment>
               ),
             }}
           />
           <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel id="role-filter-label" sx={{ color: "#a3a3a3" }}>
-              กรอง Role
+            <InputLabel id="role-filter-label" sx={{ color: "#a3a3a3", fontWeight: 800, fontSize: "0.75rem", transform: "translate(14px, 8px) scale(1)", "&.Mui-focused, &.MuiInputLabel-shrink": { transform: "translate(14px, -9px) scale(0.75)", color: "#FABF06" } }}>
+              FILTER ROLE
             </InputLabel>
             <Select
               labelId="role-filter-label"
               id="role-filter"
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              label="กรอง Role"
-              sx={{ bgcolor: "#262626", borderRadius: 1 }}
+              label="FILTER ROLE"
+              sx={{ 
+                bgcolor: "#0B0B0B", 
+                borderRadius: 1,
+                fontWeight: 800,
+                fontSize: "0.875rem",
+                "& fieldset": { borderColor: "rgba(255,255,255,0.06)" },
+                "&:hover fieldset": { borderColor: "rgba(255,255,255,0.12)" },
+                "&.Mui-focused fieldset": { borderColor: "#FABF06" },
+              }}
             >
-              <MenuItem value="all">ทั้งหมด</MenuItem>
-              <MenuItem value="admin">Admin</MenuItem>
-              <MenuItem value="user">User</MenuItem>
+              <MenuItem value="all">ALL USERS</MenuItem>
+              <MenuItem value="admin">ADMINS</MenuItem>
+              <MenuItem value="user">REGULAR USERS</MenuItem>
             </Select>
           </FormControl>
         </Stack>
@@ -273,44 +283,44 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
       {/* Users Table */}
       <Paper
         sx={{
-          bgcolor: "#171717",
-          borderRadius: 1,
-          border: "1px solid #262626",
+          bgcolor: "#141414",
+          borderRadius: 1.25,
+          border: "1px solid rgba(255,255,255,0.06)",
           overflow: "hidden",
         }}
       >
-        <Box sx={{ px: 3, py: 2, borderBottom: "1px solid #262626" }}>
+        <Box sx={{ px: 3, py: 2, borderBottom: "1px solid rgba(255,255,255,0.06)", bgcolor: "rgba(255,255,255,0.02)" }}>
           <Typography
             variant="subtitle1"
-            sx={{ fontWeight: 600, color: "#fafafa" }}
+            sx={{ fontWeight: 800, color: "#fafafa", letterSpacing: "0.02em" }}
           >
-            รายชื่อผู้ใช้ ({filteredUsers.length})
+            USER LIST ({filteredUsers.length})
           </Typography>
         </Box>
         <TableContainer>
           <Table>
             <TableHead>
-              <TableRow sx={{ bgcolor: "#0a0a0a" }}>
-                <TableCell sx={{ fontWeight: "bold", color: "#a3a3a3" }}>
-                  ผู้ใช้
+              <TableRow sx={{ bgcolor: "rgba(0,0,0,0.2)" }}>
+                <TableCell sx={{ fontWeight: 800, color: "#a3a3a3", fontSize: "0.75rem", letterSpacing: "0.05em" }}>
+                  USER
                 </TableCell>
-                <TableCell sx={{ fontWeight: "bold", color: "#a3a3a3" }}>
-                  อีเมล
+                <TableCell sx={{ fontWeight: 800, color: "#a3a3a3", fontSize: "0.75rem", letterSpacing: "0.05em" }}>
+                  EMAIL
                 </TableCell>
-                <TableCell sx={{ fontWeight: "bold", color: "#a3a3a3" }}>
-                  Role
+                <TableCell sx={{ fontWeight: 800, color: "#a3a3a3", fontSize: "0.75rem", letterSpacing: "0.05em" }}>
+                  ROLE
                 </TableCell>
-                <TableCell sx={{ fontWeight: "bold", color: "#a3a3a3" }}>
-                  สถิติ
+                <TableCell sx={{ fontWeight: 800, color: "#a3a3a3", fontSize: "0.75rem", letterSpacing: "0.05em" }}>
+                  STATS
                 </TableCell>
-                <TableCell sx={{ fontWeight: "bold", color: "#a3a3a3" }}>
-                  วันที่สมัคร
+                <TableCell sx={{ fontWeight: 800, color: "#a3a3a3", fontSize: "0.75rem", letterSpacing: "0.05em" }}>
+                  JOINED
                 </TableCell>
                 <TableCell
                   align="right"
-                  sx={{ fontWeight: "bold", color: "#a3a3a3", width: 80 }}
+                  sx={{ fontWeight: 800, color: "#a3a3a3", fontSize: "0.75rem", letterSpacing: "0.05em", width: 80 }}
                 >
-                  จัดการ
+                  ACTIONS
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -320,6 +330,7 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                   key={user.id}
                   sx={{
                     "&:last-child td": { border: 0 },
+                    "& td": { borderBottom: "1px solid rgba(255,255,255,0.04)" },
                     "&:hover": { bgcolor: "rgba(255,255,255,0.02)" },
                   }}
                 >
@@ -332,8 +343,8 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                         {user.name?.[0] || user.email?.[0] || "?"}
                       </Avatar>
                       <Box>
-                        <Typography sx={{ fontWeight: 500, color: "#fafafa" }}>
-                          {user.name || "ไม่ระบุชื่อ"}
+                        <Typography sx={{ fontWeight: 800, color: "#fafafa", fontSize: "0.95rem", letterSpacing: "0.01em" }}>
+                          {user.name || "UNNAMED USER"}
                         </Typography>
                         {user.username && (
                           <Typography
@@ -345,16 +356,18 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                         )}
                         {user.banned && (
                           <Chip
-                            label="ระงับการใช้งาน"
+                            label="SUSPENDED"
                             size="small"
-                            color="error"
                             variant="outlined"
                             sx={{
                               ml: 1,
-                              height: 20,
-                              fontSize: "0.7rem",
+                              height: 18,
+                              fontSize: "0.6rem",
+                              fontWeight: 900,
                               borderColor: "#ef4444",
                               color: "#ef4444",
+                              bgcolor: "rgba(239, 68, 68, 0.05)",
+                              borderRadius: 0.5,
                             }}
                           />
                         )}
@@ -411,34 +424,42 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                   </TableCell>
                   <TableCell>
                     <Stack direction="row" spacing={1}>
-                      <Tooltip title="คอมเมนต์">
+                      <Tooltip title="COMMENTS">
                         <Chip
-                          icon={<CommentIcon sx={{ fontSize: 14 }} />}
+                          icon={<CommentIcon sx={{ fontSize: 14, color: "#FABF06 !important" }} />}
                           label={user._count.comments}
                           size="small"
                           sx={{
-                            bgcolor: "#262626",
-                            color: "#a3a3a3",
-                            borderRadius: 1,
+                            bgcolor: "rgba(250, 191, 6, 0.05)",
+                            color: "#FABF06",
+                            borderRadius: 0.75,
+                            border: "1px solid rgba(250, 191, 6, 0.2)",
+                            fontWeight: 700,
+                            fontFamily: "monospace",
+                            "& .MuiChip-label": { px: 1 }
                           }}
                         />
                       </Tooltip>
-                      <Tooltip title="Submissions">
-                        <Chip
-                          icon={<UploadFileIcon sx={{ fontSize: 14 }} />}
-                          label={user._count.submissions}
-                          size="small"
-                          sx={{
-                            bgcolor: "#262626",
-                            color: "#a3a3a3",
-                            borderRadius: 1,
-                          }}
-                        />
+                        <Tooltip title="Submissions">
+                          <Chip
+                            icon={<UploadFileIcon sx={{ fontSize: 14, color: "#a5b4fc !important" }} />}
+                            label={user._count.submissions}
+                            size="small"
+                            sx={{
+                              bgcolor: "rgba(99, 102, 241, 0.05)",
+                              color: "#a5b4fc",
+                              borderRadius: 0.75,
+                              border: "1px solid rgba(99, 102, 241, 0.2)",
+                              fontWeight: 700,
+                              fontFamily: "monospace",
+                              "& .MuiChip-label": { px: 1 }
+                            }}
+                          />
                       </Tooltip>
                     </Stack>
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2" sx={{ color: "#737373" }}>
+                    <Typography variant="body2" sx={{ color: "#737373", fontFamily: "monospace", fontSize: "0.8rem", fontWeight: 600 }}>
                       {formatDate(user.createdAt)}
                     </Typography>
                   </TableCell>
@@ -509,8 +530,8 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                     sx={{ textAlign: "center", py: 6, color: "#525252" }}
                   >
                     {searchQuery || roleFilter !== "all"
-                      ? "ไม่พบผู้ใช้ที่ตรงกับเงื่อนไข"
-                      : "ยังไม่มีผู้ใช้ในระบบ"}
+                      ? "NO USERS FOUND MATCHING YOUR CRITERIA."
+                      : "NO USERS FOUND IN THE SYSTEM."}
                   </TableCell>
                 </TableRow>
               )}
@@ -524,19 +545,25 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
         open={banDialogOpen}
         onClose={() => setBanDialogOpen(false)}
         PaperProps={{
-          sx: { bgcolor: "#171717", color: "#fafafa", borderRadius: 1 },
+          sx: { 
+            bgcolor: "#141414", 
+            color: "#fafafa", 
+            borderRadius: 1.25,
+            border: "1px solid rgba(255,255,255,0.08)",
+            backgroundImage: "none"
+          },
         }}
       >
-        <DialogTitle>ระงับการใช้งาน?</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em", fontSize: "1rem" }}>SUSPEND ACCOUNT?</DialogTitle>
         <DialogContent>
-          <DialogContentText sx={{ color: "#a3a3a3", mb: 2 }}>
-            ระบุเหตุผลในการระงับการใช้งานบัญชี &quot;
-            {userToBan?.name || userToBan?.email}&quot;
+          <DialogContentText sx={{ color: "#a3a3a3", mb: 2, fontWeight: 600 }}>
+            PLEASE SPECIFY A REASON FOR SUSPENDING &quot;
+            {userToBan?.name || userToBan?.email}&quot;.
           </DialogContentText>
           <TextField
             autoFocus
             margin="dense"
-            label="เหตุผล"
+            label="REASON"
             type="text"
             fullWidth
             variant="outlined"
@@ -545,29 +572,31 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
             sx={{
               "& .MuiOutlinedInput-root": {
                 color: "#fafafa",
-                "& fieldset": { borderColor: "#404040" },
-                "&:hover fieldset": { borderColor: "#a3a3a3" },
+                bgcolor: "#0B0B0B",
+                borderRadius: 1,
+                "& fieldset": { borderColor: "rgba(255,255,255,0.06)" },
+                "&:hover fieldset": { borderColor: "rgba(255,255,255,0.12)" },
                 "&.Mui-focused fieldset": { borderColor: "#ef4444" },
               },
-              "& .MuiInputLabel-root": { color: "#a3a3a3" },
+              "& .MuiInputLabel-root": { color: "#a3a3a3", fontWeight: 700, fontSize: "0.8rem" },
               "& .MuiInputLabel-root.Mui-focused": { color: "#ef4444" },
             }}
           />
         </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
+        <DialogActions sx={{ p: 2.5, bgcolor: "rgba(0,0,0,0.2)" }}>
           <Button
             onClick={() => setBanDialogOpen(false)}
-            sx={{ color: "#a3a3a3" }}
+            sx={{ color: "#a3a3a3", fontWeight: 800, textTransform: "uppercase", fontSize: "0.75rem" }}
           >
-            ยกเลิก
+            CANCEL
           </Button>
           <Button
             onClick={handleBanConfirm}
             variant="contained"
-            color="error"
+            sx={{ bgcolor: "#ef4444", color: "#fff", fontWeight: 900, "&:hover": { bgcolor: "#dc2626" }, px: 3 }}
             disabled={!banReason.trim()}
           >
-            ยืนยันการระงับ
+            CONFIRM SUSPENSION
           </Button>
         </DialogActions>
       </Dialog>
@@ -577,33 +606,38 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
         PaperProps={{
-          sx: { bgcolor: "#171717", color: "#fafafa", borderRadius: 1 },
+          sx: { 
+            bgcolor: "#141414", 
+            color: "#fafafa", 
+            borderRadius: 1.25,
+            border: "1px solid rgba(255,255,255,0.08)",
+            backgroundImage: "none"
+          },
         }}
       >
-        <DialogTitle>ยืนยันการลบ?</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em", fontSize: "1rem" }}>CONFIRM DELETION?</DialogTitle>
         <DialogContent>
-          <DialogContentText sx={{ color: "#a3a3a3" }}>
-            คุณต้องการลบผู้ใช้ &quot;{userToDelete?.name || userToDelete?.email}
-            &quot; หรือไม่?
-            <br />
-            <Typography variant="caption" sx={{ color: "#ef4444" }}>
-              การลบจะลบข้อมูลทั้งหมดของผู้ใช้รวมถึงคอมเมนต์และ submissions
-            </Typography>
+          <DialogContentText sx={{ color: "#a3a3a3", fontWeight: 600, mb: 1 }}>
+            ARE YOU SURE YOU WANT TO DELETE USER &quot;{userToDelete?.name || userToDelete?.email}
+            &quot;?
           </DialogContentText>
+          <Typography variant="caption" sx={{ color: "#ef4444", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.02em" }}>
+            THIS ACTION WILL REMOVE ALL USER DATA INCLUDING COMMENTS AND SUBMISSIONS PERMANENTLY.
+          </Typography>
         </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
+        <DialogActions sx={{ p: 2.5, bgcolor: "rgba(0,0,0,0.2)" }}>
           <Button
             onClick={() => setDeleteDialogOpen(false)}
-            sx={{ color: "#a3a3a3" }}
+            sx={{ color: "#a3a3a3", fontWeight: 800, textTransform: "uppercase", fontSize: "0.75rem" }}
           >
-            ยกเลิก
+            CANCEL
           </Button>
           <Button
             onClick={handleDeleteConfirm}
             variant="contained"
-            color="error"
+            sx={{ bgcolor: "#ef4444", color: "#fff", fontWeight: 900, "&:hover": { bgcolor: "#dc2626" }, px: 3 }}
           >
-            ลบ
+            DELETE USER
           </Button>
         </DialogActions>
       </Dialog>

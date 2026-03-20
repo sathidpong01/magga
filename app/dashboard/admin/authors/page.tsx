@@ -13,8 +13,8 @@ export default async function AuthorsPage() {
 
   return (
     <Box>
-      <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
-        จัดการผู้แต่ง
+      <Typography variant="h4" sx={{ mb: 3, fontWeight: 900, letterSpacing: "-0.02em", color: "#fafafa" }}>
+        MANAGE AUTHORS
       </Typography>
       <AuthorManager initialAuthors={authors as any} />
     </Box>

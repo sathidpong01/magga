@@ -10,7 +10,7 @@ export default function DashboardLayout({
     <Box
       sx={{
         display: "flex",
-        bgcolor: "#0a0a0a",
+        bgcolor: "#0B0B0B",
         minHeight: "100vh",
         color: "#fafafa",
       }}
@@ -22,7 +22,7 @@ export default function DashboardLayout({
           flexGrow: 1,
           p: { xs: 2, md: 2.5 },
           pt: { xs: `${56 + 16}px`, md: 2.5 },
-          bgcolor: "#0a0a0a",
+          bgcolor: "#0B0B0B",
           backgroundImage: "none",
           maxWidth: "1200px",
           mx: "auto",

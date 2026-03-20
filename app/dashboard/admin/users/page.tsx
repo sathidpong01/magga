@@ -34,8 +34,8 @@ export default async function UsersPage() {
 
   return (
     <Box>
-      <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
-        จัดการผู้ใช้
+      <Typography variant="h4" sx={{ mb: 3, fontWeight: 900, letterSpacing: "-0.02em", color: "#fafafa" }}>
+        MANAGE USERS
       </Typography>
       <UserManager initialUsers={users as any} />
     </Box>

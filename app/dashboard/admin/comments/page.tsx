@@ -184,56 +184,78 @@ export default function AdminCommentsPage() {
   return (
     <Box>
       <Typography
-        variant="h5"
-        fontWeight="bold"
-        sx={{ mb: 3, color: "#fafafa" }}
+        variant="h4"
+        sx={{ 
+          mb: 4, 
+          fontWeight: 900, 
+          letterSpacing: "-0.02em", 
+          color: "#fafafa",
+          textTransform: "uppercase"
+        }}
       >
-        จัดการความคิดเห็น
+        Comments Moderation
       </Typography>
 
       {/* Toolbar */}
       <Paper
         sx={{
-          p: 2,
-          mb: 2,
-          bgcolor: "#171717",
-          border: "1px solid rgba(255,255,255,0.1)",
+          p: 2.5,
+          mb: 3,
+          bgcolor: "#141414",
+          borderRadius: 1.25,
+          border: "1px solid rgba(255,255,255,0.06)",
           display: "flex",
           gap: 2,
           alignItems: "center",
           flexWrap: "wrap",
+          backgroundImage: "none",
+          boxShadow: "none"
         }}
       >
         <Box
           component="form"
           onSubmit={handleSearch}
-          sx={{ flex: 1, minWidth: 200 }}
+          sx={{ flex: 1, minWidth: 260 }}
         >
           <TextField
-            size="small"
-            placeholder="ค้นหาความคิดเห็น, ผู้ใช้, มังงะ..."
+            fullWidth
+            variant="outlined"
+            placeholder="SEARCH BY CONTENT, USER, MANGA..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                bgcolor: "#0B0B0B",
+                borderRadius: 1,
+                fontWeight: 600,
+                fontSize: "0.9rem",
+                "& fieldset": { borderColor: "rgba(255,255,255,0.06)" },
+                "&:hover fieldset": { borderColor: "rgba(250, 191, 6, 0.3)" },
+                "&.Mui-focused fieldset": { borderColor: "#FABF06" },
+              }
+            }}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon sx={{ color: "#737373" }} />
+                  <SearchIcon sx={{ color: "#FABF06", fontSize: 20 }} />
                 </InputAdornment>
               ),
             }}
-            sx={{
-              width: "100%",
-              maxWidth: 400,
-              "& .MuiOutlinedInput-root": {
-                bgcolor: "#0a0a0a",
-                "& fieldset": { borderColor: "rgba(255,255,255,0.1)" },
-              },
-              "& input": { color: "#fafafa" },
-            }}
+            size="medium"
           />
         </Box>
 
-        <IconButton onClick={fetchComments} sx={{ color: "#a3a3a3" }}>
+        <IconButton 
+          onClick={fetchComments} 
+          sx={{ 
+            color: "#FABF06", 
+            bgcolor: "rgba(250, 191, 6, 0.08)", 
+            borderRadius: 1,
+            width: 44,
+            height: 44,
+            "&:hover": { bgcolor: "rgba(250, 191, 6, 0.15)" }
+          }}
+        >
           <RefreshIcon />
         </IconButton>
 
@@ -243,8 +265,16 @@ export default function AdminCommentsPage() {
             color="error"
             startIcon={<DeleteIcon />}
             onClick={() => setDeleteDialogOpen(true)}
+            sx={{ 
+              borderRadius: 1.25, 
+              fontWeight: 900, 
+              bgcolor: "#ef4444", 
+              "&:hover": { bgcolor: "#dc2626" },
+              px: 3,
+              height: 44
+            }}
           >
-            ลบ ({selected.length})
+            DELETE ({selected.length})
           </Button>
         )}
       </Paper>
@@ -253,16 +283,19 @@ export default function AdminCommentsPage() {
       <TableContainer
         component={Paper}
         sx={{
-          bgcolor: "#171717",
-          border: "1px solid rgba(255,255,255,0.1)",
+          bgcolor: "#141414",
+          borderRadius: 1.25,
+          border: "1px solid rgba(255,255,255,0.06)",
+          boxShadow: "none",
+          backgroundImage: "none",
         }}
       >
         <Table size="small">
           <TableHead>
-            <TableRow>
+            <TableRow sx={{ bgcolor: "rgba(255,255,255,0.02)" }}>
               <TableCell
                 padding="checkbox"
-                sx={{ borderColor: "rgba(255,255,255,0.1)" }}
+                sx={{ borderColor: "rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}
               >
                 <Checkbox
                   indeterminate={
@@ -272,65 +305,20 @@ export default function AdminCommentsPage() {
                     comments.length > 0 && selected.length === comments.length
                   }
                   onChange={handleSelectAll}
-                  sx={{ color: "#737373" }}
+                  sx={{ 
+                    color: "rgba(255,255,255,0.2)",
+                    "&.Mui-checked": { color: "#FABF06" },
+                    "&.MuiCheckbox-indeterminate": { color: "#FABF06" }
+                  }}
                 />
               </TableCell>
-              <TableCell
-                sx={{
-                  color: "#a3a3a3",
-                  fontWeight: 600,
-                  borderColor: "rgba(255,255,255,0.1)",
-                  width: 80,
-                }}
-              >
-                ประเภท
-              </TableCell>
-              <TableCell
-                sx={{
-                  color: "#a3a3a3",
-                  fontWeight: 600,
-                  borderColor: "rgba(255,255,255,0.1)",
-                }}
-              >
-                ผู้ใช้
-              </TableCell>
-              <TableCell
-                sx={{
-                  color: "#a3a3a3",
-                  fontWeight: 600,
-                  borderColor: "rgba(255,255,255,0.1)",
-                }}
-              >
-                ความคิดเห็น
-              </TableCell>
-              <TableCell
-                sx={{
-                  color: "#a3a3a3",
-                  fontWeight: 600,
-                  borderColor: "rgba(255,255,255,0.1)",
-                }}
-              >
-                มังงะ
-              </TableCell>
-              <TableCell
-                sx={{
-                  color: "#a3a3a3",
-                  fontWeight: 600,
-                  borderColor: "rgba(255,255,255,0.1)",
-                }}
-              >
-                โหวต
-              </TableCell>
-              <TableCell
-                sx={{
-                  color: "#a3a3a3",
-                  fontWeight: 600,
-                  borderColor: "rgba(255,255,255,0.1)",
-                }}
-              >
-                วันที่
-              </TableCell>
-              <TableCell sx={{ borderColor: "rgba(255,255,255,0.1)" }} />
+              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", borderColor: "rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>Type</TableCell>
+              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", borderColor: "rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>User</TableCell>
+              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", borderColor: "rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>Comment</TableCell>
+              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", borderColor: "rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>Manga</TableCell>
+              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", borderColor: "rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>Score</TableCell>
+              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", borderColor: "rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>Date</TableCell>
+              <TableCell sx={{ py: 2.5, borderColor: "rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.04)" }} />
             </TableRow>
           </TableHead>
           <TableBody>
@@ -339,9 +327,9 @@ export default function AdminCommentsPage() {
                 <TableCell
                   colSpan={8}
                   align="center"
-                  sx={{ py: 4, borderColor: "rgba(255,255,255,0.1)" }}
+                  sx={{ py: 8, borderColor: "rgba(255,255,255,0.06)" }}
                 >
-                  <CircularProgress size={32} />
+                  <CircularProgress size={36} sx={{ color: "#FABF06" }} />
                 </TableCell>
               </TableRow>
             ) : comments.length === 0 ? (
@@ -350,12 +338,15 @@ export default function AdminCommentsPage() {
                   colSpan={8}
                   align="center"
                   sx={{
-                    py: 4,
+                    py: 8,
                     color: "#737373",
-                    borderColor: "rgba(255,255,255,0.1)",
+                    borderColor: "rgba(255,255,255,0.06)",
+                    fontWeight: 800,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em"
                   }}
                 >
-                  ไม่พบความคิดเห็น
+                  No comments found
                 </TableCell>
               </TableRow>
             ) : (
@@ -379,33 +370,41 @@ export default function AdminCommentsPage() {
                       sx={{ color: "#737373" }}
                     />
                   </TableCell>
-                  <TableCell sx={{ borderColor: "rgba(255,255,255,0.1)" }}>
+                  <TableCell sx={{ borderColor: "rgba(255,255,255,0.06)" }}>
                     {comment.parent ? (
                       <Tooltip
-                        title={`ตอบกลับ: ${
+                        title={`REPLY TO: ${
                           comment.parent.user.name ||
                           comment.parent.user.username
                         } - "${truncate(comment.parent.content, 50)}"`}
                       >
                         <Chip
                           icon={<ReplyIcon sx={{ fontSize: 14 }} />}
-                          label="ตอบกลับ"
+                          label="REPLY"
                           size="small"
                           sx={{
-                            bgcolor: "rgba(251, 191, 36, 0.2)",
-                            color: "#fbbf24",
-                            fontSize: "0.7rem",
+                            fontWeight: 900,
+                            letterSpacing: "0.05em",
+                            borderRadius: 0.75,
+                            bgcolor: "rgba(250, 191, 6, 0.15)",
+                            color: "#FABF06",
+                            fontSize: "0.65rem",
+                            border: "1px solid rgba(250, 191, 6, 0.1)"
                           }}
                         />
                       </Tooltip>
                     ) : (
                       <Chip
-                        label="หลัก"
+                        label="PRIMARY"
                         size="small"
                         sx={{
-                          bgcolor: "rgba(139, 92, 246, 0.2)",
+                          fontWeight: 900,
+                          letterSpacing: "0.05em",
+                          borderRadius: 0.75,
+                          bgcolor: "rgba(139, 92, 246, 0.15)",
                           color: "#a78bfa",
-                          fontSize: "0.7rem",
+                          fontSize: "0.65rem",
+                          border: "1px solid rgba(139, 92, 246, 0.1)"
                         }}
                       />
                     )}
@@ -443,13 +442,16 @@ export default function AdminCommentsPage() {
                     </Tooltip>
                     {comment.imageUrl && (
                       <Chip
-                        label="มีรูปภาพ"
+                        label="IMAGE"
                         size="small"
                         sx={{
                           mt: 0.5,
-                          bgcolor: "rgba(59, 130, 246, 0.2)",
+                          fontWeight: 900,
+                          letterSpacing: "0.05em",
+                          borderRadius: 0.5,
+                          bgcolor: "rgba(59, 130, 246, 0.15)",
                           color: "#60a5fa",
-                          fontSize: "0.7rem",
+                          fontSize: "0.6rem",
                         }}
                       />
                     )}
@@ -472,36 +474,43 @@ export default function AdminCommentsPage() {
                       label={comment.voteScore}
                       size="small"
                       sx={{
+                        fontWeight: 900,
+                        fontFamily: "monospace",
+                        borderRadius: 1,
+                        minWidth: 40,
                         bgcolor:
                           comment.voteScore > 0
-                            ? "rgba(34, 197, 94, 0.2)"
+                            ? "rgba(34, 197, 94, 0.15)"
                             : comment.voteScore < 0
-                            ? "rgba(239, 68, 68, 0.2)"
-                            : "rgba(255,255,255,0.1)",
+                            ? "rgba(239, 68, 68, 0.15)"
+                            : "rgba(255,255,255,0.05)",
                         color:
                           comment.voteScore > 0
-                            ? "#22c55e"
+                            ? "#4ade80"
                             : comment.voteScore < 0
-                            ? "#ef4444"
+                            ? "#f87171"
                             : "#a3a3a3",
                         fontSize: "0.75rem",
+                        border: "1px solid rgba(255,255,255,0.03)"
                       }}
                     />
                   </TableCell>
                   <TableCell
                     sx={{
-                      borderColor: "rgba(255,255,255,0.1)",
+                      borderColor: "rgba(255,255,255,0.06)",
                       color: "#737373",
+                      fontFamily: "monospace",
                       fontSize: "0.75rem",
+                      fontWeight: 700
                     }}
                   >
-                    {new Date(comment.createdAt).toLocaleDateString("th-TH", {
+                    {new Date(comment.createdAt).toLocaleDateString("en-GB", {
                       day: "2-digit",
                       month: "short",
                       year: "numeric",
                       hour: "2-digit",
                       minute: "2-digit",
-                    })}
+                    }).toUpperCase()}
                   </TableCell>
                   <TableCell sx={{ borderColor: "rgba(255,255,255,0.1)" }}>
                     <IconButton
@@ -527,11 +536,15 @@ export default function AdminCommentsPage() {
           rowsPerPage={pagination.limit}
           onRowsPerPageChange={handleChangeRowsPerPage}
           rowsPerPageOptions={[10, 20, 50]}
-          labelRowsPerPage="แสดง:"
+          labelRowsPerPage="SHOW:"
           sx={{
             color: "#a3a3a3",
-            borderTop: "1px solid rgba(255,255,255,0.1)",
-            "& .MuiTablePagination-selectIcon": { color: "#737373" },
+            fontWeight: 800,
+            fontSize: "0.75rem",
+            letterSpacing: "0.05em",
+            textTransform: "uppercase",
+            borderTop: "1px solid rgba(255,255,255,0.06)",
+            "& .MuiTablePagination-selectIcon": { color: "#FABF06" },
           }}
         />
       </TableContainer>
@@ -540,34 +553,51 @@ export default function AdminCommentsPage() {
       <Dialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
-        PaperProps={{ sx: { bgcolor: "#171717", color: "#fafafa" } }}
+        PaperProps={{ 
+          sx: { 
+            bgcolor: "#141414", 
+            color: "#fafafa",
+            borderRadius: 1.25,
+            backgroundImage: "none",
+            border: "1px solid rgba(255,255,255,0.06)"
+          } 
+        }}
       >
-        <DialogTitle>ยืนยันการลบ</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em", fontSize: "1rem" }}>
+          Confirm Deletion
+        </DialogTitle>
         <DialogContent>
-          <Typography>
-            คุณต้องการลบความคิดเห็น {selected.length} รายการใช่หรือไม่?
+          <Typography sx={{ fontWeight: 600, color: "#d4d4d4" }}>
+            Are you sure you want to delete {selected.length} comments?
           </Typography>
-          <Typography variant="body2" sx={{ mt: 1, color: "#ef4444" }}>
-            การลบนี้ไม่สามารถย้อนกลับได้
+          <Typography variant="body2" sx={{ mt: 1.5, color: "#ef4444", fontWeight: 700, textTransform: "uppercase", fontSize: "0.75rem" }}>
+            This action cannot be undone.
           </Typography>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ p: 2.5, bgcolor: "rgba(0,0,0,0.2)" }}>
           <Button
             onClick={() => setDeleteDialogOpen(false)}
             disabled={deleting}
+            sx={{ color: "#a3a3a3", fontWeight: 800 }}
           >
-            ยกเลิก
+            CANCEL
           </Button>
           <Button
             onClick={handleDelete}
-            color="error"
             variant="contained"
             disabled={deleting}
             startIcon={
               deleting ? <CircularProgress size={16} /> : <DeleteIcon />
             }
+            sx={{ 
+              bgcolor: "#ef4444", 
+              color: "#fff", 
+              fontWeight: 900,
+              "&:hover": { bgcolor: "#dc2626" },
+              px: 3
+            }}
           >
-            {deleting ? "กำลังลบ..." : "ลบ"}
+            {deleting ? "DELETING..." : "DELETE"}
           </Button>
         </DialogActions>
       </Dialog>

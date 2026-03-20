@@ -81,20 +81,20 @@ export default function MetadataManager({
         const newItem = await res.json();
         if (activeTab === 0) {
           setCategories([...categories, newItem]);
-          showSuccess(`เพิ่มหมวดหมู่ "${newItemName}" เรียบร้อย`);
+          showSuccess(`Category "${newItemName}" added successfully.`);
         } else {
           setTags([...tags, newItem]);
-          showSuccess(`เพิ่มแท็ก "${newItemName}" เรียบร้อย`);
+          showSuccess(`Tag "${newItemName}" added successfully.`);
         }
         setNewItemName("");
         setAddDialogOpen(false);
       } else {
         const data = await res.json();
-        showError(data.error || "ไม่สามารถเพิ่มได้");
+        showError(data.error || "Failed to add item.");
       }
     } catch (error) {
       console.error("Failed to add item:", error);
-      showError("เกิดข้อผิดพลาดในการเพิ่ม");
+      showError("An error occurred while adding the item.");
     }
   };
 
@@ -114,20 +114,20 @@ export default function MetadataManager({
       if (res.ok) {
         if (activeTab === 0) {
           setCategories(categories.filter((c) => c.id !== itemToDelete.id));
-          showSuccess(`ลบหมวดหมู่ "${itemToDelete.name}" เรียบร้อย`);
+          showSuccess(`Category "${itemToDelete.name}" deleted successfully.`);
         } else {
           setTags(tags.filter((t) => t.id !== itemToDelete.id));
-          showSuccess(`ลบแท็ก "${itemToDelete.name}" เรียบร้อย`);
+          showSuccess(`Tag "${itemToDelete.name}" deleted successfully.`);
         }
         setDeleteDialogOpen(false);
         setItemToDelete(null);
       } else {
         const data = await res.json();
-        showError(data.error || "ไม่สามารถลบได้");
+        showError(data.error || "Failed to delete item.");
       }
     } catch (error) {
       console.error("Failed to delete item:", error);
-      showError("เกิดข้อผิดพลาดในการลบ");
+      showError("An error occurred while deleting the item.");
     }
   };
 
@@ -147,33 +147,35 @@ export default function MetadataManager({
           mb: 3,
         }}
       >
-        <Typography variant="h5" sx={{ fontWeight: 600 }}>
-          จัดการหมวดหมู่และแท็ก
+        <Typography variant="h4" sx={{ fontWeight: 900, letterSpacing: "-0.02em", color: "#fafafa" }}>
+          METADATA MANAGEMENT
         </Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => setAddDialogOpen(true)}
           sx={{
-            bgcolor: "#fbbf24",
+            bgcolor: "#FABF06",
             color: "#000",
-            borderRadius: "50px",
+            borderRadius: 1,
             px: 3,
             py: 1,
-            fontWeight: 600,
-            textTransform: "none",
-            "&:hover": { bgcolor: "#f59e0b" },
+            fontWeight: 800,
+            textTransform: "uppercase",
+            letterSpacing: "0.02em",
+            "&:hover": { bgcolor: "#eab308" },
           }}
         >
-          เพิ่ม{activeTab === 0 ? "หมวดหมู่" : "แท็ก"}
+          ADD {activeTab === 0 ? "CATEGORY" : "TAG"}
         </Button>
       </Box>
 
       {/* Container */}
       <Box
         sx={{
-          bgcolor: "#171717",
-          borderRadius: 1,
+          bgcolor: "#141414",
+          borderRadius: 1.25,
+          border: "1px solid rgba(255,255,255,0.06)",
           p: 3,
         }}
       >
@@ -184,56 +186,54 @@ export default function MetadataManager({
             setActiveTab(newValue);
             setSearch("");
           }}
+          TabIndicatorProps={{ sx: { bgcolor: "#FABF06" } }}
           sx={{
             mb: 3,
-            borderBottom: "1px solid #262626",
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
             "& .MuiTab-root": {
               color: "#a3a3a3",
-              textTransform: "none",
-              fontSize: "1rem",
-              fontWeight: 500,
+              textTransform: "uppercase",
+              fontSize: "0.875rem",
+              fontWeight: 800,
               minHeight: 48,
+              letterSpacing: "0.05em",
             },
             "& .Mui-selected": {
-              color: "#fbbf24 !important",
-            },
-            "& .MuiTabs-indicator": {
-              bgcolor: "#fbbf24",
-              height: 3,
+              color: "#FABF06 !important",
             },
           }}
         >
           <Tab
-            icon={<CategoryIcon />}
+            icon={<CategoryIcon sx={{ fontSize: 18 }} />}
             iconPosition="start"
-            label={`หมวดหมู่ (${categories.length})`}
+            label={`CATEGORIES (${categories.length})`}
           />
           <Tab
-            icon={<LocalOfferIcon />}
+            icon={<LocalOfferIcon sx={{ fontSize: 18 }} />}
             iconPosition="start"
-            label={`แท็ก (${tags.length})`}
+            label={`TAGS (${tags.length})`}
           />
         </Tabs>
 
         {/* Search */}
         <TextField
           fullWidth
-          placeholder={activeTab === 0 ? "ค้นหาหมวดหมู่..." : "ค้นหาแท็ก..."}
+          placeholder={activeTab === 0 ? "SEARCH CATEGORIES..." : "SEARCH TAGS..."}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           sx={{
             mb: 3,
             "& .MuiOutlinedInput-root": {
-              bgcolor: "#0a0a0a",
-              "& fieldset": { borderColor: "#262626" },
-              "&:hover fieldset": { borderColor: "#404040" },
-              "&.Mui-focused fieldset": { borderColor: "#fbbf24" },
+              bgcolor: "#0B0B0B",
+              borderRadius: 1,
+              "& fieldset": { borderColor: "rgba(255,255,255,0.06)" },
+              "&.Mui-focused fieldset": { borderColor: "#FABF06" },
             },
           }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchIcon sx={{ color: "#525252" }} />
+                <SearchIcon sx={{ color: "#a3a3a3", fontSize: 20 }} />
               </InputAdornment>
             ),
           }}
@@ -262,16 +262,19 @@ export default function MetadataManager({
                     </IconButton>
                   }
                   sx={{
-                    bgcolor: "#6366f120",
-                    color: "#a78bfa",
-                    borderColor: "#6366f1",
-                    border: "1px solid",
-                    fontSize: "0.875rem",
-                    height: 36,
+                    bgcolor: "rgba(99, 102, 241, 0.12)",
+                    color: "#a5b4fc",
+                    borderRadius: 0.75,
+                    border: "1px solid rgba(99, 102, 241, 0.4)",
+                    fontSize: "0.75rem",
+                    height: 32,
                     px: 1,
-                    fontWeight: 500,
+                    fontWeight: 800,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.02em",
                     "& .MuiChip-deleteIcon": {
-                      color: "#a3a3a3",
+                      color: "rgba(255,255,255,0.4)",
+                      fontSize: 16,
                       "&:hover": { color: "#ef4444" },
                     },
                   }}
@@ -285,22 +288,25 @@ export default function MetadataManager({
                   deleteIcon={
                     <IconButton
                       size="small"
-                      sx={{ color: "#a3a3a3 !important" }}
+                      sx={{ color: "inherit !important", p: 0 }}
                     >
-                      <DeleteIcon fontSize="small" />
+                      <DeleteIcon sx={{ fontSize: 16 }} />
                     </IconButton>
                   }
                   sx={{
-                    bgcolor: "#f59e0b20",
-                    color: "#fbbf24",
-                    borderColor: "#f59e0b",
-                    border: "1px solid",
-                    fontSize: "0.875rem",
-                    height: 36,
+                    bgcolor: "rgba(250, 191, 6, 0.08)",
+                    color: "#FABF06",
+                    borderRadius: 0.75,
+                    border: "1px solid rgba(250, 191, 6, 0.4)",
+                    fontSize: "0.75rem",
+                    height: 32,
                     px: 1,
-                    fontWeight: 500,
+                    fontWeight: 800,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.02em",
                     "& .MuiChip-deleteIcon": {
-                      color: "#a3a3a3",
+                      color: "rgba(255,255,255,0.4)",
+                      fontSize: 16,
                       "&:hover": { color: "#ef4444" },
                     },
                   }}
@@ -315,20 +321,26 @@ export default function MetadataManager({
             justifyContent: "space-between",
             alignItems: "center",
             pt: 2,
-            borderTop: "1px solid #262626",
+            borderTop: "1px solid rgba(255,255,255,0.06)",
           }}
         >
-          <Typography variant="body2" sx={{ color: "#71717a" }}>
-            แสดง{" "}
-            {activeTab === 0 ? filteredCategories.length : filteredTags.length}{" "}
-            จาก {activeTab === 0 ? categories.length : tags.length} รายการ
+          <Typography variant="body2" sx={{ color: "#737373", fontWeight: 700, textTransform: "uppercase", fontSize: "0.65rem", letterSpacing: "0.05em" }}>
+            SHOWING{" "}
+            <Box component="span" sx={{ color: "#fafafa" }}>
+              {activeTab === 0 ? filteredCategories.length : filteredTags.length}
+            </Box>{" "}
+            OF{" "}
+            <Box component="span" sx={{ color: "#fafafa" }}>
+              {activeTab === 0 ? categories.length : tags.length}
+            </Box>{" "}
+            ITEMS
           </Typography>
           <Button
             size="small"
             onClick={() => setSearch("")}
-            sx={{ color: "#a3a3a3", textDecoration: "underline" }}
+            sx={{ color: "#a3a3a3", fontWeight: 800, textTransform: "uppercase", fontSize: "0.7rem", "&:hover": { color: "#FABF06", bgcolor: "transparent", textDecoration: "underline" } }}
           >
-            ล้างการกรองการค้นหาทั้งหมด
+            CLEAR ALL FILTERS
           </Button>
         </Box>
       </Box>
@@ -353,37 +365,38 @@ export default function MetadataManager({
         <DialogTitle
           sx={{
             color: "#fafafa",
-            fontWeight: 600,
-            fontSize: "1.25rem",
-            borderBottom: "1px solid #262626",
+            fontWeight: 900,
+            fontSize: "1rem",
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
             pb: 2,
+            textTransform: "uppercase",
+            letterSpacing: "0.1em"
           }}
         >
-          เพิ่ม{activeTab === 0 ? "หมวดหมู่" : "แท็ก"}ใหม่
+          ADD NEW {activeTab === 0 ? "CATEGORY" : "TAG"}
         </DialogTitle>
         <DialogContent sx={{ pt: 3 }}>
           <TextField
             autoFocus
             fullWidth
-            placeholder={`กรอกชื่อ${activeTab === 0 ? "หมวดหมู่" : "แท็ก"}...`}
+            placeholder={`ENTER ${activeTab === 0 ? "CATEGORY" : "TAG"} NAME...`}
             value={newItemName}
             onChange={(e) => setNewItemName(e.target.value)}
             onKeyPress={(e) => e.key === "Enter" && handleAddItem()}
             sx={{
               "& .MuiOutlinedInput-root": {
-                bgcolor: "#171717",
+                bgcolor: "#0B0B0B",
                 fontSize: "1rem",
-                "& fieldset": { borderColor: "#404040" },
-                "&:hover fieldset": { borderColor: "#525252" },
+                borderRadius: 1,
+                "& fieldset": { borderColor: "rgba(255,255,255,0.06)" },
                 "&.Mui-focused fieldset": {
-                  borderColor: "#fbbf24",
-                  borderWidth: 2,
+                  borderColor: "#FABF06",
                 },
               },
             }}
           />
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+        <DialogActions sx={{ px: 3, py: 2.5, bgcolor: "rgba(0,0,0,0.2)", gap: 1 }}>
           <Button
             onClick={() => {
               setAddDialogOpen(false);
@@ -391,30 +404,31 @@ export default function MetadataManager({
             }}
             sx={{
               color: "#a3a3a3",
-              borderRadius: "8px",
-              px: 3,
-              textTransform: "none",
-              "&:hover": { bgcolor: "#171717" },
+              fontWeight: 800,
+              textTransform: "uppercase",
+              fontSize: "0.75rem",
+              letterSpacing: "0.05em"
             }}
           >
-            ยกเลิก
+            CANCEL
           </Button>
           <Button
             onClick={handleAddItem}
             variant="contained"
             disabled={!newItemName.trim()}
             sx={{
-              bgcolor: "#fbbf24",
+              bgcolor: "#FABF06",
               color: "#000",
-              borderRadius: "8px",
-              px: 3,
-              fontWeight: 600,
-              textTransform: "none",
-              "&:hover": { bgcolor: "#f59e0b" },
+              borderRadius: 1,
+              px: 4,
+              fontWeight: 900,
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              "&:hover": { bgcolor: "#eab308" },
               "&:disabled": { bgcolor: "#404040", color: "#737373" },
             }}
           >
-            เพิ่ม
+            CREATE {activeTab === 0 ? "CATEGORY" : "TAG"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -442,7 +456,7 @@ export default function MetadataManager({
               width: 64,
               height: 64,
               borderRadius: "50%",
-              bgcolor: "#ef444420",
+              bgcolor: "rgba(239, 68, 68, 0.15)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -453,16 +467,15 @@ export default function MetadataManager({
           </Box>
           <Typography
             variant="h6"
-            sx={{ color: "#fafafa", fontWeight: 600, mb: 1 }}
+            sx={{ color: "#fafafa", fontWeight: 900, mb: 1, textTransform: "uppercase", letterSpacing: "0.05em" }}
           >
-            ยืนยันการลบ
+            CONFIRM DELETION
           </Typography>
-          <Typography sx={{ color: "#a3a3a3", mb: 2 }}>
-            คุณแน่ใจหรือไม่ว่าต้องการลบ
-            {activeTab === 0 ? "หมวดหมู่" : "แท็ก"} "{itemToDelete?.name}"?
+          <Typography sx={{ color: "#a3a3a3", mb: 2, fontWeight: 600 }}>
+            Are you sure you want to delete {activeTab === 0 ? "category" : "tag"} &quot;{itemToDelete?.name}&quot;?
           </Typography>
-          <Typography sx={{ color: "#71717a", fontSize: "0.875rem" }}>
-            การดำเนินการนี้ไม่สามารถย้อนกลับได้
+          <Typography sx={{ color: "#ef4444", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.02em" }}>
+            This action cannot be undone.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 3, gap: 1, justifyContent: "center" }}>
@@ -473,15 +486,16 @@ export default function MetadataManager({
             }}
             sx={{
               color: "#a3a3a3",
-              borderRadius: "8px",
+              fontWeight: 800,
               px: 4,
               py: 1,
-              textTransform: "none",
-              border: "1px solid #404040",
-              "&:hover": { bgcolor: "#171717", borderColor: "#525252" },
+              textTransform: "uppercase",
+              fontSize: "0.75rem",
+              letterSpacing: "0.05em",
+              "&:hover": { color: "#fafafa" },
             }}
           >
-            ยกเลิก
+            CANCEL
           </Button>
           <Button
             onClick={handleDeleteConfirm}
@@ -489,15 +503,16 @@ export default function MetadataManager({
             sx={{
               bgcolor: "#ef4444",
               color: "#fff",
-              borderRadius: "8px",
+              borderRadius: 1,
               px: 4,
               py: 1,
-              fontWeight: 600,
-              textTransform: "none",
+              fontWeight: 900,
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
               "&:hover": { bgcolor: "#dc2626" },
             }}
           >
-            ลบ
+            DELETE
           </Button>
         </DialogActions>
       </Dialog>

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import {
@@ -269,41 +269,41 @@ export default function MangaDataTable({
         <Toolbar
           sx={{
             mb: 2,
-            bgcolor: "#8b5cf620",
-            border: "1px solid #8b5cf640",
-            borderRadius: 1,
+            bgcolor: "rgba(250, 191, 6, 0.08)",
+            border: "1px solid rgba(250, 191, 6, 0.2)",
+            borderRadius: 1.25,
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
           }}
         >
-          <Typography sx={{ color: "#8b5cf6", fontWeight: 600 }}>
-            เลือกแล้ว {selected.length} รายการ
+          <Typography sx={{ color: "#FABF06", fontWeight: 800, fontSize: "0.875rem", letterSpacing: "0.02em" }}>
+            SELECTED {selected.length} ITEMS
           </Typography>
           <Box sx={{ display: "flex", gap: 1 }}>
             <Button
               size="small"
               startIcon={<VisibilityOffIcon />}
               onClick={() => handleBulkToggleVisibility(true)}
-              sx={{ color: "#a3a3a3", borderRadius: 1 }}
+              sx={{ color: "#a3a3a3", borderRadius: 0.75, fontWeight: 700 }}
             >
-              ซ่อนทั้งหมด
+              HIDE ALL
             </Button>
             <Button
               size="small"
               startIcon={<VisibilityIcon />}
               onClick={() => handleBulkToggleVisibility(false)}
-              sx={{ color: "#10b981", borderRadius: 1 }}
+              sx={{ color: "#10b981", borderRadius: 0.75, fontWeight: 700 }}
             >
-              แสดงทั้งหมด
+              SHOW ALL
             </Button>
             <Button
               size="small"
               startIcon={<DeleteIcon />}
               onClick={handleBulkDelete}
-              sx={{ color: "#ef4444", borderRadius: 1 }}
+              sx={{ color: "#ef4444", borderRadius: 0.75, fontWeight: 700 }}
             >
-              ลบทั้งหมด
+              DELETE ALL
             </Button>
           </Box>
         </Toolbar>
@@ -319,14 +319,23 @@ export default function MangaDataTable({
       >
         <TextField
           size="small"
-          placeholder="ค้นหามังงะ..."
+          placeholder="SEARCH MANGA..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          sx={{ width: 300 }}
+          sx={{ 
+            width: 300,
+            "& .MuiOutlinedInput-root": {
+              bgcolor: "#141414",
+              borderRadius: 1.25,
+              "& fieldset": { borderColor: "rgba(255,255,255,0.06)" },
+              "&:hover fieldset": { borderColor: "rgba(255,255,255,0.12)" },
+              "&.Mui-focused fieldset": { borderColor: "#FABF06" },
+            }
+          }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <SearchIcon />
+                <SearchIcon sx={{ color: "#a3a3a3", fontSize: 20 }} />
               </InputAdornment>
             ),
           }}
@@ -338,13 +347,20 @@ export default function MangaDataTable({
 
       <TableContainer
         component={Paper}
-        sx={{ bgcolor: "#0a0a0a", borderRadius: 1 }}
+        sx={{ 
+          bgcolor: "#141414", 
+          borderRadius: 1.25,
+          border: "1px solid rgba(255,255,255,0.06)",
+          boxShadow: "none",
+          backgroundImage: "none"
+        }}
       >
         <Table>
           <TableHead>
             <TableRow
               sx={{
-                "& th": { borderBottom: "1px solid #262626", py: 2, px: 2 },
+                bgcolor: "rgba(255,255,255,0.02)",
+                "& th": { borderBottom: "1px solid rgba(255,255,255,0.06)", py: 2, px: 2 },
               }}
             >
               <TableCell padding="checkbox">
@@ -358,7 +374,11 @@ export default function MangaDataTable({
                     selected.length === filteredMangas.length
                   }
                   onChange={handleSelectAll}
-                  sx={{ color: "#525252" }}
+                  sx={{ 
+                    color: "#525252",
+                    "&.Mui-checked": { color: "#FABF06" },
+                    "&.MuiCheckbox-indeterminate": { color: "#FABF06" }
+                  }}
                 />
               </TableCell>
               <TableCell
@@ -413,7 +433,10 @@ export default function MangaDataTable({
                   <Checkbox
                     checked={selected.includes(manga.id)}
                     onChange={() => handleSelect(manga.id)}
-                    sx={{ color: "#525252" }}
+                    sx={{ 
+                      color: "#525252",
+                      "&.Mui-checked": { color: "#FABF06" }
+                    }}
                   />
                 </TableCell>
 
@@ -521,8 +544,10 @@ export default function MangaDataTable({
                         size="small"
                         onClick={() => handleOpenSettings(manga)}
                         sx={{
-                          color: "#8b5cf6",
-                          "&:hover": { bgcolor: "#8b5cf620" },
+                          color: "#FABF06",
+                          bgcolor: "rgba(250, 191, 6, 0.08)",
+                          borderRadius: 0.75,
+                          "&:hover": { bgcolor: "rgba(250, 191, 6, 0.15)" },
                         }}
                       >
                         <SettingsIcon fontSize="small" />
@@ -603,8 +628,18 @@ export default function MangaDataTable({
         onClose={() => setSettingsOpen(false)}
         maxWidth="sm"
         fullWidth
+        PaperProps={{
+          sx: {
+            bgcolor: "#141414",
+            backgroundImage: "none",
+            borderRadius: 1.25,
+            border: "1px solid rgba(255,255,255,0.08)",
+          }
+        }}
       >
-        <DialogTitle>Quick Settings - {editingManga?.title}</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 900, color: "#fafafa", fontSize: "1.1rem" }}>
+          QUICK SETTINGS
+        </DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <FormControl fullWidth size="small">
@@ -648,10 +683,26 @@ export default function MangaDataTable({
             />
           </Stack>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setSettingsOpen(false)}>ยกเลิก</Button>
-          <Button onClick={handleSaveSettings} variant="contained">
-            บันทึก
+        <DialogActions sx={{ p: 2.5, pt: 1 }}>
+          <Button 
+            onClick={() => setSettingsOpen(false)}
+            sx={{ color: "#a3a3a3", fontWeight: 700 }}
+          >
+            CANCEL
+          </Button>
+          <Button 
+            onClick={handleSaveSettings} 
+            variant="contained"
+            sx={{ 
+              bgcolor: "#FABF06", 
+              color: "#000", 
+              fontWeight: 800,
+              borderRadius: 1,
+              px: 3,
+              "&:hover": { bgcolor: "#f59e0b" }
+            }}
+          >
+            SAVE CHANGES
           </Button>
         </DialogActions>
       </Dialog>

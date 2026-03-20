@@ -48,22 +48,27 @@ export default async function AdminMangaPage() {
           mb: 3,
         }}
       >
-        <Typography variant="h5" sx={{ fontWeight: 600 }}>
-          จัดการมังงะ
+        <Typography variant="h4" sx={{ fontWeight: 900, letterSpacing: "-0.02em", color: "#fafafa" }}>
+          MANAGE MANGA
         </Typography>
         <Link
           href="/dashboard/admin/manga/create"
           style={{
             textDecoration: "none",
-            backgroundColor: "#fbbf24",
+            backgroundColor: "#FABF06",
             color: "#000",
-            padding: "8px 20px",
-            borderRadius: "50px",
-            fontWeight: 600,
-            display: "inline-block",
+            padding: "10px 24px",
+            borderRadius: "10px",
+            fontWeight: 800,
+            fontSize: "0.875rem",
+            display: "inline-flex",
+            alignItems: "center",
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+            boxShadow: "0 4px 14px rgba(250, 191, 6, 0.2)",
           }}
         >
-          + เพิ่มมังงะใหม่
+          + NEW MANGA
         </Link>
       </Box>
 

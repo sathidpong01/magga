@@ -112,10 +112,10 @@ export default function CollapsibleSidebar({
         width: isMobile ? EXPANDED_WIDTH : sidebarWidth,
         minWidth: isMobile ? EXPANDED_WIDTH : sidebarWidth,
         height: isMobile ? "100%" : "calc(100vh - 24px)",
-        bgcolor: "#171717",
-        border: isMobile ? "none" : "1px solid rgba(255,255,255,0.08)",
-        borderRadius: isMobile ? 0 : 1,
-        boxShadow: isMobile ? "none" : "0 4px 24px rgba(0,0,0,0.4)",
+        bgcolor: "#141414",
+        border: isMobile ? "none" : "1px solid rgba(255,255,255,0.06)",
+        borderRadius: isMobile ? 0 : 1.25,
+        boxShadow: isMobile ? "none" : "0 8px 32px rgba(0,0,0,0.5)",
         display: "flex",
         flexDirection: "column",
         transition: "width 0.2s ease-in-out, min-width 0.2s ease-in-out",
@@ -184,7 +184,7 @@ export default function CollapsibleSidebar({
         )}
       </Box>
 
-      <Divider sx={{ borderColor: "rgba(255,255,255,0.08)" }} />
+      <Divider sx={{ borderColor: "rgba(255,255,255,0.06)" }} />
 
       {/* Main Menu Items - scrollable */}
       <Box
@@ -216,11 +216,11 @@ export default function CollapsibleSidebar({
                 borderRadius: 0.5,
                 textDecoration: "none",
                 justifyContent: showExpanded ? "flex-start" : "center",
-                bgcolor: active ? "rgba(139, 92, 246, 0.15)" : "transparent",
+                bgcolor: active ? "rgba(250, 191, 6, 0.12)" : "transparent",
                 borderLeft: !showExpanded
                   ? "none"
                   : active
-                  ? "3px solid #8b5cf6"
+                  ? "3px solid #FABF06"
                   : "3px solid transparent",
                 transition: "all 0.15s ease",
                 "&:hover": {
@@ -232,7 +232,7 @@ export default function CollapsibleSidebar({
             >
               <Box
                 sx={{
-                  color: active ? "#8b5cf6" : "#a3a3a3",
+                  color: active ? "#FABF06" : "#a3a3a3",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -369,7 +369,7 @@ export default function CollapsibleSidebar({
             <Avatar
               src={session.user.image || undefined}
               alt={session.user.name || "User"}
-              sx={{ width: 32, height: 32, bgcolor: "#8b5cf6" }}
+              sx={{ width: 32, height: 32, bgcolor: "#FABF06", color: "#000" }}
             >
               {session.user.name?.[0]?.toUpperCase()}
             </Avatar>
@@ -432,10 +432,10 @@ export default function CollapsibleSidebar({
               onClick={handleSignOut}
               sx={{
                 width: "100%",
-                color: "#ef4444",
+                color: "#EF4444",
                 bgcolor: "rgba(239, 68, 68, 0.1)",
                 borderRadius: 0.5,
-                "&:hover": { bgcolor: "rgba(239, 68, 68, 0.2)" },
+                "&:hover": { bgcolor: "rgba(239, 68, 68, 0.15)" },
               }}
             >
               <LogoutIcon fontSize="small" />
@@ -455,10 +455,10 @@ export default function CollapsibleSidebar({
               border: "none",
               borderRadius: 0.5,
               bgcolor: "rgba(239, 68, 68, 0.1)",
-              color: "#ef4444",
+              color: "#EF4444",
               cursor: "pointer",
               transition: "all 0.15s ease",
-              "&:hover": { bgcolor: "rgba(239, 68, 68, 0.2)" },
+              "&:hover": { bgcolor: "rgba(239, 68, 68, 0.15)" },
             }}
           >
             <LogoutIcon sx={{ fontSize: 20 }} />
@@ -483,8 +483,8 @@ export default function CollapsibleSidebar({
             left: 0,
             right: 0,
             height: 56,
-            bgcolor: "#171717",
-            borderBottom: "1px solid rgba(255,255,255,0.08)",
+            bgcolor: "#141414",
+            borderBottom: "1px solid rgba(255,255,255,0.06)",
             display: "flex",
             alignItems: "center",
             px: 2,
@@ -516,9 +516,9 @@ export default function CollapsibleSidebar({
           onClose={() => setMobileOpen(false)}
           PaperProps={{
             sx: {
-              bgcolor: "#171717",
+              bgcolor: "#141414",
               width: EXPANDED_WIDTH,
-              borderRight: "1px solid rgba(255,255,255,0.08)",
+              borderRight: "1px solid rgba(255,255,255,0.06)",
             },
           }}
         >

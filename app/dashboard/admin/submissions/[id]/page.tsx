@@ -260,17 +260,26 @@ export default function SubmissionDetailPage({
         sx={{
           p: 3,
           mb: 3,
-          bgcolor: "#171717",
-          borderRadius: 1,
-          border: "1px solid rgba(255,255,255,0.08)",
+          bgcolor: "#141414",
+          borderRadius: 1.25,
+          border: "1px solid rgba(255,255,255,0.06)",
+          boxShadow: "none",
+          backgroundImage: "none"
         }}
       >
         <Button
           startIcon={<ArrowBackIcon />}
           onClick={() => router.back()}
-          sx={{ mb: 2, color: "#a3a3a3" }}
+          sx={{ 
+            mb: 3, 
+            color: "#a3a3a3",
+            fontWeight: 800,
+            fontSize: "0.75rem",
+            letterSpacing: "0.05em",
+            "&:hover": { color: "#FABF06" }
+          }}
         >
-          กลับไปรายการ
+          BACK TO LIST
         </Button>
 
         <Box sx={{ display: "flex", gap: 3, alignItems: "flex-start" }}>
@@ -296,7 +305,16 @@ export default function SubmissionDetailPage({
 
           {/* Title & Meta */}
           <Box sx={{ flex: 1 }}>
-            <Typography variant="h4" fontWeight="bold" gutterBottom>
+            <Typography 
+              variant="h4" 
+              sx={{ 
+                fontWeight: 900, 
+                letterSpacing: "-0.02em",
+                textTransform: "uppercase",
+                color: "#fafafa",
+                lineHeight: 1.1
+              }}
+            >
               {submission.title}
             </Typography>
 
@@ -306,11 +324,18 @@ export default function SubmissionDetailPage({
               alignItems="center"
               sx={{ mb: 2 }}
             >
-              <Chip
-                label={statusInfo.label}
-                color={statusInfo.color as any}
-                sx={{ fontWeight: 600 }}
-              />
+                label={submission.status}
+                sx={{ 
+                  fontWeight: 900, 
+                  fontSize: "0.65rem",
+                  letterSpacing: "0.05em",
+                  borderRadius: 1,
+                  bgcolor: statusInfo.bg,
+                  color: statusInfo.color === "success" ? "#4ade80" : 
+                         statusInfo.color === "error" ? "#f87171" :
+                         statusInfo.color === "warning" ? "#FABF06" : "#a3a3a3",
+                  border: "1px solid rgba(255,255,255,0.05)"
+                }}
               <Box
                 sx={{
                   display: "flex",
@@ -320,18 +345,23 @@ export default function SubmissionDetailPage({
                 }}
               >
                 <CalendarTodayIcon sx={{ fontSize: 16 }} />
-                <Typography variant="body2">
-                  {new Date(submission.submittedAt).toLocaleDateString(
-                    "th-TH",
-                    {
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      fontFamily: "monospace", 
+                      fontSize: "0.85rem",
+                      fontWeight: 700,
+                      color: "#a3a3a3"
+                    }}
+                  >
+                    {new Date(submission.submittedAt).toLocaleDateString("en-GB", {
+                      day: "2-digit",
+                      month: "short",
                       year: "numeric",
-                      month: "long",
-                      day: "numeric",
                       hour: "2-digit",
-                      minute: "2-digit",
-                    }
-                  )}
-                </Typography>
+                      minute: "2-digit"
+                    }).toUpperCase()}
+                  </Typography>
               </Box>
             </Stack>
 
@@ -379,18 +409,30 @@ export default function SubmissionDetailPage({
                   color="error"
                   startIcon={<CancelIcon />}
                   onClick={() => setRejectOpen(true)}
-                  sx={{ borderRadius: 1.5, px: 3 }}
+                  sx={{ 
+                    borderRadius: 1.25, 
+                    px: 3,
+                    fontWeight: 900,
+                    borderColor: "rgba(239, 68, 68, 0.3)",
+                    "&:hover": { borderColor: "#ef4444", bgcolor: "rgba(239, 68, 68, 0.05)" }
+                  }}
                 >
-                  ปฏิเสธ
+                  REJECT
                 </Button>
                 <Button
                   variant="contained"
-                  color="success"
                   startIcon={<CheckCircleIcon />}
                   onClick={() => setApproveOpen(true)}
-                  sx={{ borderRadius: 1.5, px: 3 }}
+                  sx={{ 
+                    borderRadius: 1.25, 
+                    px: 3,
+                    fontWeight: 900,
+                    bgcolor: "#FABF06",
+                    color: "#000",
+                    "&:hover": { bgcolor: "#e5af05" }
+                  }}
                 >
-                  อนุมัติ
+                  APPROVE
                 </Button>
               </Stack>
             )}
@@ -405,9 +447,11 @@ export default function SubmissionDetailPage({
             sx={{
               p: 3,
               mb: 3,
-              bgcolor: "#171717",
-              borderRadius: 1,
-              border: "1px solid rgba(255,255,255,0.08)",
+              bgcolor: "#141414",
+              borderRadius: 1.25,
+              border: "1px solid rgba(255,255,255,0.06)",
+              boxShadow: "none",
+              backgroundImage: "none"
             }}
           >
             <Box
@@ -418,10 +462,19 @@ export default function SubmissionDetailPage({
                 mb: 2,
               }}
             >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <DescriptionIcon sx={{ color: "#8b5cf6" }} />
-                <Typography variant="h6" fontWeight={600}>
-                  รายละเอียด
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <DescriptionIcon sx={{ color: "#FABF06", fontSize: 20 }} />
+                <Typography 
+                  variant="h6" 
+                  sx={{ 
+                    fontWeight: 900, 
+                    textTransform: "uppercase", 
+                    letterSpacing: "0.05em",
+                    fontSize: "0.85rem",
+                    color: "#fafafa"
+                  }}
+                >
+                  DESCRIPTION
                 </Typography>
               </Box>
               {!isEditing &&
@@ -431,9 +484,9 @@ export default function SubmissionDetailPage({
                     size="small"
                     startIcon={<EditIcon />}
                     onClick={() => setIsEditing(true)}
-                    sx={{ color: "#fbbf24" }}
+                    sx={{ fontWeight: 800, color: "#FABF06", fontSize: "0.75rem" }}
                   >
-                    แก้ไข
+                    EDIT
                   </Button>
                 )}
             </Box>
@@ -587,15 +640,31 @@ export default function SubmissionDetailPage({
               border: "1px solid rgba(255,255,255,0.08)",
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3 }}>
-              <ImageIcon sx={{ color: "#8b5cf6" }} />
-              <Typography variant="h6" fontWeight={600}>
-                ตัวอย่างหน้า
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
+              <ImageIcon sx={{ color: "#FABF06", fontSize: 20 }} />
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  fontWeight: 900, 
+                  textTransform: "uppercase", 
+                  letterSpacing: "0.05em",
+                  fontSize: "0.85rem",
+                  color: "#fafafa"
+                }}
+              >
+                PAGES PREVIEW
               </Typography>
               <Chip
-                label={`${pages.length} หน้า`}
+                label={`${pages.length} PAGES`}
                 size="small"
-                sx={{ ml: 1, bgcolor: "rgba(255,255,255,0.05)" }}
+                sx={{ 
+                  ml: 1.5, 
+                  bgcolor: "rgba(255,255,255,0.05)",
+                  fontWeight: 800,
+                  fontSize: "0.65rem",
+                  borderRadius: 0.5,
+                  fontFamily: "monospace"
+                }}
               />
             </Box>
 
@@ -652,8 +721,8 @@ export default function SubmissionDetailPage({
             </Box>
 
             {pages.length === 0 && (
-              <Box sx={{ p: 4, textAlign: "center", color: "text.secondary" }}>
-                ไม่มีหน้าตัวอย่าง
+              <Box sx={{ p: 4, textAlign: "center", color: "text.secondary", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "0.75rem" }}>
+                NO PREVIEW PAGES AVAILABLE
               </Box>
             )}
           </Paper>
@@ -666,15 +735,26 @@ export default function SubmissionDetailPage({
             sx={{
               p: 3,
               mb: 3,
-              bgcolor: "#171717",
-              borderRadius: 1,
-              border: "1px solid rgba(255,255,255,0.08)",
+              bgcolor: "#141414",
+              borderRadius: 1.25,
+              border: "1px solid rgba(255,255,255,0.06)",
+              boxShadow: "none",
+              backgroundImage: "none"
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3 }}>
-              <PersonIcon sx={{ color: "#8b5cf6" }} />
-              <Typography variant="h6" fontWeight={600}>
-                ผู้ส่ง
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
+              <PersonIcon sx={{ color: "#FABF06", fontSize: 20 }} />
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  fontWeight: 900, 
+                  textTransform: "uppercase", 
+                  letterSpacing: "0.05em",
+                  fontSize: "0.85rem",
+                  color: "#fafafa"
+                }}
+              >
+                SUBMITTER
               </Typography>
             </Box>
 
@@ -706,21 +786,20 @@ export default function SubmissionDetailPage({
               sx={{
                 display: "flex",
                 alignItems: "center",
-                gap: 1,
+                gap: 1.5,
                 color: "text.secondary",
               }}
             >
-              <CalendarTodayIcon sx={{ fontSize: 16 }} />
-              <Typography variant="body2">
-                สมาชิกตั้งแต่{" "}
-                {new Date(submission.user.createdAt).toLocaleDateString(
-                  "th-TH",
-                  {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  }
-                )}
+              <CalendarTodayIcon sx={{ fontSize: 16, color: "#FABF06" }} />
+              <Typography component="div" variant="body2" sx={{ fontWeight: 600, fontSize: "0.80rem" }}>
+                MEMBER SINCE{" "}
+                <Box component="span" sx={{ fontFamily: "monospace", color: "#fafafa" }}>
+                  {new Date(submission.user.createdAt).toLocaleDateString("en-GB", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric"
+                  }).toUpperCase()}
+                </Box>
               </Typography>
             </Box>
           </Paper>
@@ -734,10 +813,19 @@ export default function SubmissionDetailPage({
               border: "1px solid rgba(255,255,255,0.08)",
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-              <ImageIcon sx={{ color: "#8b5cf6" }} />
-              <Typography variant="h6" fontWeight={600}>
-                ภาพปก
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+              <ImageIcon sx={{ color: "#FABF06", fontSize: 20 }} />
+              <Typography 
+                variant="h6" 
+                sx={{ 
+                  fontWeight: 900, 
+                  textTransform: "uppercase", 
+                  letterSpacing: "0.05em",
+                  fontSize: "0.85rem",
+                  color: "#fafafa"
+                }}
+              >
+                COVER IMAGE
               </Typography>
             </Box>
             <Box
@@ -791,30 +879,40 @@ export default function SubmissionDetailPage({
         onClose={() => setApproveOpen(false)}
         maxWidth="sm"
         fullWidth
-        PaperProps={{ sx: { bgcolor: "#171717", borderRadius: 1 } }}
+        PaperProps={{ 
+          sx: { 
+            bgcolor: "#141414", 
+            borderRadius: 1.25,
+            backgroundImage: "none",
+            border: "1px solid rgba(255,255,255,0.06)"
+          } 
+        }}
       >
-        <DialogTitle sx={{ fontWeight: 600 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <CheckCircleIcon color="success" />
-            อนุมัติผลงาน
+        <DialogTitle sx={{ fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "1rem", color: "#fafafa" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <CheckCircleIcon sx={{ color: "#FABF06" }} />
+            Approve Submission
           </Box>
         </DialogTitle>
         <DialogContent>
           <Alert severity="info" sx={{ mb: 3, borderRadius: 1 }}>
-            การอนุมัติจะสร้างมังงะใหม่และอาจเผยแพร่ให้ผู้ใช้เห็นทันที
+            Approving this submission will create a new manga entry.
           </Alert>
           <FormControlLabel
             control={
               <Switch
                 checked={publishImmediately}
                 onChange={(e) => setPublishImmediately(e.target.checked)}
-                color="success"
+                sx={{
+                  "& .MuiSwitch-switchBase.Mui-checked": { color: "#FABF06" },
+                  "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { bgcolor: "#FABF06" }
+                }}
               />
             }
-            label="เผยแพร่ทันที (ผู้ใช้จะมองเห็นได้)"
+            label={<Typography sx={{ fontWeight: 700, fontSize: "0.85rem", color: "#a3a3a3" }}>PUBLISH IMMEDIATELY</Typography>}
           />
           <TextField
-            label="หมายเหตุภายใน (ไม่บังคับ)"
+            label="INTERNAL NOTE (OPTIONAL)"
             fullWidth
             multiline
             rows={2}
@@ -825,17 +923,16 @@ export default function SubmissionDetailPage({
             InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
           />
         </DialogContent>
-        <DialogActions sx={{ p: 2.5 }}>
+        <DialogActions sx={{ p: 2.5, bgcolor: "rgba(0,0,0,0.2)" }}>
           <Button
             onClick={() => setApproveOpen(false)}
-            sx={{ color: "#a3a3a3" }}
+            sx={{ color: "#a3a3a3", fontWeight: 800, fontSize: "0.75rem" }}
           >
-            ยกเลิก
+            CANCEL
           </Button>
           <Button
             onClick={handleApprove}
             variant="contained"
-            color="success"
             disabled={actionLoading}
             startIcon={
               actionLoading ? (
@@ -844,9 +941,15 @@ export default function SubmissionDetailPage({
                 <CheckCircleIcon />
               )
             }
-            sx={{ px: 3 }}
+            sx={{ 
+              px: 3, 
+              bgcolor: "#FABF06", 
+              color: "#000", 
+              fontWeight: 900,
+              "&:hover": { bgcolor: "#e5af05" }
+            }}
           >
-            ยืนยันอนุมัติ
+            CONFIRM APPROVAL
           </Button>
         </DialogActions>
       </Dialog>
@@ -857,20 +960,27 @@ export default function SubmissionDetailPage({
         onClose={() => setRejectOpen(false)}
         maxWidth="sm"
         fullWidth
-        PaperProps={{ sx: { bgcolor: "#171717", borderRadius: 1 } }}
+        PaperProps={{ 
+          sx: { 
+            bgcolor: "#141414", 
+            borderRadius: 1.25,
+            backgroundImage: "none",
+            border: "1px solid rgba(255,255,255,0.06)"
+          } 
+        }}
       >
-        <DialogTitle sx={{ fontWeight: 600 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <CancelIcon color="error" />
-            ปฏิเสธผลงาน
+        <DialogTitle sx={{ fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "1rem", color: "#fafafa" }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <CancelIcon sx={{ color: "#f87171" }} />
+            Reject Submission
           </Box>
         </DialogTitle>
         <DialogContent>
-          <Alert severity="warning" sx={{ mb: 3, borderRadius: 1 }}>
-            ผู้ส่งจะเห็นเหตุผลในการปฏิเสธ โปรดระบุให้ชัดเจน
+          <Alert severity="warning" sx={{ mb: 3, borderRadius: 1, bgcolor: "rgba(234, 179, 8, 0.1)", color: "#fbbf24", "& .MuiAlert-icon": { color: "#fbbf24" } }}>
+            The submitter will see the rejection reason. Please be clear.
           </Alert>
           <TextField
-            label="เหตุผลในการปฏิเสธ (บังคับ)"
+            label="REJECTION REASON (REQUIRED)"
             fullWidth
             multiline
             rows={3}
@@ -878,11 +988,11 @@ export default function SubmissionDetailPage({
             value={rejectionReason}
             onChange={(e) => setRejectionReason(e.target.value)}
             variant="filled"
-            InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
-            placeholder="เช่น ภาพไม่ชัด, เนื้อหาไม่เหมาะสม..."
+            InputProps={{ disableUnderline: true, sx: { borderRadius: 1, bgcolor: "#0B0B0B", fontWeight: 600 } }}
+            placeholder="e.g. Blur image, inappropriate content..."
           />
           <TextField
-            label="หมายเหตุภายใน (ไม่บังคับ)"
+            label="INTERNAL NOTE (OPTIONAL)"
             fullWidth
             multiline
             rows={2}
@@ -890,27 +1000,32 @@ export default function SubmissionDetailPage({
             onChange={(e) => setReviewNote(e.target.value)}
             sx={{ mt: 2 }}
             variant="filled"
-            InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
+            InputProps={{ disableUnderline: true, sx: { borderRadius: 1, bgcolor: "#0B0B0B", fontWeight: 600 } }}
           />
         </DialogContent>
-        <DialogActions sx={{ p: 2.5 }}>
+        <DialogActions sx={{ p: 2.5, bgcolor: "rgba(0,0,0,0.2)" }}>
           <Button
             onClick={() => setRejectOpen(false)}
-            sx={{ color: "#a3a3a3" }}
+            sx={{ color: "#a3a3a3", fontWeight: 800, fontSize: "0.75rem" }}
           >
-            ยกเลิก
+            CANCEL
           </Button>
           <Button
             onClick={handleReject}
             variant="contained"
-            color="error"
             disabled={actionLoading || !rejectionReason}
             startIcon={
               actionLoading ? <CircularProgress size={16} /> : <CancelIcon />
             }
-            sx={{ px: 3 }}
+            sx={{ 
+              px: 3, 
+              bgcolor: "#ef4444", 
+              color: "#fff", 
+              fontWeight: 900,
+              "&:hover": { bgcolor: "#dc2626" }
+            }}
           >
-            ยืนยันปฏิเสธ
+            CONFIRM REJECTION
           </Button>
         </DialogActions>
       </Dialog>

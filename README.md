@@ -75,6 +75,9 @@ _พัฒนาด้วย Next.js 16 (App Router) และระบบจั
 ### ⚙️ ระบบหลังบ้าน (Admin Panel)
 
 - **Dashboard:** หน้าภาพรวมสำหรับแอดมิน แสดงสถิติและรายการมังงะล่าสุด
+  - **New!** **Magga Rounded Industrial Theme:** ดีไซน์ใหม่ทั้งหมดด้วยโทนสีดำ-เหลือง สไตล์ Industrial พรีเมียม
+  - **New!** **Complete Sub-page Redesign:** ทุกหน้าจัดการ (Submissions, Comments, Ads, Metadata, Authors, Users) ถูกออกแบบใหม่ให้สวยงามและใช้งานง่ายขึ้น
+  - **New!** **English Localization:** ปรับเปลี่ยนคำสั่งและป้ายกำกับในส่วน Admin เป็นภาษาอังกฤษทั้งหมด
   - **New!** **Improved Layout:** แก้ไขปัญหา Layout ซ้อนทับ และเพิ่มปุ่ม "Back to Home" เพื่อความสะดวก
 - **Manga Management:**
   - สร้าง (Create), แก้ไข (Edit), และลบ (Delete) มังงะ

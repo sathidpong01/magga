@@ -52,17 +52,17 @@ interface Advertisement {
 }
 
 const PLACEMENTS = [
-  { value: "grid", label: "แทรกใน Grid" },
-  { value: "header", label: "ใต้ Header" },
-  { value: "footer", label: "เหนือ Footer" },
-  { value: "manga-end", label: "ท้ายหน้าอ่าน" },
-  { value: "floating", label: "มุมขวาล่าง" },
-  { value: "modal", label: "Pop-up Modal" },
+  { value: "grid", label: "GRID INSERT" },
+  { value: "header", label: "BELOW HEADER" },
+  { value: "footer", label: "ABOVE FOOTER" },
+  { value: "manga-end", label: "MANGA END" },
+  { value: "floating", label: "FLOATING BUTTON" },
+  { value: "modal", label: "POP-UP MODAL" },
 ];
 
 const TYPES = [
-  { value: "affiliate", label: "Affiliate Link" },
-  { value: "promptpay", label: "PromptPay QR" },
+  { value: "affiliate", label: "AFFILIATE" },
+  { value: "promptpay", label: "PROMPTPAY" },
 ];
 
 // Placement Preview Component - แสดงตัวอย่างตรงกับของจริง (ไม่แสดง title)
@@ -383,27 +383,44 @@ function PlacementPreview({
   return (
     <Box
       sx={{
-        p: 2,
-        bgcolor: "#0a0a0a",
-        borderRadius: 1,
-        border: "1px solid rgba(255,255,255,0.1)",
+        p: 2.5,
+        bgcolor: "#0B0B0B",
+        borderRadius: 1.25,
+        border: "1px solid rgba(255,255,255,0.06)",
       }}
     >
       <Typography
         variant="caption"
-        color="text.secondary"
-        sx={{ mb: 1.5, display: "block" }}
+        sx={{ 
+          mb: 2, 
+          display: "block", 
+          fontWeight: 900, 
+          textTransform: "uppercase", 
+          letterSpacing: "0.05em",
+          color: "#FABF06"
+        }}
       >
-        ตัวอย่าง:{" "}
-        {PLACEMENTS.find((p) => p.value === placement)?.label || "เลือกตำแหน่ง"}
+        Live Preview:{" "}
+        <Box component="span" sx={{ color: "#fafafa" }}>
+          {PLACEMENTS.find((p) => p.value === placement)?.label || "SELECT PLACEMENT"}
+        </Box>
       </Typography>
-      {renderPreview()}
+      <Box sx={{ p: 1, bgcolor: "rgba(255,255,255,0.02)", borderRadius: 1 }}>
+        {renderPreview()}
+      </Box>
       <Typography
         variant="caption"
-        color="text.secondary"
-        sx={{ mt: 1, display: "block", fontSize: 10 }}
+        sx={{ 
+          mt: 2, 
+          display: "block", 
+          fontSize: 10,
+          fontWeight: 600,
+          color: "#737373",
+          textTransform: "uppercase",
+          letterSpacing: "0.02em"
+        }}
       >
-        * ชื่อโฆษณาจะไม่แสดงให้ผู้ใช้เห็น (ใช้สำหรับ admin เท่านั้น)
+        * Ad title is for internal management only and won't be visible to users.
       </Typography>
     </Box>
   );
@@ -612,21 +629,40 @@ export default function AdvertisementsPage() {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
-          mb: 3,
+          mb: 4,
           gap: 1,
           flexWrap: "wrap",
         }}
       >
-        <Typography variant="h5" fontWeight={600} sx={{ fontSize: { xs: "1.2rem", md: "1.5rem" } }}>
-          จัดการโฆษณา
+        <Typography 
+          variant="h4" 
+          sx={{ 
+            fontWeight: 900, 
+            letterSpacing: "-0.02em", 
+            color: "#fafafa",
+            textTransform: "uppercase"
+          }}
+        >
+          Advertisements
         </Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => handleOpenDialog()}
           size={isMobile ? "small" : "medium"}
+          sx={{
+            bgcolor: "#FABF06",
+            color: "#000",
+            fontWeight: 900,
+            borderRadius: 1.25,
+            px: 3,
+            height: 44,
+            textTransform: "uppercase",
+            letterSpacing: "0.02em",
+            "&:hover": { bgcolor: "#eab308" }
+          }}
         >
-          เพิ่มโฆษณา
+          {isMobile ? "Add" : "Create Advertisement"}
         </Button>
       </Box>
 
@@ -637,9 +673,9 @@ export default function AdvertisementsPage() {
             <Paper
               key={ad.id}
               sx={{
-                bgcolor: "#171717",
-                border: "1px solid rgba(255,255,255,0.08)",
-                borderRadius: 1,
+                bgcolor: "#141414",
+                border: "1px solid rgba(255,255,255,0.06)",
+                borderRadius: 1.25,
                 overflow: "hidden",
               }}
             >
@@ -724,23 +760,35 @@ export default function AdvertisementsPage() {
             </Paper>
           ))}
           {ads.length === 0 && (
-            <Box sx={{ py: 4, textAlign: "center" }}>
-              <Typography color="text.secondary">ยังไม่มีโฆษณา</Typography>
+            <Box sx={{ py: 8, textAlign: "center", bgcolor: "#141414", borderRadius: 1.25, border: "1px solid rgba(255,255,255,0.06)" }}>
+              <Typography sx={{ fontWeight: 700, color: "#737373", textTransform: "uppercase", letterSpacing: "0.1em" }}>
+                No Advertisements Found
+              </Typography>
             </Box>
           )}
         </Box>
       ) : (
         /* Desktop: Table layout */
-        <TableContainer component={Paper} sx={{ bgcolor: "#171717" }}>
+        <TableContainer 
+          component={Paper} 
+          sx={{ 
+            bgcolor: "#141414",
+            borderRadius: 1.25,
+            border: "1px solid rgba(255,255,255,0.06)",
+            boxShadow: "none",
+            backgroundImage: "none",
+            overflow: "hidden"
+          }}
+        >
           <Table>
             <TableHead>
-              <TableRow>
-                <TableCell>รูป</TableCell>
-                <TableCell>ชื่อ</TableCell>
-                <TableCell>ประเภท</TableCell>
-                <TableCell>ตำแหน่ง</TableCell>
-                <TableCell>เปิดใช้งาน</TableCell>
-                <TableCell align="right">จัดการ</TableCell>
+              <TableRow sx={{ bgcolor: "rgba(255,255,255,0.02)" }}>
+                <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>Frame</TableCell>
+                <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>Title</TableCell>
+                <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>Category</TableCell>
+                <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>Placement</TableCell>
+                <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>Active</TableCell>
+                <TableCell align="right" sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -781,29 +829,39 @@ export default function AdvertisementsPage() {
                         ad.placement
                       }
                       size="small"
-                      color="primary"
-                      variant="outlined"
+                      sx={{ 
+                        fontWeight: 900, 
+                        fontSize: "0.65rem",
+                        borderRadius: 0.75,
+                        bgcolor: "rgba(250, 191, 6, 0.1)",
+                        color: "#FABF06",
+                        border: "1px solid rgba(250, 191, 6, 0.2)",
+                        textTransform: "uppercase"
+                      }}
                     />
                   </TableCell>
                   <TableCell>
                     <Switch
                       checked={ad.isActive}
                       onChange={() => handleToggleActive(ad)}
+                      sx={{
+                        "& .MuiSwitch-switchBase.Mui-checked": { color: "#FABF06" },
+                        "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { bgcolor: "#FABF06" }
+                      }}
                     />
-                  </TableCell>
+                 </TableCell>
                   <TableCell align="right">
                     <IconButton
                       onClick={() => handleOpenDialog(ad)}
-                      aria-label="แก้ไข"
+                      sx={{ color: "#a3a3a3", "&:hover": { color: "#FABF06" } }}
                     >
-                      <EditIcon />
+                      <EditIcon fontSize="small" />
                     </IconButton>
                     <IconButton
                       onClick={() => handleOpenDeleteDialog(ad)}
-                      color="error"
-                      aria-label="ลบ"
+                      sx={{ color: "#a3a3a3", "&:hover": { color: "#ef4444" } }}
                     >
-                      <DeleteIcon />
+                      <DeleteIcon fontSize="small" />
                     </IconButton>
                   </TableCell>
                 </TableRow>
@@ -822,12 +880,15 @@ export default function AdvertisementsPage() {
 
       {/* Pagination */}
       {totalPages > 1 && (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
           <Pagination
             count={totalPages}
             page={page}
             onChange={handlePageChange}
-            color="primary"
+            sx={{
+              "& .MuiPaginationItem-root": { color: "#a3a3a3", fontWeight: 700 },
+              "& .Mui-selected": { bgcolor: "#FABF06 !important", color: "#000 !important" }
+            }}
           />
         </Box>
       )}
@@ -839,8 +900,20 @@ export default function AdvertisementsPage() {
         maxWidth="md"
         fullWidth
         fullScreen={isMobile}
+        PaperProps={{
+          sx: {
+            bgcolor: "#141414",
+            color: "#fafafa",
+            borderRadius: isMobile ? 0 : 1.25,
+            border: isMobile ? "none" : "1px solid rgba(255,255,255,0.08)",
+            backgroundImage: "none",
+            boxShadow: "none"
+          },
+        }}
       >
-        <DialogTitle>{editingAd ? "แก้ไขโฆษณา" : "เพิ่มโฆษณา"}</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.02em", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+          {editingAd ? "EDIT ADVERTISEMENT" : "ADD NEW ADVERTISEMENT"}
+        </DialogTitle>
         <DialogContent>
           <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 3, mt: 1 }}>
             {/* Left: Form */}
@@ -852,13 +925,20 @@ export default function AdvertisementsPage() {
               )}
 
               <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>ประเภท</InputLabel>
+                <InputLabel sx={{ color: "#a3a3a3", fontWeight: 700, textTransform: "uppercase", fontSize: "0.75rem" }}>TYPE</InputLabel>
                 <Select
                   value={formData.type}
-                  label="ประเภท"
+                  label="TYPE"
                   onChange={(e) =>
                     setFormData({ ...formData, type: e.target.value })
                   }
+                  sx={{
+                    bgcolor: "#0B0B0B",
+                    borderRadius: 1,
+                    "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.06)" },
+                    "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.12)" },
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#FABF06" },
+                  }}
                 >
                   {TYPES.map((t) => (
                     <MenuItem key={t.value} value={t.value}>
@@ -870,12 +950,21 @@ export default function AdvertisementsPage() {
 
               <TextField
                 fullWidth
-                label="ชื่อโฆษณา"
+                label="AD TITLE"
                 value={formData.title}
                 onChange={(e) =>
                   setFormData({ ...formData, title: e.target.value })
                 }
-                sx={{ mb: 2 }}
+                sx={{ 
+                  mb: 2,
+                  "& .MuiOutlinedInput-root": {
+                    bgcolor: "#0B0B0B",
+                    borderRadius: 1,
+                    "& fieldset": { borderColor: "rgba(255,255,255,0.06)" },
+                    "&.Mui-focused fieldset": { borderColor: "#FABF06" },
+                  },
+                  "& .MuiInputLabel-root": { color: "#a3a3a3", fontWeight: 700, textTransform: "uppercase", fontSize: "0.75rem" }
+                }}
               />
 
               {/* File Upload */}
@@ -892,63 +981,96 @@ export default function AdvertisementsPage() {
                   fullWidth
                   startIcon={
                     uploading ? (
-                      <CircularProgress size={20} />
+                      <CircularProgress size={20} sx={{ color: "#FABF06" }} />
                     ) : (
                       <CloudUploadIcon />
                     )
                   }
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploading}
-                  sx={{ py: 2 }}
+                  sx={{ 
+                    py: 2, 
+                    borderRadius: 1, 
+                    border: "2px dashed rgba(255,255,255,0.1)",
+                    color: "#a3a3a3",
+                    fontWeight: 800,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                    "&:hover": { border: "2px dashed #FABF06", color: "#FABF06", bgcolor: "rgba(250, 191, 6, 0.05)" }
+                  }}
                 >
                   {uploading
-                    ? "กำลังอัพโหลด..."
+                    ? "UPLOADING..."
                     : formData.imageUrl
-                    ? "เปลี่ยนรูปภาพ"
-                    : "เลือกรูปภาพ"}
+                    ? "CHANGE CREATIVE"
+                    : "UPLOAD CREATIVE"}
                 </Button>
                 {formData.imageUrl && (
                   <Typography
                     variant="caption"
-                    color="success.main"
-                    sx={{ mt: 0.5, display: "block" }}
+                    sx={{ mt: 1, display: "block", color: "#4ade80", fontWeight: 800, textTransform: "uppercase", fontSize: "0.65rem" }}
                   >
-                    ✓ อัพโหลดสำเร็จ
+                    ✓ CREATIVE UPLOADED SUCCESSFULLY
                   </Typography>
                 )}
               </Box>
 
               <TextField
                 fullWidth
-                label="Affiliate Link"
+                label="AFFILIATE / TARGET URL"
                 value={formData.linkUrl}
                 onChange={(e) =>
                   setFormData({ ...formData, linkUrl: e.target.value })
                 }
-                sx={{ mb: 2 }}
+                sx={{ 
+                  mb: 2,
+                  "& .MuiOutlinedInput-root": {
+                    bgcolor: "#0B0B0B",
+                    borderRadius: 1,
+                    "& fieldset": { borderColor: "rgba(255,255,255,0.06)" },
+                    "&.Mui-focused fieldset": { borderColor: "#FABF06" },
+                  },
+                  "& .MuiInputLabel-root": { color: "#a3a3a3", fontWeight: 700, textTransform: "uppercase", fontSize: "0.75rem" }
+                }}
               />
 
               <TextField
                 fullWidth
-                label="ข้อความเพิ่มเติม"
+                label="ADDITIONAL CONTENT / NOTES"
                 value={formData.content}
                 onChange={(e) =>
                   setFormData({ ...formData, content: e.target.value })
                 }
-                sx={{ mb: 2 }}
+                sx={{ 
+                  mb: 2,
+                  "& .MuiOutlinedInput-root": {
+                    bgcolor: "#0B0B0B",
+                    borderRadius: 1,
+                    "& fieldset": { borderColor: "rgba(255,255,255,0.06)" },
+                    "&.Mui-focused fieldset": { borderColor: "#FABF06" },
+                  },
+                  "& .MuiInputLabel-root": { color: "#a3a3a3", fontWeight: 700, textTransform: "uppercase", fontSize: "0.75rem" }
+                }}
                 multiline
                 rows={2}
-                helperText="เช่น เลข PromptPay หรือคำอธิบาย"
+                placeholder="e.g. PromptPay number or description"
               />
 
               <FormControl fullWidth>
-                <InputLabel>ตำแหน่ง</InputLabel>
+                <InputLabel sx={{ color: "#a3a3a3", fontWeight: 700, textTransform: "uppercase", fontSize: "0.75rem" }}>PLACEMENT</InputLabel>
                 <Select
                   value={formData.placement}
-                  label="ตำแหน่ง"
+                  label="PLACEMENT"
                   onChange={(e) =>
                     setFormData({ ...formData, placement: e.target.value })
                   }
+                  sx={{
+                    bgcolor: "#0B0B0B",
+                    borderRadius: 1,
+                    "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.06)" },
+                    "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.12)" },
+                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#FABF06" },
+                  }}
                 >
                   {PLACEMENTS.map((p) => (
                     <MenuItem key={p.value} value={p.value}>
@@ -963,7 +1085,7 @@ export default function AdvertisementsPage() {
                 <TextField
                   fullWidth
                   type="number"
-                  label="แสดงซ้ำ (จำนวน)"
+                  label="REPEAT FREQUENCY"
                   value={formData.repeatCount}
                   onChange={(e) =>
                     setFormData({
@@ -972,16 +1094,25 @@ export default function AdvertisementsPage() {
                     })
                   }
                   inputProps={{ min: 1, max: 10 }}
-                  helperText="จำนวนครั้งที่โฆษณาจะแสดงซ้ำใน Grid (1-10)"
-                  sx={{ mt: 2 }}
+                  sx={{ 
+                    mt: 2,
+                    "& .MuiOutlinedInput-root": {
+                      bgcolor: "#0B0B0B",
+                      borderRadius: 1,
+                      "& fieldset": { borderColor: "rgba(255,255,255,0.06)" },
+                      "&.Mui-focused fieldset": { borderColor: "#FABF06" },
+                    },
+                    "& .MuiInputLabel-root": { color: "#a3a3a3", fontWeight: 700, textTransform: "uppercase", fontSize: "0.75rem" }
+                  }}
+                  helperText={<Typography variant="caption" sx={{ color: "#737373", fontSize: "0.65rem", fontWeight: 600 }}>HOW OFTEN THE AD REPEATS IN THE MANGA GRID (1-10)</Typography>}
                 />
               )}
             </Box>
 
             {/* Right: Preview */}
-            <Box sx={{ width: { xs: "100%", md: 280 }, flexShrink: 0 }}>
-              <Typography variant="subtitle2" sx={{ mb: 1.5 }}>
-                ตัวอย่างการแสดงผล
+            <Box sx={{ width: { xs: "100%", md: 320 }, flexShrink: 0 }}>
+              <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 900, textTransform: "uppercase", fontSize: "0.75rem", color: "#a3a3a3", letterSpacing: "0.05em" }}>
+                Placement Preview
               </Typography>
               <PlacementPreview
                 placement={formData.placement}
@@ -991,19 +1122,31 @@ export default function AdvertisementsPage() {
             </Box>
           </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>ยกเลิก</Button>
+        <DialogActions sx={{ p: 3, bgcolor: "rgba(0,0,0,0.2)" }}>
+          <Button 
+            onClick={handleCloseDialog}
+            sx={{ color: "#a3a3a3", fontWeight: 800 }}
+          >
+            CANCEL
+          </Button>
           <Button
             variant="contained"
             onClick={handleSubmit}
             disabled={uploading}
+            sx={{
+              bgcolor: "#FABF06",
+              color: "#000",
+              fontWeight: 900,
+              px: 4,
+              borderRadius: 1,
+              "&:hover": { bgcolor: "#eab308" }
+            }}
           >
-            บันทึก
+            {editingAd ? "UPDATE CHANGES" : "CREATE ADVERTISEMENT"}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
       <Dialog
         open={deleteDialogOpen}
         onClose={handleCloseDeleteDialog}
@@ -1011,34 +1154,46 @@ export default function AdvertisementsPage() {
         fullWidth
         PaperProps={{
           sx: {
-            bgcolor: "#171717",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
+            bgcolor: "#141414",
+            borderRadius: 1.25,
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            backgroundImage: "none"
           },
         }}
       >
-        <DialogTitle sx={{ color: "#fafafa" }}>ยืนยันการลบ</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em", fontSize: "1rem" }}>
+          Confirm Deletion
+        </DialogTitle>
         <DialogContent>
-          <Typography color="text.secondary">
-            คุณต้องการลบโฆษณา &quot;{deletingAd?.title}&quot; หรือไม่?
+          <Typography sx={{ fontWeight: 600, color: "#d4d4d4" }}>
+            Are you sure you want to delete &quot;{deletingAd?.title}&quot;?
           </Typography>
           <Typography
             variant="caption"
-            color="error"
-            sx={{ mt: 1, display: "block" }}
+            sx={{ mt: 2, display: "block", color: "#ef4444", fontWeight: 700, textTransform: "uppercase", fontSize: "0.75rem" }}
           >
-            การดำเนินการนี้ไม่สามารถย้อนกลับได้
+            This action cannot be undone.
           </Typography>
         </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={handleCloseDeleteDialog} sx={{ color: "#a3a3a3" }}>
-            ยกเลิก
+        <DialogActions sx={{ p: 2.5, bgcolor: "rgba(0,0,0,0.2)" }}>
+          <Button 
+            onClick={handleCloseDeleteDialog} 
+            sx={{ color: "#a3a3a3", fontWeight: 800 }}
+          >
+            CANCEL
           </Button>
           <Button
             variant="contained"
-            color="error"
             onClick={handleConfirmDelete}
+            sx={{ 
+              bgcolor: "#ef4444", 
+              color: "#fff", 
+              fontWeight: 900,
+              "&:hover": { bgcolor: "#dc2626" },
+              px: 3
+            }}
           >
-            ลบ
+            DELETE
           </Button>
         </DialogActions>
       </Dialog>
