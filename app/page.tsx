@@ -4,17 +4,12 @@ import { and, asc, eq, inArray } from "drizzle-orm";
 import { Typography, Box, Container } from "@mui/material";
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
-import MangaGridSkeleton from "./components/features/manga/MangaGridSkeleton";
 import { unstable_cache } from "next/cache";
+import HomeMangaGrid from "./components/features/manga/HomeMangaGrid";
 
 const SearchFilters = dynamic(
   () => import("./components/features/search/SearchFilters"),
   { ssr: true }
-);
-
-const StreamingMangaGrid = dynamic(
-  () => import("./components/features/manga/StreamingMangaGrid"),
-  { ssr: true, loading: () => <MangaGridSkeleton count={12} /> }
 );
 
 type Props = {
@@ -105,17 +100,14 @@ export default async function Home({ searchParams }: Props) {
           <SearchFilters categories={categories} tags={tags} />
         </Suspense>
 
-        {/* Streaming: Manga grid loads progressively while skeleton shows */}
-        <Suspense fallback={<MangaGridSkeleton count={homePageSize} />}>
-          <StreamingMangaGrid
-            search={search}
-            categoryId={categoryId}
-            tagNames={tagNameArray}
-            sort={sort}
-            ads={gridAds as any}
-            pageSize={homePageSize}
-          />
-        </Suspense>
+        <HomeMangaGrid
+          search={search}
+          categoryId={categoryId}
+          tagNames={tagNameArray}
+          sort={sort}
+          ads={gridAds as any}
+          pageSize={homePageSize}
+        />
       </Box>
     </Container>
   );
