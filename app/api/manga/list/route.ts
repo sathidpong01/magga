@@ -5,6 +5,18 @@ import { eq, ilike, and, inArray, desc, asc, count, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 
 const DEFAULT_ITEMS_PER_PAGE = 12;
+type MangaListRow = {
+  id: string;
+  slug: string;
+  title: string;
+  coverImage: string;
+  viewCount: number;
+  averageRating: number;
+  category?: { name: string } | null;
+  mangaTags_mangaId?: Array<{
+    tag_tagId?: { id: string; name: string } | null;
+  }>;
+};
 
 // Cache the query for 60 seconds
 const getMangasWithPagination = unstable_cache(
@@ -18,6 +30,14 @@ const getMangasWithPagination = unstable_cache(
     excludeTagIds?: string[]
   ) => {
     const offset = (page - 1) * pageSize;
+    const mapMangas = (rows: MangaListRow[]) =>
+      rows.map(({ mangaTags_mangaId, ...m }) => ({
+        ...m,
+        category: m.category ?? null,
+        tags: (mangaTags_mangaId ?? [])
+          .map((mt) => mt.tag_tagId)
+          .filter((tag): tag is { id: string; name: string } => Boolean(tag)),
+      }));
 
     // Build Where conditions
     const conditions = [eq(mangaTable.isHidden, false)];
@@ -81,41 +101,63 @@ const getMangasWithPagination = unstable_cache(
 
     const whereClause = and(...conditions);
 
-    // Fetch mangas and total in parallel
-    const [mangaRows, [{ total }]] = await Promise.all([
-      db.query.manga.findMany({
-        where: whereClause,
-        orderBy: orderByClause,
-        offset,
-        limit: pageSize,
-        columns: {
-          id: true,
-          slug: true,
-          title: true,
-          coverImage: true,
-          viewCount: true,
-          averageRating: true,
-        },
-        with: {
-          category: {
-            columns: { name: true },
+    const totalPromise = db.select({ total: count() }).from(mangaTable).where(whereClause);
+    let mangaRows: MangaListRow[];
+    let totalRows: Array<{ total: number }>;
+
+    try {
+      [mangaRows, totalRows] = await Promise.all([
+        db.query.manga.findMany({
+          where: whereClause,
+          orderBy: orderByClause,
+          offset,
+          limit: pageSize,
+          columns: {
+            id: true,
+            slug: true,
+            title: true,
+            coverImage: true,
+            viewCount: true,
+            averageRating: true,
           },
-          mangaTags_mangaId: {
-            with: {
-              tag_tagId: {
-                columns: { id: true, name: true },
+          with: {
+            category: {
+              columns: { name: true },
+            },
+            mangaTags_mangaId: {
+              with: {
+                tag_tagId: {
+                  columns: { id: true, name: true },
+                },
               },
             },
           },
-        },
-      }),
-      db.select({ total: count() }).from(mangaTable).where(whereClause),
-    ]);
+        }),
+        totalPromise,
+      ]);
+    } catch (error) {
+      console.error("Manga list relation query failed, falling back to base manga query.", error);
+      [mangaRows, totalRows] = await Promise.all([
+        db.query.manga.findMany({
+          where: whereClause,
+          orderBy: orderByClause,
+          offset,
+          limit: pageSize,
+          columns: {
+            id: true,
+            slug: true,
+            title: true,
+            coverImage: true,
+            viewCount: true,
+            averageRating: true,
+          },
+        }),
+        totalPromise,
+      ]);
+    }
 
-    const mangas = mangaRows.map((m) => ({
-      ...m,
-      tags: m.mangaTags_mangaId.map((mt: any) => mt.tag_tagId),
-    }));
+    const [{ total }] = totalRows;
+    const mangas = mapMangas(mangaRows);
 
     const totalNum = Number(total);
 
