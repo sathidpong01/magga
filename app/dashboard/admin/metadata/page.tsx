@@ -4,6 +4,8 @@ import { asc } from "drizzle-orm";
 import { Box, Stack, Typography } from "@mui/material";
 import MetadataManager from "./MetadataManager";
 
+export const dynamic = "force-dynamic";
+
 export default async function MetadataPage() {
   const categories = await db.query.categories.findMany({
     columns: { id: true, name: true },
