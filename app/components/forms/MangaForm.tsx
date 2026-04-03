@@ -37,6 +37,8 @@ import UploadProgress, {
   UploadFileStatus,
 } from "@/app/components/ui/UploadProgress";
 import { authFetch } from "@/lib/auth-fetch";
+import { normalizeMangaPages } from "@/lib/manga-pages";
+import { extractFirstUploadUrl } from "@/lib/upload-response";
 import {
   DashboardPageHeader,
   DashboardSectionTitle,
@@ -159,15 +161,13 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
 
   // Unified Page State
   const [pageItems, setPageItems] = useState<PageItem[]>(() => {
-    if (!manga?.pages) return [];
-    let initialPages: string[] = [];
-    if (Array.isArray(manga.pages)) initialPages = manga.pages as string[];
+    const initialPages = normalizeMangaPages(manga?.pages);
 
-    return initialPages.map((url, index) => ({
+    return initialPages.map((page, index) => ({
       id: `existing-${index}-${Date.now()}`,
       type: "url",
-      content: url,
-      preview: url,
+      content: page.url,
+      preview: page.url,
     }));
   });
 
@@ -402,6 +402,8 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
     setError("");
 
     try {
+      const uploadedUrlMap: Record<string, string> = { ...uploadedUrls };
+
       // 0. Create pending author if exists (with credits)
       let finalAuthorId = selectedAuthor?.id || null;
 
@@ -447,7 +449,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
         });
         if (!res.ok) throw new Error("ไม่สามารถอัปโหลดรูปปกได้");
         const json = await res.json();
-        finalCoverUrl = json.urls[0].url;
+        finalCoverUrl = extractFirstUploadUrl(json);
       } else {
         finalCoverUrl = coverItem.content as string;
       }
@@ -515,7 +517,8 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
               if (xhr.status >= 200 && xhr.status < 300) {
                 try {
                   const response = JSON.parse(xhr.responseText);
-                  const url = response.urls[0];
+                  const url = extractFirstUploadUrl(response);
+                  uploadedUrlMap[item.id] = url;
                   setUploadedUrls((prev) => ({ ...prev, [item.id]: url }));
                   setUploadFiles((prev) =>
                     prev.map((f) =>
@@ -547,6 +550,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
               reject(new Error("เกิดปัญหาเครือข่ายระหว่างอัปโหลด"));
             };
 
+            xhr.withCredentials = true;
             xhr.open("POST", "/api/upload");
             xhr.send(fd);
           });
@@ -582,8 +586,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
       // Reconstruct pages array in order
       const finalPages = pageItems.map((item) => {
         if (item.type === "url") return item.content as string;
-        // Check both the local state and the ref/state we just updated
-        return uploadedUrls[item.id];
+        return uploadedUrlMap[item.id] || uploadedUrls[item.id];
       });
 
       // Verify all pages have URLs
@@ -741,7 +744,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
       if (xhr.status >= 200 && xhr.status < 300) {
         try {
           const response = JSON.parse(xhr.responseText);
-          const url = response.urls[0];
+          const url = extractFirstUploadUrl(response);
           setUploadedUrls((prev) => ({ ...prev, [fileId]: url }));
           setUploadFiles((prev) =>
             prev.map((f) =>
@@ -766,6 +769,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
       );
     };
 
+    xhr.withCredentials = true;
     xhr.open("POST", "/api/upload");
     xhr.send(fd);
   };

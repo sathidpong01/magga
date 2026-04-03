@@ -4,6 +4,7 @@ import { loginAttempts as loginAttemptsTable, mangaSubmissions as submissionsTab
 import { lt, eq, and, inArray } from "drizzle-orm";
 import { DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { r2Client, R2_BUCKET, R2_PUBLIC_URL } from "@/lib/r2";
+import { extractMangaPageUrls } from "@/lib/manga-pages";
 
 export async function GET(req: Request) {
   // Verify secret to prevent unauthorized calls (supports both query param and header)
@@ -58,14 +59,12 @@ export async function GET(req: Request) {
           allKeys.push(submission.coverImage.replace(`${R2_PUBLIC_URL}/`, ""));
         }
         try {
-          const pages = JSON.parse(submission.pages as string);
-          if (Array.isArray(pages)) {
-            allKeys.push(
-              ...pages
-                .filter((url: string) => url.includes(R2_PUBLIC_URL || ""))
-                .map((url: string) => url.replace(`${R2_PUBLIC_URL}/`, ""))
-            );
-          }
+          const pageUrls = extractMangaPageUrls(JSON.parse(submission.pages as string));
+          allKeys.push(
+            ...pageUrls
+              .filter((url) => url.includes(R2_PUBLIC_URL || ""))
+              .map((url) => url.replace(`${R2_PUBLIC_URL}/`, ""))
+          );
         } catch { /* skip unparseable pages */ }
       }
 

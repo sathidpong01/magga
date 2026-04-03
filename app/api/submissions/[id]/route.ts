@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { isUserBanned } from "@/lib/session-utils";
 import { z } from "zod";
+import { extractMangaPageUrls } from "@/lib/manga-pages";
 
 // GET single submission
 export async function GET(
@@ -40,7 +41,7 @@ export async function GET(
     const result = {
       ...submission,
       tags: submission.mangaSubmissionTags.map((t: any) => t.tag),
-      pages: JSON.parse(submission.pages),
+      pages: extractMangaPageUrls(JSON.parse(submission.pages)),
     };
 
     return NextResponse.json(result);

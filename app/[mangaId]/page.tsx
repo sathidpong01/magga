@@ -26,6 +26,7 @@ import ScrollToTop from "@/app/components/ui/ScrollToTop";
 import ShareButton from "@/app/components/ui/ShareButton";
 import { getSiteUrl } from "@/lib/site-url";
 import { unstable_cache } from "next/cache";
+import { normalizeMangaPages } from "@/lib/manga-pages";
 
 type MangaPageProps = {
   params: Promise<{
@@ -163,11 +164,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
     tags: mangaData.mangaTags_mangaId?.map((mt: any) => mt.tag_tagId) || [],
   };
 
-  const pages: string[] = (() => {
-    if (!manga.pages) return [];
-    if (Array.isArray(manga.pages)) return manga.pages as string[];
-    return [];
-  })();
+  const pages = normalizeMangaPages(manga.pages);
 
   const baseUrl = getSiteUrl();
   const authorName = manga.author?.name || manga.authorName;

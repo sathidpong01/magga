@@ -9,6 +9,7 @@ import {
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth-helpers";
+import { extractMangaPageUrls } from "@/lib/manga-pages";
 
 export async function POST(
   req: Request,
@@ -55,7 +56,7 @@ export async function POST(
         .where(eq(mangaTable.slug, baseSlug))
         .limit(1);
       const finalSlug = existingManga ? `${baseSlug}-${Date.now()}` : baseSlug;
-      const parsedPages = JSON.parse(submission.pages) as string[];
+      const parsedPages = extractMangaPageUrls(JSON.parse(submission.pages));
       
       const [manga] = await tx.insert(mangaTable).values({
         title: submission.title,

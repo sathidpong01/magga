@@ -3,6 +3,7 @@
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import { MangaReaderSkeleton } from "./loading-skeletons";
+import type { MangaPageRecord } from "@/lib/manga-pages";
 
 // Dynamic import WITH SSR enabled for better FCP/LCP
 // The component will render on server first, then hydrate on client
@@ -16,7 +17,7 @@ const MangaReader = dynamic(
 interface MangaContentProps {
   mangaId: string;
   mangaTitle: string;
-  pages: string[];
+  pages: MangaPageRecord[];
 }
 
 export function SuspendedMangaReader({
