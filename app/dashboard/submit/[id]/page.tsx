@@ -6,6 +6,7 @@ import MangaForm from "@/app/components/forms/MangaForm";
 import { db } from "@/db";
 import { mangaSubmissions as submissionsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import { extractMangaPageUrls } from "@/lib/manga-pages";
 
 export default async function EditSubmissionPage({
   params,
@@ -44,7 +45,7 @@ export default async function EditSubmissionPage({
 
   const submissionForForm = {
     ...submission,
-    pages: JSON.parse(submission.pages) as string[],
+    pages: extractMangaPageUrls(JSON.parse(submission.pages)),
     tags: submission.mangaSubmissionTags.map((item) => item.tag),
   };
 

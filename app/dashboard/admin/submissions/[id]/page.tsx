@@ -251,7 +251,7 @@ export default function SubmissionDetailPage({
     );
 
   const statusInfo = getStatusInfo(submission.status);
-  const pages = JSON.parse(submission.pages as string);
+  const pages = Array.isArray(submission.pages) ? submission.pages : [];
 
   return (
     <Box sx={{ maxWidth: 1400, mx: "auto" }}>

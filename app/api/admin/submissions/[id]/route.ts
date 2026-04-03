@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { mangaSubmissions as submissionsTable, mangaSubmissionTags as submissionTagsTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
+import { extractMangaPageUrls } from "@/lib/manga-pages";
 
 // GET: Fetch submission details
 export async function GET(
@@ -49,6 +50,7 @@ export async function GET(
     return NextResponse.json({
       ...submission,
       user: submission.profile,
+      pages: extractMangaPageUrls(JSON.parse(submission.pages)),
       tags: submission.mangaSubmissionTags,
     });
   } catch (error) {
