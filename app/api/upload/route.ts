@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { r2Client, R2_BUCKET, R2_PUBLIC_URL } from "@/lib/r2";
+import { r2Client, R2_BUCKET, getR2PublicUrl } from "@/lib/r2";
 
 import sharp from "sharp";
 
@@ -175,7 +175,7 @@ export async function POST(request: Request) {
 
         // Return object with url and dimensions for CLS prevention
         return {
-          url: R2_PUBLIC_URL ? `${R2_PUBLIC_URL}/${key}` : `/${key}`,
+          url: getR2PublicUrl(key),
           width: finalWidth,
           height: finalHeight,
         };

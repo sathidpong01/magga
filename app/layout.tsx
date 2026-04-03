@@ -6,6 +6,7 @@ import ErrorBoundary from "./components/common/ErrorBoundary";
 import LayoutWrapper from "./components/layout/LayoutWrapper";
 import LazyClientComponents from "./components/layout/LazyClientComponents";
 import { getSiteUrl } from "@/lib/site-url";
+import { R2_PUBLIC_URL } from "@/lib/r2-public";
 
 const kanit = Kanit({
   weight: ["400", "500", "700"],
@@ -56,6 +57,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const r2PublicUrl = R2_PUBLIC_URL;
+
   return (
     <html lang="th" suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
@@ -65,11 +68,11 @@ export default function RootLayout({
         {/* Preconnect to R2 CDN for faster image loading */}
         <link
           rel="preconnect"
-          href="https://pub-1f8d25d164134702943300ef6d01fc35.r2.dev"
+          href={r2PublicUrl}
         />
         <link
           rel="dns-prefetch"
-          href="https://pub-1f8d25d164134702943300ef6d01fc35.r2.dev"
+          href={r2PublicUrl}
         />
       </head>
       <body className={kanit.className}>

@@ -1,23 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { r2Client, R2_BUCKET, getR2PublicUrl } from "@/lib/r2";
 import sharp from "sharp";
-
-const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
-const R2_ACCESS_KEY_ID = process.env.R2_ACCESS_KEY_ID;
-const R2_SECRET_ACCESS_KEY = process.env.R2_SECRET_ACCESS_KEY;
-const R2_BUCKET_NAME = process.env.R2_BUCKET_NAME;
-const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL;
-
-const S3 = new S3Client({
-  region: "auto",
-  endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: R2_ACCESS_KEY_ID || "",
-    secretAccessKey: R2_SECRET_ACCESS_KEY || "",
-  },
-});
 
 // POST /api/comments/upload - Upload image for comment
 export async function POST(request: Request) {
@@ -97,16 +83,17 @@ export async function POST(request: Request) {
     const safeName = `${Date.now()}-${fileName.replace(/[^a-zA-Z0-9.-]/g, "_")}`;
     const key = `uploads/comments/${year}/${month}/${session.user.id}/${safeName}`;
 
-    await S3.send(
+    await r2Client.send(
       new PutObjectCommand({
-        Bucket: R2_BUCKET_NAME,
+        Bucket: R2_BUCKET,
         Key: key,
         Body: imageData,
         ContentType: contentType,
+        CacheControl: "public, max-age=31536000, immutable",
       })
     );
 
-    const url = R2_PUBLIC_URL ? `${R2_PUBLIC_URL}/${key}` : `/${key}`;
+    const url = getR2PublicUrl(key);
 
     return NextResponse.json({ url });
   } catch (error) {

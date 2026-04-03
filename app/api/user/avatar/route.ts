@@ -3,17 +3,9 @@ import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { profiles as usersTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { r2Client, R2_BUCKET, getR2PublicUrl } from "@/lib/r2";
 import sharp from "sharp";
-
-const S3 = new S3Client({
-  region: "auto",
-  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID || "",
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || "",
-  },
-});
 
 export async function POST(request: Request) {
   const session = await auth.api.getSession({ headers: request.headers });
@@ -51,9 +43,9 @@ export async function POST(request: Request) {
     const safeName = `${Date.now()}-avatar.webp`;
     const key = `uploads/avatars/${session.user.id}/${safeName}`;
 
-    await S3.send(
+    await r2Client.send(
       new PutObjectCommand({
-        Bucket: process.env.R2_BUCKET_NAME,
+        Bucket: R2_BUCKET,
         Key: key,
         Body: new Uint8Array(processedBuffer),
         ContentType: "image/webp",
@@ -61,9 +53,7 @@ export async function POST(request: Request) {
       })
     );
 
-    const imageUrl = process.env.R2_PUBLIC_URL
-      ? `${process.env.R2_PUBLIC_URL}/${key}`
-      : `/${key}`;
+    const imageUrl = getR2PublicUrl(key);
 
     // Update profile image in DB
     await db

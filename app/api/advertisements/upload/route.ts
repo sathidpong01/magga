@@ -1,17 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { requireAdmin } from "@/lib/auth-helpers";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { r2Client, R2_BUCKET, getR2PublicUrl } from "@/lib/r2";
 import sharp from "sharp";
-
-const s3Client = new S3Client({
-  region: "auto",
-  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-  credentials: {
-    accessKeyId: process.env.R2_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY!,
-  },
-});
 
 export async function POST(request: NextRequest) {
   try {
@@ -57,16 +49,17 @@ export async function POST(request: NextRequest) {
     const fileName = `ads/${timestamp}.webp`;
 
     // Upload to R2
-    await s3Client.send(
+    await r2Client.send(
       new PutObjectCommand({
-        Bucket: process.env.R2_BUCKET_NAME!,
+        Bucket: R2_BUCKET,
         Key: fileName,
         Body: processedBuffer,
         ContentType: "image/webp",
+        CacheControl: "public, max-age=31536000, immutable",
       })
     );
 
-    const imageUrl = `${process.env.R2_PUBLIC_URL}/${fileName}`;
+    const imageUrl = getR2PublicUrl(fileName);
 
     return NextResponse.json({ imageUrl }, { status: 201 });
   } catch (error) {
