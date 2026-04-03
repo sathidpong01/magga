@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     const [newTag] = await db.insert(tagsTable)
       .values({ name: sanitizedName })
       .returning();
-    revalidatePath("/admin/metadata");
+    revalidatePath("/dashboard/admin/metadata");
     revalidatePath("/"); // Refresh home page to show new tag
     return NextResponse.json(newTag, { status: 201 });
   } catch {

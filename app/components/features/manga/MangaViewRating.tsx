@@ -14,6 +14,7 @@ interface MangaViewRatingProps {
   hideViewCount?: boolean;
   hideInteractive?: boolean;
   hideAverage?: boolean;
+  trackViewOnMount?: boolean;
 }
 
 export default function MangaViewRating({
@@ -24,6 +25,7 @@ export default function MangaViewRating({
   hideViewCount = false,
   hideInteractive = false,
   hideAverage = false,
+  trackViewOnMount = false,
 }: MangaViewRatingProps) {
   const [averageRating, setAverageRating] = useState(initialAverageRating);
   const [ratingCount, setRatingCount] = useState(initialRatingCount);
@@ -33,12 +35,37 @@ export default function MangaViewRating({
   const [fingerprint, setFingerprint] = useState<string | null>(null);
   const viewTracked = useRef(false);
 
-  // Track view on mount (once)
+  // Track a page view only from the designated instance and only once the tab is visible.
   useEffect(() => {
-    if (viewTracked.current) return;
-    viewTracked.current = true;
-    fetch(`/api/manga/${mangaId}/view`, { method: "POST" }).catch(() => {});
-  }, [mangaId]);
+    if (!trackViewOnMount || viewTracked.current) return;
+
+    const postView = () => {
+      if (viewTracked.current) return;
+      viewTracked.current = true;
+      fetch(`/api/manga/${mangaId}/view`, {
+        method: "POST",
+        keepalive: true,
+      }).catch(() => {});
+    };
+
+    if (typeof document !== "undefined" && document.visibilityState === "visible") {
+      postView();
+      return;
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        postView();
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [mangaId, trackViewOnMount]);
 
   // Load FingerprintJS and fetch existing rating
   useEffect(() => {

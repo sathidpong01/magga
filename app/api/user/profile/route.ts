@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { isUserBanned } from "@/lib/session-utils";
 import { db } from "@/db";
 import { profiles as usersTable } from "@/db/schema";
 import { eq, or, and, ne } from "drizzle-orm";
@@ -29,7 +30,7 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if ((session.user as any).banned) {
+    if (isUserBanned(session)) {
       return NextResponse.json(
         { error: "บัญชีของคุณถูกระงับการใช้งาน" },
         { status: 403 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import {
   Box,
@@ -65,7 +65,7 @@ export default function AdminSubmissionsPage() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const fetchSubmissions = async () => {
+  const fetchSubmissions = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -85,11 +85,11 @@ export default function AdminSubmissionsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, statusFilter, debouncedSearch]);
 
   useEffect(() => {
     fetchSubmissions();
-  }, [page, statusFilter, debouncedSearch]);
+  }, [fetchSubmissions]);
 
   const handleStatusChange = (
     event: React.SyntheticEvent,
@@ -99,16 +99,18 @@ export default function AdminSubmissionsPage() {
     setPage(1);
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusLabel = (status: string) => {
     switch (status) {
       case "APPROVED":
-        return "success";
+        return "อนุมัติแล้ว";
       case "REJECTED":
-        return "error";
+        return "ปฏิเสธ";
       case "UNDER_REVIEW":
-        return "warning";
+        return "กำลังตรวจสอบ";
+      case "PENDING":
+        return "รอพิจารณา";
       default:
-        return "default";
+        return status;
     }
   };
 
@@ -122,17 +124,21 @@ export default function AdminSubmissionsPage() {
           mb: 4,
         }}
       >
-        <Typography 
-          variant="h4" 
-          sx={{ 
-            fontWeight: 900, 
-            letterSpacing: "-0.02em",
-            color: "#fafafa",
-            textTransform: "uppercase"
-          }}
-        >
-          Submissions Management
-        </Typography>
+        <Box>
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: 900,
+              letterSpacing: "-0.03em",
+              color: "#fafafa",
+            }}
+          >
+            จัดการการฝากส่ง
+          </Typography>
+          <Typography sx={{ color: "#a3a3a3", mt: 0.75 }}>
+            ตรวจสอบรายการฝากส่งทั้งหมดในมุมมองเดียว
+          </Typography>
+        </Box>
         <Button
           startIcon={<RefreshIcon />}
           onClick={fetchSubmissions}
@@ -148,7 +154,7 @@ export default function AdminSubmissionsPage() {
             }
           }}
         >
-          Refresh
+          รีเฟรช
         </Button>
       </Box>
 
@@ -173,11 +179,11 @@ export default function AdminSubmissionsPage() {
             borderColor: "rgba(255,255,255,0.06)",
             minHeight: 56,
             "& .MuiTab-root": { 
-              fontWeight: 800, 
+              fontWeight: 800,
               color: "#a3a3a3",
               fontSize: "0.85rem",
-              letterSpacing: "0.05em",
-              textTransform: "uppercase",
+              letterSpacing: "0",
+              textTransform: "none",
               minHeight: 56,
               opacity: 0.7,
               "&.Mui-selected": { 
@@ -187,18 +193,18 @@ export default function AdminSubmissionsPage() {
             }
           }}
         >
-          <Tab label="All" value="ALL" />
-          <Tab label="Pending" value="PENDING" />
-          <Tab label="Under Review" value="UNDER_REVIEW" />
-          <Tab label="Approved" value="APPROVED" />
-          <Tab label="Rejected" value="REJECTED" />
+          <Tab label="ทั้งหมด" value="ALL" />
+          <Tab label="รอพิจารณา" value="PENDING" />
+          <Tab label="กำลังตรวจสอบ" value="UNDER_REVIEW" />
+          <Tab label="อนุมัติแล้ว" value="APPROVED" />
+          <Tab label="ปฏิเสธ" value="REJECTED" />
         </Tabs>
 
         <Box sx={{ p: 2.5, bgcolor: "rgba(0,0,0,0.2)" }}>
           <TextField
             fullWidth
             variant="outlined"
-            placeholder="SEARCH BY TITLE OR SUBMITTER..."
+            placeholder="ค้นหาตามชื่อเรื่องหรือชื่อผู้ส่ง"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             sx={{
@@ -238,12 +244,12 @@ export default function AdminSubmissionsPage() {
         <Table>
           <TableHead>
             <TableRow sx={{ bgcolor: "rgba(255,255,255,0.02)" }}>
-              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>Cover</TableCell>
-              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>Title</TableCell>
-              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>Submitter</TableCell>
-              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>Status</TableCell>
-              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>Submitted At</TableCell>
-              <TableCell align="right" sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>Actions</TableCell>
+              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "none", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>ปก</TableCell>
+              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "none", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>ชื่อเรื่อง</TableCell>
+              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "none", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>ผู้ส่ง</TableCell>
+              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "none", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>สถานะ</TableCell>
+              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "none", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>วันที่ส่ง</TableCell>
+              <TableCell align="right" sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "none", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>จัดการ</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -256,9 +262,9 @@ export default function AdminSubmissionsPage() {
             ) : submissions.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
-                  <Typography sx={{ color: "#a3a3a3", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                    No submissions found
-                  </Typography>
+                    <Typography sx={{ color: "#a3a3a3", fontWeight: 700, letterSpacing: "0.03em" }}>
+                    ไม่พบรายการฝากส่ง
+                    </Typography>
                 </TableCell>
               </TableRow>
             ) : (
@@ -302,12 +308,12 @@ export default function AdminSubmissionsPage() {
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={sub.status}
+                      label={getStatusLabel(sub.status)}
                       size="small"
                       sx={{ 
                         fontWeight: 900, 
                         fontSize: "0.65rem",
-                        letterSpacing: "0.05em",
+                        letterSpacing: "0",
                         borderRadius: 1,
                         bgcolor: sub.status === "APPROVED" 
                           ? "rgba(34, 197, 94, 0.15)" 
@@ -337,7 +343,7 @@ export default function AdminSubmissionsPage() {
                     </Typography>
                   </TableCell>
                   <TableCell align="right">
-                    <Tooltip title="VIEW SUBMISSION">
+                      <Tooltip title="ดูรายการ">
                       <IconButton
                         component={Link}
                         href={`/dashboard/admin/submissions/${sub.id}`}
@@ -353,7 +359,7 @@ export default function AdminSubmissionsPage() {
                           },
                           transition: "all 0.2s"
                         }}
-                        aria-label="View Details"
+                        aria-label="ดูรายละเอียด"
                       >
                         <VisibilityIcon sx={{ fontSize: 18 }} />
                       </IconButton>

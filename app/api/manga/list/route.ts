@@ -4,19 +4,20 @@ import { manga as mangaTable, categories as categoriesTable, tags as tagsTable, 
 import { eq, ilike, and, inArray, desc, asc, count, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 
-const ITEMS_PER_PAGE = 12;
+const DEFAULT_ITEMS_PER_PAGE = 12;
 
 // Cache the query for 60 seconds
 const getMangasWithPagination = unstable_cache(
   async (
     page: number,
+    pageSize: number,
     search?: string,
     categoryId?: string,
     tagNames?: string[],
     sort?: string,
     excludeTagIds?: string[]
   ) => {
-    const offset = (page - 1) * ITEMS_PER_PAGE;
+    const offset = (page - 1) * pageSize;
 
     // Build Where conditions
     const conditions = [eq(mangaTable.isHidden, false)];
@@ -86,7 +87,7 @@ const getMangasWithPagination = unstable_cache(
         where: whereClause,
         orderBy: orderByClause,
         offset,
-        limit: ITEMS_PER_PAGE,
+        limit: pageSize,
         columns: {
           id: true,
           slug: true,
@@ -122,7 +123,7 @@ const getMangasWithPagination = unstable_cache(
       mangas,
       total: totalNum,
       page,
-      totalPages: Math.ceil(totalNum / ITEMS_PER_PAGE),
+      totalPages: Math.ceil(totalNum / pageSize),
       hasMore: offset + mangas.length < totalNum,
     };
   },
@@ -134,6 +135,13 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1", 10);
+    const pageSizeParam = parseInt(
+      searchParams.get("pageSize") || String(DEFAULT_ITEMS_PER_PAGE),
+      10
+    );
+    const pageSize = Number.isFinite(pageSizeParam)
+      ? Math.min(Math.max(pageSizeParam, 1), 24)
+      : DEFAULT_ITEMS_PER_PAGE;
     const search = searchParams.get("search") || undefined;
     const categoryId = searchParams.get("categoryId") || undefined;
     const tagsParam = searchParams.get("tags");
@@ -144,6 +152,7 @@ export async function GET(request: Request) {
 
     const result = await getMangasWithPagination(
       page,
+      pageSize,
       search,
       categoryId,
       tagNames,

@@ -7,6 +7,7 @@ import { manga as mangaTable, mangaSubmissions as submissionsTable, mangaSubmiss
 import { eq, sql, ilike } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { isUserBanned } from "@/lib/session-utils";
 
 // ============================================================================
 // Schema Definitions
@@ -23,8 +24,7 @@ const SubmitMangaSchema = z.object({
   categoryId: z.string().nullable().optional(),
   authorId: z.string().nullable().optional(),
   tagIds: z.array(z.string()).optional(),
-  status: z.enum(["DRAFT", "PENDING"]).optional().default("PENDING"),
-  approvedMangaId: z.string().optional(),
+  status: z.enum(["PENDING"]).optional().default("PENDING"),
 });
 
 const CreateCategorySchema = z.object({
@@ -55,7 +55,7 @@ export async function submitManga(data: z.input<typeof SubmitMangaSchema>) {
     return { error: "กรุณาเข้าสู่ระบบก่อนส่งผลงาน" };
   }
 
-  if ((session.user as any).banned) {
+  if (isUserBanned(session)) {
     return { error: "บัญชีของคุณถูกระงับการใช้งาน" };
   }
 
@@ -74,7 +74,6 @@ export async function submitManga(data: z.input<typeof SubmitMangaSchema>) {
     authorId,
     tagIds,
     status,
-    approvedMangaId,
   } = parsed.data;
 
   try {
@@ -87,7 +86,7 @@ export async function submitManga(data: z.input<typeof SubmitMangaSchema>) {
       .where(eq(mangaTable.slug, finalSlug))
       .limit(1);
 
-    if (existingManga && existingManga.id !== approvedMangaId) {
+    if (existingManga) {
       finalSlug = `${finalSlug}-${Date.now()}`;
     }
 
@@ -130,7 +129,6 @@ export async function submitManga(data: z.input<typeof SubmitMangaSchema>) {
         categoryId: categoryId || null,
         authorId: authorId || null,
         status,
-        approvedMangaId: approvedMangaId || null,
       })
       .returning();
 
@@ -187,7 +185,7 @@ export async function createCategory(name: string) {
       .values({ name: name.trim() })
       .returning();
 
-    revalidatePath("/submit");
+    revalidatePath("/dashboard/submit");
     revalidatePath("/");
 
     return { category };
@@ -224,7 +222,7 @@ export async function createTag(name: string) {
       .values({ name: name.trim() })
       .returning();
 
-    revalidatePath("/submit");
+    revalidatePath("/dashboard/submit");
     revalidatePath("/");
 
     return { tag };
@@ -261,7 +259,7 @@ export async function createAuthor(name: string) {
       .values({ name: name.trim() })
       .returning();
 
-    revalidatePath("/submit");
+    revalidatePath("/dashboard/submit");
 
     return { author };
   } catch (error) {

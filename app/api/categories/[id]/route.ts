@@ -30,7 +30,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
       .set({ name })
       .where(eq(categoriesTable.id, id))
       .returning();
-    revalidatePath("/admin/metadata");
+    revalidatePath("/dashboard/admin/metadata");
     return NextResponse.json(updatedCategory);
   } catch {
     return NextResponse.json(
@@ -51,7 +51,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
   try {
     await db.delete(categoriesTable).where(eq(categoriesTable.id, id));
-    revalidatePath("/admin/metadata");
+    revalidatePath("/dashboard/admin/metadata");
     return new NextResponse(null, { status: 204 }); // No Content
   } catch {
     // Handle cases where the category is still in use

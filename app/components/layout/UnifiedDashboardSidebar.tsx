@@ -4,6 +4,7 @@ import CollapsibleSidebar, {
   SidebarItem,
 } from "@/app/components/layout/CollapsibleSidebar";
 import { useSession } from "@/lib/auth-client";
+import { isAdminRole, isUserBanned } from "@/lib/session-utils";
 import AddBoxIcon from "@mui/icons-material/AddBox";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import HomeIcon from "@mui/icons-material/Home";
@@ -17,8 +18,8 @@ import PeopleIcon from "@mui/icons-material/People";
 
 export default function UnifiedDashboardSidebar() {
   const { data: session } = useSession();
-  const isAdmin = (session?.user as any)?.role === "admin";
-  const banned = (session?.user as any)?.banned;
+  const isAdmin = isAdminRole(session);
+  const banned = isUserBanned(session);
 
   // Menu items based on role
   const menuItems: SidebarItem[] = [
@@ -93,7 +94,7 @@ export default function UnifiedDashboardSidebar() {
     { text: "กลับหน้าหลัก", href: "/", icon: <HomeIcon /> },
   ];
 
-  const title = isAdmin ? "Magga Admin" : "แดชบอร์ด";
+  const title = isAdmin ? "MAGGA Admin" : "MAGGA Workspace";
 
   return (
     <CollapsibleSidebar

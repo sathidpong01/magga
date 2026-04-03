@@ -1,99 +1,37 @@
 import { db } from "@/db";
 import { 
   manga as mangaTable,
+  mangaViews as mangaViewsTable,
   categories as categoriesTable,
   tags as tagsTable,
   profiles as usersTable,
   comments as commentsTable,
   mangaSubmissions as submissionsTable
 } from "@/db/schema";
-import { count, eq, sum, desc } from "drizzle-orm";
-import { Box, Typography, Grid, Chip, Divider } from "@mui/material";
+import { count, eq, sum, desc, inArray } from "drizzle-orm";
+import { Box, Typography, Grid, Divider, Stack } from "@mui/material";
 import CategoryIcon from "@mui/icons-material/Category";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import PeopleIcon from "@mui/icons-material/People";
 import CommentIcon from "@mui/icons-material/Comment";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import EditNoteIcon from "@mui/icons-material/EditNote";
 import AutoStoriesIcon from "@mui/icons-material/AutoStories";
 import AssignmentIcon from "@mui/icons-material/Assignment";
+import InsightsIcon from "@mui/icons-material/Insights";
 import Link from "next/link";
 import Image from "next/image";
+import {
+  DashboardPageHeader,
+  DashboardSectionTitle,
+  DashboardStat,
+  DashboardSurface,
+  dashboardInsetSurfaceSx,
+  dashboardTokens,
+} from "@/app/components/dashboard/system";
 
 // Dynamic rendering for real-time data
 export const dynamic = "force-dynamic";
-
-function StatCard({
-  label,
-  value,
-  icon,
-  color,
-  href,
-}: {
-  label: string;
-  value: string | number;
-  icon: React.ReactNode;
-  color: string;
-  href?: string;
-}) {
-  const content = (
-    <Box
-      sx={{
-        p: 2.5,
-        bgcolor: "#141414",
-        border: "1px solid rgba(255,255,255,0.06)",
-        borderRadius: 1.25, // 10px
-        display: "flex",
-        alignItems: "center",
-        gap: 2.5,
-        transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-        position: "relative",
-        overflow: "hidden",
-        ...(href && {
-          "&:hover": { 
-            borderColor: color === "#FABF06" ? "rgba(250, 191, 6, 0.4)" : color, 
-            cursor: "pointer",
-            bgcolor: "#1a1a1a",
-            transform: "translateY(-2px)",
-          },
-        }),
-      }}
-    >
-      <Box
-        sx={{
-          p: 1.25,
-          borderRadius: 1,
-          bgcolor: `${color}10`,
-          color: color,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          border: `1px solid ${color}20`,
-        }}
-      >
-        {icon}
-      </Box>
-      <Box>
-        <Typography variant="h5" sx={{ fontWeight: 800, color: "#fafafa", lineHeight: 1.1, fontSize: "1.35rem" }}>
-          {typeof value === "number" ? value.toLocaleString() : value}
-        </Typography>
-        <Typography variant="caption" sx={{ color: "#a3a3a3", fontWeight: 500, letterSpacing: "0.02em", mt: 0.5, display: "block" }}>
-          {label.toUpperCase()}
-        </Typography>
-      </Box>
-    </Box>
-  );
-
-  if (href) {
-    return (
-      <Link href={href} style={{ textDecoration: "none" }}>
-        {content}
-      </Link>
-    );
-  }
-  return content;
-}
 
 export default async function AdminPage() {
   // Stats
@@ -105,11 +43,14 @@ export default async function AdminPage() {
   const [{ count: totalComments }] = await db.select({ count: count() }).from(commentsTable);
   const [{ count: pendingSubmissions }] = await db.select({ count: count() }).from(submissionsTable).where(eq(submissionsTable.status, "PENDING"));
 
-  // Total views across all manga
+  // Total reads and unique visitors across all manga
   const [{ totalViewsAgg }] = await db.select({ totalViewsAgg: sum(mangaTable.viewCount) }).from(mangaTable);
   const totalViews = Number(totalViewsAgg || 0);
+  const [{ totalUniqueVisitors }] = await db
+    .select({ totalUniqueVisitors: count() })
+    .from(mangaViewsTable);
 
-  // Top 10 Popular Manga
+  // Top 10 Popular Manga by total reads
   const topManga = await db.query.manga.findMany({
     where: eq(mangaTable.isHidden, false),
     orderBy: [desc(mangaTable.viewCount)],
@@ -122,221 +63,247 @@ export default async function AdminPage() {
       coverImage: true,
     },
   });
+  const topMangaIds = topManga.map((manga) => manga.id);
+  const uniqueVisitorRows = topMangaIds.length
+    ? await db
+        .select({
+          mangaId: mangaViewsTable.mangaId,
+          uniqueVisitors: count(),
+        })
+        .from(mangaViewsTable)
+        .where(inArray(mangaViewsTable.mangaId, topMangaIds))
+        .groupBy(mangaViewsTable.mangaId)
+    : [];
+  const uniqueVisitorMap = new Map(
+    uniqueVisitorRows.map((row) => [row.mangaId, row.uniqueVisitors])
+  );
+  const rankedManga = topManga.map((manga) => ({
+    ...manga,
+    uniqueVisitors: uniqueVisitorMap.get(manga.id) ?? 0,
+  }));
 
   return (
     <Box>
-      <Box sx={{ mb: 4, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-        <Box>
-          <Typography variant="h4" sx={{ fontWeight: 900, mb: 1, letterSpacing: "-0.02em", color: "#fafafa" }}>
-            OVERVIEW
-          </Typography>
-          <Typography variant="body2" sx={{ color: "#a3a3a3" }}>
-            ยินดีต้อนรับกลับ, คุณกำลังดูแลระบบ Magga ในขณะนี้
-          </Typography>
-        </Box>
-      </Box>
+      <DashboardPageHeader
+        eyebrow="ADMIN WORKSPACE"
+        title="ภาพรวมการดูแลระบบ"
+        description="สรุปภาพรวมของมังงะ ผู้ใช้ คอมเมนต์ และรายการฝากลง เพื่อให้ตัดสินใจและจัดการงานประจำวันได้จากหน้าเดียว"
+      />
 
       {/* Stats Grid */}
       <Grid container spacing={2.5} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            label="Total Manga"
+          <DashboardStat
+            label="มังงะทั้งหมด"
             value={totalManga}
             icon={<AutoStoriesIcon />}
-            color="#FABF06"
             href="/dashboard/admin/manga"
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            label="Total Users"
+          <DashboardStat
+            label="ผู้ใช้ทั้งหมด"
             value={totalUsers}
             icon={<PeopleIcon />}
-            color="#10b981"
             href="/dashboard/admin/users"
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            label="Total Comments"
+          <DashboardStat
+            label="คอมเมนต์ทั้งหมด"
             value={totalComments}
             icon={<CommentIcon />}
-            color="#818cf8"
             href="/dashboard/admin/comments"
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <StatCard
-            label="Submissions"
+          <DashboardStat
+            label="รายการรอตรวจ"
             value={pendingSubmissions}
             icon={<AssignmentIcon />}
-            color="#EF4444"
             href="/dashboard/admin/submissions"
           />
         </Grid>
         <Grid size={{ xs: 6, sm: 4, md: 3 }}>
-          <StatCard
+          <DashboardStat
             label="ฉบับร่าง"
             value={draftManga}
             icon={<EditNoteIcon />}
-            color="#94a3b8"
             href="/dashboard/admin/manga"
           />
         </Grid>
         <Grid size={{ xs: 6, sm: 4, md: 3 }}>
-          <StatCard
-            label="เข้าชมรวม"
+          <DashboardStat
+            label="อ่านสะสม"
             value={totalViews}
             icon={<VisibilityIcon />}
-            color="#4ade80"
           />
         </Grid>
         <Grid size={{ xs: 6, sm: 4, md: 3 }}>
-          <StatCard
+          <DashboardStat
+            label="ผู้ชมแยกเรื่อง"
+            value={totalUniqueVisitors}
+            icon={<InsightsIcon />}
+          />
+        </Grid>
+        <Grid size={{ xs: 6, sm: 4, md: 3 }}>
+          <DashboardStat
             label="หมวดหมู่"
             value={totalCategories}
             icon={<CategoryIcon />}
-            color="#fb923c"
             href="/dashboard/admin/metadata"
           />
         </Grid>
         <Grid size={{ xs: 6, sm: 4, md: 3 }}>
-          <StatCard
+          <DashboardStat
             label="แท็ก"
             value={totalTags}
             icon={<LocalOfferIcon />}
-            color="#2dd4bf"
             href="/dashboard/admin/metadata"
           />
         </Grid>
       </Grid>
 
-      <Divider sx={{ borderColor: "rgba(255,255,255,0.06)", mb: 3 }} />
+      <Divider sx={{ borderColor: "rgba(255,255,255,0.06)", mb: 3.5 }} />
 
       {/* Top 10 Popular Manga */}
-      <Box
-        sx={{
-          bgcolor: "#141414",
-          border: "1px solid rgba(255,255,255,0.06)",
-          borderRadius: 1.25,
-          p: 2.5,
-        }}
-      >
-        <Box sx={{ mb: 3 }}>
-          <Typography variant="h6" sx={{ fontWeight: 800, mb: 2, display: "flex", alignItems: "center", gap: 1, color: "#fafafa" }}>
-            <TrendingUpIcon sx={{ color: "#FABF06" }} /> TOP 10 MOST READ
-          </Typography>
-        </Box>
+      <DashboardSurface sx={{ p: { xs: 2.5, md: 3 } }}>
+        <DashboardSectionTitle
+          title="เรื่องที่ถูกอ่านมากที่สุด"
+          description="จัดอันดับจากยอดอ่านสะสม พร้อมผู้ชมไม่ซ้ำรายเรื่องจากคีย์ผู้เยี่ยมชมฝั่งเบราว์เซอร์ เพื่ออ่านแนวโน้มได้แม่นขึ้นกว่าเดิม"
+        />
 
-        {/* Top 3 Grid */}
-        <Grid container spacing={2} sx={{ mb: 2 }}>
-          {topManga.slice(0, 3).map((manga, index) => (
+        <Grid container spacing={2.25} sx={{ mb: 2.25 }}>
+          {rankedManga.slice(0, 3).map((manga, index) => (
             <Grid key={manga.id} size={{ xs: 12, sm: 4 }}>
-              <Link href={`/${manga.slug}`} style={{ textDecoration: "none" }}>
+              <Link href={`/${manga.slug || manga.id}`} style={{ textDecoration: "none", display: "block" }}>
                 <Box
                   sx={{
-                    position: "relative",
-                    height: 180,
-                    borderRadius: 1.25,
-                    overflow: "hidden",
-                    bgcolor: "#0B0B0B",
-                    border: "1px solid rgba(255,255,255,0.06)",
-                    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                    ...dashboardInsetSurfaceSx,
+                    p: 1.1,
+                    height: "100%",
+                    transition: "transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease",
                     "&:hover": {
-                      transform: "translateY(-4px)",
-                      borderColor: "rgba(250, 191, 6, 0.4)",
-                      "& .top3-overlay": { opacity: 1 },
-                      "& img": { transform: "scale(1.05)" }
-                    }
+                      transform: "translateY(-3px)",
+                      borderColor: "rgba(251,191,36,0.28)",
+                      bgcolor: "#1b1b1b",
+                    },
                   }}
                 >
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      top: 10,
-                      left: 10,
-                      zIndex: 10,
-                      bgcolor: "#FABF06",
-                      color: "#000",
-                      width: 28,
-                      height: 28,
-                      borderRadius: 0.5,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontWeight: 900,
-                      fontSize: "0.9rem",
-                      boxShadow: "0 4px 12px rgba(0,0,0,0.5)"
-                    }}
-                  >
-                    {index + 1}
-                  </Box>
-                  {manga.coverImage && (
-                    <Image
-                      src={manga.coverImage}
-                      alt={manga.title}
-                      fill
-                      sizes="(max-width: 600px) 100vw, 33vw"
-                      style={{ objectFit: "cover", transition: "transform 0.5s ease" }}
-                    />
-                  )}
-                  <Box
-                    className="top3-overlay"
-                    sx={{
-                      position: "absolute",
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      p: 2,
-                      background: "linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0) 100%)",
-                      display: "flex",
-                      flexDirection: "column",
-                      justifyContent: "flex-end",
-                      minHeight: "60%",
-                      transition: "opacity 0.3s ease"
-                    }}
-                  >
-                    <Typography
-                      variant="subtitle2"
+                  <Box sx={{ position: "relative", mb: 1.25 }}>
+                    <Box
                       sx={{
-                        fontWeight: 800,
-                        color: "#fafafa",
-                        lineHeight: 1.2,
-                        mb: 0.5,
-                        display: "-webkit-box",
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: "vertical",
-                        overflow: "hidden"
+                        position: "absolute",
+                        top: 10,
+                        left: 10,
+                        zIndex: 2,
+                        minWidth: 34,
+                        height: 34,
+                        px: 1,
+                        borderRadius: 0.9,
+                        bgcolor: index === 0 ? dashboardTokens.accent : "rgba(10,10,10,0.88)",
+                        color: index === 0 ? "#120d00" : "#fafafa",
+                        border: index === 0 ? "none" : "1px solid rgba(255,255,255,0.1)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontWeight: 900,
+                        fontSize: "0.95rem",
+                        boxShadow: "0 8px 18px rgba(0,0,0,0.35)",
                       }}
                     >
-                      {manga.title}
-                    </Typography>
-                    <Typography variant="caption" sx={{ color: "#FABF06", fontWeight: 700 }}>
-                      {manga.viewCount?.toLocaleString() || 0} VIEWS
-                    </Typography>
+                      {index + 1}
+                    </Box>
+                    <Box
+                      sx={{
+                        position: "relative",
+                        width: "100%",
+                        aspectRatio: "2 / 3",
+                        overflow: "hidden",
+                        borderRadius: 1,
+                        bgcolor: "#0b0b0b",
+                      }}
+                    >
+                      {manga.coverImage ? (
+                        <Image
+                          src={manga.coverImage}
+                          alt={manga.title}
+                          fill
+                          sizes="(max-width: 900px) 100vw, 30vw"
+                          style={{ objectFit: "cover" }}
+                        />
+                      ) : null}
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          inset: 0,
+                          background:
+                            "linear-gradient(180deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.14) 45%, rgba(0,0,0,0.82) 100%)",
+                        }}
+                      />
+                    </Box>
                   </Box>
+
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: dashboardTokens.textSoft,
+                      fontWeight: 700,
+                      letterSpacing: "0.08em",
+                      display: "block",
+                      mb: 0.7,
+                    }}
+                  >
+                    อันดับ {index + 1}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      color: dashboardTokens.text,
+                      fontWeight: 800,
+                      lineHeight: 1.25,
+                      minHeight: { xs: "auto", sm: 48 },
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {manga.title}
+                  </Typography>
+                  <Typography
+                    sx={{
+                      color: dashboardTokens.accent,
+                      fontWeight: 800,
+                      mt: 0.8,
+                      fontSize: "0.95rem",
+                    }}
+                  >
+                    {manga.viewCount?.toLocaleString() || 0} ครั้ง
+                  </Typography>
+                  <Typography sx={{ color: dashboardTokens.textSoft, fontSize: "0.78rem", mt: 0.3 }}>
+                    ผู้ชมไม่ซ้ำ {manga.uniqueVisitors.toLocaleString()}
+                  </Typography>
                 </Box>
               </Link>
             </Grid>
           ))}
         </Grid>
 
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75 }}>
-          {topManga.slice(3).map((manga, index) => (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.85 }}>
+          {rankedManga.slice(3).map((manga, index) => (
             <Link
               key={manga.id}
-              href={`/${manga.slug}`}
-              style={{ textDecoration: "none" }}
+              href={`/${manga.slug || manga.id}`}
+              style={{ textDecoration: "none", display: "block" }}
             >
               <Box
                 sx={{
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  p: 1.5,
-                  bgcolor: "#0B0B0B",
-                  borderRadius: 1,
-                  border: "1px solid rgba(255,255,255,0.04)",
+                  gap: 1.5,
+                  p: 1.2,
+                  ...dashboardInsetSurfaceSx,
                   textDecoration: "none",
                   transition: "all 0.2s",
                   "&:hover": {
@@ -346,46 +313,70 @@ export default async function AdminPage() {
                   },
                 }}
               >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, minWidth: 0 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0, flex: 1 }}>
                   <Typography
                     variant="h6"
                     sx={{
-                      width: 40,
+                      width: 34,
                       fontWeight: 900,
-                      color: index < 3 ? "#FABF06" : "#404040",
+                      color: index === 0 ? dashboardTokens.accent : "#64748b",
                       textAlign: "center",
-                      fontStyle: "italic"
+                      fontStyle: "italic",
+                      flexShrink: 0,
                     }}
                   >
                     {index + 4}
                   </Typography>
+                  <Box
+                    sx={{
+                      position: "relative",
+                      width: 42,
+                      height: 58,
+                      borderRadius: 0.75,
+                      overflow: "hidden",
+                      bgcolor: "#0b0b0b",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {manga.coverImage ? (
+                      <Image
+                        src={manga.coverImage}
+                        alt={manga.title}
+                        fill
+                        sizes="84px"
+                        style={{ objectFit: "cover" }}
+                      />
+                    ) : null}
+                  </Box>
                   <Typography
                     variant="body2"
                     sx={{
                       fontWeight: 700,
                       color: "#fafafa",
                       minWidth: 0,
-                      whiteSpace: "nowrap",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
                       overflow: "hidden",
-                      textOverflow: "ellipsis",
+                      lineHeight: 1.35,
                     }}
                   >
                     {manga.title}
                   </Typography>
                 </Box>
                 <Box sx={{ textAlign: "right", flexShrink: 0 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 800, color: "#FABF06", lineHeight: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 800, color: dashboardTokens.accent, lineHeight: 1 }}>
                     {manga.viewCount?.toLocaleString() || 0}
                   </Typography>
-                  <Typography variant="caption" sx={{ color: "#737373", fontSize: "0.65rem", display: "block", mt: 0.25 }}>
-                    VIEWS
+                  <Typography variant="caption" sx={{ color: dashboardTokens.textSoft, fontSize: "0.7rem", display: "block", mt: 0.25 }}>
+                    ผู้ชม {manga.uniqueVisitors.toLocaleString()}
                   </Typography>
                 </Box>
               </Box>
             </Link>
           ))}
         </Box>
-      </Box>
+      </DashboardSurface>
     </Box>
   );
 }

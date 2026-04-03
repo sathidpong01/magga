@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import { signIn, signUp } from "@/lib/auth-client";
+import { signIn, signUp, syncClientSession } from "@/lib/auth-client";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -98,6 +98,7 @@ function RegisterForm() {
       });
 
       if (!loginRes.error) {
+        await syncClientSession();
         router.push(callbackUrl);
         router.refresh();
       } else {

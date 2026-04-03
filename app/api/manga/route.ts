@@ -92,7 +92,8 @@ export async function POST(request: Request) {
       );
     }
 
-    revalidatePath("/admin");
+    revalidatePath("/dashboard/admin");
+    revalidatePath("/dashboard/admin/manga");
     revalidatePath("/");
     return NextResponse.json(newManga, { status: 201 });
   } catch (error) {

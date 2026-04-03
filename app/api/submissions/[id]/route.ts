@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { mangaSubmissions as submissionsTable, mangaSubmissionTags as submissionTagsTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
+import { isUserBanned } from "@/lib/session-utils";
 import { z } from "zod";
 
 // GET single submission
@@ -39,7 +40,7 @@ export async function GET(
     const result = {
       ...submission,
       tags: submission.mangaSubmissionTags.map((t: any) => t.tag),
-      pages: submission.pages,
+      pages: JSON.parse(submission.pages),
     };
 
     return NextResponse.json(result);
@@ -61,7 +62,7 @@ const updateSubmissionSchema = z.object({
   categoryId: z.string().nullable().optional(),
   tagIds: z.array(z.string()).optional(),
   extraMetadata: z.string().optional(),
-  status: z.enum(["DRAFT", "PENDING"]).optional(),
+  status: z.enum(["PENDING"]).optional(),
 });
 
 export async function PUT(
@@ -72,6 +73,13 @@ export async function PUT(
     const session = await auth.api.getSession({ headers: req.headers });
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (isUserBanned(session)) {
+      return NextResponse.json(
+        { error: "บัญชีของคุณถูกระงับการใช้งาน" },
+        { status: 403 }
+      );
     }
 
     const { id } = await params;
@@ -99,7 +107,7 @@ export async function PUT(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    if (submission.status !== "DRAFT" && submission.status !== "PENDING") {
+    if (submission.status !== "PENDING" && submission.status !== "REJECTED") {
       return NextResponse.json(
         { error: "Cannot edit submission in current status" },
         { status: 400 }
@@ -129,8 +137,6 @@ export async function PUT(
       updateData.reviewedBy = null;
       updateData.rejectionReason = null;
       updateData.reviewNote = null;
-    } else if (status === "DRAFT") {
-      updateData.status = "DRAFT";
     }
 
     // Handle Tags update if provided
@@ -175,6 +181,13 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    if (isUserBanned(session)) {
+      return NextResponse.json(
+        { error: "บัญชีของคุณถูกระงับการใช้งาน" },
+        { status: 403 }
+      );
+    }
+
     const { id } = await params;
 
     const [submission] = await db
@@ -191,7 +204,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    if (submission.status !== "DRAFT" && submission.status !== "PENDING") {
+    if (submission.status !== "PENDING" && submission.status !== "REJECTED") {
       return NextResponse.json(
         { error: "Cannot delete submission in current status" },
         { status: 400 }

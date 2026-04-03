@@ -6,6 +6,7 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import MangaCard, { MangaWithDetails } from "./MangaCard";
 import { AdCard } from "@/app/components/features/ads";
 import EmptyState from "@/app/components/ui/EmptyState";
+import { useSession } from "@/lib/auth-client";
 
 interface Ad {
   id: string;
@@ -21,6 +22,7 @@ interface InfiniteMangaGridProps {
   initialMangas: MangaWithDetails[];
   initialHasMore: boolean;
   ads?: Ad[];
+  pageSize?: number;
   search?: string;
   categoryId?: string;
   tags?: string;
@@ -31,28 +33,42 @@ export default function InfiniteMangaGrid({
   initialMangas,
   initialHasMore,
   ads = [],
+  pageSize = 12,
   search,
   categoryId,
   tags,
   sort,
 }: InfiniteMangaGridProps) {
+  const { data: session, isPending: isSessionPending } = useSession();
   const [blockedTagIds, setBlockedTagIds] = useState<string[]>([]);
   const [mangas, setMangas] = useState<MangaWithDetails[]>(initialMangas);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Fetch user's blocked tag IDs on mount to filter manga
+  // Fetch blocked tags only when the session is known to avoid noisy 401s for guests.
   useEffect(() => {
+    if (isSessionPending) {
+      return;
+    }
+
+    if (!session?.user?.id) {
+      setBlockedTagIds([]);
+      return;
+    }
+
     fetch("/api/user/blocked-tags")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
-        if (data?.blockedTags?.length) {
-          setBlockedTagIds(data.blockedTags.map((t: any) => t.tagId));
-        }
+        const nextBlockedTagIds = Array.isArray(data?.blockedTags)
+          ? data.blockedTags.map((t: any) => t.tagId)
+          : [];
+        setBlockedTagIds(nextBlockedTagIds);
       })
-      .catch(() => {});
-  }, []);
+      .catch(() => {
+        setBlockedTagIds([]);
+      });
+  }, [isSessionPending, session?.user?.id]);
 
   // Filter out manga that contain any blocked tag, and apply when blocked tags change
   const filteredMangas = blockedTagIds.length === 0
@@ -74,6 +90,7 @@ export default function InfiniteMangaGrid({
     try {
       const params = new URLSearchParams();
       params.set("page", String(page + 1));
+      params.set("pageSize", String(pageSize));
       if (search) params.set("search", search);
       if (categoryId && categoryId !== "all")
         params.set("categoryId", categoryId);
@@ -93,7 +110,7 @@ export default function InfiniteMangaGrid({
     } finally {
       setIsLoading(false);
     }
-  }, [page, hasMore, isLoading, search, categoryId, tags, sort, blockedTagIds]);
+  }, [page, hasMore, isLoading, pageSize, search, categoryId, tags, sort, blockedTagIds]);
 
   // สร้าง items พร้อม ads แทรก
   const itemsWithAds = (() => {
@@ -138,6 +155,11 @@ export default function InfiniteMangaGrid({
     return items;
   })();
 
+  const totalItems = itemsWithAds.length;
+  const orphanAtTwoColumns = totalItems % 2 === 1;
+  const orphanAtThreeColumns = totalItems % 3 === 1;
+  const orphanAtFourColumns = totalItems % 4 === 1;
+
   if (filteredMangas.length === 0 && !isLoading) {
     return <EmptyState />;
   }
@@ -154,6 +176,18 @@ export default function InfiniteMangaGrid({
                 : `ad-${item.data.id}-${item.index}`
             }
             size={{ xs: 6, sm: 6, md: 4, lg: 3 }}
+            sx={
+              index === totalItems - 1
+                ? {
+                    mx: {
+                      xs: orphanAtTwoColumns ? "auto" : undefined,
+                      sm: orphanAtTwoColumns ? "auto" : undefined,
+                      md: orphanAtThreeColumns ? "auto" : undefined,
+                      lg: orphanAtFourColumns ? "auto" : undefined,
+                    },
+                  }
+                : undefined
+            }
           >
             {item.type === "manga" ? (
               <MangaCard manga={item.data} priority={index < 4} />

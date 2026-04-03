@@ -2,12 +2,13 @@ import { MetadataRoute } from "next";
 import { db } from "@/db";
 import { manga as mangaTable, categories as categoriesTable, tags as tagsTable } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
+import { getSiteUrl } from "@/lib/site-url";
 
 // ISR: Regenerate sitemap every 1 hour
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "https://magga.vercel.app";
+  const baseUrl = getSiteUrl();
 
   let mangas: { slug: string; updatedAt: string }[] = [];
   let categories: { name: string }[] = [];

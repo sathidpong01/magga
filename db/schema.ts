@@ -2,6 +2,8 @@ import { pgTable, pgPolicy, text, integer, timestamp, unique, check, uuid, boole
 import { sql } from "drizzle-orm"
 
 const tsvector = customType<{ data: string }>({ dataType() { return 'tsvector'; } });
+const currentUserId = sql`(SELECT private.current_user_id())`;
+const adminOnly = sql`(SELECT private.is_admin())`;
 
 export const loginAttempts = pgTable("login_attempts", {
 	identifier: text().primaryKey().notNull(),
@@ -18,11 +20,9 @@ export const systemConfig = pgTable("system_config", {
 	value: text().notNull(),
 	description: text(),
 }, (table) => [
-	pgPolicy("system_config_admin_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: sql`(EXISTS ( SELECT 1
-   FROM profiles
-  WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
-	pgPolicy("system_config_admin_update", { as: "permissive", for: "update", to: ["authenticated"], using: sql`(EXISTS ( SELECT 1 FROM profiles WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
-	pgPolicy("system_config_admin_write", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: sql`(EXISTS ( SELECT 1 FROM profiles WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
+	pgPolicy("system_config_admin_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: adminOnly }),
+	pgPolicy("system_config_admin_update", { as: "permissive", for: "update", to: ["authenticated"], using: adminOnly }),
+	pgPolicy("system_config_admin_write", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: adminOnly }),
 	pgPolicy("system_config_select", { as: "permissive", for: "select", to: ["public"] }),
 ]);
 
@@ -50,12 +50,10 @@ export const advertisements = pgTable("advertisements", {
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
-	pgPolicy("advertisements_admin_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: sql`(EXISTS ( SELECT 1
-   FROM profiles
-  WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
-	pgPolicy("advertisements_admin_update", { as: "permissive", for: "update", to: ["authenticated"], using: sql`(EXISTS ( SELECT 1 FROM profiles WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
-	pgPolicy("advertisements_admin_write", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: sql`(EXISTS ( SELECT 1 FROM profiles WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
-	pgPolicy("advertisements_select", { as: "permissive", for: "select", to: ["public"] }),
+	pgPolicy("advertisements_admin_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: adminOnly }),
+	pgPolicy("advertisements_admin_update", { as: "permissive", for: "update", to: ["authenticated"], using: adminOnly }),
+	pgPolicy("advertisements_admin_write", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: adminOnly }),
+	pgPolicy("advertisements_select", { as: "permissive", for: "select", to: ["public"], using: sql`is_active = true OR ${adminOnly}` }),
 	check("advertisements_placement_check", sql`placement = ANY (ARRAY['grid'::text, 'header'::text, 'footer'::text, 'manga-end'::text, 'floating'::text, 'modal'::text])`),
 	check("advertisements_type_check", sql`type = ANY (ARRAY['affiliate'::text, 'promptpay'::text])`),
 ]);
@@ -76,6 +74,7 @@ export const accounts = pgTable("accounts", {
 	accessTokenExpiresAt: timestamp("access_token_expires_at", { withTimezone: true, mode: 'date' }),
 	refreshTokenExpiresAt: timestamp("refresh_token_expires_at", { withTimezone: true, mode: 'date' }),
 }, (table) => [
+	index("idx_accounts_user_id").using("btree", table.userId.asc().nullsLast().op("text_ops")),
 	foreignKey({
 			columns: [table.userId],
 			foreignColumns: [profiles.id],
@@ -95,6 +94,7 @@ export const sessions = pgTable("sessions", {
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'date' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'date' }).defaultNow().notNull(),
 }, (table) => [
+	index("idx_sessions_user_id").using("btree", table.userId.asc().nullsLast().op("text_ops")),
 	foreignKey({
 			columns: [table.userId],
 			foreignColumns: [profiles.id],
@@ -124,7 +124,8 @@ export const profiles = pgTable("profiles", {
 	unique("profiles_email_key").on(table.email),
 	unique("profiles_username_key").on(table.username),
 	pgPolicy("Anyone can view profiles", { as: "permissive", for: "select", to: ["public"], using: sql`true` }),
-	pgPolicy("Users can update own profile", { as: "permissive", for: "update", to: ["authenticated"], using: sql`(id = ( SELECT (auth.uid())::text AS uid))` }),
+	pgPolicy("Users can update own profile", { as: "permissive", for: "update", to: ["authenticated"], using: sql`id = ${currentUserId}` }),
+	check("profiles_comment_preference_check", sql`comment_preference = ANY (ARRAY['sidebar'::text, 'bottom'::text, 'both'::text, 'none'::text])`),
 	check("profiles_role_check", sql`role = ANY (ARRAY['user'::text, 'admin'::text])`),
 ]);
 
@@ -133,7 +134,7 @@ export const verificationTokens = pgTable("verification_tokens", {
 	token: text().notNull(),
 	expires: timestamp({ withTimezone: true, mode: 'string' }).notNull(),
 }, (table) => [
-	unique("verification_tokens_identifier_token_key").on(table.identifier, table.token),
+	primaryKey({ columns: [table.identifier, table.token], name: "verification_tokens_pkey" }),
 	unique("verification_tokens_token_key").on(table.token),
 ]);
 
@@ -158,9 +159,9 @@ export const commentVotes = pgTable("comment_votes", {
 		}).onDelete("cascade"),
 	unique("comment_votes_comment_id_user_id_key").on(table.commentId, table.userId),
 	pgPolicy("Anyone can view votes", { as: "permissive", for: "select", to: ["public"], using: sql`true` }),
-	pgPolicy("Authenticated users can vote", { as: "permissive", for: "insert", to: ["authenticated"] }),
-	pgPolicy("Users can change own vote", { as: "permissive", for: "update", to: ["authenticated"] }),
-	pgPolicy("Users can remove own vote", { as: "permissive", for: "delete", to: ["authenticated"] }),
+	pgPolicy("Authenticated users can vote", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: sql`user_id = ${currentUserId}` }),
+	pgPolicy("Users can change own vote", { as: "permissive", for: "update", to: ["authenticated"], using: sql`user_id = ${currentUserId}` }),
+	pgPolicy("Users can remove own vote", { as: "permissive", for: "delete", to: ["authenticated"], using: sql`user_id = ${currentUserId}` }),
 	check("comment_votes_value_check", sql`value = ANY (ARRAY['-1'::integer, 1])`),
 ]);
 
@@ -195,12 +196,10 @@ export const comments = pgTable("comments", {
 			foreignColumns: [profiles.id],
 			name: "comments_user_id_fkey"
 		}).onDelete("cascade"),
-	pgPolicy("comments_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: sql`((user_id = ( SELECT (auth.uid())::text AS uid)) OR (EXISTS ( SELECT 1
-   FROM profiles
-  WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text)))))` }),
-	pgPolicy("comments_insert", { as: "permissive", for: "insert", to: ["authenticated"] }),
+	pgPolicy("comments_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: sql`user_id = ${currentUserId} OR ${adminOnly}` }),
+	pgPolicy("comments_insert", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: sql`user_id = ${currentUserId}` }),
 	pgPolicy("comments_select", { as: "permissive", for: "select", to: ["public"] }),
-	pgPolicy("comments_update", { as: "permissive", for: "update", to: ["authenticated"] }),
+	pgPolicy("comments_update", { as: "permissive", for: "update", to: ["authenticated"], using: sql`user_id = ${currentUserId}` }),
 ]);
 
 export const categories = pgTable("categories", {
@@ -208,11 +207,9 @@ export const categories = pgTable("categories", {
 	name: text().notNull(),
 }, (table) => [
 	unique("categories_name_key").on(table.name),
-	pgPolicy("categories_admin_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: sql`(EXISTS ( SELECT 1
-   FROM profiles
-  WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
-	pgPolicy("categories_admin_update", { as: "permissive", for: "update", to: ["authenticated"], using: sql`(EXISTS ( SELECT 1 FROM profiles WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
-	pgPolicy("categories_admin_write", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: sql`(EXISTS ( SELECT 1 FROM profiles WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
+	pgPolicy("categories_admin_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: adminOnly }),
+	pgPolicy("categories_admin_update", { as: "permissive", for: "update", to: ["authenticated"], using: adminOnly }),
+	pgPolicy("categories_admin_write", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: adminOnly }),
 	pgPolicy("categories_select", { as: "permissive", for: "select", to: ["public"] }),
 ]);
 
@@ -221,11 +218,9 @@ export const tags = pgTable("tags", {
 	name: text().notNull(),
 }, (table) => [
 	unique("tags_name_key").on(table.name),
-	pgPolicy("tags_admin_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: sql`(EXISTS ( SELECT 1
-   FROM profiles
-  WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
-	pgPolicy("tags_admin_update", { as: "permissive", for: "update", to: ["authenticated"], using: sql`(EXISTS ( SELECT 1 FROM profiles WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
-	pgPolicy("tags_admin_write", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: sql`(EXISTS ( SELECT 1 FROM profiles WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
+	pgPolicy("tags_admin_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: adminOnly }),
+	pgPolicy("tags_admin_update", { as: "permissive", for: "update", to: ["authenticated"], using: adminOnly }),
+	pgPolicy("tags_admin_write", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: adminOnly }),
 	pgPolicy("tags_select", { as: "permissive", for: "select", to: ["public"] }),
 ]);
 
@@ -238,11 +233,9 @@ export const authors = pgTable("authors", {
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
 	unique("authors_name_key").on(table.name),
-	pgPolicy("authors_admin_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: sql`(EXISTS ( SELECT 1
-   FROM profiles
-  WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
-	pgPolicy("authors_admin_update", { as: "permissive", for: "update", to: ["authenticated"], using: sql`(EXISTS ( SELECT 1 FROM profiles WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
-	pgPolicy("authors_admin_write", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: sql`(EXISTS ( SELECT 1 FROM profiles WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
+	pgPolicy("authors_admin_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: adminOnly }),
+	pgPolicy("authors_admin_update", { as: "permissive", for: "update", to: ["authenticated"], using: adminOnly }),
+	pgPolicy("authors_admin_write", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: adminOnly }),
 	pgPolicy("authors_select", { as: "permissive", for: "select", to: ["public"] }),
 ]);
 
@@ -290,12 +283,10 @@ export const manga = pgTable("manga", {
 		}).onDelete("set null"),
 	unique("manga_slug_key").on(table.slug),
 	unique("manga_title_key").on(table.title),
-	pgPolicy("manga_admin_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: sql`(EXISTS ( SELECT 1
-   FROM profiles
-  WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
-	pgPolicy("manga_admin_update", { as: "permissive", for: "update", to: ["authenticated"], using: sql`(EXISTS ( SELECT 1 FROM profiles WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
-	pgPolicy("manga_admin_write", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: sql`(EXISTS ( SELECT 1 FROM profiles WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
-	pgPolicy("manga_select", { as: "permissive", for: "select", to: ["public"] }),
+	pgPolicy("manga_admin_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: adminOnly }),
+	pgPolicy("manga_admin_update", { as: "permissive", for: "update", to: ["authenticated"], using: adminOnly }),
+	pgPolicy("manga_admin_write", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: adminOnly }),
+	pgPolicy("manga_select", { as: "permissive", for: "select", to: ["public"], using: sql`is_hidden = false OR ${adminOnly}` }),
 ]);
 
 export const mangaRatings = pgTable("manga_ratings", {
@@ -365,14 +356,12 @@ export const mangaSubmissions = pgTable("manga_submissions", {
 			columns: [table.userId],
 			foreignColumns: [profiles.id],
 			name: "manga_submissions_user_id_fkey"
-		}).onDelete("cascade"),
+	}).onDelete("cascade"),
 	unique("manga_submissions_approved_manga_id_key").on(table.approvedMangaId),
-	pgPolicy("submissions_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: sql`((user_id = ( SELECT (auth.uid())::text AS uid)) OR (EXISTS ( SELECT 1
-   FROM profiles
-  WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text)))))` }),
-	pgPolicy("submissions_insert", { as: "permissive", for: "insert", to: ["authenticated"] }),
-	pgPolicy("submissions_select", { as: "permissive", for: "select", to: ["public"] }),
-	pgPolicy("submissions_update", { as: "permissive", for: "update", to: ["authenticated"] }),
+	pgPolicy("submissions_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: sql`user_id = ${currentUserId} OR ${adminOnly}` }),
+	pgPolicy("submissions_insert", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: sql`user_id = ${currentUserId}` }),
+	pgPolicy("submissions_select", { as: "permissive", for: "select", to: ["authenticated"], using: sql`user_id = ${currentUserId} OR ${adminOnly}` }),
+	pgPolicy("submissions_update", { as: "permissive", for: "update", to: ["authenticated"], using: sql`user_id = ${currentUserId} OR ${adminOnly}` }),
 	check("manga_submissions_status_check", sql`status = ANY (ARRAY['PENDING'::text, 'UNDER_REVIEW'::text, 'APPROVED'::text, 'REJECTED'::text])`),
 ]);
 
@@ -412,12 +401,10 @@ export const userSubmissionLimits = pgTable("user_submission_limits", {
 			name: "user_submission_limits_user_id_fkey"
 		}).onDelete("cascade"),
 	unique("user_submission_limits_user_id_key").on(table.userId),
-	pgPolicy("submission_limits_admin_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: sql`(EXISTS ( SELECT 1
-   FROM profiles
-  WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
-	pgPolicy("submission_limits_admin_update", { as: "permissive", for: "update", to: ["authenticated"], using: sql`(user_id = ( SELECT (auth.uid())::text AS uid))` }),
-	pgPolicy("submission_limits_admin_write", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: sql`(user_id = ( SELECT (auth.uid())::text AS uid))` }),
-	pgPolicy("submission_limits_select", { as: "permissive", for: "select", to: ["authenticated"] }),
+	pgPolicy("submission_limits_admin_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: adminOnly }),
+	pgPolicy("submission_limits_admin_update", { as: "permissive", for: "update", to: ["authenticated"], using: sql`user_id = ${currentUserId}` }),
+	pgPolicy("submission_limits_admin_write", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: sql`user_id = ${currentUserId}` }),
+	pgPolicy("submission_limits_select", { as: "permissive", for: "select", to: ["authenticated"], using: sql`user_id = ${currentUserId}` }),
 ]);
 
 export const mangaViews = pgTable("manga_views", {
@@ -432,7 +419,7 @@ export const mangaViews = pgTable("manga_views", {
 			name: "manga_views_manga_id_fkey"
 		}).onDelete("cascade"),
 	primaryKey({ columns: [table.mangaId, table.ipHash], name: "manga_views_pkey"}),
-	pgPolicy("manga_views_all", { as: "permissive", for: "all", to: ["public"], using: sql`true` }),
+	pgPolicy("manga_views_select", { as: "permissive", for: "select", to: ["public"], using: sql`true` }),
 ]);
 
 export const blockedUsers = pgTable("blocked_users", {
@@ -446,9 +433,9 @@ export const blockedUsers = pgTable("blocked_users", {
 	foreignKey({ columns: [table.userId], foreignColumns: [profiles.id], name: "blocked_users_user_id_fkey" }).onDelete("cascade"),
 	foreignKey({ columns: [table.blockedUserId], foreignColumns: [profiles.id], name: "blocked_users_blocked_user_id_fkey" }).onDelete("cascade"),
 	unique("blocked_users_user_id_blocked_user_id_key").on(table.userId, table.blockedUserId),
-	pgPolicy("blocked_users_select", { as: "permissive", for: "select", to: ["authenticated"], using: sql`user_id = (SELECT auth.uid()::text)` }),
-	pgPolicy("blocked_users_insert", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: sql`user_id = (SELECT auth.uid()::text)` }),
-	pgPolicy("blocked_users_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: sql`user_id = (SELECT auth.uid()::text)` }),
+	pgPolicy("blocked_users_select", { as: "permissive", for: "select", to: ["authenticated"], using: sql`user_id = ${currentUserId}` }),
+	pgPolicy("blocked_users_insert", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: sql`user_id = ${currentUserId}` }),
+	pgPolicy("blocked_users_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: sql`user_id = ${currentUserId}` }),
 ]);
 
 export const blockedTags = pgTable("blocked_tags", {
@@ -462,9 +449,9 @@ export const blockedTags = pgTable("blocked_tags", {
 	foreignKey({ columns: [table.userId], foreignColumns: [profiles.id], name: "blocked_tags_user_id_fkey" }).onDelete("cascade"),
 	foreignKey({ columns: [table.tagId], foreignColumns: [tags.id], name: "blocked_tags_tag_id_fkey" }).onDelete("cascade"),
 	unique("blocked_tags_user_id_tag_id_key").on(table.userId, table.tagId),
-	pgPolicy("blocked_tags_select", { as: "permissive", for: "select", to: ["authenticated"], using: sql`user_id = (SELECT auth.uid()::text)` }),
-	pgPolicy("blocked_tags_insert", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: sql`user_id = (SELECT auth.uid()::text)` }),
-	pgPolicy("blocked_tags_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: sql`user_id = (SELECT auth.uid()::text)` }),
+	pgPolicy("blocked_tags_select", { as: "permissive", for: "select", to: ["authenticated"], using: sql`user_id = ${currentUserId}` }),
+	pgPolicy("blocked_tags_insert", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: sql`user_id = ${currentUserId}` }),
+	pgPolicy("blocked_tags_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: sql`user_id = ${currentUserId}` }),
 ]);
 
 export const mangaTags = pgTable("manga_tags", {
@@ -483,9 +470,7 @@ export const mangaTags = pgTable("manga_tags", {
 			name: "manga_tags_tag_id_fkey"
 		}).onDelete("cascade"),
 	primaryKey({ columns: [table.mangaId, table.tagId], name: "manga_tags_pkey"}),
-	pgPolicy("manga_tags_admin_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: sql`(EXISTS ( SELECT 1
-   FROM profiles
-  WHERE ((profiles.id = ( SELECT (auth.uid())::text AS uid)) AND (profiles.role = 'admin'::text))))` }),
-	pgPolicy("manga_tags_admin_write", { as: "permissive", for: "insert", to: ["authenticated"] }),
+	pgPolicy("manga_tags_admin_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: adminOnly }),
+	pgPolicy("manga_tags_admin_write", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: adminOnly }),
 	pgPolicy("manga_tags_select", { as: "permissive", for: "select", to: ["public"] }),
 ]);

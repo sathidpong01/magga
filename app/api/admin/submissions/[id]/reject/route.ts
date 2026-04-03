@@ -3,6 +3,8 @@ import { db } from "@/db";
 import { mangaSubmissions as submissionsTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
+import { revalidatePath } from "next/cache";
+import { requireAdmin } from "@/lib/auth-helpers";
 
 export async function POST(
   req: Request,
@@ -10,8 +12,9 @@ export async function POST(
 ) {
   try {
     const session = await auth.api.getSession({ headers: req.headers });
-    if (!session || (session?.user as any)?.role !== "admin") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const authError = requireAdmin(session);
+    if (authError || !session) {
+      return authError ?? NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
@@ -35,6 +38,9 @@ export async function POST(
         rejectionReason,
       })
       .where(eq(submissionsTable.id, id));
+
+    revalidatePath("/dashboard/admin/submissions");
+    revalidatePath("/dashboard/submissions");
 
     return NextResponse.json({ success: true });
   } catch (error) {

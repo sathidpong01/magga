@@ -1,13 +1,14 @@
-import { Box, Skeleton, Paper } from "@mui/material";
+import { Box, Skeleton } from "@mui/material";
+import { DashboardSurface } from "@/app/components/dashboard/system";
 
 export default function AdminDashboardLoading() {
   return (
-    <Box sx={{ p: 3 }}>
+    <Box>
       <Skeleton
         variant="text"
-        width={250}
-        height={40}
-        sx={{ bgcolor: "rgba(255,255,255,0.05)", mb: 4, borderRadius: 1 }}
+        width={280}
+        height={44}
+        sx={{ bgcolor: "rgba(255,255,255,0.05)", mb: 4.5, borderRadius: 2 }}
       />
 
       {/* Dashboard Grid */}
@@ -23,23 +24,21 @@ export default function AdminDashboardLoading() {
         }}
       >
         {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-          <Paper
+          <DashboardSurface
             key={i}
             sx={{
               p: 3,
-              bgcolor: "#171717",
-              border: "1px solid rgba(255,255,255,0.08)",
-              borderRadius: 1,
               display: "flex",
               flexDirection: "column",
               gap: 2,
+              minHeight: 158,
             }}
           >
             <Skeleton
               variant="rectangular"
               width={48}
               height={48}
-              sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 1 }}
+              sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 2 }}
             />
             <Skeleton
               variant="text"
@@ -50,9 +49,9 @@ export default function AdminDashboardLoading() {
               variant="text"
               width={100}
               height={36}
-              sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 1 }}
+              sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 2 }}
             />
-          </Paper>
+          </DashboardSurface>
         ))}
       </Box>
     </Box>

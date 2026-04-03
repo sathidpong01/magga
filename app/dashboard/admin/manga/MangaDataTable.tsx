@@ -74,6 +74,32 @@ const TAG_COLORS: Record<string, string> = {
   blowjob: "#f59e0b",
 };
 
+const shellSx = {
+  bgcolor: "#141414",
+  border: "1px solid rgba(255,255,255,0.06)",
+  borderRadius: 1.5,
+  backgroundImage: "none",
+  boxShadow: "0 16px 50px rgba(0,0,0,0.22)",
+};
+
+const surfaceSx = {
+  bgcolor: "#171717",
+  border: "1px solid rgba(255,255,255,0.06)",
+  borderRadius: 1.5,
+  backgroundImage: "none",
+};
+
+const inputSx = {
+  "& .MuiOutlinedInput-root": {
+    bgcolor: "#0B0B0B",
+    borderRadius: 1.1,
+    "& fieldset": { borderColor: "rgba(255,255,255,0.06)" },
+    "&:hover fieldset": { borderColor: "rgba(255,255,255,0.14)" },
+    "&.Mui-focused fieldset": { borderColor: "#fbbf24" },
+  },
+  "& .MuiInputLabel-root": { color: "#a3a3a3" },
+};
+
 export default function MangaDataTable({
   initialMangas,
   allCategories,
@@ -263,47 +289,51 @@ export default function MangaDataTable({
   };
 
   return (
-    <Box>
-      {/* Bulk Actions Toolbar */}
+    <Box
+      sx={{
+        ...shellSx,
+        p: { xs: 2, md: 2.5 },
+      }}
+    >
       {selected.length > 0 && (
         <Toolbar
           sx={{
             mb: 2,
-            bgcolor: "rgba(250, 191, 6, 0.08)",
-            border: "1px solid rgba(250, 191, 6, 0.2)",
-            borderRadius: 1.25,
+            bgcolor: "rgba(251, 191, 36, 0.08)",
+            border: "1px solid rgba(251, 191, 36, 0.18)",
+            borderRadius: 1.5,
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
           }}
         >
-          <Typography sx={{ color: "#FABF06", fontWeight: 800, fontSize: "0.875rem", letterSpacing: "0.02em" }}>
-            SELECTED {selected.length} ITEMS
+          <Typography sx={{ color: "#fbbf24", fontWeight: 800, fontSize: "0.875rem", letterSpacing: "0.02em" }}>
+            เลือกแล้ว {selected.length} รายการ
           </Typography>
           <Box sx={{ display: "flex", gap: 1 }}>
             <Button
               size="small"
               startIcon={<VisibilityOffIcon />}
               onClick={() => handleBulkToggleVisibility(true)}
-              sx={{ color: "#a3a3a3", borderRadius: 0.75, fontWeight: 700 }}
+              sx={{ color: "#d4d4d4", borderRadius: 1.1, fontWeight: 700, textTransform: "none" }}
             >
-              HIDE ALL
+              ซ่อนทั้งหมด
             </Button>
             <Button
               size="small"
               startIcon={<VisibilityIcon />}
               onClick={() => handleBulkToggleVisibility(false)}
-              sx={{ color: "#10b981", borderRadius: 0.75, fontWeight: 700 }}
+              sx={{ color: "#10b981", borderRadius: 1.1, fontWeight: 700, textTransform: "none" }}
             >
-              SHOW ALL
+              แสดงทั้งหมด
             </Button>
             <Button
               size="small"
               startIcon={<DeleteIcon />}
               onClick={handleBulkDelete}
-              sx={{ color: "#ef4444", borderRadius: 0.75, fontWeight: 700 }}
+              sx={{ color: "#ef4444", borderRadius: 1.1, fontWeight: 700, textTransform: "none" }}
             >
-              DELETE ALL
+              ลบทั้งหมด
             </Button>
           </Box>
         </Toolbar>
@@ -319,18 +349,12 @@ export default function MangaDataTable({
       >
         <TextField
           size="small"
-          placeholder="SEARCH MANGA..."
+          placeholder="ค้นหาชื่อมังงะ..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           sx={{ 
             width: 300,
-            "& .MuiOutlinedInput-root": {
-              bgcolor: "#141414",
-              borderRadius: 1.25,
-              "& fieldset": { borderColor: "rgba(255,255,255,0.06)" },
-              "&:hover fieldset": { borderColor: "rgba(255,255,255,0.12)" },
-              "&.Mui-focused fieldset": { borderColor: "#FABF06" },
-            }
+            ...inputSx,
           }}
           InputProps={{
             startAdornment: (
@@ -341,21 +365,18 @@ export default function MangaDataTable({
           }}
         />
         <Box sx={{ color: "#a3a3a3", fontSize: "0.875rem" }}>
-          {filteredMangas.length} รายการ
+          ผลลัพธ์ {filteredMangas.length} รายการ
         </Box>
       </Box>
 
       <TableContainer
         component={Paper}
         sx={{ 
-          bgcolor: "#141414", 
-          borderRadius: 1.25,
-          border: "1px solid rgba(255,255,255,0.06)",
-          boxShadow: "none",
-          backgroundImage: "none"
+          ...surfaceSx,
+          overflow: "hidden",
         }}
       >
-        <Table>
+        <Table sx={{ minWidth: 1120 }}>
           <TableHead>
             <TableRow
               sx={{
@@ -468,10 +489,12 @@ export default function MangaDataTable({
                       label={manga.category.name}
                       size="small"
                       sx={{
-                        bgcolor: "#1e293b",
-                        color: "#94a3b8",
+                        bgcolor: "rgba(251,191,36,0.08)",
+                        color: "#fbbf24",
+                        border: "1px solid rgba(251,191,36,0.18)",
                         fontSize: "0.75rem",
                         height: 24,
+                        fontWeight: 700,
                       }}
                     />
                   ) : (
@@ -488,15 +511,16 @@ export default function MangaDataTable({
                   >
                     {manga.tags.slice(0, 3).map((tag) => (
                       <Chip
-                        key={tag.id}
-                        label={tag.name}
-                        size="small"
-                        sx={{
-                          bgcolor: `${getTagColor(tag.name)}20`,
+                          key={tag.id}
+                          label={tag.name}
+                          size="small"
+                          sx={{
+                          bgcolor: `${getTagColor(tag.name)}18`,
                           color: getTagColor(tag.name),
                           fontSize: "0.75rem",
                           height: 24,
-                          fontWeight: 500,
+                          fontWeight: 600,
+                          border: `1px solid ${getTagColor(tag.name)}30`,
                         }}
                       />
                     ))}
@@ -517,11 +541,12 @@ export default function MangaDataTable({
 
                 <TableCell>
                   <Chip
-                    label={manga.isHidden ? "ซ่อน" : "เผยแพร่"}
-                    size="small"
-                    sx={{
-                      bgcolor: manga.isHidden ? "#44403c20" : "#16a34a20",
-                      color: manga.isHidden ? "#a8a29e" : "#22c55e",
+                      label={manga.isHidden ? "ซ่อน" : "เผยแพร่"}
+                      size="small"
+                      sx={{
+                      bgcolor: manga.isHidden ? "rgba(239,68,68,0.08)" : "rgba(34,197,94,0.08)",
+                      color: manga.isHidden ? "#fca5a5" : "#4ade80",
+                      border: manga.isHidden ? "1px solid rgba(239,68,68,0.16)" : "1px solid rgba(34,197,94,0.16)",
                       fontSize: "0.75rem",
                       height: 24,
                       fontWeight: 600,
@@ -539,31 +564,28 @@ export default function MangaDataTable({
                     spacing={0.5}
                     justifyContent="flex-end"
                   >
-                    <Tooltip title="Settings">
+                    <Tooltip title="ตั้งค่า">
                       <IconButton
                         size="small"
                         onClick={() => handleOpenSettings(manga)}
                         sx={{
-                          color: "#FABF06",
-                          bgcolor: "rgba(250, 191, 6, 0.08)",
-                          borderRadius: 0.75,
-                          "&:hover": { bgcolor: "rgba(250, 191, 6, 0.15)" },
+                          color: "#fbbf24",
+                          bgcolor: "rgba(251, 191, 36, 0.08)",
+                          borderRadius: 1.1,
+                          "&:hover": { bgcolor: "rgba(251, 191, 36, 0.16)" },
                         }}
                       >
                         <SettingsIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
 
-                    <Tooltip title="View Page">
+                    <Tooltip title="เปิดหน้าเรื่อง">
                       <IconButton
                         size="small"
                         component={Link}
                         href={`/${manga.slug || manga.id}`}
                         target="_blank"
-                        sx={{
-                          color: "#3b82f6",
-                          "&:hover": { bgcolor: "#3b82f620" },
-                        }}
+                        sx={{ color: "#3b82f6", "&:hover": { bgcolor: "#3b82f620" } }}
                       >
                         <OpenInNewIcon fontSize="small" />
                       </IconButton>
@@ -630,15 +652,12 @@ export default function MangaDataTable({
         fullWidth
         PaperProps={{
           sx: {
-            bgcolor: "#141414",
-            backgroundImage: "none",
-            borderRadius: 1.25,
-            border: "1px solid rgba(255,255,255,0.08)",
+            ...surfaceSx,
           }
         }}
       >
-        <DialogTitle sx={{ fontWeight: 900, color: "#fafafa", fontSize: "1.1rem" }}>
-          QUICK SETTINGS
+        <DialogTitle sx={{ fontWeight: 900, color: "#fafafa", fontSize: "1.1rem", letterSpacing: "0.02em" }}>
+          ตั้งค่าด่วน
         </DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ mt: 1 }}>
@@ -648,6 +667,7 @@ export default function MangaDataTable({
                 value={selectedCategory}
                 label="หมวดหมู่"
                 onChange={(e) => setSelectedCategory(e.target.value)}
+                sx={inputSx}
               >
                 {allCategories.map((cat) => (
                   <MenuItem key={cat.id} value={cat.name}>
@@ -664,7 +684,7 @@ export default function MangaDataTable({
               onChange={(_, newValue) => setSelectedTags(newValue)}
               getOptionLabel={(option) => option.name}
               renderInput={(params) => (
-                <TextField {...params} label="แท็ก" size="small" />
+                <TextField {...params} label="แท็ก" size="small" sx={inputSx} />
               )}
             />
 
@@ -678,7 +698,7 @@ export default function MangaDataTable({
               }
               getOptionLabel={(option) => option.name}
               renderInput={(params) => (
-                <TextField {...params} label="ผู้แต่ง" size="small" />
+                <TextField {...params} label="ผู้แต่ง" size="small" sx={inputSx} />
               )}
             />
           </Stack>
@@ -686,23 +706,24 @@ export default function MangaDataTable({
         <DialogActions sx={{ p: 2.5, pt: 1 }}>
           <Button 
             onClick={() => setSettingsOpen(false)}
-            sx={{ color: "#a3a3a3", fontWeight: 700 }}
+            sx={{ color: "#a3a3a3", fontWeight: 700, textTransform: "none" }}
           >
-            CANCEL
+            ยกเลิก
           </Button>
           <Button 
             onClick={handleSaveSettings} 
             variant="contained"
             sx={{ 
-              bgcolor: "#FABF06", 
+              bgcolor: "#fbbf24", 
               color: "#000", 
               fontWeight: 800,
-              borderRadius: 1,
+              borderRadius: 1.1,
               px: 3,
+              textTransform: "none",
               "&:hover": { bgcolor: "#f59e0b" }
             }}
           >
-            SAVE CHANGES
+            บันทึกการเปลี่ยนแปลง
           </Button>
         </DialogActions>
       </Dialog>
@@ -721,11 +742,12 @@ export default function MangaDataTable({
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>ยกเลิก</Button>
+          <Button onClick={() => setDeleteDialogOpen(false)} sx={{ textTransform: "none" }}>ยกเลิก</Button>
           <Button
             onClick={handleDeleteConfirm}
             color="error"
             variant="contained"
+            sx={{ textTransform: "none" }}
           >
             ลบ
           </Button>

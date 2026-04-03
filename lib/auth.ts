@@ -3,15 +3,12 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { admin, username } from "better-auth/plugins";
 import { db, schema } from "@/db";
 import { randomUUID } from "crypto";
+import { getAuthBaseUrl, getTrustedOrigins } from "@/lib/site-url";
 
 export const auth = betterAuth({
   appName: "Magga",
-  baseURL: process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
-  trustedOrigins: [
-    "http://localhost:3000",
-    process.env.BETTER_AUTH_URL || "",
-    process.env.NEXT_PUBLIC_APP_URL || "",
-  ].filter(Boolean),
+  baseURL: getAuthBaseUrl(),
+  trustedOrigins: getTrustedOrigins(),
   database: drizzleAdapter(db, {
     provider: "pg",
     schema: {
@@ -49,6 +46,16 @@ export const auth = betterAuth({
       role: {
         type: "string",
         defaultValue: "user",
+        required: false,
+      },
+      banned: {
+        type: "boolean",
+        defaultValue: false,
+        required: false,
+      },
+      isBanned: {
+        type: "boolean",
+        defaultValue: false,
         required: false,
       },
       username: {

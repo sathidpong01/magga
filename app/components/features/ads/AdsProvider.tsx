@@ -43,7 +43,7 @@ export function AdsProvider({ children }: { children: ReactNode }) {
       })
       .catch(console.error)
       .finally(() => setIsLoading(false));
-  }, []);
+  }, [ads.length]);
 
   const getAdsByPlacement = (placement: string): Ad[] => {
     return ads.filter((ad) => ad.placement === placement);

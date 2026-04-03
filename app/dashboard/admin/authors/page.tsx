@@ -13,9 +13,17 @@ export default async function AuthorsPage() {
 
   return (
     <Box>
-      <Typography variant="h4" sx={{ mb: 3, fontWeight: 900, letterSpacing: "-0.02em", color: "#fafafa" }}>
-        MANAGE AUTHORS
-      </Typography>
+      <Box sx={{ mb: 3 }}>
+        <Typography
+          variant="h4"
+          sx={{ fontWeight: 900, letterSpacing: "-0.03em", color: "#fafafa", mb: 0.75 }}
+        >
+          จัดการผู้แต่ง
+        </Typography>
+        <Typography sx={{ color: "#a3a3a3" }}>
+          ดู เพิ่ม แก้ไข และลบข้อมูลผู้แต่งในรูปแบบ workspace เดียวกัน
+        </Typography>
+      </Box>
       <AuthorManager initialAuthors={authors as any} />
     </Box>
   );

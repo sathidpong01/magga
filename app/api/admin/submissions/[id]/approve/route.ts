@@ -8,6 +8,7 @@ import {
 } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { requireAdmin } from "@/lib/auth-helpers";
 
 export async function POST(
   req: Request,
@@ -15,9 +16,9 @@ export async function POST(
 ) {
   try {
     const session = await auth.api.getSession({ headers: req.headers });
-    const userRole = (session?.user as any)?.role;
-    if (!session || (userRole !== "admin" && userRole !== "ADMIN")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const authError = requireAdmin(session);
+    if (authError || !session) {
+      return authError ?? NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
@@ -40,14 +41,28 @@ export async function POST(
       }
 
       // 2. Create Manga Record
-      const finalSlug = submission.slug || submission.title.toLowerCase().replace(/\s+/g, "-");
+      const baseSlug =
+        submission.slug ||
+        submission.title
+          .toLowerCase()
+          .trim()
+          .replace(/[\s]+/g, "-")
+          .replace(/[^\w\-\u0E00-\u0E7F]+/g, "")
+          .replace(/\-\-+/g, "-");
+      const [existingManga] = await tx
+        .select({ id: mangaTable.id })
+        .from(mangaTable)
+        .where(eq(mangaTable.slug, baseSlug))
+        .limit(1);
+      const finalSlug = existingManga ? `${baseSlug}-${Date.now()}` : baseSlug;
+      const parsedPages = JSON.parse(submission.pages) as string[];
       
       const [manga] = await tx.insert(mangaTable).values({
         title: submission.title,
         slug: finalSlug,
         description: submission.description,
         coverImage: submission.coverImage,
-        pages: submission.pages as any, // Expecting valid json string
+        pages: parsedPages,
         categoryId: submission.categoryId,
         authorId: submission.authorId,
         isHidden: !publishImmediately,
@@ -79,6 +94,8 @@ export async function POST(
     }
 
     // 4. Revalidate home page cache to show new manga immediately
+    revalidatePath("/dashboard/admin/submissions");
+    revalidatePath("/dashboard/submissions");
     revalidatePath("/");
     revalidatePath(`/${result.data?.slug}`);
 

@@ -1,16 +1,15 @@
 import { MetadataRoute } from "next";
+import { getSiteUrl } from "@/lib/site-url";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXTAUTH_URL || "https://magga.vercel.app";
+  const baseUrl = getSiteUrl();
 
   return {
     rules: {
       userAgent: "*",
       allow: "/",
       disallow: [
-        "/admin/",
         "/api/",
-        "/submit/",
         "/settings/",
         "/dashboard/",
       ],

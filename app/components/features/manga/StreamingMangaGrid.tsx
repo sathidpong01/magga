@@ -19,9 +19,8 @@ interface StreamingMangaGridProps {
   tagNames?: string[];
   sort?: string;
   ads: Ad[];
+  pageSize?: number;
 }
-
-const ITEMS_PER_PAGE = 12;
 
 /**
  * Async Server Component for streaming manga grid
@@ -33,6 +32,7 @@ export default async function StreamingMangaGrid({
   tagNames,
   sort,
   ads,
+  pageSize = 12,
 }: StreamingMangaGridProps) {
   // Build where conditions
   const conditions: SQL[] = [eq(mangaTable.isHidden, false)];
@@ -76,7 +76,7 @@ export default async function StreamingMangaGrid({
     db.query.manga.findMany({
       where: whereClause,
       orderBy: [orderByClause],
-      limit: ITEMS_PER_PAGE,
+      limit: pageSize,
       columns: {
         id: true,
         slug: true,
@@ -115,6 +115,7 @@ export default async function StreamingMangaGrid({
       initialMangas={mangas as any}
       initialHasMore={hasMore}
       ads={ads}
+      pageSize={pageSize}
       search={search}
       categoryId={categoryId}
       tags={(tagNames ?? []).join(",")}

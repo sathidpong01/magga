@@ -24,6 +24,7 @@ import { Suspense } from "react";
 import { AdContainer } from "@/app/components/features/ads";
 import ScrollToTop from "@/app/components/ui/ScrollToTop";
 import ShareButton from "@/app/components/ui/ShareButton";
+import { getSiteUrl } from "@/lib/site-url";
 import { unstable_cache } from "next/cache";
 
 type MangaPageProps = {
@@ -168,7 +169,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
     return [];
   })();
 
-  const baseUrl = process.env.BETTER_AUTH_URL || "https://magga.vercel.app";
+  const baseUrl = getSiteUrl();
   const authorName = manga.author?.name || manga.authorName;
 
   const jsonLd = {
@@ -430,6 +431,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
                     initialRatingCount={Number(manga.ratingCount)}
                     hideViewCount={true}
                     hideInteractive
+                    trackViewOnMount
                   />
                   <Box sx={{ ml: "auto !important" }}>
                     <ShareButton title={manga.title} slug={manga.slug} />

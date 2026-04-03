@@ -25,7 +25,7 @@ _พัฒนาด้วย Next.js 16 (App Router) และระบบจั
 
 - **Framework:** [Next.js 16](https://nextjs.org/) (App Router)
 - **Language:** [TypeScript](https://www.typescriptlang.org/)
-- **Database:** [Turso (LibSQL)](https://turso.tech/) (ผ่าน [Drizzle ORM](https://orm.drizzle.team/))
+- **Database:** [Supabase Postgres](https://supabase.com/postgres) (ผ่าน [Drizzle ORM](https://orm.drizzle.team/))
 - **Storage:** [Cloudflare R2](https://www.cloudflare.com/developer-platform/r2/)
 - **Styling:**
   - [Tailwind CSS v4](https://tailwindcss.com/)
@@ -131,8 +131,10 @@ npm install
 สร้างไฟล์ `.env` ที่ root directory และกำหนดค่าดังนี้:
 
 ```env
-# Database (Turso / LibSQL)
-TURSO_DATABASE_URL="libsql://..."
+# Database (Supabase PostgreSQL)
+DATABASE_URL="postgresql://..."
+# Optional: direct connection for migrations / long-running jobs
+POSTGRES_URL_NON_POOLING="postgresql://..."
 
 # Better Auth Configuration
 BETTER_AUTH_SECRET="your-super-secret-key-change-me"
@@ -153,22 +155,11 @@ R2_PUBLIC_URL="https://pub-xxxxxxxx.r2.dev"
 ### 4. เตรียมฐานข้อมูล
 
 ```bash
-# สร้างตารางใน Database
-npm run db:push
+# รัน baseline migration
+npm run db:migrate
 ```
 
-> **Important:** หากคุณอัปเดตมาจากเวอร์ชันเก่า ต้องรัน SQL Migration เพื่อเพิ่มคอลัมน์ `slug` และ `role`:
->
-> ```sql
-> ALTER TABLE "Manga" ADD COLUMN "slug" TEXT;
-> UPDATE "Manga" SET "slug" = "id";
-> CREATE UNIQUE INDEX "Manga_slug_key" ON "Manga"("slug");
->
-> ALTER TABLE "User" ADD COLUMN "role" TEXT DEFAULT 'USER';
-> UPDATE "User" SET "role" = 'ADMIN' WHERE "username" = 'admin'; -- ตัวอย่างการตั้งค่า Admin
-> ```
-
-> **Note:** การตั้งค่า Database และ Schema อยู่ในโฟลเดอร์ `db/` และไฟล์ `drizzle.config.ts`
+> **Note:** baseline SQL migrations และ Drizzle schema อยู่ในโฟลเดอร์ `db/` และไฟล์ `drizzle.config.ts`
 
 ### 5. รันโปรเจกต์
 
@@ -188,7 +179,7 @@ npm run dev
 
 **🔥 Critical Performance Fixes (FCP/LCP):**
 
-- **Session User Cache:** In-memory TTL cache (60s) for session lookups — ~90% fewer Turso DB round-trips
+- **Session User Cache:** In-memory TTL cache (60s) for session lookups — ~90% fewer database round-trips
 - **Lazy Load Layout Components:** 6 non-critical client components now lazy-loaded (ssr: false) — reduces initial JS bundle
 - **Ads Consolidation:** 4 parallel ad fetches → 1 via shared `AdsProvider` context — 75% fewer API calls
 
@@ -233,7 +224,7 @@ npm run dev
 - Font optimization with `next/font`
 - Image WebP/AVIF formats + 1-year cache
 - CDN edge caching with stale-while-revalidate
-- Turso connection pooling
+- Supabase Postgres connection pooling
 
 ### 📊 Performance Metrics
 
@@ -258,7 +249,7 @@ npm run dev
 
 ## 🛣️ แผนการพัฒนาในอนาคต (Roadmap)
 
-- [x] **เปลี่ยนฐานข้อมูล:** ย้ายจาก SQLite ไปใช้ Turso (LibSQL) เรียบร้อยแล้ว
+- [x] **เปลี่ยนฐานข้อมูล:** ย้ายจาก Turso มาใช้ Supabase PostgreSQL เรียบร้อยแล้ว
 - [x] **ระบบจัดการรูปภาพ:** เปลี่ยนการเก็บรูปจาก Local ไปใช้ Cloudflare R2 เรียบร้อยแล้ว
 - [x] **Image Optimization:** เพิ่มระบบบีบอัดรูปภาพ (WebP) และ Lazy Loading
 - [x] **Web Analytics:** ติดตั้งระบบเก็บสถิติผู้เข้าชมเว็บไซต์

@@ -1,6 +1,6 @@
 {
-  "id": "346a98af-dff2-46aa-87c4-f80086a057bf",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "4b4f4df9-931d-4c12-bacb-82b30b7fc3ac",
+  "prevId": "605253d7-e94b-43d7-8d7e-efa4264a460f",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -2235,15 +2235,6 @@
             "public"
           ],
           "using": "true"
-        },
-        "manga_views_insert": {
-          "name": "manga_views_insert",
-          "as": "PERMISSIVE",
-          "for": "INSERT",
-          "to": [
-            "public"
-          ],
-          "withCheck": "true"
         }
       },
       "checkConstraints": {},

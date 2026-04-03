@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     const [newCategory] = await db.insert(categoriesTable)
       .values({ name: sanitizedName })
       .returning();
-    revalidatePath("/admin/metadata");
+    revalidatePath("/dashboard/admin/metadata");
     revalidatePath("/"); // Refresh home page to show new category
     return NextResponse.json(newCategory, { status: 201 });
   } catch {

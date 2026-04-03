@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { InferSelectModel } from "drizzle-orm";
 import type { categories, tags, manga as mangaTable, authors } from "@/db/schema";
@@ -23,7 +23,6 @@ import {
   Typography,
   Alert,
   CircularProgress,
-  Paper,
   Grid,
   IconButton,
   InputAdornment,
@@ -38,6 +37,17 @@ import UploadProgress, {
   UploadFileStatus,
 } from "@/app/components/ui/UploadProgress";
 import { authFetch } from "@/lib/auth-fetch";
+import {
+  DashboardPageHeader,
+  DashboardSectionTitle,
+  DashboardSurface,
+  dashboardGhostButtonSx,
+  dashboardInsetSurfaceSx,
+  dashboardPrimaryButtonSx,
+  dashboardSecondaryButtonSx,
+  dashboardTextFieldSx,
+  dashboardTokens,
+} from "@/app/components/dashboard/system";
 
 // DnD Kit Imports
 import {
@@ -173,6 +183,8 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
     }
     return null;
   });
+  const pageItemsRef = useRef(pageItems);
+  const coverItemRef = useRef(coverItem);
 
   // Author Credits State (uses socialLinks from Author model)
   type AuthorCredit = { url: string; label: string; icon: string };
@@ -192,6 +204,14 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
+  useEffect(() => {
+    pageItemsRef.current = pageItems;
+  }, [pageItems]);
+
+  useEffect(() => {
+    coverItemRef.current = coverItem;
+  }, [coverItem]);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -256,12 +276,34 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
   // Cleanup object URLs on unmount
   useEffect(() => {
     return () => {
-      pageItems.forEach((item) => {
+      pageItemsRef.current.forEach((item) => {
         if (item.type === "file") URL.revokeObjectURL(item.preview);
       });
-      if (coverItem?.type === "file") URL.revokeObjectURL(coverItem.preview);
+      if (coverItemRef.current?.type === "file") {
+        URL.revokeObjectURL(coverItemRef.current.preview);
+      }
     };
   }, []);
+
+  const filledInputProps = {
+    disableUnderline: true,
+    sx: { borderRadius: 2 },
+  };
+
+  const filledFieldSx = dashboardTextFieldSx;
+
+  const pageTitle = manga
+    ? mode === "admin"
+      ? "แก้ไขมังงะ"
+      : "แก้ไขรายการฝากลง"
+    : mode === "admin"
+      ? "สร้างมังงะใหม่"
+      : "ฝากลงมังงะ";
+
+  const pageDescription =
+    mode === "admin"
+      ? "จัดการข้อมูลหลัก ปก เนื้อหา เมทาดาทา และลำดับหน้าของเรื่องให้พร้อมเผยแพร่"
+      : "กรอกข้อมูลเรื่อง ปก หน้าอ่าน และรายละเอียดที่จำเป็นเพื่อส่งให้ทีมตรวจสอบ";
 
   // Credit Handlers
   const handleAddCredit = () =>
@@ -287,7 +329,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
       const res = await authFetch(
         `/api/metadata?url=${encodeURIComponent(url)}`
       );
-      if (!res.ok) throw new Error("Failed to fetch metadata");
+      if (!res.ok) throw new Error("ไม่สามารถดึงข้อมูลลิงก์ได้");
       const data = await res.json();
       const newCredits = [...credits];
       newCredits[index] = {
@@ -306,13 +348,13 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: inputValue }),
       });
-      if (!res.ok) throw new Error("Failed to create tag");
+      if (!res.ok) throw new Error("ไม่สามารถสร้างแท็กได้");
       const newTag = await res.json();
       setAvailableTags((prev) => [...prev, newTag]);
       setSelectedTags((prev) => [...prev, newTag]);
     } catch (error) {
       console.error("Error creating tag:", error);
-      setError("Failed to create tag");
+      setError("ไม่สามารถสร้างแท็กได้");
     }
   };
 
@@ -323,13 +365,13 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: inputValue }),
       });
-      if (!res.ok) throw new Error("Failed to create category");
+      if (!res.ok) throw new Error("ไม่สามารถสร้างหมวดหมู่ได้");
       const newCategory = await res.json();
       setAvailableCategories((prev) => [...prev, newCategory]);
       setCategoryId(newCategory.id);
     } catch (error) {
       console.error("Error creating category:", error);
-      setError("Failed to create category");
+      setError("ไม่สามารถสร้างหมวดหมู่ได้");
     }
   };
 
@@ -349,11 +391,11 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
   ) => {
     e.preventDefault();
     if (!title || !coverItem) {
-      setError("Title and Cover Image are required.");
+      setError("กรุณากรอกชื่อเรื่องและอัปโหลดรูปปก");
       return;
     }
     if (!slug) {
-      setError("Slug is required.");
+      setError("กรุณาระบุ slug ของเรื่อง");
       return;
     }
     setIsSubmitting(true);
@@ -378,7 +420,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
             body: JSON.stringify(authorBody),
           });
 
-          if (!authorRes.ok) throw new Error("Failed to create author");
+          if (!authorRes.ok) throw new Error("ไม่สามารถสร้างข้อมูลผู้แต่งได้");
 
           const newAuthor = await authorRes.json();
           finalAuthorId = newAuthor.id;
@@ -387,8 +429,8 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
           setAvailableAuthors((prev) => [...prev, newAuthor]);
         } catch (error) {
           throw new Error(
-            `Failed to create author: ${
-              error instanceof Error ? error.message : "Unknown error"
+            `ไม่สามารถสร้างข้อมูลผู้แต่งได้: ${
+              error instanceof Error ? error.message : "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ"
             }`
           );
         }
@@ -403,7 +445,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
           method: "POST",
           body: fd,
         });
-        if (!res.ok) throw new Error("Failed to upload cover image");
+        if (!res.ok) throw new Error("ไม่สามารถอัปโหลดรูปปกได้");
         const json = await res.json();
         finalCoverUrl = json.urls[0].url;
       } else {
@@ -484,7 +526,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                   );
                   resolve();
                 } catch (e) {
-                  reject(new Error("Invalid response"));
+                  reject(new Error("รูปแบบข้อมูลตอบกลับไม่ถูกต้อง"));
                 }
               } else {
                 setUploadFiles((prev) =>
@@ -492,7 +534,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     f.id === item.id ? { ...f, status: "error" } : f
                   )
                 );
-                reject(new Error("Upload failed"));
+                reject(new Error("อัปโหลดไฟล์ไม่สำเร็จ"));
               }
             };
 
@@ -502,7 +544,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                   f.id === item.id ? { ...f, status: "error" } : f
                 )
               );
-              reject(new Error("Network error"));
+              reject(new Error("เกิดปัญหาเครือข่ายระหว่างอัปโหลด"));
             };
 
             xhr.open("POST", "/api/upload");
@@ -533,7 +575,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
         }
 
         if (hasUploadErrors) {
-          throw new Error("Some files failed to upload. Please retry them.");
+          throw new Error("มีบางไฟล์อัปโหลดไม่สำเร็จ กรุณาลองใหม่อีกครั้ง");
         }
       }
 
@@ -546,30 +588,45 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
 
       // Verify all pages have URLs
       if (finalPages.some((p) => !p)) {
-        throw new Error("Some pages are missing URLs. Please retry uploading.");
+        throw new Error("บางหน้าของเรื่องยังไม่มี URL กรุณาลองอัปโหลดใหม่");
       }
 
       const selectedTagIds = selectedTags.map((t) => t.id);
 
-      const body = {
-        title,
-        slug,
-        description,
-        coverImage: finalCoverUrl,
-        pages: finalPages,
-        categoryId: categoryId || null,
-        authorId: finalAuthorId,
-        isHidden: saveAsDraft,
-        selectedTags: selectedTagIds,
-        authorName: authorName || null,
-      };
+      const body =
+        mode === "admin"
+          ? {
+              title,
+              slug,
+              description,
+              coverImage: finalCoverUrl,
+              pages: finalPages,
+              categoryId: categoryId || null,
+              authorId: finalAuthorId,
+              isHidden: saveAsDraft,
+              selectedTags: selectedTagIds,
+              authorName: authorName || null,
+            }
+          : {
+              title,
+              slug,
+              description,
+              coverImage: finalCoverUrl,
+              pages: finalPages,
+              categoryId: categoryId || null,
+              authorId: finalAuthorId,
+              tagIds: selectedTagIds,
+              status: "PENDING",
+            };
 
       const endpoint =
         mode === "admin"
           ? manga
             ? `/api/manga/${manga.id}`
             : "/api/manga"
-          : "/api/submissions";
+          : manga
+            ? `/api/submissions/${manga.id}`
+            : "/api/submissions";
       const method = manga ? "PUT" : "POST";
 
       const response = await authFetch(endpoint, {
@@ -580,7 +637,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
 
       if (!response.ok) {
         const res = await response.json();
-        let errorMessage = res.error || "Failed to save manga";
+        let errorMessage = res.error || "บันทึกรายการไม่สำเร็จ";
 
         if (typeof errorMessage === "object") {
           // Handle Zod flattened error
@@ -597,7 +654,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
             ) {
               errorMessage = errorMessage.formErrors[0];
             } else {
-              errorMessage = "Validation failed";
+              errorMessage = "ข้อมูลไม่ผ่านการตรวจสอบ";
             }
           } else {
             errorMessage = JSON.stringify(errorMessage);
@@ -610,19 +667,29 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
       const data = await response.json();
 
       setNotificationType("success");
-      setNotificationTitle(manga ? "Manga Updated" : "Manga Created");
+      setNotificationTitle(
+        manga
+          ? mode === "admin"
+            ? "อัปเดตมังงะสำเร็จ"
+            : "อัปเดตรายการฝากลงสำเร็จ"
+          : mode === "admin"
+            ? "สร้างมังงะสำเร็จ"
+            : "ส่งรายการฝากลงสำเร็จ"
+      );
       setNotificationMessage(
         manga
-          ? `Successfully updated "${title}".`
-          : `Successfully created "${title}".`
+          ? `อัปเดตรายการ "${title}" เรียบร้อยแล้ว`
+          : mode === "admin"
+            ? `สร้างรายการ "${title}" เรียบร้อยแล้ว`
+            : `ส่ง "${title}" เข้าตรวจเรียบร้อยแล้ว`
       );
       setNotificationOpen(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      setError(err instanceof Error ? err.message : "เกิดข้อผิดพลาด");
       setNotificationType("error");
-      setNotificationTitle("Error");
+      setNotificationTitle("เกิดข้อผิดพลาด");
       setNotificationMessage(
-        err instanceof Error ? err.message : "An unexpected error occurred."
+        err instanceof Error ? err.message : "เกิดข้อผิดพลาดที่ไม่คาดคิด"
       );
       setNotificationOpen(true);
     } finally {
@@ -716,87 +783,73 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
   };
 
   return (
-    <>
+      <>
       <Box component="form" onSubmit={(e) => handleSubmitWithDraft(e, false)}>
-        <Grid container spacing={3}>
-          {/* Header / Actions */}
-          <Grid
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 2,
-            }}
-            size={12}
+        <DashboardPageHeader
+          eyebrow={mode === "admin" ? "CONTENT MANAGER" : "SUBMISSION"}
+          title={pageTitle}
+          description={pageDescription}
+        >
+          <Button
+            variant="text"
+            onClick={() => router.back()}
+            disabled={isSubmitting}
+            sx={dashboardGhostButtonSx}
           >
-            <Typography variant="h5" component="h2" sx={{ fontWeight: 700 }}>
-              {manga
-                ? "Edit Manga"
+            ย้อนกลับ
+          </Button>
+          {!manga && mode === "admin" && (
+            <Button
+              variant="outlined"
+              onClick={(e) => {
+                e.preventDefault();
+                handleSubmitWithDraft(e, true);
+              }}
+              disabled={isSubmitting}
+              sx={dashboardSecondaryButtonSx}
+            >
+              บันทึกเป็นฉบับร่าง
+            </Button>
+          )}
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={isSubmitting}
+            startIcon={
+              isSubmitting ? (
+                <CircularProgress
+                  size={20}
+                  color="inherit"
+                  aria-label="Saving..."
+                />
+              ) : null
+            }
+            sx={dashboardPrimaryButtonSx}
+          >
+            {isSubmitting
+              ? "กำลังบันทึก..."
+              : manga
+                ? mode === "admin"
+                  ? "อัปเดตมังงะ"
+                  : "อัปเดตรายการฝากลง"
                 : mode === "admin"
-                ? "Create New Manga"
-                : "Submit Manga"}
-            </Typography>
-            <Stack direction="row" spacing={2}>
-              <Button
-                variant="text"
-                color="inherit"
-                onClick={() => router.back()}
-                disabled={isSubmitting}
-                sx={{ borderRadius: 1 }}
-              >
-                Cancel
-              </Button>
-              {!manga && mode === "admin" && (
-                <Button
-                  variant="outlined"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleSubmitWithDraft(e, true);
-                  }}
-                  disabled={isSubmitting}
-                  sx={{
-                    borderRadius: 1,
-                    borderColor: "rgba(255,255,255,0.1)",
-                    color: "text.secondary",
-                  }}
-                >
-                  Save Draft
-                </Button>
-              )}
-              <Button
-                type="submit"
-                variant="contained"
-                disabled={isSubmitting}
-                startIcon={
-                  isSubmitting ? (
-                    <CircularProgress
-                      size={20}
-                      color="inherit"
-                      aria-label="Saving..."
-                    />
-                  ) : null
-                }
-                sx={{
-                  borderRadius: 1,
-                  bgcolor: "#fbbf24",
-                  color: "#000",
-                  "&:hover": { bgcolor: "#f59e0b" },
-                }}
-              >
-                {isSubmitting
-                  ? "Saving..."
-                  : manga
-                  ? "Update Manga"
-                  : mode === "admin"
-                  ? "Create Manga"
-                  : "Submit"}
-              </Button>
-            </Stack>
-          </Grid>
+                  ? "สร้างมังงะ"
+                  : "ส่งรายการฝากลง"}
+          </Button>
+        </DashboardPageHeader>
 
+        <Grid container spacing={3}>
           {error && (
 <Grid  size={12}>
-              <Alert severity="error" sx={{ borderRadius: 1 }}>
+              <Alert
+                severity="error"
+                sx={{
+                  borderRadius: 2,
+                  bgcolor: "rgba(239, 68, 68, 0.08)",
+                  color: "#fecaca",
+                  border: "1px solid rgba(239, 68, 68, 0.18)",
+                }}
+              >
                 {error}
               </Alert>
             </Grid>
@@ -804,37 +857,22 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
 
           {/* Left Column: General Info */}
 <Grid   size={{ xs: 12, md: 7 }}>
-            <Paper
-              elevation={0}
-              sx={{ p: 3, borderRadius: 1, bgcolor: "#171717", minHeight: 600 }}
-            >
-              <Typography
-                variant="h6"
-                component="h3"
-                gutterBottom
-                sx={{
-                  mb: 3,
-                  fontSize: "1rem",
-                  color: "text.secondary",
-                  textTransform: "uppercase",
-                  letterSpacing: 1,
-                }}
-              >
-                General Information
-              </Typography>
-              <Grid container spacing={3}>
+            <DashboardSurface sx={{ minHeight: 600 }}>
+              <DashboardSectionTitle
+                title="ข้อมูลหลักของเรื่อง"
+                description="ระบุชื่อ สลักก์ คำอธิบาย ผู้แต่ง หมวดหมู่ และแท็กให้ครบถ้วนก่อนส่งหรือเผยแพร่"
+              />
+                <Grid container spacing={3}>
 <Grid  size={12}>
                   <TextField
-                    label="Title"
+                    label="ชื่อเรื่อง"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     fullWidth
                     required
                     variant="filled"
-                    InputProps={{
-                      disableUnderline: true,
-                      sx: { borderRadius: 1 },
-                    }}
+                    sx={filledFieldSx}
+                    InputProps={filledInputProps}
                   />
                 </Grid>
 <Grid  size={12}>
@@ -845,13 +883,13 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     fullWidth
                     required
                     variant="filled"
-                    helperText={`Preview: /manga/${slug}`}
+                    sx={filledFieldSx}
+                    helperText={`ตัวอย่างลิงก์: /${slug || "your-slug"}`}
                     InputProps={{
-                      disableUnderline: true,
-                      sx: { borderRadius: 1 },
+                      ...filledInputProps,
                       endAdornment: (
                         <InputAdornment position="end">
-                          <Tooltip title="Generate from Title">
+                          <Tooltip title="สร้างจากชื่อเรื่อง">
                             <IconButton
                               aria-label="Generate slug"
                               onClick={() => {
@@ -875,17 +913,15 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                 </Grid>
 <Grid  size={12}>
                   <TextField
-                    label="Description"
+                    label="คำอธิบาย"
                     value={description ?? ""}
                     onChange={(e) => setDescription(e.target.value)}
                     fullWidth
                     multiline
                     rows={4}
                     variant="filled"
-                    InputProps={{
-                      disableUnderline: true,
-                      sx: { borderRadius: 1 },
-                    }}
+                    sx={filledFieldSx}
+                    InputProps={filledInputProps}
                   />
                 </Grid>
 <Grid   size={{ xs: 12, md: 6 }}>
@@ -921,7 +957,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                       if (inputValue !== "" && !isExisting) {
                         filtered.push({
                           inputValue,
-                          name: `Add "${inputValue}"`,
+                          name: `เพิ่ม "${inputValue}"`,
                           id: "new-author",
                         } as any);
                       }
@@ -950,13 +986,13 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Author"
+                        label="ผู้แต่ง"
                         variant="filled"
-                        placeholder="Select or create author"
+                        placeholder="เลือกหรือสร้างผู้แต่ง"
+                        sx={filledFieldSx}
                         InputProps={{
                           ...params.InputProps,
-                          disableUnderline: true,
-                          sx: { borderRadius: 1 },
+                          ...filledInputProps,
                         }}
                       />
                     )}
@@ -971,23 +1007,18 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     variant="filled"
                     placeholder="เช่น Aokana, Doujin Circle"
                     helperText="สำหรับแสดงใน og:title เมื่อแชร์ลิงก์ (auto-filled from author)"
-                    InputProps={{
-                      disableUnderline: true,
-                      sx: { borderRadius: 1 },
-                    }}
+                    sx={filledFieldSx}
+                    InputProps={filledInputProps}
                   />
                 </Grid>
 
                 {/* Author Credits - Show only when adding new author */}
                 {pendingAuthorName && (
 <Grid  size={12}>
-                    <Paper
-                      elevation={0}
+                    <Box
                       sx={{
                         p: 2,
-                        borderRadius: 1,
-                        bgcolor: "rgba(255,255,255,0.02)",
-                        border: "1px solid rgba(255,255,255,0.05)",
+                        ...dashboardInsetSurfaceSx,
                       }}
                     >
                       <Box
@@ -1001,48 +1032,40 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                         <Typography
                           variant="subtitle2"
                           sx={{
-                            color: "text.secondary",
-                            textTransform: "uppercase",
-                            letterSpacing: 1,
-                            fontSize: "0.75rem",
+                            color: dashboardTokens.textMuted,
+                            fontWeight: 700,
                           }}
                         >
-                          Author Credits (Social Links)
+                          เครดิตผู้แต่งและโซเชียลลิงก์
                         </Typography>
                         <Button
                           size="small"
                           onClick={handleAddCredit}
-                          sx={{
-                            borderRadius: 1,
-                            fontSize: "0.75rem",
-                            color: "#fbbf24",
-                          }}
+                          sx={dashboardGhostButtonSx}
                         >
-                          + Add Credit
+                          เพิ่มเครดิต
                         </Button>
                       </Box>
                       {credits.length === 0 ? (
                         <Typography
                           variant="body2"
                           sx={{
-                            color: "text.disabled",
+                            color: dashboardTokens.textSoft,
                             textAlign: "center",
                             py: 2,
                           }}
                         >
-                          No credits added yet
+                          ยังไม่มีเครดิตเพิ่มเติม
                         </Typography>
                       ) : (
                         <Stack spacing={2}>
                           {credits.map((credit, index) => (
-                            <Paper
+                            <Box
                               key={index}
-                              elevation={0}
                               sx={{
                                 p: 2,
-                                borderRadius: 1,
-                                bgcolor: "rgba(0,0,0,0.2)",
-                                border: "1px solid rgba(255,255,255,0.05)",
+                                ...dashboardInsetSurfaceSx,
+                                bgcolor: "rgba(0,0,0,0.18)",
                               }}
                             >
                               <Grid container spacing={2}>
@@ -1065,15 +1088,13 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                                         )
                                       }
                                       fullWidth
-                                      variant="filled"
-                                      placeholder="https://example.com"
-                                      size="small"
-                                      InputProps={{
-                                        disableUnderline: true,
-                                        sx: { borderRadius: 1 },
-                                      }}
-                                    />
-                                    <Tooltip title="Auto-fetch title and icon">
+                                    variant="filled"
+                                    placeholder="https://example.com"
+                                    size="small"
+                                    sx={filledFieldSx}
+                                    InputProps={filledInputProps}
+                                  />
+                                    <Tooltip title="ดึงชื่อและไอคอนอัตโนมัติ">
                                       <span>
                                         <IconButton
                                           size="small"
@@ -1094,7 +1115,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                                         </IconButton>
                                       </span>
                                     </Tooltip>
-                                    <Tooltip title="Remove credit">
+                                    <Tooltip title="ลบเครดิต">
                                       <IconButton
                                         size="small"
                                         onClick={() =>
@@ -1114,7 +1135,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                                 </Grid>
 <Grid   size={{ xs: 12, sm: 6 }}>
                                   <TextField
-                                    label="Label"
+                                    label="ชื่อที่จะแสดง"
                                     value={credit.label}
                                     onChange={(e) =>
                                       handleCreditChange(
@@ -1125,17 +1146,15 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                                     }
                                     fullWidth
                                     variant="filled"
-                                    placeholder="e.g., Website, Twitter"
+                                    placeholder="เช่น Website, Twitter"
                                     size="small"
-                                    InputProps={{
-                                      disableUnderline: true,
-                                      sx: { borderRadius: 1 },
-                                    }}
+                                    sx={filledFieldSx}
+                                    InputProps={filledInputProps}
                                   />
                                 </Grid>
 <Grid   size={{ xs: 12, sm: 6 }}>
                                   <TextField
-                                    label="Icon URL"
+                                    label="ลิงก์ไอคอน"
                                     value={credit.icon}
                                     onChange={(e) =>
                                       handleCreditChange(
@@ -1148,19 +1167,17 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                                     variant="filled"
                                     placeholder="https://example.com/icon.png"
                                     size="small"
-                                    InputProps={{
-                                      disableUnderline: true,
-                                      sx: { borderRadius: 1 },
-                                    }}
+                                    sx={filledFieldSx}
+                                    InputProps={filledInputProps}
                                   />
                                 </Grid>
                               </Grid>
-                            </Paper>
+                            </Box>
                           ))}
                         </Stack>
                       )}
-                    </Paper>
-                  </Grid>
+                    </Box>
+                </Grid>
                 )}
 
 <Grid   size={{ xs: 12, md: 6 }}>
@@ -1189,7 +1206,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                       if (inputValue !== "" && !isExisting) {
                         filtered.push({
                           inputValue,
-                          name: `Add "${inputValue}"`,
+                          name: `เพิ่ม "${inputValue}"`,
                           id: "new-category",
                         } as any);
                       }
@@ -1224,12 +1241,12 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Category"
+                        label="หมวดหมู่"
                         variant="filled"
+                        sx={filledFieldSx}
                         InputProps={{
                           ...params.InputProps,
-                          disableUnderline: true,
-                          sx: { borderRadius: 1 },
+                          ...filledInputProps,
                         }}
                       />
                     )}
@@ -1278,7 +1295,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                       if (inputValue !== "" && !isExisting) {
                         filtered.push({
                           inputValue,
-                          name: `Add "${inputValue}"`,
+                          name: `เพิ่ม "${inputValue}"`,
                           id: "new-tag",
                         } as any);
                       }
@@ -1300,46 +1317,33 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                       <TextField
                         {...params}
                         variant="filled"
-                        label="Tags"
-                        placeholder="Select tags"
+                        label="แท็ก"
+                        placeholder="เลือกหรือสร้างแท็ก"
+                        sx={filledFieldSx}
                         InputProps={{
                           ...params.InputProps,
-                          disableUnderline: true,
-                          sx: { borderRadius: 1 },
+                          ...filledInputProps,
                         }}
                       />
                     )}
                   />
                 </Grid>
               </Grid>
-            </Paper>
+            </DashboardSurface>
           </Grid>
 
           {/* Right Column: Media Assets */}
 <Grid   size={{ xs: 12, md: 5 }}>
-            <Paper
-              elevation={0}
-              sx={{ p: 3, borderRadius: 1, bgcolor: "#171717", height: "100%" }}
-            >
-              <Typography
-                variant="h6"
-                component="h3"
-                gutterBottom
-                sx={{
-                  mb: 3,
-                  fontSize: "1rem",
-                  color: "text.secondary",
-                  textTransform: "uppercase",
-                  letterSpacing: 1,
-                }}
-              >
-                Media Assets
-              </Typography>
+            <DashboardSurface sx={{ height: "100%" }}>
+              <DashboardSectionTitle
+                title="ไฟล์ภาพและลำดับหน้า"
+                description="อัปโหลดรูปปก เพิ่มหน้าภาพ และจัดเรียงลำดับก่อนบันทึกหรือส่งตรวจ"
+              />
 
               {/* Cover Image */}
               <Box sx={{ mb: 4 }}>
                 <Typography variant="subtitle1" component="h4" gutterBottom>
-                  Cover Image
+                  รูปปก
                 </Typography>
 
                 {!coverItem ? (
@@ -1350,12 +1354,13 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     sx={{
                       height: 120,
                       borderStyle: "dashed",
-                      borderColor: "rgba(255,255,255,0.2)",
-                      borderRadius: 1,
-                      color: "text.secondary",
+                      borderColor: "rgba(255,255,255,0.16)",
+                      borderRadius: 2,
+                      color: dashboardTokens.textMuted,
                       flexDirection: "column",
                       gap: 1,
                       cursor: "pointer",
+                      ...dashboardSecondaryButtonSx,
                     }}
                   >
                     <input
@@ -1367,7 +1372,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     <AddPhotoAlternateIcon
                       sx={{ fontSize: 40, opacity: 0.5 }}
                     />
-                    Add Cover Image
+                    อัปโหลดรูปปก
                   </Button>
                 ) : (
                   <Box
@@ -1376,7 +1381,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                       width: "100%",
                       maxWidth: 200,
                       margin: "0 auto",
-                      borderRadius: 1,
+                      borderRadius: 2,
                       overflow: "hidden",
                       boxShadow: 3,
                     }}
@@ -1416,13 +1421,17 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                   }}
                 >
                   <Typography variant="subtitle1" component="h4">
-                    Pages ({pageItems.length})
+                    หน้าอ่าน ({pageItems.length})
                   </Typography>
                   <Button
                     size="small"
                     startIcon={<AddPhotoAlternateIcon />}
                     component="label"
-                    sx={{ color: "#fbbf24", cursor: "pointer" }}
+                    sx={{
+                      ...(dashboardGhostButtonSx as any),
+                      color: dashboardTokens.accent,
+                      cursor: "pointer",
+                    }}
                   >
                     <input
                       type="file"
@@ -1431,7 +1440,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                       multiple
                       onChange={handlePagesUpload}
                     />
-                    Add Pages
+                    เพิ่มหน้า
                   </Button>
                 </Box>
 
@@ -1470,16 +1479,16 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     sx={{
                       p: 4,
                       border: "1px dashed rgba(255,255,255,0.1)",
-                      borderRadius: 1,
+                      borderRadius: 2,
                       textAlign: "center",
-                      color: "text.secondary",
+                      color: dashboardTokens.textMuted,
                     }}
                   >
-                    <Typography variant="body2">No pages added yet.</Typography>
+                    <Typography variant="body2">ยังไม่มีหน้าภาพในรายการ</Typography>
                   </Box>
                 )}
               </Box>
-            </Paper>
+            </DashboardSurface>
           </Grid>
         </Grid>
       </Box>
@@ -1492,13 +1501,13 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
         title={notificationTitle}
         message={notificationMessage}
         primaryAction={
-          notificationType === "success"
-            ? {
-                label: "Go to List",
+              notificationType === "success"
+                ? {
+                label: "ไปที่รายการ",
                 onClick: handleGoToList,
               }
-            : {
-                label: "Close",
+                : {
+                label: "ปิด",
                 onClick: handleCloseNotification,
               }
         }

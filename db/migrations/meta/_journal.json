@@ -5,8 +5,29 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1772605627872,
-      "tag": "0000_lethal_dreaming_celestial",
+      "when": 1775202573404,
+      "tag": "0000_supabase_baseline",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1775203688712,
+      "tag": "0001_reconcile_supabase_production",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1775203779993,
+      "tag": "0002_lock_down_manga_views_insert",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1775204166387,
+      "tag": "0003_optimize_rls_initplan",
       "breakpoints": true
     }
   ]

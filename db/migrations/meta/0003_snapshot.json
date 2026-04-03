@@ -1,6 +1,6 @@
 {
-  "id": "346a98af-dff2-46aa-87c4-f80086a057bf",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "d365ccb3-869a-4dd4-9921-ae382b8a214c",
+  "prevId": "4b4f4df9-931d-4c12-bacb-82b30b7fc3ac",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -241,7 +241,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "EXISTS (SELECT 1 FROM profiles WHERE profiles.id = (SELECT auth.uid()::text) AND profiles.role = 'admin')"
+          "using": "(SELECT private.is_admin())"
         },
         "advertisements_admin_update": {
           "name": "advertisements_admin_update",
@@ -250,7 +250,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "EXISTS (SELECT 1 FROM profiles WHERE profiles.id = (SELECT auth.uid()::text) AND profiles.role = 'admin')"
+          "using": "(SELECT private.is_admin())"
         },
         "advertisements_admin_write": {
           "name": "advertisements_admin_write",
@@ -259,7 +259,7 @@
           "to": [
             "authenticated"
           ],
-          "withCheck": "EXISTS (SELECT 1 FROM profiles WHERE profiles.id = (SELECT auth.uid()::text) AND profiles.role = 'admin')"
+          "withCheck": "(SELECT private.is_admin())"
         },
         "advertisements_select": {
           "name": "advertisements_select",
@@ -267,7 +267,8 @@
           "for": "SELECT",
           "to": [
             "public"
-          ]
+          ],
+          "using": "is_active = true OR (SELECT private.is_admin())"
         }
       },
       "checkConstraints": {
@@ -346,7 +347,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "EXISTS (SELECT 1 FROM profiles WHERE profiles.id = (SELECT auth.uid()::text) AND profiles.role = 'admin')"
+          "using": "(SELECT private.is_admin())"
         },
         "authors_admin_update": {
           "name": "authors_admin_update",
@@ -355,7 +356,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "EXISTS (SELECT 1 FROM profiles WHERE profiles.id = (SELECT auth.uid()::text) AND profiles.role = 'admin')"
+          "using": "(SELECT private.is_admin())"
         },
         "authors_admin_write": {
           "name": "authors_admin_write",
@@ -364,7 +365,7 @@
           "to": [
             "authenticated"
           ],
-          "withCheck": "EXISTS (SELECT 1 FROM profiles WHERE profiles.id = (SELECT auth.uid()::text) AND profiles.role = 'admin')"
+          "withCheck": "(SELECT private.is_admin())"
         },
         "authors_select": {
           "name": "authors_select",
@@ -488,7 +489,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "user_id = (SELECT auth.uid()::text)"
+          "using": "user_id = (SELECT private.current_user_id())"
         },
         "blocked_tags_insert": {
           "name": "blocked_tags_insert",
@@ -497,7 +498,7 @@
           "to": [
             "authenticated"
           ],
-          "withCheck": "user_id = (SELECT auth.uid()::text)"
+          "withCheck": "user_id = (SELECT private.current_user_id())"
         },
         "blocked_tags_delete": {
           "name": "blocked_tags_delete",
@@ -506,7 +507,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "user_id = (SELECT auth.uid()::text)"
+          "using": "user_id = (SELECT private.current_user_id())"
         }
       },
       "checkConstraints": {},
@@ -622,7 +623,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "user_id = (SELECT auth.uid()::text)"
+          "using": "user_id = (SELECT private.current_user_id())"
         },
         "blocked_users_insert": {
           "name": "blocked_users_insert",
@@ -631,7 +632,7 @@
           "to": [
             "authenticated"
           ],
-          "withCheck": "user_id = (SELECT auth.uid()::text)"
+          "withCheck": "user_id = (SELECT private.current_user_id())"
         },
         "blocked_users_delete": {
           "name": "blocked_users_delete",
@@ -640,7 +641,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "user_id = (SELECT auth.uid()::text)"
+          "using": "user_id = (SELECT private.current_user_id())"
         }
       },
       "checkConstraints": {},
@@ -684,7 +685,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "EXISTS (SELECT 1 FROM profiles WHERE profiles.id = (SELECT auth.uid()::text) AND profiles.role = 'admin')"
+          "using": "(SELECT private.is_admin())"
         },
         "categories_admin_update": {
           "name": "categories_admin_update",
@@ -693,7 +694,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "EXISTS (SELECT 1 FROM profiles WHERE profiles.id = (SELECT auth.uid()::text) AND profiles.role = 'admin')"
+          "using": "(SELECT private.is_admin())"
         },
         "categories_admin_write": {
           "name": "categories_admin_write",
@@ -702,7 +703,7 @@
           "to": [
             "authenticated"
           ],
-          "withCheck": "EXISTS (SELECT 1 FROM profiles WHERE profiles.id = (SELECT auth.uid()::text) AND profiles.role = 'admin')"
+          "withCheck": "(SELECT private.is_admin())"
         },
         "categories_select": {
           "name": "categories_select",
@@ -842,7 +843,8 @@
           "for": "INSERT",
           "to": [
             "authenticated"
-          ]
+          ],
+          "withCheck": "user_id = (SELECT private.current_user_id())"
         },
         "Users can change own vote": {
           "name": "Users can change own vote",
@@ -850,7 +852,8 @@
           "for": "UPDATE",
           "to": [
             "authenticated"
-          ]
+          ],
+          "using": "user_id = (SELECT private.current_user_id())"
         },
         "Users can remove own vote": {
           "name": "Users can remove own vote",
@@ -858,7 +861,8 @@
           "for": "DELETE",
           "to": [
             "authenticated"
-          ]
+          ],
+          "using": "user_id = (SELECT private.current_user_id())"
         }
       },
       "checkConstraints": {
@@ -1062,7 +1066,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "((user_id = ( SELECT (auth.uid())::text AS uid)) OR EXISTS (SELECT 1 FROM profiles WHERE profiles.id = (SELECT auth.uid()::text) AND profiles.role = 'admin'))"
+          "using": "user_id = (SELECT private.current_user_id()) OR (SELECT private.is_admin())"
         },
         "comments_insert": {
           "name": "comments_insert",
@@ -1070,7 +1074,8 @@
           "for": "INSERT",
           "to": [
             "authenticated"
-          ]
+          ],
+          "withCheck": "user_id = (SELECT private.current_user_id())"
         },
         "comments_select": {
           "name": "comments_select",
@@ -1086,7 +1091,8 @@
           "for": "UPDATE",
           "to": [
             "authenticated"
-          ]
+          ],
+          "using": "user_id = (SELECT private.current_user_id())"
         }
       },
       "checkConstraints": {},
@@ -1462,7 +1468,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "EXISTS (SELECT 1 FROM profiles WHERE profiles.id = (SELECT auth.uid()::text) AND profiles.role = 'admin')"
+          "using": "(SELECT private.is_admin())"
         },
         "manga_admin_update": {
           "name": "manga_admin_update",
@@ -1471,7 +1477,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "EXISTS (SELECT 1 FROM profiles WHERE profiles.id = (SELECT auth.uid()::text) AND profiles.role = 'admin')"
+          "using": "(SELECT private.is_admin())"
         },
         "manga_admin_write": {
           "name": "manga_admin_write",
@@ -1480,7 +1486,7 @@
           "to": [
             "authenticated"
           ],
-          "withCheck": "EXISTS (SELECT 1 FROM profiles WHERE profiles.id = (SELECT auth.uid()::text) AND profiles.role = 'admin')"
+          "withCheck": "(SELECT private.is_admin())"
         },
         "manga_select": {
           "name": "manga_select",
@@ -1488,7 +1494,8 @@
           "for": "SELECT",
           "to": [
             "public"
-          ]
+          ],
+          "using": "is_hidden = false OR (SELECT private.is_admin())"
         }
       },
       "checkConstraints": {},
@@ -2021,7 +2028,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "((user_id = ( SELECT (auth.uid())::text AS uid)) OR EXISTS (SELECT 1 FROM profiles WHERE profiles.id = (SELECT auth.uid()::text) AND profiles.role = 'admin'))"
+          "using": "user_id = (SELECT private.current_user_id()) OR (SELECT private.is_admin())"
         },
         "submissions_insert": {
           "name": "submissions_insert",
@@ -2029,15 +2036,17 @@
           "for": "INSERT",
           "to": [
             "authenticated"
-          ]
+          ],
+          "withCheck": "user_id = (SELECT private.current_user_id())"
         },
         "submissions_select": {
           "name": "submissions_select",
           "as": "PERMISSIVE",
           "for": "SELECT",
           "to": [
-            "public"
-          ]
+            "authenticated"
+          ],
+          "using": "user_id = (SELECT private.current_user_id()) OR (SELECT private.is_admin())"
         },
         "submissions_update": {
           "name": "submissions_update",
@@ -2045,7 +2054,8 @@
           "for": "UPDATE",
           "to": [
             "authenticated"
-          ]
+          ],
+          "using": "user_id = (SELECT private.current_user_id()) OR (SELECT private.is_admin())"
         }
       },
       "checkConstraints": {
@@ -2137,7 +2147,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "EXISTS (SELECT 1 FROM profiles WHERE profiles.id = (SELECT auth.uid()::text) AND profiles.role = 'admin')"
+          "using": "(SELECT private.is_admin())"
         },
         "manga_tags_admin_write": {
           "name": "manga_tags_admin_write",
@@ -2146,7 +2156,7 @@
           "to": [
             "authenticated"
           ],
-          "withCheck": "EXISTS (SELECT 1 FROM profiles WHERE profiles.id = (SELECT auth.uid()::text) AND profiles.role = 'admin')"
+          "withCheck": "(SELECT private.is_admin())"
         },
         "manga_tags_select": {
           "name": "manga_tags_select",
@@ -2235,15 +2245,6 @@
             "public"
           ],
           "using": "true"
-        },
-        "manga_views_insert": {
-          "name": "manga_views_insert",
-          "as": "PERMISSIVE",
-          "for": "INSERT",
-          "to": [
-            "public"
-          ],
-          "withCheck": "true"
         }
       },
       "checkConstraints": {},
@@ -2386,7 +2387,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "id = (SELECT auth.uid()::text)"
+          "using": "id = (SELECT private.current_user_id())"
         }
       },
       "checkConstraints": {
@@ -2548,7 +2549,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "EXISTS (SELECT 1 FROM profiles WHERE profiles.id = (SELECT auth.uid()::text) AND profiles.role = 'admin')"
+          "using": "(SELECT private.is_admin())"
         },
         "system_config_admin_update": {
           "name": "system_config_admin_update",
@@ -2557,7 +2558,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "EXISTS (SELECT 1 FROM profiles WHERE profiles.id = (SELECT auth.uid()::text) AND profiles.role = 'admin')"
+          "using": "(SELECT private.is_admin())"
         },
         "system_config_admin_write": {
           "name": "system_config_admin_write",
@@ -2566,7 +2567,7 @@
           "to": [
             "authenticated"
           ],
-          "withCheck": "EXISTS (SELECT 1 FROM profiles WHERE profiles.id = (SELECT auth.uid()::text) AND profiles.role = 'admin')"
+          "withCheck": "(SELECT private.is_admin())"
         },
         "system_config_select": {
           "name": "system_config_select",
@@ -2618,7 +2619,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "EXISTS (SELECT 1 FROM profiles WHERE profiles.id = (SELECT auth.uid()::text) AND profiles.role = 'admin')"
+          "using": "(SELECT private.is_admin())"
         },
         "tags_admin_update": {
           "name": "tags_admin_update",
@@ -2627,7 +2628,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "EXISTS (SELECT 1 FROM profiles WHERE profiles.id = (SELECT auth.uid()::text) AND profiles.role = 'admin')"
+          "using": "(SELECT private.is_admin())"
         },
         "tags_admin_write": {
           "name": "tags_admin_write",
@@ -2636,7 +2637,7 @@
           "to": [
             "authenticated"
           ],
-          "withCheck": "EXISTS (SELECT 1 FROM profiles WHERE profiles.id = (SELECT auth.uid()::text) AND profiles.role = 'admin')"
+          "withCheck": "(SELECT private.is_admin())"
         },
         "tags_select": {
           "name": "tags_select",
@@ -2740,7 +2741,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "EXISTS (SELECT 1 FROM profiles WHERE profiles.id = (SELECT auth.uid()::text) AND profiles.role = 'admin')"
+          "using": "(SELECT private.is_admin())"
         },
         "submission_limits_admin_update": {
           "name": "submission_limits_admin_update",
@@ -2749,7 +2750,7 @@
           "to": [
             "authenticated"
           ],
-          "using": "(user_id = ( SELECT (auth.uid())::text AS uid))"
+          "using": "user_id = (SELECT private.current_user_id())"
         },
         "submission_limits_admin_write": {
           "name": "submission_limits_admin_write",
@@ -2758,7 +2759,7 @@
           "to": [
             "authenticated"
           ],
-          "withCheck": "(user_id = ( SELECT (auth.uid())::text AS uid))"
+          "withCheck": "user_id = (SELECT private.current_user_id())"
         },
         "submission_limits_select": {
           "name": "submission_limits_select",
@@ -2766,7 +2767,8 @@
           "for": "SELECT",
           "to": [
             "authenticated"
-          ]
+          ],
+          "using": "user_id = (SELECT private.current_user_id())"
         }
       },
       "checkConstraints": {},

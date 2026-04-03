@@ -51,6 +51,6 @@ export function sanitizeFilename(filename: string): string {
       // Remove directory separators
       .replace(/[\/\\]/g, "")
       // Keep only alphanumeric, dots, dashes, underscores
-      .replace(/[^a-zA-Z0-9.-_]/g, "_")
+      .replace(/[^a-zA-Z0-9._-]/g, "_")
   );
 }

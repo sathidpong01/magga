@@ -110,7 +110,7 @@ export default function AdminCommentsPage() {
     } finally {
       setLoading(false);
     }
-  }, [pagination.page, pagination.limit, search]);
+  }, [pagination.page, pagination.limit, search, showError]);
 
   useEffect(() => {
     fetchComments();
@@ -183,18 +183,22 @@ export default function AdminCommentsPage() {
 
   return (
     <Box>
-      <Typography
-        variant="h4"
-        sx={{ 
-          mb: 4, 
-          fontWeight: 900, 
-          letterSpacing: "-0.02em", 
-          color: "#fafafa",
-          textTransform: "uppercase"
-        }}
-      >
-        Comments Moderation
-      </Typography>
+      <Box sx={{ mb: 3 }}>
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 900,
+            letterSpacing: "-0.03em",
+            color: "#fafafa",
+            mb: 0.75,
+          }}
+        >
+          จัดการความคิดเห็น
+        </Typography>
+        <Typography sx={{ color: "#a3a3a3", maxWidth: 720 }}>
+          ตรวจสอบ ตอบกลับ และลบความคิดเห็นจากศูนย์กลางเดียว
+        </Typography>
+      </Box>
 
       {/* Toolbar */}
       <Paper
@@ -220,7 +224,7 @@ export default function AdminCommentsPage() {
           <TextField
             fullWidth
             variant="outlined"
-            placeholder="SEARCH BY CONTENT, USER, MANGA..."
+            placeholder="ค้นหาจากเนื้อหา ผู้ใช้ หรือมังงะ"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             sx={{
@@ -274,7 +278,7 @@ export default function AdminCommentsPage() {
               height: 44
             }}
           >
-            DELETE ({selected.length})
+            ลบที่เลือก ({selected.length})
           </Button>
         )}
       </Paper>
@@ -312,12 +316,12 @@ export default function AdminCommentsPage() {
                   }}
                 />
               </TableCell>
-              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", borderColor: "rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>Type</TableCell>
-              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", borderColor: "rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>User</TableCell>
-              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", borderColor: "rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>Comment</TableCell>
-              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", borderColor: "rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>Manga</TableCell>
-              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", borderColor: "rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>Score</TableCell>
-              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.1em", textTransform: "uppercase", borderColor: "rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>Date</TableCell>
+              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "none", borderColor: "rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>ประเภท</TableCell>
+              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "none", borderColor: "rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>ผู้ใช้</TableCell>
+              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "none", borderColor: "rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>ความคิดเห็น</TableCell>
+              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "none", borderColor: "rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>มังงะ</TableCell>
+              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "none", borderColor: "rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>คะแนน</TableCell>
+              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "none", borderColor: "rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>วันที่</TableCell>
               <TableCell sx={{ py: 2.5, borderColor: "rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.04)" }} />
             </TableRow>
           </TableHead>
@@ -342,11 +346,11 @@ export default function AdminCommentsPage() {
                     color: "#737373",
                     borderColor: "rgba(255,255,255,0.06)",
                     fontWeight: 800,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.05em"
+                    textTransform: "none",
+                    letterSpacing: "0"
                   }}
                 >
-                  No comments found
+                  ไม่พบความคิดเห็น
                 </TableCell>
               </TableRow>
             ) : (
@@ -373,18 +377,18 @@ export default function AdminCommentsPage() {
                   <TableCell sx={{ borderColor: "rgba(255,255,255,0.06)" }}>
                     {comment.parent ? (
                       <Tooltip
-                        title={`REPLY TO: ${
+                        title={`ตอบกลับถึง: ${
                           comment.parent.user.name ||
                           comment.parent.user.username
                         } - "${truncate(comment.parent.content, 50)}"`}
                       >
                         <Chip
                           icon={<ReplyIcon sx={{ fontSize: 14 }} />}
-                          label="REPLY"
+                          label="ตอบกลับ"
                           size="small"
                           sx={{
                             fontWeight: 900,
-                            letterSpacing: "0.05em",
+                            letterSpacing: "0",
                             borderRadius: 0.75,
                             bgcolor: "rgba(250, 191, 6, 0.15)",
                             color: "#FABF06",
@@ -395,11 +399,11 @@ export default function AdminCommentsPage() {
                       </Tooltip>
                     ) : (
                       <Chip
-                        label="PRIMARY"
+                        label="ต้นฉบับ"
                         size="small"
                         sx={{
                           fontWeight: 900,
-                          letterSpacing: "0.05em",
+                          letterSpacing: "0",
                           borderRadius: 0.75,
                           bgcolor: "rgba(139, 92, 246, 0.15)",
                           color: "#a78bfa",
@@ -424,7 +428,7 @@ export default function AdminCommentsPage() {
                         >
                           {comment.user.name ||
                             comment.user.username ||
-                            "Unknown"}
+                            "ไม่ทราบชื่อ"}
                         </Typography>
                       </Box>
                     </Box>
@@ -442,12 +446,12 @@ export default function AdminCommentsPage() {
                     </Tooltip>
                     {comment.imageUrl && (
                       <Chip
-                        label="IMAGE"
+                        label="รูปภาพ"
                         size="small"
                         sx={{
                           mt: 0.5,
                           fontWeight: 900,
-                          letterSpacing: "0.05em",
+                          letterSpacing: "0",
                           borderRadius: 0.5,
                           bgcolor: "rgba(59, 130, 246, 0.15)",
                           color: "#60a5fa",
@@ -536,13 +540,13 @@ export default function AdminCommentsPage() {
           rowsPerPage={pagination.limit}
           onRowsPerPageChange={handleChangeRowsPerPage}
           rowsPerPageOptions={[10, 20, 50]}
-          labelRowsPerPage="SHOW:"
+          labelRowsPerPage="แสดง:"
           sx={{
             color: "#a3a3a3",
             fontWeight: 800,
             fontSize: "0.75rem",
-            letterSpacing: "0.05em",
-            textTransform: "uppercase",
+            letterSpacing: "0",
+            textTransform: "none",
             borderTop: "1px solid rgba(255,255,255,0.06)",
             "& .MuiTablePagination-selectIcon": { color: "#FABF06" },
           }}
@@ -563,15 +567,15 @@ export default function AdminCommentsPage() {
           } 
         }}
       >
-        <DialogTitle sx={{ fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em", fontSize: "1rem" }}>
-          Confirm Deletion
+        <DialogTitle sx={{ fontWeight: 900, letterSpacing: "0", fontSize: "1rem" }}>
+          ยืนยันการลบ
         </DialogTitle>
         <DialogContent>
           <Typography sx={{ fontWeight: 600, color: "#d4d4d4" }}>
-            Are you sure you want to delete {selected.length} comments?
+            ต้องการลบความคิดเห็นที่เลือกทั้งหมด {selected.length} รายการใช่หรือไม่?
           </Typography>
-          <Typography variant="body2" sx={{ mt: 1.5, color: "#ef4444", fontWeight: 700, textTransform: "uppercase", fontSize: "0.75rem" }}>
-            This action cannot be undone.
+          <Typography variant="body2" sx={{ mt: 1.5, color: "#ef4444", fontWeight: 700, textTransform: "none", fontSize: "0.75rem" }}>
+            การกระทำนี้ยกเลิกไม่ได้
           </Typography>
         </DialogContent>
         <DialogActions sx={{ p: 2.5, bgcolor: "rgba(0,0,0,0.2)" }}>
@@ -580,7 +584,7 @@ export default function AdminCommentsPage() {
             disabled={deleting}
             sx={{ color: "#a3a3a3", fontWeight: 800 }}
           >
-            CANCEL
+            ยกเลิก
           </Button>
           <Button
             onClick={handleDelete}
@@ -597,7 +601,7 @@ export default function AdminCommentsPage() {
               px: 3
             }}
           >
-            {deleting ? "DELETING..." : "DELETE"}
+            {deleting ? "กำลังลบ..." : "ลบ"}
           </Button>
         </DialogActions>
       </Dialog>

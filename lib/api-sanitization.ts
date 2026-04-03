@@ -8,12 +8,12 @@ import { z } from "zod";
 // Sensitive fields that should never be exposed
 const SENSITIVE_FIELDS = [
   "password",
-  "hashedPassword",
-  "accessToken",
-  "refreshToken",
+  "hashedpassword",
+  "accesstoken",
+  "refreshtoken",
   "secret",
-  "apiKey",
-  "privateKey",
+  "apikey",
+  "privatekey",
 ];
 
 /**

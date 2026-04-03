@@ -37,8 +37,8 @@ export async function POST(request: Request) {
         socialLinks: socialLinks || null,
       })
       .returning();
-    revalidatePath("/admin/categories");
-    revalidatePath("/submit");
+    revalidatePath("/dashboard/admin/authors");
+    revalidatePath("/dashboard/submit");
     return NextResponse.json(newAuthor, { status: 201 });
   } catch (error: any) {
     // Handle unique constraint violation (Postgres error code 23505)

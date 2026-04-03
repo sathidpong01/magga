@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { mangaSubmissions as submissionsTable, mangaSubmissionTags as submissionTagsTable, userSubmissionLimits as submissionLimitsTable, manga as mangaTable } from "@/db/schema";
 import { eq, and, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
+import { isUserBanned } from "@/lib/session-utils";
 import { z } from "zod";
 
 const submissionSchema = z.object({
@@ -15,8 +16,7 @@ const submissionSchema = z.object({
   authorId: z.string().nullable().optional(),
   tagIds: z.array(z.string()).optional(),
   extraMetadata: z.string().optional(),
-  status: z.enum(["DRAFT", "PENDING"]).optional().default("PENDING"),
-  approvedMangaId: z.string().optional(),
+  status: z.enum(["PENDING"]).optional().default("PENDING"),
 });
 
 export async function POST(req: Request) {
@@ -24,6 +24,13 @@ export async function POST(req: Request) {
     const session = await auth.api.getSession({ headers: req.headers });
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (isUserBanned(session)) {
+      return NextResponse.json(
+        { error: "บัญชีของคุณถูกระงับการใช้งาน" },
+        { status: 403 }
+      );
     }
 
     const body = await req.json();
@@ -38,7 +45,7 @@ export async function POST(req: Request) {
 
     const { 
       title, slug, description, coverImage, pages, categoryId, authorId, tagIds, 
-      extraMetadata, status, approvedMangaId 
+      extraMetadata, status
     } = validation.data;
 
     // Generate slug if not provided
@@ -59,7 +66,7 @@ export async function POST(req: Request) {
       .where(eq(mangaTable.slug, finalSlug))
       .limit(1);
 
-    if (existingManga && existingManga.id !== approvedMangaId) {
+    if (existingManga) {
       finalSlug = `${finalSlug}-${Date.now()}`;
     }
 
@@ -104,7 +111,6 @@ export async function POST(req: Request) {
         authorId: authorId || null,
         extraMetadata,
         status,
-        approvedMangaId: approvedMangaId || null,
       })
       .returning();
 

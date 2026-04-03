@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useSession } from "@/lib/auth-client";
+import { isAdminRole } from "@/lib/session-utils";
 import { Box, Typography, Button, Paper } from "@mui/material";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import HomeIcon from "@mui/icons-material/Home";
@@ -32,7 +33,7 @@ export default function DevToolsProtection() {
   const isLighthouseTesting = process.env.NEXT_PUBLIC_LIGHTHOUSE_TESTING === "true";
 
   // Skip protection for Admin users
-  const isAdmin = (session?.user as any)?.role === "admin";
+  const isAdmin = isAdminRole(session);
 
   const handleDetection = useCallback(
     (method: string) => {
@@ -63,7 +64,7 @@ export default function DevToolsProtection() {
       // Note: Avoid logging sensitive info to console in production
       // If needed, send to a secure backend API for logging
     },
-    [isAdmin, isLighthouseTesting]
+    [isAdmin, isDevelopment, isLighthouseTesting]
   );
 
   // Handle back to home - force reload
@@ -212,7 +213,7 @@ export default function DevToolsProtection() {
       const injectedStyle = document.getElementById("magga-protection-styles");
       if (injectedStyle) injectedStyle.remove();
     };
-  }, [isAdmin, isLighthouseTesting, handleDetection]);
+  }, [isAdmin, isDevelopment, isLighthouseTesting, handleDetection]);
 
   // Don't render block screen for admin, development, or Lighthouse testing
   if (isAdmin || isDevelopment || isLighthouseTesting || !isBlocked) return null;

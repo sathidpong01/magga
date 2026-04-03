@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth-helpers";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import sharp from "sharp";
 
@@ -15,19 +16,9 @@ const s3Client = new S3Client({
 export async function POST(request: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });
-    
-    // Debug log
-    console.log("Upload session:", session ? { 
-      user: session.user?.email, 
-      role: (session.user as { role?: string })?.role 
-    } : "No session");
-    
-    if (!session || (session.user as { role?: string })?.role !== "ADMIN") {
-      return NextResponse.json({ 
-        error: "Unauthorized", 
-        debug: session ? "Not admin role" : "No session" 
-      }, { status: 401 });
-    }
+
+    const authError = requireAdmin(session);
+    if (authError) return authError;
 
     const formData = await request.formData();
     const file = formData.get("file") as File | null;

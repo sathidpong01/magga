@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { categories as categoriesTable, tags as tagsTable, advertisements as adsTable, mangaTags } from "@/db/schema";
-import { asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { Typography, Box, Container } from "@mui/material";
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
@@ -58,7 +58,7 @@ const getTags = unstable_cache(
 const getGridAds = unstable_cache(
   async () => {
     return db.query.advertisements.findMany({
-      where: eq(adsTable.isActive, true),
+      where: and(eq(adsTable.isActive, true), eq(adsTable.placement, "grid")),
       columns: {
         id: true,
         type: true,
@@ -95,6 +95,7 @@ export default async function Home({ searchParams }: Props) {
       ? tagNames
       : [tagNames]
     : [];
+  const homePageSize = gridAds.length > 0 ? 11 : 12;
 
   return (
     <Container maxWidth="xl">
@@ -105,13 +106,14 @@ export default async function Home({ searchParams }: Props) {
         </Suspense>
 
         {/* Streaming: Manga grid loads progressively while skeleton shows */}
-        <Suspense fallback={<MangaGridSkeleton count={12} />}>
+        <Suspense fallback={<MangaGridSkeleton count={homePageSize} />}>
           <StreamingMangaGrid
             search={search}
             categoryId={categoryId}
             tagNames={tagNameArray}
             sort={sort}
             ads={gridAds as any}
+            pageSize={homePageSize}
           />
         </Suspense>
       </Box>

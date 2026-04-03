@@ -8,6 +8,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { headers } from "next/headers";
+import { isAdminRole, isUserBanned } from "@/lib/session-utils";
 
 // ============================================================================
 // Schema Definitions
@@ -67,7 +68,7 @@ export async function createComment(formData: FormData) {
     return { error: "กรุณาเข้าสู่ระบบก่อนแสดงความคิดเห็น" };
   }
 
-  if ((session.user as any).banned) {
+  if (isUserBanned(session)) {
     return { error: "บัญชีของคุณถูกระงับการใช้งาน" };
   }
 
@@ -123,8 +124,7 @@ export async function createComment(formData: FormData) {
       return { error: "Manga not found" };
     }
 
-    const userRole = (session.user as { role?: string }).role;
-    if (manga.isHidden && userRole !== "admin") {
+    if (manga.isHidden && !isAdminRole(session)) {
       return { error: "Cannot comment on hidden manga" };
     }
 
@@ -233,7 +233,7 @@ export async function deleteComment(commentId: string) {
     }
 
     const isOwner = comment.userId === session.user.id;
-    const isAdmin = (session.user as { role?: string }).role === "admin";
+    const isAdmin = isAdminRole(session);
 
     if (!isOwner && !isAdmin) {
       return { error: "You don't have permission to delete this comment" };
@@ -260,7 +260,7 @@ export async function voteComment(commentId: string, value: 1 | -1) {
     return { error: "กรุณาเข้าสู่ระบบก่อนโหวต" };
   }
 
-  if ((session.user as any).banned) {
+  if (isUserBanned(session)) {
     return { error: "บัญชีของคุณถูกระงับการใช้งาน" };
   }
 

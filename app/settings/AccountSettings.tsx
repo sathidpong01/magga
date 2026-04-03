@@ -36,7 +36,7 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import WarningIcon from "@mui/icons-material/Warning";
 import React from "react";
 import Link from "next/link";
-import { linkSocial } from "@/lib/auth-client";
+import { linkSocial, useSession } from "@/lib/auth-client";
 import GoogleIcon from "@mui/icons-material/Google";
 import LinkIcon from "@mui/icons-material/Link";
 import LinkOffIcon from "@mui/icons-material/LinkOff";
@@ -642,25 +642,47 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
 }
 
 function BlockedUsersPanel({ onCountChange }: { onCountChange?: (n: number) => void }) {
+  const { data: session, isPending: isSessionPending } = useSession();
   const [blockedList, setBlockedList] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [removing, setRemoving] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isSessionPending) {
+      return;
+    }
+
+    if (!session?.user?.id) {
+      setBlockedList([]);
+      onCountChange?.(0);
+      setLoadingData(false);
+      return;
+    }
+
+    let cancelled = false;
+
     (async () => {
       try {
         const res = await fetch("/api/user/blocked-users");
         if (res.ok) {
           const data = await res.json();
           const list = data.blockedUsers || [];
-          setBlockedList(list);
-          onCountChange?.(list.length);
+          if (!cancelled) {
+            setBlockedList(list);
+            onCountChange?.(list.length);
+          }
         }
       } finally {
-        setLoadingData(false);
+        if (!cancelled) {
+          setLoadingData(false);
+        }
       }
     })();
-  }, []);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isSessionPending, onCountChange, session?.user?.id]);
 
   const handleUnblock = async (blockedUserId: string) => {
     setRemoving(blockedUserId);
@@ -721,6 +743,7 @@ function BlockedUsersPanel({ onCountChange }: { onCountChange?: (n: number) => v
 }
 
 function BlockedTagsPanel({ onCountChange }: { onCountChange?: (n: number) => void }) {
+  const { data: session, isPending: isSessionPending } = useSession();
   const [blockedList, setBlockedList] = useState<any[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [removing, setRemoving] = useState<string | null>(null);
@@ -730,24 +753,47 @@ function BlockedTagsPanel({ onCountChange }: { onCountChange?: (n: number) => vo
   const [allTags, setAllTags] = useState<any[]>([]);
 
   useEffect(() => {
+    if (isSessionPending) {
+      return;
+    }
+
+    if (!session?.user?.id) {
+      setBlockedList([]);
+      onCountChange?.(0);
+      setLoadingData(false);
+      return;
+    }
+
+    let cancelled = false;
+
     (async () => {
       try {
         const [tagsRes, blockedRes] = await Promise.all([
           fetch("/api/tags"),
           fetch("/api/user/blocked-tags"),
         ]);
-        if (tagsRes.ok) setAllTags(await tagsRes.json());
+        if (tagsRes.ok && !cancelled) {
+          setAllTags(await tagsRes.json());
+        }
         if (blockedRes.ok) {
           const data = await blockedRes.json();
           const list = data.blockedTags || [];
-          setBlockedList(list);
-          onCountChange?.(list.length);
+          if (!cancelled) {
+            setBlockedList(list);
+            onCountChange?.(list.length);
+          }
         }
       } finally {
-        setLoadingData(false);
+        if (!cancelled) {
+          setLoadingData(false);
+        }
       }
     })();
-  }, []);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isSessionPending, onCountChange, session?.user?.id]);
 
   const handleSearch = (q: string) => {
     setSearch(q);

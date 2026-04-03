@@ -58,7 +58,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       );
     }
 
-    revalidatePath("/admin");
+    revalidatePath("/dashboard/admin");
+    revalidatePath("/dashboard/admin/manga");
     revalidatePath("/");
     if (updatedManga.slug) {
       revalidatePath(`/${updatedManga.slug}`);
@@ -80,7 +81,8 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 
   try {
     await db.delete(mangaTable).where(eq(mangaTable.id, id));
-    revalidatePath("/admin");
+    revalidatePath("/dashboard/admin");
+    revalidatePath("/dashboard/admin/manga");
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     return NextResponse.json({ error: "Failed to delete manga" }, { status: 500 });

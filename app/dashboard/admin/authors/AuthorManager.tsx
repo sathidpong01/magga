@@ -92,7 +92,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
       }
       setSocialLinks(newLinks);
     } catch {
-      showError("Failed to fetch metadata from URL.");
+      showError("ไม่สามารถดึงข้อมูลจาก URL นี้ได้");
     } finally {
       setIsFetching(null);
     }
@@ -149,12 +149,12 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
       }
 
       showSuccess(
-        editingAuthor ? "Author updated successfully." : "Author added successfully."
+        editingAuthor ? "อัปเดตผู้แต่งเรียบร้อย" : "เพิ่มผู้แต่งเรียบร้อย"
       );
       resetForm();
       router.refresh();
     } catch (err) {
-      showError(err instanceof Error ? err.message : "An error occurred.");
+      showError(err instanceof Error ? err.message : "เกิดข้อผิดพลาด");
     } finally {
       setIsLoading(false);
     }
@@ -205,10 +205,10 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
       if (!response.ok) throw new Error("Delete failed.");
       setDeleteDialogOpen(false);
       setAuthorToDelete(null);
-      showSuccess("Author deleted successfully.");
+      showSuccess("ลบผู้แต่งเรียบร้อย");
       router.refresh();
     } catch {
-      showError("Failed to delete author.");
+      showError("ไม่สามารถลบผู้แต่งได้");
       setDeleteDialogOpen(false);
     }
   };
@@ -244,8 +244,8 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
           alignItems="center"
           sx={{ mb: 2 }}
         >
-          <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#fafafa", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-            {editingAuthor ? "EDIT AUTHOR" : "ADD NEW AUTHOR"}
+          <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#fafafa", letterSpacing: "0.03em" }}>
+            {editingAuthor ? "แก้ไขผู้แต่ง" : "เพิ่มผู้แต่ง"}
           </Typography>
           <Stack direction="row" spacing={1}>
             {editingAuthor && (
@@ -256,13 +256,12 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                   borderColor: "rgba(255,255,255,0.1)",
                   color: "#a3a3a3",
                   fontWeight: 800,
-                  textTransform: "uppercase",
                   fontSize: "0.75rem",
-                  letterSpacing: "0.05em",
+                  letterSpacing: "0",
                   "&:hover": { borderColor: "rgba(255,255,255,0.2)", bgcolor: "rgba(255,255,255,0.02)" },
                 }}
               >
-                CANCEL
+                ยกเลิก
               </Button>
             )}
             <Button
@@ -289,7 +288,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                 "&.Mui-disabled": { bgcolor: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.2)" }
               }}
             >
-              {editingAuthor ? "UPDATE" : "ADD"}
+                {editingAuthor ? "บันทึกการแก้ไข" : "เพิ่ม"}
             </Button>
           </Stack>
         </Stack>
@@ -300,9 +299,9 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
             <Box>
               <Typography
                 variant="caption"
-                sx={{ color: "#a3a3a3", mb: 0.5, display: "block", fontWeight: 700, textTransform: "uppercase", fontSize: "0.75rem" }}
+                sx={{ color: "#a3a3a3", mb: 0.5, display: "block", fontWeight: 700, textTransform: "none", fontSize: "0.75rem" }}
               >
-                AUTHOR NAME *
+                ชื่อผู้แต่ง *
               </Typography>
               <TextField
                 value={name}
@@ -310,7 +309,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                 fullWidth
                 required
                 size="small"
-                placeholder="AUTHOR NAME OR PEN NAME..."
+                placeholder="ชื่อผู้แต่งหรือชื่อปากกา..."
                 sx={{
                   "& .MuiOutlinedInput-root": {
                     bgcolor: "#0B0B0B",
@@ -326,9 +325,9 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
             <Box>
               <Typography
                 variant="subtitle2"
-                sx={{ color: "#a3a3a3", mb: 1.5, fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "0.75rem" }}
+                sx={{ color: "#a3a3a3", mb: 1.5, fontWeight: 900, textTransform: "none", letterSpacing: "0", fontSize: "0.75rem" }}
               >
-                SOCIAL MEDIA CHANNELS
+                ช่องทางโซเชียล
               </Typography>
 
               <Stack spacing={2}>
@@ -384,7 +383,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                           variant="caption"
                           sx={{ color: "#737373", mb: 0.5, display: "block" }}
                         >
-                          Label
+                          ป้ายชื่อ
                         </Typography>
                         <TextField
                           value={link.label}
@@ -407,7 +406,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                           variant="caption"
                           sx={{ color: "#737373", mb: 0.5, display: "block" }}
                         >
-                          Icon URL
+                          URL ไอคอน
                         </Typography>
                         <Stack direction="row" spacing={1} alignItems="center">
                           <TextField
@@ -417,7 +416,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                             }
                             fullWidth
                             size="small"
-                            placeholder="URL ไอคอน"
+                              placeholder="วาง URL ไอคอน"
                             sx={{
                               "& .MuiOutlinedInput-root": {
                                 bgcolor: "#262626",
@@ -438,7 +437,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                         spacing={0.5}
                         sx={{ flexShrink: 0, pb: 0.5 }}
                       >
-                        <Tooltip title="Auto-fetch Title & Icon">
+                        <Tooltip title="ดึงชื่อและไอคอนอัตโนมัติ">
                           <Box component="span">
                             <IconButton
                               onClick={() => handleAutoFetch(index)}
@@ -459,7 +458,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                           </Box>
                         </Tooltip>
                         {socialLinks.length > 1 && (
-                          <Tooltip title="REMOVE CHANNEL">
+                          <Tooltip title="ลบช่องทางนี้">
                             <IconButton
                               onClick={() => removeSocialLink(index)}
                               size="small"
@@ -493,16 +492,16 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                   borderColor: "rgba(255,255,255,0.1)",
                   color: "#FABF06",
                   fontWeight: 800,
-                  textTransform: "uppercase",
+                  textTransform: "none",
                   fontSize: "0.7rem",
-                  letterSpacing: "0.05em",
+                  letterSpacing: "0",
                   "&:hover": {
                     borderColor: "#FABF06",
                     bgcolor: "rgba(250, 191, 6, 0.05)",
                   },
                 }}
               >
-                ADD SOCIAL CHANNEL
+                เพิ่มช่องทาง
               </Button>
             </Box>
           </Stack>
@@ -521,26 +520,26 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
         <Box sx={{ px: 3, py: 2.5, borderBottom: "1px solid rgba(255,255,255,0.06)", bgcolor: "rgba(255,255,255,0.02)" }}>
           <Typography
             variant="subtitle1"
-            sx={{ fontWeight: 900, color: "#fafafa", textTransform: "uppercase", fontSize: "0.85rem", letterSpacing: "0.1em" }}
+            sx={{ fontWeight: 900, color: "#fafafa", textTransform: "none", fontSize: "0.85rem", letterSpacing: "0" }}
           >
-            AUTHOR LIST ({authors.length})
+            รายชื่อผู้แต่ง ({authors.length})
           </Typography>
         </Box>
         <TableContainer>
           <Table>
             <TableHead>
               <TableRow sx={{ bgcolor: "rgba(0,0,0,0.2)" }}>
-                <TableCell sx={{ fontWeight: 800, color: "#a3a3a3", fontSize: "0.75rem", letterSpacing: "0.05em" }}>
-                  NAME
+                <TableCell sx={{ fontWeight: 800, color: "#a3a3a3", fontSize: "0.75rem", letterSpacing: "0" }}>
+                  ชื่อ
                 </TableCell>
-                <TableCell sx={{ fontWeight: 800, color: "#a3a3a3", fontSize: "0.75rem", letterSpacing: "0.05em" }}>
-                  SOCIAL LINKS
+                <TableCell sx={{ fontWeight: 800, color: "#a3a3a3", fontSize: "0.75rem", letterSpacing: "0" }}>
+                  ช่องทาง
                 </TableCell>
                 <TableCell
                   align="right"
-                  sx={{ fontWeight: 800, color: "#a3a3a3", fontSize: "0.75rem", letterSpacing: "0.05em", width: 120 }}
+                  sx={{ fontWeight: 800, color: "#a3a3a3", fontSize: "0.75rem", letterSpacing: "0", width: 120 }}
                 >
-                  ACTIONS
+                  จัดการ
                 </TableCell>
               </TableRow>
             </TableHead>
@@ -601,7 +600,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                           ))
                         ) : (
                           <Typography variant="body2" sx={{ color: "#525252" }}>
-                            ไม่มี
+                            ไม่มีข้อมูล
                           </Typography>
                         )}
                       </Stack>
@@ -619,7 +618,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                           <EditIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title="DELETE AUTHOR">
+                      <Tooltip title="ลบผู้แต่ง">
                         <IconButton
                           onClick={() => handleDeleteClick(author)}
                           size="small"
@@ -641,7 +640,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                     colSpan={3}
                     sx={{ textAlign: "center", py: 6, color: "#525252" }}
                   >
-                    ยังไม่มีผู้แต่ง กรุณาเพิ่มผู้แต่งแรกด้านบน
+                    ยังไม่มีผู้แต่ง กรุณาเพิ่มรายการแรกด้านบน
                   </TableCell>
                 </TableRow>
               )}
@@ -665,27 +664,27 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
           },
         }}
       >
-        <DialogTitle sx={{ fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.1em", fontSize: "1rem" }}>
-          Confirm Deletion
+        <DialogTitle sx={{ fontWeight: 900, letterSpacing: "0", fontSize: "1rem" }}>
+          ยืนยันการลบ
         </DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ color: "#d4d4d4", fontWeight: 600 }}>
-            Are you sure you want to delete author &quot;{authorToDelete?.name}&quot;?
+            ต้องการลบผู้แต่ง &quot;{authorToDelete?.name}&quot; ใช่หรือไม่?
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ p: 2.5, bgcolor: "rgba(0,0,0,0.2)" }}>
           <Button
             onClick={() => setDeleteDialogOpen(false)}
-            sx={{ color: "#a3a3a3", fontWeight: 800, textTransform: "uppercase", fontSize: "0.75rem" }}
+            sx={{ color: "#a3a3a3", fontWeight: 800, textTransform: "none", fontSize: "0.75rem" }}
           >
-            CANCEL
+            ยกเลิก
           </Button>
           <Button
             onClick={handleDeleteConfirm}
             variant="contained"
             sx={{ bgcolor: "#ef4444", color: "#fff", fontWeight: 900, "&:hover": { bgcolor: "#dc2626" }, px: 3 }}
           >
-            DELETE
+            ลบ
           </Button>
         </DialogActions>
       </Dialog>

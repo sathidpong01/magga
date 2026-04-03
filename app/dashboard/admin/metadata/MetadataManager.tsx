@@ -81,20 +81,20 @@ export default function MetadataManager({
         const newItem = await res.json();
         if (activeTab === 0) {
           setCategories([...categories, newItem]);
-          showSuccess(`Category "${newItemName}" added successfully.`);
+          showSuccess(`เพิ่มหมวดหมู่ "${newItemName}" เรียบร้อย`);
         } else {
           setTags([...tags, newItem]);
-          showSuccess(`Tag "${newItemName}" added successfully.`);
+          showSuccess(`เพิ่มแท็ก "${newItemName}" เรียบร้อย`);
         }
         setNewItemName("");
         setAddDialogOpen(false);
       } else {
         const data = await res.json();
-        showError(data.error || "Failed to add item.");
+        showError(data.error || "ไม่สามารถเพิ่มรายการได้");
       }
     } catch (error) {
       console.error("Failed to add item:", error);
-      showError("An error occurred while adding the item.");
+      showError("เกิดข้อผิดพลาดระหว่างเพิ่มรายการ");
     }
   };
 
@@ -114,20 +114,20 @@ export default function MetadataManager({
       if (res.ok) {
         if (activeTab === 0) {
           setCategories(categories.filter((c) => c.id !== itemToDelete.id));
-          showSuccess(`Category "${itemToDelete.name}" deleted successfully.`);
+          showSuccess(`ลบหมวดหมู่ "${itemToDelete.name}" เรียบร้อย`);
         } else {
           setTags(tags.filter((t) => t.id !== itemToDelete.id));
-          showSuccess(`Tag "${itemToDelete.name}" deleted successfully.`);
+          showSuccess(`ลบแท็ก "${itemToDelete.name}" เรียบร้อย`);
         }
         setDeleteDialogOpen(false);
         setItemToDelete(null);
       } else {
         const data = await res.json();
-        showError(data.error || "Failed to delete item.");
+        showError(data.error || "ไม่สามารถลบรายการได้");
       }
     } catch (error) {
       console.error("Failed to delete item:", error);
-      showError("An error occurred while deleting the item.");
+      showError("เกิดข้อผิดพลาดระหว่างลบรายการ");
     }
   };
 
@@ -148,7 +148,7 @@ export default function MetadataManager({
         }}
       >
         <Typography variant="h4" sx={{ fontWeight: 900, letterSpacing: "-0.02em", color: "#fafafa" }}>
-          METADATA MANAGEMENT
+          จัดการเมตาดาต้า
         </Typography>
         <Button
           variant="contained"
@@ -161,12 +161,12 @@ export default function MetadataManager({
             px: 3,
             py: 1,
             fontWeight: 800,
-            textTransform: "uppercase",
-            letterSpacing: "0.02em",
+            textTransform: "none",
+            letterSpacing: "0",
             "&:hover": { bgcolor: "#eab308" },
           }}
         >
-          ADD {activeTab === 0 ? "CATEGORY" : "TAG"}
+          {activeTab === 0 ? "เพิ่มหมวดหมู่" : "เพิ่มแท็ก"}
         </Button>
       </Box>
 
@@ -192,11 +192,11 @@ export default function MetadataManager({
             borderBottom: "1px solid rgba(255,255,255,0.06)",
             "& .MuiTab-root": {
               color: "#a3a3a3",
-              textTransform: "uppercase",
+              textTransform: "none",
               fontSize: "0.875rem",
               fontWeight: 800,
               minHeight: 48,
-              letterSpacing: "0.05em",
+              letterSpacing: "0",
             },
             "& .Mui-selected": {
               color: "#FABF06 !important",
@@ -206,19 +206,19 @@ export default function MetadataManager({
           <Tab
             icon={<CategoryIcon sx={{ fontSize: 18 }} />}
             iconPosition="start"
-            label={`CATEGORIES (${categories.length})`}
+            label={`หมวดหมู่ (${categories.length})`}
           />
           <Tab
             icon={<LocalOfferIcon sx={{ fontSize: 18 }} />}
             iconPosition="start"
-            label={`TAGS (${tags.length})`}
+            label={`แท็ก (${tags.length})`}
           />
         </Tabs>
 
         {/* Search */}
         <TextField
           fullWidth
-          placeholder={activeTab === 0 ? "SEARCH CATEGORIES..." : "SEARCH TAGS..."}
+          placeholder={activeTab === 0 ? "ค้นหาหมวดหมู่..." : "ค้นหาแท็ก..."}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           sx={{
@@ -262,16 +262,16 @@ export default function MetadataManager({
                     </IconButton>
                   }
                   sx={{
-                    bgcolor: "rgba(99, 102, 241, 0.12)",
-                    color: "#a5b4fc",
+                    bgcolor: "rgba(250, 191, 6, 0.08)",
+                    color: "#f5d66a",
                     borderRadius: 0.75,
-                    border: "1px solid rgba(99, 102, 241, 0.4)",
+                    border: "1px solid rgba(250, 191, 6, 0.18)",
                     fontSize: "0.75rem",
                     height: 32,
                     px: 1,
                     fontWeight: 800,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.02em",
+                    textTransform: "none",
+                    letterSpacing: "0",
                     "& .MuiChip-deleteIcon": {
                       color: "rgba(255,255,255,0.4)",
                       fontSize: 16,
@@ -297,13 +297,13 @@ export default function MetadataManager({
                     bgcolor: "rgba(250, 191, 6, 0.08)",
                     color: "#FABF06",
                     borderRadius: 0.75,
-                    border: "1px solid rgba(250, 191, 6, 0.4)",
+                    border: "1px solid rgba(250, 191, 6, 0.18)",
                     fontSize: "0.75rem",
                     height: 32,
                     px: 1,
                     fontWeight: 800,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.02em",
+                    textTransform: "none",
+                    letterSpacing: "0",
                     "& .MuiChip-deleteIcon": {
                       color: "rgba(255,255,255,0.4)",
                       fontSize: 16,
@@ -324,23 +324,23 @@ export default function MetadataManager({
             borderTop: "1px solid rgba(255,255,255,0.06)",
           }}
         >
-          <Typography variant="body2" sx={{ color: "#737373", fontWeight: 700, textTransform: "uppercase", fontSize: "0.65rem", letterSpacing: "0.05em" }}>
-            SHOWING{" "}
+          <Typography variant="body2" sx={{ color: "#737373", fontWeight: 700, textTransform: "none", fontSize: "0.7rem", letterSpacing: "0" }}>
+            แสดง{" "}
             <Box component="span" sx={{ color: "#fafafa" }}>
               {activeTab === 0 ? filteredCategories.length : filteredTags.length}
             </Box>{" "}
-            OF{" "}
+            จาก{" "}
             <Box component="span" sx={{ color: "#fafafa" }}>
               {activeTab === 0 ? categories.length : tags.length}
             </Box>{" "}
-            ITEMS
+            รายการ
           </Typography>
           <Button
             size="small"
             onClick={() => setSearch("")}
-            sx={{ color: "#a3a3a3", fontWeight: 800, textTransform: "uppercase", fontSize: "0.7rem", "&:hover": { color: "#FABF06", bgcolor: "transparent", textDecoration: "underline" } }}
+            sx={{ color: "#a3a3a3", fontWeight: 800, textTransform: "none", fontSize: "0.8rem", "&:hover": { color: "#FABF06", bgcolor: "transparent", textDecoration: "underline" } }}
           >
-            CLEAR ALL FILTERS
+            ล้างตัวกรอง
           </Button>
         </Box>
       </Box>
@@ -369,17 +369,17 @@ export default function MetadataManager({
             fontSize: "1rem",
             borderBottom: "1px solid rgba(255,255,255,0.06)",
             pb: 2,
-            textTransform: "uppercase",
-            letterSpacing: "0.1em"
+            textTransform: "none",
+            letterSpacing: "0"
           }}
         >
-          ADD NEW {activeTab === 0 ? "CATEGORY" : "TAG"}
+          {activeTab === 0 ? "เพิ่มหมวดหมู่ใหม่" : "เพิ่มแท็กใหม่"}
         </DialogTitle>
         <DialogContent sx={{ pt: 3 }}>
           <TextField
             autoFocus
             fullWidth
-            placeholder={`ENTER ${activeTab === 0 ? "CATEGORY" : "TAG"} NAME...`}
+            placeholder={`กรอกชื่อ${activeTab === 0 ? "หมวดหมู่" : "แท็ก"}...`}
             value={newItemName}
             onChange={(e) => setNewItemName(e.target.value)}
             onKeyPress={(e) => e.key === "Enter" && handleAddItem()}
@@ -405,12 +405,12 @@ export default function MetadataManager({
             sx={{
               color: "#a3a3a3",
               fontWeight: 800,
-              textTransform: "uppercase",
-              fontSize: "0.75rem",
-              letterSpacing: "0.05em"
+              textTransform: "none",
+              fontSize: "0.85rem",
+              letterSpacing: "0"
             }}
           >
-            CANCEL
+            ยกเลิก
           </Button>
           <Button
             onClick={handleAddItem}
@@ -422,13 +422,13 @@ export default function MetadataManager({
               borderRadius: 1,
               px: 4,
               fontWeight: 900,
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
+              textTransform: "none",
+              letterSpacing: "0",
               "&:hover": { bgcolor: "#eab308" },
               "&:disabled": { bgcolor: "#404040", color: "#737373" },
             }}
           >
-            CREATE {activeTab === 0 ? "CATEGORY" : "TAG"}
+            {activeTab === 0 ? "เพิ่มหมวดหมู่" : "เพิ่มแท็ก"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -467,15 +467,15 @@ export default function MetadataManager({
           </Box>
           <Typography
             variant="h6"
-            sx={{ color: "#fafafa", fontWeight: 900, mb: 1, textTransform: "uppercase", letterSpacing: "0.05em" }}
+            sx={{ color: "#fafafa", fontWeight: 900, mb: 1, textTransform: "none", letterSpacing: "0" }}
           >
-            CONFIRM DELETION
+            ยืนยันการลบ
           </Typography>
           <Typography sx={{ color: "#a3a3a3", mb: 2, fontWeight: 600 }}>
-            Are you sure you want to delete {activeTab === 0 ? "category" : "tag"} &quot;{itemToDelete?.name}&quot;?
+            ยืนยันว่าจะลบ{activeTab === 0 ? "หมวดหมู่" : "แท็ก"} &quot;{itemToDelete?.name}&quot; ใช่หรือไม่
           </Typography>
-          <Typography sx={{ color: "#ef4444", fontSize: "0.75rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.02em" }}>
-            This action cannot be undone.
+          <Typography sx={{ color: "#ef4444", fontSize: "0.75rem", fontWeight: 700, textTransform: "none", letterSpacing: "0" }}>
+            การกระทำนี้ยกเลิกไม่ได้
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 3, gap: 1, justifyContent: "center" }}>
@@ -489,13 +489,13 @@ export default function MetadataManager({
               fontWeight: 800,
               px: 4,
               py: 1,
-              textTransform: "uppercase",
-              fontSize: "0.75rem",
-              letterSpacing: "0.05em",
+              textTransform: "none",
+              fontSize: "0.85rem",
+              letterSpacing: "0",
               "&:hover": { color: "#fafafa" },
             }}
           >
-            CANCEL
+            ยกเลิก
           </Button>
           <Button
             onClick={handleDeleteConfirm}
@@ -507,12 +507,12 @@ export default function MetadataManager({
               px: 4,
               py: 1,
               fontWeight: 900,
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
+              textTransform: "none",
+              letterSpacing: "0",
               "&:hover": { bgcolor: "#dc2626" },
             }}
           >
-            DELETE
+            ลบ
           </Button>
         </DialogActions>
       </Dialog>

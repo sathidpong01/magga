@@ -1,25 +1,26 @@
-import { Box, Skeleton, Paper, Stack } from "@mui/material";
+import { Box, Skeleton, Stack } from "@mui/material";
+import { DashboardSurface } from "@/app/components/dashboard/system";
 
 export default function DashboardLoading() {
   return (
-    <Box sx={{ p: 3 }}>
+    <Box>
       {/* Header */}
-      <Stack spacing={1} sx={{ mb: 4 }}>
+      <Stack spacing={1} sx={{ mb: 4.5 }}>
         <Skeleton
           variant="text"
-          width={200}
-          height={40}
-          sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 1 }}
+          width={220}
+          height={46}
+          sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: 2 }}
         />
         <Skeleton
           variant="text"
-          width={300}
-          height={24}
-          sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 1 }}
+          width={360}
+          height={26}
+          sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 2 }}
         />
       </Stack>
 
-      {/* Stats Cards */}
+      {/* Header surface */}
       <Box
         sx={{
           display: "grid",
@@ -29,21 +30,19 @@ export default function DashboardLoading() {
         }}
       >
         {[1, 2, 3].map((i) => (
-          <Paper
+          <DashboardSurface
             key={i}
             sx={{
               p: 3,
-              bgg: "#171717",
-              border: "1px solid rgba(255,255,255,0.08)",
-              borderRadius: 1,
+              minHeight: 148,
             }}
           >
             <Stack spacing={2}>
               <Skeleton
                 variant="rectangular"
-                width={40}
-                height={40}
-                sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 1 }}
+                width={44}
+                height={44}
+                sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: 2 }}
               />
               <Skeleton
                 variant="text"
@@ -52,29 +51,26 @@ export default function DashboardLoading() {
               />
               <Skeleton
                 variant="text"
-                width={80}
-                height={32}
-                sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 1 }}
+                width={100}
+                height={38}
+                sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 2 }}
               />
             </Stack>
-          </Paper>
+          </DashboardSurface>
         ))}
       </Box>
 
       {/* Recent Activity */}
-      <Paper
+      <DashboardSurface
         sx={{
           p: 3,
-          bgcolor: "#171717",
-          border: "1px solid rgba(255,255,255,0.08)",
-          borderRadius: 1,
         }}
       >
         <Skeleton
           variant="text"
           width={180}
           height={32}
-          sx={{ bgcolor: "rgba(255,255,255,0.05)", mb: 2 }}
+          sx={{ bgcolor: "rgba(255,255,255,0.05)", mb: 2.5 }}
         />
         <Stack spacing={2}>
           {[1, 2, 3, 4].map((i) => (
@@ -100,7 +96,7 @@ export default function DashboardLoading() {
             </Box>
           ))}
         </Stack>
-      </Paper>
+      </DashboardSurface>
     </Box>
   );
 }

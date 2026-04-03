@@ -96,7 +96,7 @@ export default function MyCommentsPage() {
       }
       fetchComments(1);
     }
-  }, [session, isPending, isOwnProfile]);
+  }, [fetchComments, isOwnProfile, isPending, router, session, username]);
 
   if (isPending || loading) {
     return (

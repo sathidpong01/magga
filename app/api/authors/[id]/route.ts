@@ -61,7 +61,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
       .where(eq(authorsTable.id, id))
       .returning();
 
-    revalidatePath("/admin/categories");
+    revalidatePath("/dashboard/admin/authors");
     return NextResponse.json(updatedAuthor);
   } catch (error: any) {
     if (error.code === "23505") {
@@ -82,7 +82,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
   try {
     await db.delete(authorsTable).where(eq(authorsTable.id, id));
-    revalidatePath("/admin/categories");
+    revalidatePath("/dashboard/admin/authors");
     return new NextResponse(null, { status: 204 });
   } catch {
     return NextResponse.json(

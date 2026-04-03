@@ -128,7 +128,7 @@ export default function MangaReader({
         });
       }
     },
-    [mangaId]
+    [mangaId, CACHE_DURATION]
   );
 
   const handleCommentCreated = useCallback(

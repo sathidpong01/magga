@@ -20,6 +20,7 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { useSession, signOut } from "@/lib/auth-client";
+import { isAdminRole, isUserBanned } from "@/lib/session-utils";
 import MenuIcon from "@mui/icons-material/Menu";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
@@ -56,7 +57,8 @@ export default function Header() {
     setAnchorEl(null);
   };
 
-  const isAdmin = (session?.user as any)?.role === "admin";
+  const isAdmin = isAdminRole(session);
+  const banned = isUserBanned(session);
 
   return (
     <>
@@ -76,7 +78,7 @@ export default function Header() {
       }}
     >
       {/* Ban Warning Banner - Show on ALL pages */}
-      {(session?.user as any)?.banned && (
+      {banned && (
         <Box
           sx={{
             bgcolor: "#ef4444",
@@ -331,7 +333,7 @@ export default function Header() {
                     >
                       {isAdmin ? "Administrator" : "Member"}
                     </Typography>
-                    {(session?.user as any)?.banned && (
+                    {banned && (
                       <Chip
                         label="ระงับการใช้งาน"
                         size="small"
@@ -430,7 +432,7 @@ export default function Header() {
                 <MenuItem
                   onClick={handleMenuClose}
                   component={Link}
-                  href="/submit"
+                  href="/auth/signin?callbackUrl=/dashboard/submit"
                 >
                   <ListItemIcon>
                     <CloudUploadIcon sx={{ color: "#fbbf24" }} />

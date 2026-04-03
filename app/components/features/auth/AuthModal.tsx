@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { signIn } from "@/lib/auth-client";
+import { signIn, syncClientSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import {
   Dialog,
@@ -62,6 +62,7 @@ export default function AuthModal({ open, onClose, onSuccess, callbackUrl = "/" 
       if (result?.error) {
         setError(result.error.message || "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
       } else {
+        await syncClientSession();
         setSuccess("เข้าสู่ระบบสำเร็จ!");
         setTimeout(() => {
           onClose();
