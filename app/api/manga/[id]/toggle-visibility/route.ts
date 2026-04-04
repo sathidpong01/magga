@@ -1,3 +1,4 @@
+import { revalidatePath, revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { manga as mangaTable } from "@/db/schema";
@@ -33,6 +34,11 @@ export async function PATCH(
       .set({ isHidden: !currentManga.isHidden })
       .where(eq(mangaTable.id, id))
       .returning();
+
+    revalidatePath("/dashboard/admin");
+    revalidatePath("/dashboard/admin/manga");
+    revalidatePath("/");
+    revalidateTag("manga-list", "max");
 
     return NextResponse.json(updatedManga);
   } catch (error) {

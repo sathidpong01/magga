@@ -102,6 +102,8 @@ export default function UnifiedDashboardSidebar() {
       items={menuItems}
       bottomItems={bottomItems}
       storageKey="unified-dashboard-sidebar-collapsed"
+      session={session ?? null}
+      banned={banned}
     />
   );
 }

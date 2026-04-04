@@ -14,8 +14,7 @@ import {
   useTheme,
 } from "@mui/material";
 import Link from "next/link";
-import { useSession, signOutAndSync } from "@/lib/auth-client";
-import { isUserBanned } from "@/lib/session-utils";
+import { signOutAndSync } from "@/lib/auth-client";
 import { dashboardTokens } from "@/app/components/dashboard/system";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
@@ -35,6 +34,14 @@ interface CollapsibleSidebarProps {
   items: SidebarItem[];
   bottomItems?: SidebarItem[];
   storageKey?: string; // For localStorage persistence
+  session?: {
+    user?: {
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+    } | null;
+  } | null;
+  banned?: boolean;
 }
 
 const EXPANDED_WIDTH = 272;
@@ -45,12 +52,12 @@ export default function CollapsibleSidebar({
   items,
   bottomItems = [],
   storageKey = "sidebar-collapsed",
+  session = null,
+  banned = false,
 }: CollapsibleSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { showError, showSuccess } = useToast();
-  const { data: session } = useSession();
-  const banned = isUserBanned(session);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);

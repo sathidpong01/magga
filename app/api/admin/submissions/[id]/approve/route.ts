@@ -7,7 +7,7 @@ import {
   mangaSubmissions as mangaSubmissionsTable 
 } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { extractMangaPageUrls } from "@/lib/manga-pages";
 
@@ -98,6 +98,7 @@ export async function POST(
     revalidatePath("/dashboard/admin/submissions");
     revalidatePath("/dashboard/submissions");
     revalidatePath("/");
+    revalidateTag("manga-list", "max");
     revalidatePath(`/${result.data?.slug}`);
 
     return NextResponse.json({ success: true, mangaId: result.data?.id });

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { db } from "@/db";
 import { manga as mangaTable, mangaTags as mangaTagsTable } from "@/db/schema";
 import { eq, and, ne } from "drizzle-orm";
@@ -61,6 +61,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     revalidatePath("/dashboard/admin");
     revalidatePath("/dashboard/admin/manga");
     revalidatePath("/");
+    revalidateTag("manga-list", "max");
     if (updatedManga.slug) {
       revalidatePath(`/${updatedManga.slug}`);
     }
@@ -83,6 +84,8 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     await db.delete(mangaTable).where(eq(mangaTable.id, id));
     revalidatePath("/dashboard/admin");
     revalidatePath("/dashboard/admin/manga");
+    revalidatePath("/");
+    revalidateTag("manga-list", "max");
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     return NextResponse.json({ error: "Failed to delete manga" }, { status: 500 });

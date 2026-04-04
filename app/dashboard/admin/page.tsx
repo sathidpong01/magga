@@ -33,53 +33,85 @@ import {
 // Dynamic rendering for real-time data
 export const dynamic = "force-dynamic";
 
+const ANALYTICS_TIMEOUT_MS = 1500;
+
+async function withTimeout<T>(promise: Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<T>((resolve) => {
+        setTimeout(() => resolve(fallback), ANALYTICS_TIMEOUT_MS);
+      }),
+    ]);
+  } catch {
+    return fallback;
+  }
+}
+
 export default async function AdminPage() {
-  // Stats
-  const [{ count: totalManga }] = await db.select({ count: count() }).from(mangaTable);
-  const [{ count: totalCategories }] = await db.select({ count: count() }).from(categoriesTable);
-  const [{ count: totalTags }] = await db.select({ count: count() }).from(tagsTable);
-  const [{ count: draftManga }] = await db.select({ count: count() }).from(mangaTable).where(eq(mangaTable.isHidden, true));
-  const [{ count: totalUsers }] = await db.select({ count: count() }).from(usersTable);
-  const [{ count: totalComments }] = await db.select({ count: count() }).from(commentsTable);
-  const [{ count: pendingSubmissions }] = await db.select({ count: count() }).from(submissionsTable).where(eq(submissionsTable.status, "PENDING"));
+  const [
+    [{ count: totalManga }],
+    [{ count: totalCategories }],
+    [{ count: totalTags }],
+    [{ count: draftManga }],
+    [{ count: totalUsers }],
+    [{ count: totalComments }],
+    [{ count: pendingSubmissions }],
+    [{ totalViewsAgg }],
+    topManga,
+  ] = await Promise.all([
+    db.select({ count: count() }).from(mangaTable),
+    db.select({ count: count() }).from(categoriesTable),
+    db.select({ count: count() }).from(tagsTable),
+    db.select({ count: count() }).from(mangaTable).where(eq(mangaTable.isHidden, true)),
+    db.select({ count: count() }).from(usersTable),
+    db.select({ count: count() }).from(commentsTable),
+    db
+      .select({ count: count() })
+      .from(submissionsTable)
+      .where(eq(submissionsTable.status, "PENDING")),
+    db.select({ totalViewsAgg: sum(mangaTable.viewCount) }).from(mangaTable),
+    db.query.manga.findMany({
+      where: eq(mangaTable.isHidden, false),
+      orderBy: [desc(mangaTable.viewCount)],
+      limit: 10,
+      columns: {
+        id: true,
+        title: true,
+        slug: true,
+        viewCount: true,
+        coverImage: true,
+      },
+    }),
+  ]);
 
-  // Total reads and unique visitors across all manga
-  const [{ totalViewsAgg }] = await db.select({ totalViewsAgg: sum(mangaTable.viewCount) }).from(mangaTable);
   const totalViews = Number(totalViewsAgg || 0);
-  const [{ totalUniqueVisitors }] = await db
-    .select({ totalUniqueVisitors: count() })
-    .from(mangaViewsTable);
+  const totalUniqueVisitorResult = await withTimeout(
+    db.select({ totalUniqueVisitors: count() }).from(mangaViewsTable),
+    [{ totalUniqueVisitors: null as number | null }],
+  );
+  const totalUniqueVisitors = totalUniqueVisitorResult[0]?.totalUniqueVisitors ?? null;
 
-  // Top 10 Popular Manga by total reads
-  const topManga = await db.query.manga.findMany({
-    where: eq(mangaTable.isHidden, false),
-    orderBy: [desc(mangaTable.viewCount)],
-    limit: 10,
-    columns: {
-      id: true,
-      title: true,
-      slug: true,
-      viewCount: true,
-      coverImage: true,
-    },
-  });
   const topMangaIds = topManga.map((manga) => manga.id);
   const uniqueVisitorRows = topMangaIds.length
-    ? await db
-        .select({
-          mangaId: mangaViewsTable.mangaId,
-          uniqueVisitors: count(),
-        })
-        .from(mangaViewsTable)
-        .where(inArray(mangaViewsTable.mangaId, topMangaIds))
-        .groupBy(mangaViewsTable.mangaId)
+    ? await withTimeout(
+        db
+          .select({
+            mangaId: mangaViewsTable.mangaId,
+            uniqueVisitors: count(),
+          })
+          .from(mangaViewsTable)
+          .where(inArray(mangaViewsTable.mangaId, topMangaIds))
+          .groupBy(mangaViewsTable.mangaId),
+        [] as Array<{ mangaId: string; uniqueVisitors: number }>,
+      )
     : [];
   const uniqueVisitorMap = new Map(
     uniqueVisitorRows.map((row) => [row.mangaId, row.uniqueVisitors])
   );
   const rankedManga = topManga.map((manga) => ({
     ...manga,
-    uniqueVisitors: uniqueVisitorMap.get(manga.id) ?? 0,
+    uniqueVisitors: uniqueVisitorMap.get(manga.id) ?? null,
   }));
 
   return (
@@ -142,7 +174,7 @@ export default async function AdminPage() {
         <Grid size={{ xs: 6, sm: 4, md: 3 }}>
           <DashboardStat
             label="ผู้ชมแยกเรื่อง"
-            value={totalUniqueVisitors}
+            value={totalUniqueVisitors ?? "—"}
             icon={<InsightsIcon />}
           />
         </Grid>
@@ -281,7 +313,7 @@ export default async function AdminPage() {
                     {manga.viewCount?.toLocaleString() || 0} ครั้ง
                   </Typography>
                   <Typography sx={{ color: dashboardTokens.textSoft, fontSize: "0.78rem", mt: 0.3 }}>
-                    ผู้ชมไม่ซ้ำ {manga.uniqueVisitors.toLocaleString()}
+                    ผู้ชมไม่ซ้ำ {manga.uniqueVisitors?.toLocaleString() ?? "—"}
                   </Typography>
                 </Box>
               </Link>
@@ -369,7 +401,7 @@ export default async function AdminPage() {
                     {manga.viewCount?.toLocaleString() || 0}
                   </Typography>
                   <Typography variant="caption" sx={{ color: dashboardTokens.textSoft, fontSize: "0.7rem", display: "block", mt: 0.25 }}>
-                    ผู้ชม {manga.uniqueVisitors.toLocaleString()}
+                    ผู้ชม {manga.uniqueVisitors?.toLocaleString() ?? "—"}
                   </Typography>
                 </Box>
               </Box>

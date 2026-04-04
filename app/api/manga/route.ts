@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { db } from "@/db";
 import { manga as mangaTable, mangaTags as mangaTagsTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -95,6 +95,7 @@ export async function POST(request: Request) {
     revalidatePath("/dashboard/admin");
     revalidatePath("/dashboard/admin/manga");
     revalidatePath("/");
+    revalidateTag("manga-list", "max");
     return NextResponse.json(newManga, { status: 201 });
   } catch (error) {
     console.error("Error creating manga:", error);

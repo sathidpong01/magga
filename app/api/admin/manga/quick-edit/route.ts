@@ -5,6 +5,7 @@ import { eq, inArray } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { requireAdmin } from "@/lib/auth-helpers";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 export async function PATCH(req: NextRequest) {
   try {
@@ -85,6 +86,11 @@ export async function PATCH(req: NextRequest) {
         },
       },
     });
+
+    revalidatePath("/dashboard/admin");
+    revalidatePath("/dashboard/admin/manga");
+    revalidatePath("/");
+    revalidateTag("manga-list", "max");
 
     return NextResponse.json({
       success: true,
