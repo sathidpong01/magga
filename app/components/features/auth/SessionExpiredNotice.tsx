@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSession } from "@/lib/auth-client";
+import {
+  clearReauthInProgress,
+  hasReauthInProgress,
+  markReauthInProgress,
+  useSession,
+} from "@/lib/auth-client";
 import {
   Dialog,
   DialogTitle,
@@ -20,8 +25,11 @@ export default function SessionExpiredNotice() {
   useEffect(() => {
     // Track if user was previously authenticated
     if (!isPending && session) {
+      setShowNotice(false);
       setWasAuthenticated(true);
       sessionStorage.setItem("wasAuthenticated", "true");
+      clearReauthInProgress();
+      return;
     }
 
     // Check if session expired (was authenticated -> now unauthenticated)
@@ -29,8 +37,9 @@ export default function SessionExpiredNotice() {
       const previouslyAuth =
         sessionStorage.getItem("wasAuthenticated") === "true";
       const intentLogout = sessionStorage.getItem("intent_logout") === "true";
+      const reauthInProgress = hasReauthInProgress();
 
-      if ((previouslyAuth || wasAuthenticated) && !intentLogout) {
+      if ((previouslyAuth || wasAuthenticated) && !intentLogout && !reauthInProgress) {
         setShowNotice(true);
       }
       
@@ -48,6 +57,7 @@ export default function SessionExpiredNotice() {
   };
 
   const handleLogin = () => {
+    markReauthInProgress();
     setShowNotice(false);
     window.location.href = "/auth/signin";
   };

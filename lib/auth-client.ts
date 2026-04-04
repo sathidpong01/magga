@@ -6,6 +6,7 @@ import { getAuthBaseUrl } from "@/lib/site-url";
 
 export const AUTH_PENDING_SOCIAL_KEY = "magga:auth-pending-social";
 export const AUTH_SESSION_REFRESH_EVENT = "magga:auth-session-refresh";
+export const AUTH_REAUTH_IN_PROGRESS_KEY = "magga:auth-reauth-in-progress";
 
 export const authClient = createAuthClient({
   baseURL: getAuthBaseUrl(),
@@ -45,6 +46,10 @@ export async function syncClientSession() {
 
   authClient.$store.notify("$sessionSignal");
 
+  if (sessionData && typeof window !== "undefined") {
+    window.sessionStorage.removeItem(AUTH_REAUTH_IN_PROGRESS_KEY);
+  }
+
   return sessionData;
 }
 
@@ -76,6 +81,30 @@ export function clearPendingSocialAuth() {
   }
 
   window.sessionStorage.removeItem(AUTH_PENDING_SOCIAL_KEY);
+}
+
+export function markReauthInProgress() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.sessionStorage.setItem(AUTH_REAUTH_IN_PROGRESS_KEY, "true");
+}
+
+export function clearReauthInProgress() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.sessionStorage.removeItem(AUTH_REAUTH_IN_PROGRESS_KEY);
+}
+
+export function hasReauthInProgress() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return window.sessionStorage.getItem(AUTH_REAUTH_IN_PROGRESS_KEY) === "true";
 }
 
 export function requestClientSessionRefresh() {

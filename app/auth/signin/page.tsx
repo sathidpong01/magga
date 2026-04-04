@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Box, CircularProgress } from "@mui/material";
 import AuthModal from "@/app/components/features/auth/AuthModal";
+import { clearReauthInProgress } from "@/lib/auth-client";
 
 function SignInModal() {
   const router = useRouter();
@@ -12,11 +13,13 @@ function SignInModal() {
   const [open, setOpen] = useState(true);
 
   const handleClose = () => {
+    clearReauthInProgress();
     setOpen(false);
     router.push("/");
   };
 
   const handleSuccess = () => {
+    clearReauthInProgress();
     router.push(callbackUrl);
     router.refresh();
   };
