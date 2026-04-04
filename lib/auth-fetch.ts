@@ -1,4 +1,4 @@
-import { signOut } from "@/lib/auth-client";
+import { signOutAndSync } from "@/lib/auth-client";
 
 /**
  * Wrapper for fetch that automatically signs out user on 401 (session expired)
@@ -17,7 +17,7 @@ export async function authFetch(
 
   // Auto logout on 401 Unauthorized (session expired)
   if (res.status === 401) {
-    await signOut();
+    await signOutAndSync();
     if (typeof window !== "undefined") {
       window.location.href = `/auth/signin`;
     }

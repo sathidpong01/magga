@@ -19,7 +19,7 @@ import {
 } from "@mui/material";
 import Link from "next/link";
 import Image from "next/image";
-import { useSession, signOut } from "@/lib/auth-client";
+import { useSession, signOutAndSync } from "@/lib/auth-client";
 import { isAdminRole, isUserBanned } from "@/lib/session-utils";
 import MenuIcon from "@mui/icons-material/Menu";
 import DashboardIcon from "@mui/icons-material/Dashboard";
@@ -30,12 +30,14 @@ import SettingsIcon from "@mui/icons-material/Settings";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import { useToast } from "@/app/contexts/ToastContext";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 const AuthModal = dynamic(() => import("@/app/components/features/auth/AuthModal"), { ssr: false });
 
 export default function Header() {
   const { data: session, isPending } = useSession();
   const { showSuccess } = useToast();
   const pathname = usePathname();
+  const router = useRouter();
   const [isScrolled, setIsScrolled] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -417,8 +419,9 @@ export default function Header() {
                   onClick={async () => {
                     handleMenuClose();
                     sessionStorage.setItem("intent_logout", "true");
-                    await signOut();
+                    await signOutAndSync();
                     showSuccess("ออกจากระบบสำเร็จ");
+                    router.refresh();
                   }}
                 >
                   <ListItemIcon>

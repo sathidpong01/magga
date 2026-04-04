@@ -23,34 +23,53 @@ export const {
   linkSocial,
 } = authClient;
 
-export async function syncClientSession() {
-  const sessionResult = await getSession({
-    query: { disableCookieCache: true },
-  });
-
+function setClientSessionState(sessionData: unknown, error: unknown = null) {
   const sessionAtom = authClient.$store.atoms.session as any;
   const currentState = sessionAtom.get();
-  const sessionData =
-    sessionResult?.data?.session && sessionResult?.data?.user
-      ? sessionResult.data
-      : null;
 
   sessionAtom.set({
     ...currentState,
     data: sessionData,
-    error: sessionResult?.error ?? null,
+    error,
     isPending: false,
     isRefetching: false,
     refetch: currentState.refetch,
   });
 
   authClient.$store.notify("$sessionSignal");
+}
+
+export function clearClientSession() {
+  setClientSessionState(null, null);
+}
+
+export async function syncClientSession() {
+  const sessionResult = await getSession({
+    query: { disableCookieCache: true },
+  });
+
+  const sessionData =
+    sessionResult?.data?.session && sessionResult?.data?.user
+      ? sessionResult.data
+      : null;
+
+  setClientSessionState(sessionData, sessionResult?.error ?? null);
 
   if (sessionData && typeof window !== "undefined") {
     window.sessionStorage.removeItem(AUTH_REAUTH_IN_PROGRESS_KEY);
   }
 
   return sessionData;
+}
+
+export async function signOutAndSync() {
+  try {
+    await signOut();
+  } finally {
+    clearClientSession();
+    clearPendingSocialAuth();
+    clearReauthInProgress();
+  }
 }
 
 export function markPendingSocialAuth(callbackURL?: string) {

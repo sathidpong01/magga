@@ -14,7 +14,7 @@ import {
   useTheme,
 } from "@mui/material";
 import Link from "next/link";
-import { useSession, signOut } from "@/lib/auth-client";
+import { useSession, signOutAndSync } from "@/lib/auth-client";
 import { isUserBanned } from "@/lib/session-utils";
 import { dashboardTokens } from "@/app/components/dashboard/system";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
@@ -86,7 +86,7 @@ export default function CollapsibleSidebar({
 
   const handleSignOut = async () => {
     sessionStorage.setItem("intent_logout", "true");
-    await signOut();
+    await signOutAndSync();
     showSuccess("ออกจากระบบสำเร็จ");
     router.push("/");
     router.refresh();

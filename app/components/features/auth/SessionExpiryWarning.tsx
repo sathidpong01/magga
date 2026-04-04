@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useSession, signOut, getSession } from "@/lib/auth-client";
+import { useSession, signOutAndSync, getSession } from "@/lib/auth-client";
 import { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
@@ -34,7 +34,7 @@ export default function SessionExpiryWarning() {
 
     if (remaining <= 0) {
       setShowWarning(false);
-      signOut();
+      void signOutAndSync();
       return;
     }
 
@@ -59,7 +59,7 @@ export default function SessionExpiryWarning() {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(countdown);
-          signOut();
+          void signOutAndSync();
           return 0;
         }
         return prev - 1;
@@ -156,7 +156,7 @@ export default function SessionExpiryWarning() {
 
       <DialogActions sx={{ p: 2, pt: 1 }}>
         <Button
-          onClick={() => signOut()}
+          onClick={() => void signOutAndSync()}
           size="small"
           sx={{ color: "#737373" }}
         >
