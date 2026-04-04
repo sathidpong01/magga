@@ -65,6 +65,98 @@ const TYPES = [
   { value: "promptpay", label: "พร้อมเพย์" },
 ];
 
+const adDialogFieldSx = {
+  "& .MuiOutlinedInput-root": {
+    bgcolor: "rgba(255,255,255,0.025)",
+    borderRadius: 1.25,
+    color: "#fafafa",
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03)",
+    "& fieldset": {
+      borderColor: "rgba(255,255,255,0.08)",
+    },
+    "&:hover fieldset": {
+      borderColor: "rgba(255,255,255,0.16)",
+    },
+    "&.Mui-focused fieldset": {
+      borderColor: "#fbbf24",
+      boxShadow: "0 0 0 1px rgba(251,191,36,0.08)",
+    },
+    "& .MuiSelect-icon": {
+      color: "rgba(255,255,255,0.7)",
+    },
+    "& .MuiSelect-select": {
+      color: "#fafafa !important",
+      WebkitTextFillColor: "#fafafa",
+      fontWeight: 700,
+    },
+    "& .MuiSelect-select.MuiSelect-outlined": {
+      color: "#fafafa !important",
+      WebkitTextFillColor: "#fafafa",
+    },
+    "& .MuiOutlinedInput-input": {
+      color: "#fafafa !important",
+      WebkitTextFillColor: "#fafafa",
+    },
+  },
+  "& .MuiInputLabel-root": {
+    color: "#bcbcbc",
+    fontWeight: 700,
+    textTransform: "none",
+    fontSize: "0.75rem",
+    letterSpacing: "0.01em",
+  },
+  "& .MuiInputLabel-root.Mui-focused": {
+    color: "#f7d27a",
+  },
+  "& .MuiFormHelperText-root": {
+    mx: 0.25,
+    mt: 0.85,
+    color: "#8c8c8c",
+    fontWeight: 600,
+    fontSize: "0.68rem",
+  },
+};
+
+const adDialogPanelSx = {
+  bgcolor: "rgba(255,255,255,0.02)",
+  border: "1px solid rgba(255,255,255,0.06)",
+  borderRadius: 1.5,
+  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.025)",
+};
+
+const adDialogSelectMenuProps = {
+  PaperProps: {
+    sx: {
+      mt: 0.75,
+      bgcolor: "#191919",
+      color: "#ececec",
+      border: "1px solid rgba(255,255,255,0.08)",
+      borderRadius: 1.25,
+      backgroundImage: "none",
+      boxShadow: "0 18px 50px rgba(0,0,0,0.42)",
+      "& .MuiMenuItem-root": {
+        fontWeight: 700,
+        fontSize: "0.9rem",
+        color: "#d4d4d4",
+        minHeight: 42,
+        textTransform: "none",
+        "&:hover": {
+          bgcolor: "rgba(255,255,255,0.05)",
+          color: "#fafafa",
+        },
+        "&.Mui-selected": {
+          bgcolor: "rgba(251,191,36,0.12)",
+          color: "#f7d27a",
+        },
+        "&.Mui-selected:hover": {
+          bgcolor: "rgba(251,191,36,0.18)",
+          color: "#fbe4a3",
+        },
+      },
+    },
+  },
+};
+
 // Placement Preview Component - แสดงตัวอย่างตรงกับของจริง (ไม่แสดง title)
 function PlacementPreview({
   placement,
@@ -383,41 +475,60 @@ function PlacementPreview({
   return (
     <Box
       sx={{
-        p: 2.5,
-        bgcolor: "#0B0B0B",
-        borderRadius: 1.25,
+        p: 2.25,
+        bgcolor: "rgba(255,255,255,0.02)",
+        borderRadius: 1.5,
         border: "1px solid rgba(255,255,255,0.06)",
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.025)",
       }}
     >
-      <Typography
-        variant="caption"
-        sx={{ 
-          mb: 2, 
-          display: "block", 
-          fontWeight: 900, 
-          textTransform: "none",
-          letterSpacing: "0",
-          color: "#FABF06"
+      <Box sx={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 1, mb: 1.5 }}>
+        <Typography
+          variant="caption"
+          sx={{
+            display: "block",
+            fontWeight: 900,
+            textTransform: "none",
+            letterSpacing: "0",
+            color: "#fbbf24",
+          }}
+        >
+          ตัวอย่างสด
+        </Typography>
+        <Chip
+          size="small"
+          label={PLACEMENTS.find((p) => p.value === placement)?.label || "เลือกตำแหน่ง"}
+          sx={{
+            height: 24,
+            bgcolor: "rgba(251,191,36,0.08)",
+            color: "#f7d27a",
+            border: "1px solid rgba(251,191,36,0.18)",
+            fontWeight: 700,
+            borderRadius: 0.75,
+          }}
+        />
+      </Box>
+      <Box
+        sx={{
+          p: 1.25,
+          bgcolor: "rgba(0,0,0,0.22)",
+          borderRadius: 1.25,
+          border: "1px solid rgba(255,255,255,0.04)",
         }}
       >
-        ตัวอย่างสด:{" "}
-        <Box component="span" sx={{ color: "#fafafa" }}>
-          {PLACEMENTS.find((p) => p.value === placement)?.label || "เลือกตำแหน่ง"}
-        </Box>
-      </Typography>
-      <Box sx={{ p: 1, bgcolor: "rgba(255,255,255,0.02)", borderRadius: 1 }}>
         {renderPreview()}
       </Box>
       <Typography
         variant="caption"
-        sx={{ 
-          mt: 2, 
-          display: "block", 
+        sx={{
+          mt: 1.5,
+          display: "block",
           fontSize: 10,
           fontWeight: 600,
-          color: "#737373",
+          color: "#8c8c8c",
           textTransform: "none",
-          letterSpacing: "0"
+          letterSpacing: "0",
+          lineHeight: 1.5,
         }}
       >
         * ชื่อโฆษณาใช้สำหรับจัดการภายในเท่านั้น ผู้ใช้จะไม่เห็นข้อความนี้
@@ -912,33 +1023,46 @@ export default function AdvertisementsPage() {
         }}
       >
         <DialogTitle sx={{ fontWeight: 800, textTransform: "none", letterSpacing: "0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-          {editingAd ? "แก้ไขโฆษณา" : "เพิ่มโฆษณาใหม่"}
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.35 }}>
+            <Typography sx={{ color: "#fbbf24", fontSize: "0.72rem", fontWeight: 900, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+              Ad Workspace
+            </Typography>
+            <Typography component="span" sx={{ fontWeight: 900, fontSize: { xs: "1.2rem", md: "1.35rem" }, color: "#fafafa" }}>
+              {editingAd ? "แก้ไขโฆษณา" : "เพิ่มโฆษณาใหม่"}
+            </Typography>
+            <Typography component="span" sx={{ color: "#8c8c8c", fontWeight: 600, fontSize: "0.78rem" }}>
+              จัดรูปภาพ ลิงก์ และตำแหน่งให้พร้อมใช้งานจากฟอร์มเดียว
+            </Typography>
+          </Box>
         </DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 3, mt: 1 }}>
+        <DialogContent sx={{ px: { xs: 2, md: 3 }, py: { xs: 2, md: 2.5 } }}>
+          <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 2.25, mt: 0.5 }}>
             {/* Left: Form */}
-            <Box sx={{ flex: 1 }}>
+            <Box sx={{ flex: 1, ...adDialogPanelSx, p: { xs: 1.5, md: 2 } }}>
+              <Box sx={{ mb: 2 }}>
+                <Typography sx={{ color: "#fafafa", fontWeight: 800, fontSize: "0.95rem" }}>
+                  รายละเอียดโฆษณา
+                </Typography>
+                <Typography sx={{ color: "#8c8c8c", fontWeight: 600, fontSize: "0.74rem", mt: 0.35 }}>
+                  กำหนดชนิด ชื่อ ภาพปลายทาง และการวางตำแหน่งให้ชัดก่อนบันทึก
+                </Typography>
+              </Box>
               {error && (
-                <Alert severity="error" sx={{ mb: 2 }}>
+                <Alert severity="error" sx={{ mb: 2, borderRadius: 1.25, bgcolor: "rgba(127,29,29,0.28)", color: "#fecaca", border: "1px solid rgba(239,68,68,0.22)" }}>
                   {error}
                 </Alert>
               )}
 
               <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel sx={{ color: "#a3a3a3", fontWeight: 700, textTransform: "none", fontSize: "0.75rem" }}>ประเภท</InputLabel>
+                <InputLabel sx={adDialogFieldSx["& .MuiInputLabel-root"]}>ประเภท</InputLabel>
                 <Select
                   value={formData.type}
                   label="ประเภท"
                   onChange={(e) =>
                     setFormData({ ...formData, type: e.target.value })
                   }
-                  sx={{
-                    bgcolor: "#0B0B0B",
-                    borderRadius: 1,
-                    "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.06)" },
-                    "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.12)" },
-                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#FABF06" },
-                  }}
+                  sx={adDialogFieldSx}
+                  MenuProps={adDialogSelectMenuProps}
                 >
                   {TYPES.map((t) => (
                     <MenuItem key={t.value} value={t.value}>
@@ -955,16 +1079,8 @@ export default function AdvertisementsPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, title: e.target.value })
                 }
-                sx={{ 
-                  mb: 2,
-                  "& .MuiOutlinedInput-root": {
-                    bgcolor: "#0B0B0B",
-                    borderRadius: 1,
-                    "& fieldset": { borderColor: "rgba(255,255,255,0.06)" },
-                    "&.Mui-focused fieldset": { borderColor: "#FABF06" },
-                  },
-                  "& .MuiInputLabel-root": { color: "#a3a3a3", fontWeight: 700, textTransform: "none", fontSize: "0.75rem" }
-                }}
+                sx={{ mb: 2, ...adDialogFieldSx }}
+                helperText="ใช้สำหรับจัดการภายใน ผู้ใช้จะไม่เห็นข้อความนี้"
               />
 
               {/* File Upload */}
@@ -988,15 +1104,23 @@ export default function AdvertisementsPage() {
                   }
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploading}
-                  sx={{ 
-                    py: 2, 
-                    borderRadius: 1, 
-                    border: "2px dashed rgba(255,255,255,0.1)",
-                    color: "#a3a3a3",
+                  sx={{
+                    py: 1.8,
+                    borderRadius: 1.25,
+                    border: "1px dashed rgba(255,255,255,0.16)",
+                    bgcolor: "rgba(255,255,255,0.02)",
+                    color: formData.imageUrl ? "#f7d27a" : "#d4d4d4",
                     fontWeight: 800,
                     textTransform: "none",
                     letterSpacing: "0",
-                    "&:hover": { border: "2px dashed #FABF06", color: "#FABF06", bgcolor: "rgba(250, 191, 6, 0.05)" }
+                    justifyContent: "flex-start",
+                    px: 2,
+                    gap: 1,
+                    "&:hover": {
+                      border: "1px dashed rgba(251,191,36,0.5)",
+                      color: "#fbbf24",
+                      bgcolor: "rgba(251,191,36,0.05)",
+                    },
                   }}
                 >
                   {uploading
@@ -1008,7 +1132,7 @@ export default function AdvertisementsPage() {
                 {formData.imageUrl && (
                   <Typography
                     variant="caption"
-                    sx={{ mt: 1, display: "block", color: "#4ade80", fontWeight: 800, textTransform: "none", fontSize: "0.65rem" }}
+                    sx={{ mt: 1, display: "block", color: "#86efac", fontWeight: 800, textTransform: "none", fontSize: "0.66rem" }}
                   >
                     ✓ อัปโหลดรูปเรียบร้อย
                   </Typography>
@@ -1022,16 +1146,7 @@ export default function AdvertisementsPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, linkUrl: e.target.value })
                 }
-                sx={{ 
-                  mb: 2,
-                  "& .MuiOutlinedInput-root": {
-                    bgcolor: "#0B0B0B",
-                    borderRadius: 1,
-                    "& fieldset": { borderColor: "rgba(255,255,255,0.06)" },
-                    "&.Mui-focused fieldset": { borderColor: "#FABF06" },
-                  },
-                  "& .MuiInputLabel-root": { color: "#a3a3a3", fontWeight: 700, textTransform: "none", fontSize: "0.75rem" }
-                }}
+                sx={{ mb: 2, ...adDialogFieldSx }}
               />
 
               <TextField
@@ -1041,36 +1156,22 @@ export default function AdvertisementsPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, content: e.target.value })
                 }
-                sx={{ 
-                  mb: 2,
-                  "& .MuiOutlinedInput-root": {
-                    bgcolor: "#0B0B0B",
-                    borderRadius: 1,
-                    "& fieldset": { borderColor: "rgba(255,255,255,0.06)" },
-                    "&.Mui-focused fieldset": { borderColor: "#FABF06" },
-                  },
-                  "& .MuiInputLabel-root": { color: "#a3a3a3", fontWeight: 700, textTransform: "none", fontSize: "0.75rem" }
-                }}
+                sx={{ mb: 2, ...adDialogFieldSx }}
                 multiline
                 rows={2}
                 placeholder="เช่น เลขพร้อมเพย์ หรือคำอธิบาย"
               />
 
               <FormControl fullWidth>
-                <InputLabel sx={{ color: "#a3a3a3", fontWeight: 700, textTransform: "none", fontSize: "0.75rem" }}>ตำแหน่ง</InputLabel>
+                <InputLabel sx={adDialogFieldSx["& .MuiInputLabel-root"]}>ตำแหน่ง</InputLabel>
                 <Select
                   value={formData.placement}
                   label="ตำแหน่ง"
                   onChange={(e) =>
                     setFormData({ ...formData, placement: e.target.value })
                   }
-                  sx={{
-                    bgcolor: "#0B0B0B",
-                    borderRadius: 1,
-                    "& .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.06)" },
-                    "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "rgba(255,255,255,0.12)" },
-                    "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#FABF06" },
-                  }}
+                  sx={adDialogFieldSx}
+                  MenuProps={adDialogSelectMenuProps}
                 >
                   {PLACEMENTS.map((p) => (
                     <MenuItem key={p.value} value={p.value}>
@@ -1094,25 +1195,19 @@ export default function AdvertisementsPage() {
                     })
                   }
                   inputProps={{ min: 1, max: 10 }}
-                  sx={{ 
-                    mt: 2,
-                    "& .MuiOutlinedInput-root": {
-                      bgcolor: "#0B0B0B",
-                      borderRadius: 1,
-                      "& fieldset": { borderColor: "rgba(255,255,255,0.06)" },
-                      "&.Mui-focused fieldset": { borderColor: "#FABF06" },
-                    },
-                    "& .MuiInputLabel-root": { color: "#a3a3a3", fontWeight: 700, textTransform: "none", fontSize: "0.75rem" }
-                  }}
-                  helperText={<Typography variant="caption" sx={{ color: "#737373", fontSize: "0.65rem", fontWeight: 600 }}>จำนวนครั้งที่โฆษณานี้จะแทรกในกริดมังงะ (1-10)</Typography>}
+                  sx={{ mt: 2, ...adDialogFieldSx }}
+                  helperText="จำนวนครั้งที่โฆษณานี้จะแทรกในกริดมังงะ (1-10)"
                 />
               )}
             </Box>
 
             {/* Right: Preview */}
-            <Box sx={{ width: { xs: "100%", md: 320 }, flexShrink: 0 }}>
-              <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 900, textTransform: "none", fontSize: "0.75rem", color: "#a3a3a3", letterSpacing: "0" }}>
+            <Box sx={{ width: { xs: "100%", md: 320 }, flexShrink: 0, ...adDialogPanelSx, p: { xs: 1.5, md: 2 } }}>
+              <Typography sx={{ color: "#fafafa", fontWeight: 800, fontSize: "0.95rem", mb: 0.5 }}>
                 ตัวอย่างตำแหน่ง
+              </Typography>
+              <Typography sx={{ color: "#8c8c8c", fontWeight: 600, fontSize: "0.74rem", mb: 1.75 }}>
+                ดูจังหวะการวางคร่าวๆ ก่อนสร้างจริง เพื่อเช็กสัดส่วนและพื้นที่ใช้งาน
               </Typography>
               <PlacementPreview
                 placement={formData.placement}
@@ -1122,10 +1217,17 @@ export default function AdvertisementsPage() {
             </Box>
           </Box>
         </DialogContent>
-        <DialogActions sx={{ p: 3, bgcolor: "rgba(0,0,0,0.2)" }}>
+        <DialogActions sx={{ p: 2.5, borderTop: "1px solid rgba(255,255,255,0.06)", bgcolor: "rgba(255,255,255,0.015)" }}>
           <Button 
             onClick={handleCloseDialog}
-            sx={{ color: "#a3a3a3", fontWeight: 800, textTransform: "none" }}
+            sx={{
+              color: "#d4d4d4",
+              fontWeight: 800,
+              textTransform: "none",
+              borderRadius: 1,
+              px: 2.2,
+              "&:hover": { bgcolor: "rgba(255,255,255,0.04)" },
+            }}
           >
             ยกเลิก
           </Button>
@@ -1138,8 +1240,9 @@ export default function AdvertisementsPage() {
               color: "#000",
               fontWeight: 900,
               px: 4,
-              borderRadius: 1,
-              "&:hover": { bgcolor: "#eab308" }
+              borderRadius: 1.1,
+              boxShadow: "0 10px 30px rgba(251,191,36,0.18)",
+              "&:hover": { bgcolor: "#eab308", boxShadow: "0 12px 32px rgba(234,179,8,0.24)" }
             }}
           >
             {editingAd ? "บันทึกการเปลี่ยนแปลง" : "สร้างโฆษณา"}

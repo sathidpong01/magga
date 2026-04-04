@@ -49,7 +49,7 @@ export async function PUT(req: Request) {
       if (orConditions.length > 0) {
         const existingUser = await db.query.profiles.findFirst({
           where: and(
-            ne(usersTable.email, session.user.email),
+            ne(usersTable.id, session.user.id),
             or(...orConditions)
           ),
         });
@@ -83,12 +83,12 @@ export async function PUT(req: Request) {
       const [updated] = await db
         .update(usersTable)
         .set(updateData)
-        .where(eq(usersTable.email, session.user.email))
+        .where(eq(usersTable.id, session.user.id))
         .returning();
       user = updated;
     } else {
       user = await db.query.profiles.findFirst({
-        where: eq(usersTable.email, session.user.email),
+        where: eq(usersTable.id, session.user.id),
       });
     }
 

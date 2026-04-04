@@ -5,12 +5,10 @@ import {
   Box,
   Container,
   Typography,
-  Avatar,
   Breadcrumbs,
   CircularProgress,
   Button,
   Chip,
-  Divider,
 } from "@mui/material";
 import Link from "next/link";
 import Image from "next/image";
@@ -63,7 +61,8 @@ export default function MyCommentsPage() {
   const [page, setPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  const isOwnProfile = session?.user?.username === username || session?.user?.name === username;
+  const isOwnProfile =
+    session?.user?.username === username || session?.user?.id === username;
 
   const fetchComments = useCallback(async (p: number) => {
     if (p === 1) setLoading(true); else setLoadingMore(true);
@@ -100,14 +99,14 @@ export default function MyCommentsPage() {
 
   if (isPending || loading) {
     return (
-      <Container maxWidth="sm" sx={{ py: 6, display: "flex", justifyContent: "center" }}>
+      <Container maxWidth="md" sx={{ py: 6, display: "flex", justifyContent: "center" }}>
         <CircularProgress sx={{ color: "#fbbf24" }} />
       </Container>
     );
   }
 
   return (
-    <Container maxWidth="sm" sx={{ py: 4 }}>
+    <Container maxWidth="md" sx={{ py: { xs: 3, md: 5 } }}>
       {/* Breadcrumb */}
       <Breadcrumbs
         separator={<NavigateNextIcon fontSize="small" sx={{ color: "#a3a3a3" }} />}
@@ -123,11 +122,39 @@ export default function MyCommentsPage() {
         <Typography sx={{ color: "#fafafa", fontSize: "0.875rem" }}>ความคิดเห็น</Typography>
       </Breadcrumbs>
 
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 4 }}>
-        <ChatBubbleOutlineIcon sx={{ color: "#fbbf24", fontSize: 28 }} />
+      <Box
+        sx={{
+          mb: 4,
+          borderRadius: 4,
+          border: "1px solid rgba(255,255,255,0.08)",
+          background:
+            "linear-gradient(180deg, rgba(94,234,212,0.08) 0%, rgba(255,255,255,0.02) 100%)",
+          px: { xs: 2.5, md: 3 },
+          py: { xs: 2.5, md: 3 },
+          display: "flex",
+          alignItems: "center",
+          gap: 1.5,
+        }}
+      >
+        <Box
+          sx={{
+            width: 46,
+            height: 46,
+            borderRadius: 2.5,
+            bgcolor: "rgba(94,234,212,0.12)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          <ChatBubbleOutlineIcon sx={{ color: "#5eead4", fontSize: 24 }} />
+        </Box>
         <Box>
-          <Typography variant="h5" fontWeight={700}>ความคิดเห็นของฉัน</Typography>
-          <Typography variant="body2" sx={{ color: "#a3a3a3" }}>{comments.length} ความคิดเห็น{hasMore ? "+" : ""}</Typography>
+          <Typography variant="h5" fontWeight={800}>ความคิดเห็นของฉัน</Typography>
+          <Typography variant="body2" sx={{ color: "#a3a3a3" }}>
+            {comments.length} ความคิดเห็น{hasMore ? "+" : ""}
+          </Typography>
         </Box>
       </Box>
 

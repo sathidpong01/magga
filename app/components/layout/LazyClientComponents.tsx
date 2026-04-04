@@ -11,10 +11,12 @@ const SessionExpiredNotice = dynamic(() => import("../features/auth/SessionExpir
 const DevToolsProtection = dynamic(() => import("../security/DevToolsProtection"), { ssr: false });
 const ConditionalAnalytics = dynamic(() => import("../features/analytics/ConditionalAnalytics"), { ssr: false });
 const GlobalAds = dynamic(() => import("../features/ads/GlobalAds"), { ssr: false });
+const AuthSessionSync = dynamic(() => import("./AuthSessionSync"), { ssr: false });
 
 export default function LazyClientComponents() {
   return (
     <>
+      <AuthSessionSync />
       <AgeVerificationModal />
       <CookieConsent />
       <SessionExpiryWarning />

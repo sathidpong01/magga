@@ -18,6 +18,7 @@ import {
   FormControl,
   InputLabel,
   Autocomplete,
+  Chip,
   createFilterOptions,
   Stack,
   Typography,
@@ -27,10 +28,15 @@ import {
   IconButton,
   InputAdornment,
   Tooltip,
+  Dialog,
+  DialogContent,
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
+import ZoomInRoundedIcon from "@mui/icons-material/ZoomInRounded";
+import ZoomOutRoundedIcon from "@mui/icons-material/ZoomOutRounded";
+import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import NotificationModal from "@/app/components/modals/NotificationModal";
 import { SortableItem } from "@/app/components/ui/SortableItem";
 import UploadProgress, {
@@ -50,6 +56,7 @@ import {
   dashboardTextFieldSx,
   dashboardTokens,
 } from "@/app/components/dashboard/system";
+import { getMetadataChipSx } from "@/lib/metadata-chip-tone";
 
 // DnD Kit Imports
 import {
@@ -100,6 +107,8 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
   );
   const [notificationTitle, setNotificationTitle] = useState("");
   const [notificationMessage, setNotificationMessage] = useState("");
+  const [previewPage, setPreviewPage] = useState<{ src: string; index: number } | null>(null);
+  const [previewZoom, setPreviewZoom] = useState(1);
 
   // Form State
   const [title, setTitle] = useState(manga?.title || "");
@@ -199,7 +208,9 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
 
   // DnD Sensors
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 6 },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -291,6 +302,41 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
   };
 
   const filledFieldSx = dashboardTextFieldSx;
+  const headerGhostButtonSx = {
+    ...dashboardGhostButtonSx,
+    color: dashboardTokens.text,
+    border: "1px solid rgba(255,255,255,0.1)",
+    bgcolor: "rgba(255,255,255,0.03)",
+    px: 1.6,
+    "&:hover": {
+      color: dashboardTokens.text,
+      bgcolor: "rgba(255,255,255,0.08)",
+      borderColor: "rgba(255,255,255,0.16)",
+    },
+  };
+  const headerSecondaryButtonSx = {
+    ...dashboardSecondaryButtonSx,
+    color: dashboardTokens.text,
+    borderColor: "rgba(251,191,36,0.26)",
+    bgcolor: "rgba(251,191,36,0.07)",
+    boxShadow: "0 10px 22px rgba(0,0,0,0.14)",
+  };
+  const headerPrimaryButtonSx = {
+    ...dashboardPrimaryButtonSx,
+    boxShadow: "0 12px 28px rgba(251,191,36,0.26)",
+  };
+  const mediaActionButtonSx = {
+    color: dashboardTokens.text,
+    borderColor: "rgba(251,191,36,0.24)",
+    bgcolor: "rgba(251,191,36,0.08)",
+    borderRadius: 1.4,
+    fontWeight: 700,
+    px: 1.4,
+    "&:hover": {
+      borderColor: "rgba(251,191,36,0.42)",
+      bgcolor: "rgba(251,191,36,0.14)",
+    },
+  };
 
   const pageTitle = manga
     ? mode === "admin"
@@ -778,6 +824,30 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
     setNotificationOpen(false);
   };
 
+  const handleClosePreview = () => {
+    setPreviewPage(null);
+    setPreviewZoom(1);
+  };
+
+  const handleZoomIn = () => {
+    setPreviewZoom((prev) => Math.min(prev + 0.25, 3));
+  };
+
+  const handleZoomOut = () => {
+    setPreviewZoom((prev) => Math.max(prev - 0.25, 0.75));
+  };
+
+  const handlePreviewWheel = (event: React.WheelEvent<HTMLDivElement>) => {
+    event.preventDefault();
+
+    if (event.deltaY < 0) {
+      setPreviewZoom((prev) => Math.min(prev + 0.12, 3));
+      return;
+    }
+
+    setPreviewZoom((prev) => Math.max(prev - 0.12, 0.75));
+  };
+
   const handleGoToList = () => {
     setNotificationOpen(false);
     router.push(
@@ -798,7 +868,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
             variant="text"
             onClick={() => router.back()}
             disabled={isSubmitting}
-            sx={dashboardGhostButtonSx}
+            sx={headerGhostButtonSx}
           >
             ย้อนกลับ
           </Button>
@@ -810,7 +880,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                 handleSubmitWithDraft(e, true);
               }}
               disabled={isSubmitting}
-              sx={dashboardSecondaryButtonSx}
+              sx={headerSecondaryButtonSx}
             >
               บันทึกเป็นฉบับร่าง
             </Button>
@@ -828,7 +898,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                 />
               ) : null
             }
-            sx={dashboardPrimaryButtonSx}
+            sx={headerPrimaryButtonSx}
           >
             {isSubmitting
               ? "กำลังบันทึก..."
@@ -906,6 +976,16 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                                 setSlug(newSlug);
                               }}
                               edge="end"
+                              sx={{
+                                color: "rgba(255,255,255,0.82)",
+                                bgcolor: "transparent",
+                                border: "none",
+                                boxShadow: "none",
+                                "&:hover": {
+                                  bgcolor: "transparent",
+                                  color: "#ffffff",
+                                },
+                              }}
                             >
                               <AutoFixHighIcon />
                             </IconButton>
@@ -987,6 +1067,22 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                       );
                     }}
                     freeSolo
+                    slotProps={{
+                      chip: {
+                        sx: {
+                          bgcolor: "rgba(251,191,36,0.14)",
+                          color: "#f7e3a2",
+                          border: "1px solid rgba(251,191,36,0.2)",
+                          fontWeight: 600,
+                          "& .MuiChip-deleteIcon": {
+                            color: "rgba(247,227,162,0.72)",
+                            "&:hover": {
+                              color: dashboardTokens.accent,
+                            },
+                          },
+                        },
+                      },
+                    }}
                     renderInput={(params) => (
                       <TextField
                         {...params}
@@ -1107,9 +1203,13 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                                           }
                                           disabled={!credit.url}
                                           sx={{
-                                            bgcolor: "rgba(251,191,36,0.1)",
+                                            color: "rgba(255,255,255,0.82)",
+                                            bgcolor: "transparent",
+                                            border: "none",
+                                            boxShadow: "none",
                                             "&:hover": {
-                                              bgcolor: "rgba(251,191,36,0.2)",
+                                              bgcolor: "transparent",
+                                              color: "#ffffff",
                                             },
                                           }}
                                         >
@@ -1316,6 +1416,26 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                         </li>
                       );
                     }}
+                    renderTags={(value, getTagProps) =>
+                      value.map((option, index) => {
+                        const { key, ...tagProps } = getTagProps({ index });
+
+                        return (
+                          <Chip
+                            key={key ?? option.id}
+                            label={option.name}
+                            {...tagProps}
+                            sx={{
+                              ...getMetadataChipSx(option.name),
+                              height: 30,
+                              px: 0.25,
+                              fontSize: "0.82rem",
+                              textTransform: "none",
+                            }}
+                          />
+                        );
+                      })
+                    }
                     freeSolo
                     renderInput={(params) => (
                       <TextField
@@ -1358,13 +1478,13 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     sx={{
                       height: 120,
                       borderStyle: "dashed",
-                      borderColor: "rgba(255,255,255,0.16)",
+                      borderColor: "rgba(251,191,36,0.22)",
                       borderRadius: 2,
-                      color: dashboardTokens.textMuted,
+                      color: dashboardTokens.text,
                       flexDirection: "column",
                       gap: 1,
                       cursor: "pointer",
-                      ...dashboardSecondaryButtonSx,
+                      ...mediaActionButtonSx,
                     }}
                   >
                     <input
@@ -1383,11 +1503,12 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     sx={{
                       position: "relative",
                       width: "100%",
-                      maxWidth: 200,
+                      maxWidth: 220,
                       margin: "0 auto",
-                      borderRadius: 2,
+                      borderRadius: 2.5,
                       overflow: "hidden",
-                      boxShadow: 3,
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      boxShadow: "0 16px 30px rgba(0,0,0,0.24)",
                     }}
                   >
                     <Box
@@ -1404,8 +1525,10 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                         position: "absolute",
                         top: 4,
                         right: 4,
-                        bgcolor: "rgba(0,0,0,0.6)",
-                        "&:hover": { bgcolor: "rgba(220, 38, 38, 0.8)" },
+                        color: "#fff",
+                        bgcolor: "rgba(220,38,38,0.84)",
+                        border: "1px solid rgba(254,202,202,0.22)",
+                        "&:hover": { bgcolor: "rgba(185,28,28,0.96)" },
                       }}
                     >
                       <DeleteIcon fontSize="small" />
@@ -1421,7 +1544,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    mb: 2,
+                    mb: 1.1,
                   }}
                 >
                   <Typography variant="subtitle1" component="h4">
@@ -1432,8 +1555,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     startIcon={<AddPhotoAlternateIcon />}
                     component="label"
                     sx={{
-                      ...(dashboardGhostButtonSx as any),
-                      color: dashboardTokens.accent,
+                      ...(mediaActionButtonSx as any),
                       cursor: "pointer",
                     }}
                   >
@@ -1448,6 +1570,19 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                   </Button>
                 </Box>
 
+                {pageItems.length > 0 && (
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      display: "block",
+                      color: dashboardTokens.textSoft,
+                      mb: 1.8,
+                    }}
+                  >
+                    ลากที่ภาพได้โดยตรงเพื่อจัดลำดับใหม่ กดไอคอนรูปตาเพื่อดูภาพเต็ม
+                  </Typography>
+                )}
+
                 <DndContext
                   sensors={sensors}
                   collisionDetection={closestCenter}
@@ -1459,10 +1594,17 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                   >
                     <Box
                       sx={{
+                        p: 1.4,
+                        borderRadius: 2.5,
+                        border: "1px solid rgba(255,255,255,0.08)",
+                        bgcolor: "rgba(255,255,255,0.02)",
                         display: "grid",
                         gridTemplateColumns:
-                          "repeat(auto-fill, minmax(80px, 1fr))",
-                        gap: 1,
+                          "repeat(auto-fill, minmax(118px, 1fr))",
+                        gap: 1.6,
+                        alignItems: "start",
+                        maxHeight: { xs: "none", md: 620 },
+                        overflowY: { xs: "visible", md: "auto" },
                       }}
                     >
                       {pageItems.map((item, index) => (
@@ -1472,6 +1614,9 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                           src={item.preview}
                           index={index}
                           onRemove={() => handleRemovePage(item.id)}
+                          onPreview={() =>
+                            setPreviewPage({ src: item.preview, index })
+                          }
                         />
                       ))}
                     </Box>
@@ -1516,6 +1661,143 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
               }
         }
       />
+
+      <Dialog
+        open={Boolean(previewPage)}
+        onClose={handleClosePreview}
+        fullScreen
+        PaperProps={{
+          sx: {
+            bgcolor: "rgba(0,0,0,0.82)",
+            color: dashboardTokens.text,
+            backgroundImage: "none",
+            overflow: "hidden",
+            boxShadow: "none",
+          },
+        }}
+        slotProps={{
+          backdrop: {
+            sx: { bgcolor: "rgba(0,0,0,0.68)", backdropFilter: "blur(2px)" },
+          },
+        }}
+      >
+        <DialogContent
+          sx={{
+            p: 0,
+            height: "100vh",
+            overflow: "hidden",
+            position: "relative",
+            bgcolor: "rgba(0,0,0,0.78)",
+          }}
+        >
+          <Box
+            sx={{
+              position: "absolute",
+              top: 18,
+              left: 20,
+              zIndex: 3,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              px: 1.4,
+              py: 0.9,
+              borderRadius: 2,
+              bgcolor: "rgba(0,0,0,0.42)",
+              border: "1px solid rgba(255,255,255,0.1)",
+            }}
+          >
+            <Typography variant="body2" sx={{ color: dashboardTokens.text, fontWeight: 700 }}>
+              {previewPage ? `หน้า ${previewPage.index + 1}` : ""}
+            </Typography>
+            <Typography variant="caption" sx={{ color: dashboardTokens.textSoft }}>
+              {Math.round(previewZoom * 100)}%
+            </Typography>
+          </Box>
+
+          <Box
+            sx={{
+              position: "absolute",
+              top: 18,
+              right: 20,
+              zIndex: 3,
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+            }}
+          >
+            <IconButton
+              onClick={handleZoomOut}
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: "rgba(0,0,0,0.42)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                color: "#fafafa",
+                "&:hover": { bgcolor: "rgba(0,0,0,0.8)" },
+              }}
+            >
+              <ZoomOutRoundedIcon />
+            </IconButton>
+            <IconButton
+              onClick={handleZoomIn}
+              sx={{
+                width: 40,
+                height: 40,
+                bgcolor: "rgba(0,0,0,0.42)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                color: "#fafafa",
+                "&:hover": { bgcolor: "rgba(0,0,0,0.8)" },
+              }}
+            >
+              <ZoomInRoundedIcon />
+            </IconButton>
+            <IconButton
+              onClick={handleClosePreview}
+              sx={{
+                width: 42,
+                height: 42,
+                bgcolor: "rgba(220,38,38,0.9)",
+                border: "1px solid rgba(254,202,202,0.22)",
+                color: "#fff",
+                "&:hover": { bgcolor: "rgba(185,28,28,0.96)" },
+              }}
+            >
+              <CloseRoundedIcon />
+            </IconButton>
+          </Box>
+
+          <Box
+            onWheel={handlePreviewWheel}
+            sx={{
+              width: "100%",
+              height: "100%",
+              overflow: previewZoom > 1 ? "auto" : "hidden",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              p: { xs: 2, md: 4 },
+            }}
+          >
+            {previewPage ? (
+              <Box
+                component="img"
+                src={previewPage.src}
+                alt={`Preview page ${previewPage.index + 1}`}
+                sx={{
+                  display: "block",
+                  width: previewZoom > 1 ? `${previewZoom * 100}%` : "auto",
+                  maxWidth: previewZoom > 1 ? "none" : "100%",
+                  maxHeight: previewZoom > 1 ? "none" : "100%",
+                  height: "auto",
+                  objectFit: "contain",
+                  transform: previewZoom <= 1 ? `scale(${previewZoom})` : "none",
+                  transformOrigin: "center center",
+                }}
+              />
+            ) : null}
+          </Box>
+        </DialogContent>
+      </Dialog>
 
       {/* Floating Upload Progress */}
       {uploadFiles.length > 0 && (

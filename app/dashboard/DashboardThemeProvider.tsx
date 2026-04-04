@@ -3,6 +3,20 @@
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 
 const dashboardTheme = createTheme({
+  palette: {
+    mode: "dark",
+    background: {
+      default: "#0a0a0a",
+      paper: "#171717",
+    },
+    text: {
+      primary: "#fafafa",
+      secondary: "#a3a3a3",
+    },
+    primary: {
+      main: "#fbbf24",
+    },
+  },
   shape: {
     borderRadius: 8,
   },
@@ -40,6 +54,18 @@ const dashboardTheme = createTheme({
         root: {
           borderRadius: 8,
         },
+        input: {
+          color: "#fafafa",
+          WebkitTextFillColor: "#fafafa",
+        },
+      },
+    },
+    MuiInputBase: {
+      styleOverrides: {
+        input: {
+          color: "#fafafa",
+          WebkitTextFillColor: "#fafafa",
+        },
       },
     },
     MuiFilledInput: {
@@ -53,6 +79,18 @@ const dashboardTheme = createTheme({
       styleOverrides: {
         select: {
           borderRadius: 8,
+          color: "#fafafa",
+          WebkitTextFillColor: "#fafafa",
+        },
+        icon: {
+          color: "rgba(255,255,255,0.72)",
+        },
+      },
+    },
+    MuiInputLabel: {
+      styleOverrides: {
+        root: {
+          color: "#a3a3a3",
         },
       },
     },

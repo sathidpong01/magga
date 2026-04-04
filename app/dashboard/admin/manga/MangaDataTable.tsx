@@ -44,6 +44,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useToast } from "@/app/contexts/ToastContext";
 import { authFetch } from "@/lib/auth-fetch";
+import { getMetadataChipSx } from "@/lib/metadata-chip-tone";
 
 type Manga = {
   id: string;
@@ -62,16 +63,6 @@ type MangaDataTableProps = {
   allCategories: any[];
   allTags: any[];
   allAuthors: any[];
-};
-
-const TAG_COLORS: Record<string, string> = {
-  tiger: "#f97316",
-  human: "#8b5cf6",
-  dog: "#06b6d4",
-  wolf: "#6366f1",
-  cat: "#ec4899",
-  anal: "#ef4444",
-  blowjob: "#f59e0b",
 };
 
 const shellSx = {
@@ -281,11 +272,6 @@ export default function MangaDataTable({
       console.error("Failed to bulk toggle:", error);
       showError("เกิดข้อผิดพลาดในการเปลี่ยนสถานะ");
     }
-  };
-
-  const getTagColor = (tagName: string) => {
-    const key = tagName.toLowerCase();
-    return TAG_COLORS[key] || "#64748b";
   };
 
   return (
@@ -511,16 +497,15 @@ export default function MangaDataTable({
                   >
                     {manga.tags.slice(0, 3).map((tag) => (
                       <Chip
-                          key={tag.id}
-                          label={tag.name}
-                          size="small"
-                          sx={{
-                          bgcolor: `${getTagColor(tag.name)}18`,
-                          color: getTagColor(tag.name),
+                        key={tag.id}
+                        label={tag.name}
+                        size="small"
+                        sx={{
+                          ...getMetadataChipSx(tag.name),
                           fontSize: "0.75rem",
                           height: 24,
                           fontWeight: 600,
-                          border: `1px solid ${getTagColor(tag.name)}30`,
+                          borderRadius: 0.75,
                         }}
                       />
                     ))}

@@ -25,6 +25,7 @@ import AddIcon from "@mui/icons-material/Add";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { authFetch } from "@/lib/auth-fetch";
 import { useToast } from "@/app/contexts/ToastContext";
+import { getMetadataChipSx } from "@/lib/metadata-chip-tone";
 
 type Category = {
   id: string;
@@ -256,16 +257,14 @@ export default function MetadataManager({
                   deleteIcon={
                     <IconButton
                       size="small"
-                      sx={{ color: "#a3a3a3 !important" }}
+                      sx={{ color: "inherit !important", p: 0 }}
                     >
                       <DeleteIcon fontSize="small" />
                     </IconButton>
                   }
                   sx={{
-                    bgcolor: "rgba(250, 191, 6, 0.08)",
-                    color: "#f5d66a",
+                    ...getMetadataChipSx(cat.name),
                     borderRadius: 0.75,
-                    border: "1px solid rgba(250, 191, 6, 0.18)",
                     fontSize: "0.75rem",
                     height: 32,
                     px: 1,
@@ -273,9 +272,7 @@ export default function MetadataManager({
                     textTransform: "none",
                     letterSpacing: "0",
                     "& .MuiChip-deleteIcon": {
-                      color: "rgba(255,255,255,0.4)",
                       fontSize: 16,
-                      "&:hover": { color: "#ef4444" },
                     },
                   }}
                 />
@@ -294,10 +291,8 @@ export default function MetadataManager({
                     </IconButton>
                   }
                   sx={{
-                    bgcolor: "rgba(250, 191, 6, 0.08)",
-                    color: "#FABF06",
+                    ...getMetadataChipSx(tag.name),
                     borderRadius: 0.75,
-                    border: "1px solid rgba(250, 191, 6, 0.18)",
                     fontSize: "0.75rem",
                     height: 32,
                     px: 1,
@@ -305,9 +300,7 @@ export default function MetadataManager({
                     textTransform: "none",
                     letterSpacing: "0",
                     "& .MuiChip-deleteIcon": {
-                      color: "rgba(255,255,255,0.4)",
                       fontSize: 16,
-                      "&:hover": { color: "#ef4444" },
                     },
                   }}
                 />

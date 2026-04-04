@@ -44,7 +44,7 @@ export default async function ProfilePage({ params }: Props) {
   const isOwnProfile = session?.user?.id === profileUser.id;
 
   return (
-    <Container maxWidth="sm" sx={{ py: 4 }}>
+    <Container maxWidth="md" sx={{ py: { xs: 3, md: 5 } }}>
       <ProfileView
         profileUser={profileUser}
         isOwnProfile={isOwnProfile}

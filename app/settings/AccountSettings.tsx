@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Box,
   Typography,
@@ -36,13 +37,13 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import WarningIcon from "@mui/icons-material/Warning";
 import React from "react";
 import Link from "next/link";
-import { linkSocial, useSession } from "@/lib/auth-client";
+import { linkSocial, markPendingSocialAuth, syncClientSession, useSession } from "@/lib/auth-client";
 import GoogleIcon from "@mui/icons-material/Google";
 import LinkIcon from "@mui/icons-material/Link";
-import LinkOffIcon from "@mui/icons-material/LinkOff";
-import CommentIcon from "@mui/icons-material/Comment";
 import ViewSidebarIcon from "@mui/icons-material/ViewSidebar";
 import VerticalAlignBottomIcon from "@mui/icons-material/VerticalAlignBottom";
+import { validatePassword } from "@/lib/password-validation";
+import { useToast } from "@/app/contexts/ToastContext";
 
 interface UserData {
   name: string | null;
@@ -64,18 +65,19 @@ const inputSx = {
   "& .MuiInputLabel-root": { color: "#a3a3a3" },
   "& .MuiOutlinedInput-root": {
     color: "#fafafa",
-    bgcolor: "#262626",
-    "& fieldset": { borderColor: "#404040" },
-    "&:hover fieldset": { borderColor: "#fbbf24" },
+    bgcolor: "#202020",
+    borderRadius: 3,
+    "& fieldset": { borderColor: "rgba(255,255,255,0.08)" },
+    "&:hover fieldset": { borderColor: "rgba(251,191,36,0.45)" },
     "&.Mui-focused fieldset": { borderColor: "#fbbf24" },
   },
 };
 
 const accordionSx = {
-  bgcolor: "#171717",
+  bgcolor: "#151515",
   border: "1px solid rgba(255,255,255,0.08)",
-  borderRadius: "12px !important",
-  mb: 1,
+  borderRadius: "18px !important",
+  mb: 1.25,
   "&:before": { display: "none" },
   "&.Mui-expanded": { borderColor: "rgba(251,191,36,0.25)" },
   boxShadow: "none",
@@ -83,8 +85,8 @@ const accordionSx = {
 
 const summarySx = {
   px: 2.5,
-  py: 0.5,
-  minHeight: 64,
+  py: 0.75,
+  minHeight: 72,
   "& .MuiAccordionSummary-content": { my: 1.5, alignItems: "center", gap: 2 },
 };
 
@@ -109,9 +111,13 @@ function RowIcon({ icon }: { icon: React.ReactNode }) {
 }
 
 export default function AccountSettings({ user, hasPassword, blockedUserCount, blockedTagCount, linkedProviders }: Props) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { showSuccess, showError } = useToast();
   const [expanded, setExpanded] = useState<string | false>(false);
   const [liveBlockedUserCount, setLiveBlockedUserCount] = useState(blockedUserCount);
   const [liveBlockedTagCount, setLiveBlockedTagCount] = useState(blockedTagCount);
+  const [linkedProviderState, setLinkedProviderState] = useState(linkedProviders);
   const initialCommentPrefs = (): Set<string> => {
     const raw = user.commentPreference || 'sidebar';
     return new Set(raw === 'none' ? [] : raw === 'both' ? ['sidebar', 'bottom'] : [raw]);
@@ -133,6 +139,20 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
   const [message, setMessage] = useState<{ panel: string; type: "success" | "error"; text: string } | null>(null);
   const [openEmailConfirm, setOpenEmailConfirm] = useState(false);
 
+  useEffect(() => {
+    const section = searchParams.get("section");
+    if (section) {
+      setExpanded(section);
+    }
+  }, [searchParams]);
+
+  const syncAfterAccountChange = async (panel: string, text: string) => {
+    await syncClientSession();
+    router.refresh();
+    setMessage({ panel, type: "success", text });
+    showSuccess(text);
+  };
+
   const handleAccordion = (panel: string) => (_: React.SyntheticEvent, isExpanded: boolean) => {
     setExpanded(isExpanded ? panel : false);
     setMessage(null);
@@ -149,8 +169,7 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "อัปเดตไม่สำเร็จ");
-      setMessage({ panel: "name", type: "success", text: "อัปเดตชื่อแสดงสำเร็จ" });
-      setTimeout(() => window.location.reload(), 1000);
+      await syncAfterAccountChange("name", "อัปเดตชื่อแสดงสำเร็จ");
     } catch (err: any) {
       setMessage({ panel: "name", type: "error", text: err.message });
     } finally {
@@ -169,8 +188,7 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "อัปเดตไม่สำเร็จ");
-      setMessage({ panel: "username", type: "success", text: "อัปเดตชื่อผู้ใช้สำเร็จ" });
-      setTimeout(() => window.location.reload(), 1000);
+      await syncAfterAccountChange("username", "อัปเดตชื่อผู้ใช้สำเร็จ");
     } catch (err: any) {
       setMessage({ panel: "username", type: "error", text: err.message });
     } finally {
@@ -189,8 +207,7 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "อัปเดตไม่สำเร็จ");
-      setMessage({ panel: "email", type: "success", text: "อัปเดตอีเมลสำเร็จ" });
-      setTimeout(() => window.location.reload(), 1000);
+      await syncAfterAccountChange("email", "อัปเดตอีเมลสำเร็จ");
     } catch (err: any) {
       setMessage({ panel: "email", type: "error", text: err.message });
     } finally {
@@ -206,8 +223,9 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
       setMessage({ panel: "password", type: "error", text: "รหัสผ่านไม่ตรงกัน" });
       return;
     }
-    if (passwordData.newPassword.length < 6) {
-      setMessage({ panel: "password", type: "error", text: "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร" });
+    const passwordValidation = validatePassword(passwordData.newPassword);
+    if (!passwordValidation.isValid) {
+      setMessage({ panel: "password", type: "error", text: passwordValidation.errors[0] || "รหัสผ่านไม่ปลอดภัยพอ" });
       return;
     }
     setLoading("password");
@@ -222,9 +240,8 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "อัปเดตไม่สำเร็จ");
-      setMessage({ panel: "password", type: "success", text: "เปลี่ยนรหัสผ่านสำเร็จ" });
       setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
-      if (!hasPassword) setTimeout(() => window.location.reload(), 1000);
+      await syncAfterAccountChange("password", hasPassword ? "เปลี่ยนรหัสผ่านสำเร็จ" : "ตั้งรหัสผ่านสำเร็จ");
     } catch (err: any) {
       setMessage({ panel: "password", type: "error", text: err.message });
     } finally {
@@ -241,12 +258,24 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
       : next.has('sidebar') ? 'sidebar'
       : next.has('bottom') ? 'bottom'
       : 'none';
-    await fetch("/api/user/profile", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ commentPreference: value }),
-    });
-    setCommentPrefSaving(false);
+    try {
+      const res = await fetch("/api/user/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ commentPreference: value }),
+      });
+
+      if (!res.ok) {
+        throw new Error("บันทึกการตั้งค่าความคิดเห็นไม่สำเร็จ");
+      }
+
+      showSuccess("อัปเดตรูปแบบความคิดเห็นแล้ว");
+    } catch (error: any) {
+      setCommentPrefs(new Set(initialCommentPrefs()));
+      showError(error.message || "บันทึกการตั้งค่าไม่สำเร็จ");
+    } finally {
+      setCommentPrefSaving(false);
+    }
   };
 
   return (
@@ -260,8 +289,8 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
           <HomeIcon sx={{ fontSize: 16, mr: 0.5 }} />
           หน้าแรก
         </Link>
-        {user.username ? (
-          <Link href={`/profile/${user.username}`} style={{ color: "#fbbf24", textDecoration: "none", fontSize: "0.875rem" }}>
+        {formData.username ? (
+          <Link href={`/profile/${formData.username}`} style={{ color: "#fbbf24", textDecoration: "none", fontSize: "0.875rem" }}>
             ฉัน
           </Link>
         ) : (
@@ -270,9 +299,36 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
         <Typography sx={{ color: "#fafafa", fontSize: "0.875rem" }}>ตั้งค่าบัญชี</Typography>
       </Breadcrumbs>
 
-      <Typography variant="h4" fontWeight={700} sx={{ mb: 4 }}>
-        ตั้งค่าบัญชี
-      </Typography>
+      <Box
+        sx={{
+          mb: 4,
+          borderRadius: 4,
+          border: "1px solid rgba(255,255,255,0.08)",
+          background:
+            "linear-gradient(180deg, rgba(251,191,36,0.08) 0%, rgba(255,255,255,0.02) 100%)",
+          px: { xs: 2.5, md: 3 },
+          py: { xs: 2.5, md: 3 },
+          display: "flex",
+          alignItems: "center",
+          gap: 2,
+        }}
+      >
+        <Avatar
+          src={user.image || undefined}
+          alt={formData.name || formData.username || "User"}
+          sx={{ width: 56, height: 56, bgcolor: "#262626", border: "1px solid rgba(255,255,255,0.1)" }}
+        >
+          {(formData.name || formData.username || "U").charAt(0).toUpperCase()}
+        </Avatar>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: -0.4, mb: 0.4 }}>
+            ตั้งค่าบัญชี
+          </Typography>
+          <Typography variant="body2" sx={{ color: "#a3a3a3" }}>
+            จัดการข้อมูลโปรไฟล์ ความปลอดภัย บัญชีที่เชื่อมต่อ และตัวกรองการใช้งานของคุณ
+          </Typography>
+        </Box>
+      </Box>
 
       {/* ชื่อแสดง */}
       <Accordion expanded={expanded === "name"} onChange={handleAccordion("name")} sx={accordionSx}>
@@ -280,7 +336,7 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
           <RowIcon icon={<PersonIcon fontSize="small" />} />
           <Box>
             <Typography variant="caption" sx={{ color: "#5eead4", display: "block", lineHeight: 1.3 }}>ชื่อแสดง</Typography>
-            <Typography variant="body1" fontWeight={500}>{user.name || "ยังไม่ได้ตั้งค่า"}</Typography>
+            <Typography variant="body1" fontWeight={500}>{formData.name || "ยังไม่ได้ตั้งค่า"}</Typography>
           </Box>
         </AccordionSummary>
         <AccordionDetails sx={{ px: 2.5, pb: 2.5 }}>
@@ -316,7 +372,7 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
           <RowIcon icon={<PersonIcon fontSize="small" />} />
           <Box>
             <Typography variant="caption" sx={{ color: "#5eead4", display: "block", lineHeight: 1.3 }}>ชื่อผู้ใช้</Typography>
-            <Typography variant="body1" fontWeight={500}>{user.username || "ยังไม่ได้ตั้งค่า"}</Typography>
+            <Typography variant="body1" fontWeight={500}>{formData.username || "ยังไม่ได้ตั้งค่า"}</Typography>
           </Box>
         </AccordionSummary>
         <AccordionDetails sx={{ px: 2.5, pb: 2.5 }}>
@@ -350,7 +406,7 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
           <RowIcon icon={<EmailIcon fontSize="small" />} />
           <Box>
             <Typography variant="caption" sx={{ color: "#5eead4", display: "block", lineHeight: 1.3 }}>อีเมล</Typography>
-            <Typography variant="body1" fontWeight={500}>{user.email || "ยังไม่ได้ตั้งค่า"}</Typography>
+            <Typography variant="body1" fontWeight={500}>{formData.email || "ยังไม่ได้ตั้งค่า"}</Typography>
           </Box>
         </AccordionSummary>
         <AccordionDetails sx={{ px: 2.5, pb: 2.5 }}>
@@ -477,22 +533,22 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
           <Box>
             <Typography variant="caption" sx={{ color: "#5eead4", display: "block", lineHeight: 1.3 }}>บัญชีที่เชื่อมต่อ</Typography>
             <Typography variant="body1" fontWeight={500}>
-              {linkedProviders.includes("google") ? "เชื่อมต่อ Google แล้ว" : "เชื่อมต่อกับ Google"}
+              {linkedProviderState.includes("google") ? "เชื่อมต่อ Google แล้ว" : "เชื่อมต่อกับ Google"}
             </Typography>
           </Box>
         </AccordionSummary>
         <AccordionDetails sx={{ px: 2.5, pb: 2.5 }}>
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2, bgcolor: "#262626", borderRadius: 1.5 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <GoogleIcon sx={{ color: linkedProviders.includes("google") ? "#4285F4" : "#a3a3a3", fontSize: 28 }} />
+              <GoogleIcon sx={{ color: linkedProviderState.includes("google") ? "#4285F4" : "#a3a3a3", fontSize: 28 }} />
               <Box>
                 <Typography variant="body2" fontWeight={600}>Google</Typography>
                 <Typography variant="caption" sx={{ color: "#a3a3a3" }}>
-                  {linkedProviders.includes("google") ? "เชื่อมต่อแล้ว — สามารถใช้เข้าสู่ระบบได้" : "ยังไม่ได้เชื่อมต่อ"}
+                  {linkedProviderState.includes("google") ? "เชื่อมต่อแล้ว — สามารถใช้เข้าสู่ระบบได้" : "ยังไม่ได้เชื่อมต่อ"}
                 </Typography>
               </Box>
             </Box>
-            {linkedProviders.includes("google") ? (
+            {linkedProviderState.includes("google") ? (
               <Chip label="เชื่อมต่อแล้ว" size="small" sx={{ bgcolor: "rgba(66,133,244,0.15)", color: "#4285F4", border: "1px solid rgba(66,133,244,0.3)" }} />
             ) : (
               <Button
@@ -500,7 +556,14 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
                 variant="outlined"
                 startIcon={<LinkIcon fontSize="small" />}
                 onClick={async () => {
-                  await linkSocial({ provider: "google", callbackURL: "/settings" });
+                  try {
+                    markPendingSocialAuth("/settings");
+                    setLinkedProviderState((prev) => prev.includes("google") ? prev : [...prev, "google"]);
+                    await linkSocial({ provider: "google", callbackURL: "/settings" });
+                  } catch {
+                    setLinkedProviderState((prev) => prev.filter((provider) => provider !== "google"));
+                    showError("เชื่อมต่อ Google ไม่สำเร็จ");
+                  }
                 }}
                 sx={{ color: "#fbbf24", borderColor: "rgba(251,191,36,0.4)", "&:hover": { borderColor: "#fbbf24", bgcolor: "rgba(251,191,36,0.06)" } }}
               >
@@ -508,7 +571,7 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
               </Button>
             )}
           </Box>
-          {linkedProviders.includes("google") && (
+          {linkedProviderState.includes("google") && (
             <Typography variant="caption" sx={{ color: "#a3a3a3", display: "block", mt: 1.5 }}>
               บัญชี Google เชื่อมต่ออยู่แล้ว การเข้าสู่ระบบครั้งต่อไปสามารถใช้ Google ได้โดยไม่ต้องใส่รหัสผ่าน
             </Typography>
@@ -687,8 +750,11 @@ function BlockedUsersPanel({ onCountChange }: { onCountChange?: (n: number) => v
   const handleUnblock = async (blockedUserId: string) => {
     setRemoving(blockedUserId);
     await fetch(`/api/user/blocked-users?blockedUserId=${blockedUserId}`, { method: "DELETE" });
-    setBlockedList((prev) => prev.filter((u) => u.blockedUserId !== blockedUserId));
-    onCountChange?.(blockedList.length - 1);
+    setBlockedList((prev) => {
+      const next = prev.filter((u) => u.blockedUserId !== blockedUserId);
+      onCountChange?.(next.length);
+      return next;
+    });
     setRemoving(null);
   };
 
@@ -799,7 +865,10 @@ function BlockedTagsPanel({ onCountChange }: { onCountChange?: (n: number) => vo
     setSearch(q);
     if (!q.trim()) { setSearchResults([]); return; }
     const lower = q.toLowerCase();
-    setSearchResults(allTags.filter((t) => t.name.toLowerCase().includes(lower)));
+    const blockedTagIds = new Set(blockedList.map((item) => item.tagId));
+    setSearchResults(
+      allTags.filter((t) => !blockedTagIds.has(t.id) && t.name.toLowerCase().includes(lower))
+    );
   };
 
   const handleBlockTag = async (tagId: string, tagName: string) => {
@@ -809,8 +878,14 @@ function BlockedTagsPanel({ onCountChange }: { onCountChange?: (n: number) => vo
       body: JSON.stringify({ tagId }),
     });
     if (res.ok) {
-      setBlockedList((prev) => [...prev, { id: Date.now().toString(), tagId, tag: { name: tagName } }]);
-      onCountChange?.(blockedList.length + 1);
+      setBlockedList((prev) => {
+        if (prev.some((item) => item.tagId === tagId)) {
+          return prev;
+        }
+        const next = [...prev, { id: Date.now().toString(), tagId, tag: { name: tagName } }];
+        onCountChange?.(next.length);
+        return next;
+      });
       setSearch("");
       setSearchResults([]);
     }
@@ -819,8 +894,11 @@ function BlockedTagsPanel({ onCountChange }: { onCountChange?: (n: number) => vo
   const handleUnblock = async (tagId: string) => {
     setRemoving(tagId);
     await fetch(`/api/user/blocked-tags?tagId=${tagId}`, { method: "DELETE" });
-    setBlockedList((prev) => prev.filter((t) => t.tagId !== tagId));
-    onCountChange?.(blockedList.length - 1);
+    setBlockedList((prev) => {
+      const next = prev.filter((t) => t.tagId !== tagId);
+      onCountChange?.(next.length);
+      return next;
+    });
     setRemoving(null);
   };
 

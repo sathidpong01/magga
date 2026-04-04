@@ -38,7 +38,7 @@ export default async function SettingsPage() {
   const linkedProviders = linkedAccounts.map((a) => a.providerId);
 
   return (
-    <Container maxWidth="sm" sx={{ py: 4 }}>
+    <Container maxWidth="md" sx={{ py: { xs: 3, md: 5 } }}>
       <AccountSettings
         user={user}
         hasPassword={!!user.password}

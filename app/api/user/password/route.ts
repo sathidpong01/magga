@@ -47,7 +47,7 @@ export async function PUT(req: Request) {
     const { currentPassword, newPassword } = passwordSchema.parse(body);
 
     const user = await db.query.profiles.findFirst({
-      where: eq(usersTable.email, session.user.email),
+      where: eq(usersTable.id, session.user.id),
     });
 
     if (!user) {
