@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { r2Client, R2_BUCKET, getR2PublicUrl } from "@/lib/r2";
+import { readValidatedImageFile } from "@/lib/image-security";
 import sharp from "sharp";
 
 export async function POST(request: NextRequest) {
@@ -36,7 +37,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
+    const { buffer } = await readValidatedImageFile(file, {
+      maxBytes: 5 * 1024 * 1024,
+      allowedMimeTypes: allowedTypes,
+    });
 
     // Compress and convert to WebP
     const processedBuffer = await sharp(buffer)

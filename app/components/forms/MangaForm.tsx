@@ -1471,22 +1471,19 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                 </Typography>
 
                 {!coverItem ? (
-                  <Button
-                    variant="outlined"
-                    fullWidth
-                    component="label"
-                    sx={{
-                      height: 120,
-                      borderStyle: "dashed",
-                      borderColor: "rgba(251,191,36,0.22)",
-                      borderRadius: 2,
-                      color: dashboardTokens.text,
-                      flexDirection: "column",
-                      gap: 1,
-                      cursor: "pointer",
-                      ...mediaActionButtonSx,
-                    }}
-                  >
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      component="label"
+                      sx={{
+                        ...mediaActionButtonSx,
+                        height: 120,
+                        borderStyle: "dashed",
+                        flexDirection: "column",
+                        gap: 1,
+                        cursor: "pointer",
+                      }}
+                    >
                     <input
                       type="file"
                       hidden

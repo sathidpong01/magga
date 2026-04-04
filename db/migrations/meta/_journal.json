@@ -29,6 +29,20 @@
       "when": 1775204166387,
       "tag": "0003_optimize_rls_initplan",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1775281469849,
+      "tag": "0004_clever_ares",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1775281470000,
+      "tag": "0005_harden_auth_surface",
+      "breakpoints": true
     }
   ]
 }

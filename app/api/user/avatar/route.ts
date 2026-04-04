@@ -5,12 +5,24 @@ import { profiles as usersTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { r2Client, R2_BUCKET, getR2PublicUrl } from "@/lib/r2";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { readValidatedImageFile } from "@/lib/image-security";
+import { isUserBanned } from "@/lib/session-utils";
 import sharp from "sharp";
 
 export async function POST(request: Request) {
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (isUserBanned(session)) {
+    return NextResponse.json({ error: "บัญชีของคุณถูกระงับการใช้งาน" }, { status: 403 });
+  }
+
+  const rateLimit = await checkRateLimit(`avatar:${session.user.id}`, 10, 60 * 60 * 1000);
+  if (!rateLimit.allowed) {
+    return NextResponse.json({ error: "อัปโหลดรูปโปรไฟล์บ่อยเกินไป กรุณาลองใหม่ภายหลัง" }, { status: 429 });
   }
 
   try {
@@ -31,8 +43,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "รองรับเฉพาะไฟล์ JPEG, PNG, WebP, GIF" }, { status: 400 });
     }
 
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    const { buffer } = await readValidatedImageFile(file, {
+      maxBytes: MAX_SIZE,
+      allowedMimeTypes: ALLOWED_TYPES,
+    });
 
     // Resize to 200x200 square, convert to webp
     const processedBuffer = await sharp(buffer)

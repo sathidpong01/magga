@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { r2Client, R2_BUCKET, getR2PublicUrl } from "@/lib/r2";
+import { readValidatedImageFile } from "@/lib/image-security";
+import { isUserBanned } from "@/lib/session-utils";
 import sharp from "sharp";
 
 // POST /api/comments/upload - Upload image for comment
@@ -11,6 +13,10 @@ export async function POST(request: Request) {
   
   if (!session?.user?.id) {
     return NextResponse.json({ error: "กรุณาเข้าสู่ระบบก่อนอัพโหลดรูป" }, { status: 401 });
+  }
+
+  if (isUserBanned(session)) {
+    return NextResponse.json({ error: "บัญชีของคุณถูกระงับการใช้งาน" }, { status: 403 });
   }
 
   // Rate limiting: 10 images per 15 minutes per user
@@ -47,12 +53,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "รองรับเฉพาะไฟล์ JPEG, PNG, WebP, GIF" }, { status: 400 });
     }
 
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    const { buffer } = await readValidatedImageFile(file, {
+      maxBytes: MAX_FILE_SIZE,
+      allowedMimeTypes: ALLOWED_TYPES,
+    });
 
     // Compress and convert to WebP
     let imageData = new Uint8Array(buffer);
-    let contentType = file.type;
+    let contentType = "image/webp";
     let fileName = file.name;
 
     try {
@@ -69,11 +77,10 @@ export async function POST(request: Request) {
         .toBuffer();
 
       imageData = new Uint8Array(compressedBuffer);
-      contentType = "image/webp";
       fileName = fileName.replace(/\.[^/.]+$/, "") + ".webp";
     } catch (error) {
       console.error("Image compression failed:", error);
-      // Continue with original if compression fails
+      return NextResponse.json({ error: "ไฟล์รูปภาพเสียหายหรือไม่รองรับ" }, { status: 400 });
     }
 
     // Construct path: uploads/comments/{year}/{month}/{userId}/{filename}

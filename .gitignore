@@ -49,6 +49,8 @@ next-env.d.ts
 # Database dumps and migrations (manual SQL files)
 *.sql
 !prisma/migrations/**/*.sql
+!db/migrations/0004_clever_ares.sql
+!db/migrations/0005_harden_auth_surface.sql
 
 # Debug/test scripts
 scripts/test-*.ts

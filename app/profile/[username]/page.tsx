@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: Props) {
 export default async function ProfilePage({ params }: Props) {
   const { username } = await params;
 
-  const [profileUser, session] = await Promise.all([
+  const [profileRecord, session] = await Promise.all([
     db.query.profiles.findFirst({
       where: or(eq(profiles.username, username), eq(profiles.id, username)),
       columns: {
@@ -37,11 +37,15 @@ export default async function ProfilePage({ params }: Props) {
     auth.api.getSession({ headers: await headers() }),
   ]);
 
-  if (!profileUser) {
+  if (!profileRecord) {
     notFound();
   }
 
-  const isOwnProfile = session?.user?.id === profileUser.id;
+  const isOwnProfile = session?.user?.id === profileRecord.id;
+  const profileUser = {
+    ...profileRecord,
+    email: isOwnProfile ? profileRecord.email : null,
+  };
 
   return (
     <Container maxWidth="md" sx={{ py: { xs: 3, md: 5 } }}>

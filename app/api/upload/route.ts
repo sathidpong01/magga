@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { r2Client, R2_BUCKET, getR2PublicUrl } from "@/lib/r2";
+import { readValidatedImageFile, sanitizeObjectKeySegment } from "@/lib/image-security";
+import { isUserBanned } from "@/lib/session-utils";
 
 import sharp from "sharp";
 
@@ -10,6 +12,10 @@ export async function POST(request: Request) {
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (isUserBanned(session)) {
+    return NextResponse.json({ error: "บัญชีของคุณถูกระงับการใช้งาน" }, { status: 403 });
   }
 
   // Rate limiting: 50 uploads per hour per user
@@ -31,7 +37,10 @@ export async function POST(request: Request) {
   try {
     const form = await request.formData();
     const files = form.getAll("files") as File[];
-    const mangaId = (form.get("mangaId") as string) || "uncategorized";
+    const mangaId = sanitizeObjectKeySegment(
+      (form.get("mangaId") as string) || "uncategorized",
+      "uncategorized"
+    );
 
     // Upload type: 'cover' = 400px, 'page' = 1920px (default)
     const uploadType = (form.get("type") as string) || "page";
@@ -55,62 +64,12 @@ export async function POST(request: Request) {
 
     const saved = await Promise.all(
       files.map(async (file) => {
-        // 1. File Size Check
-        if (file.size > MAX_FILE_SIZE) {
-          throw new Error(`File ${file.name} is too large (max 10MB)`);
-        }
+        const { buffer } = await readValidatedImageFile(file, {
+          maxBytes: MAX_FILE_SIZE,
+          allowedMimeTypes: ALLOWED_MIME_TYPES,
+        });
 
-        // 2. MIME Type Check
-        if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-          throw new Error(`File type ${file.type} is not allowed.`);
-        }
-
-        const arrayBuffer = await file.arrayBuffer();
-        const buffer = Buffer.from(arrayBuffer);
-
-        // 3. Magic Number Check - Validate file signature
-        const hex = buffer.toString("hex", 0, 12); // Read 12 bytes for HEIC/ftyp check
-        const hex4 = hex.substring(0, 8); // First 4 bytes
-        let isValidMagic = false;
-
-        // JPEG: ffd8ff (all variants: JFIF, EXIF, DQT, SOF0, etc.)
-        if (hex4.startsWith("ffd8ff")) {
-          isValidMagic = true;
-        }
-        // PNG: 89504e47
-        else if (hex4 === "89504e47") {
-          isValidMagic = true;
-        }
-        // GIF: 47494638 (GIF8)
-        else if (hex4.startsWith("47494638")) {
-          isValidMagic = true;
-        }
-        // WebP: RIFF....WEBP (52494646)
-        else if (hex4.startsWith("52494646")) {
-          isValidMagic = true;
-        }
-        // BMP: 424d (BM)
-        else if (hex4.startsWith("424d")) {
-          isValidMagic = true;
-        }
-        // HEIC/HEIF: ftyp marker (00 00 00 xx 66 74 79 70 = ....ftyp)
-        // The 4th byte offset contains 'ftyp' (66747970)
-        else if (hex.includes("66747970")) {
-          isValidMagic = true;
-        }
-        // AVIF: Also uses ftyp but with 'avif' brand
-        else if (file.type === "image/avif") {
-          isValidMagic = true; // AVIF has complex signature, trust MIME type
-        }
-
-        if (!isValidMagic) {
-          console.warn(
-            `Invalid file signature for ${file.name}: header ${hex4}`
-          );
-          throw new Error(`Invalid file signature for ${file.name}`);
-        }
-
-        let imageData = new Uint8Array(arrayBuffer);
+        let imageData = new Uint8Array(buffer);
         let contentType = file.type;
         let fileName = file.name;
         let finalWidth = 0;
@@ -185,9 +144,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ urls: saved });
   } catch (err: any) {
     console.error("Upload error:", err);
+    const status =
+      typeof err?.message === "string" && /file|image|upload/i.test(err.message)
+        ? 400
+        : 500;
     return NextResponse.json(
       { error: err.message || "Upload failed" },
-      { status: 500 }
+      { status }
     );
   }
 }

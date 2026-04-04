@@ -81,7 +81,7 @@ export const accounts = pgTable("accounts", {
 			name: "accounts_user_id_fkey"
 		}).onDelete("cascade"),
 	unique("accounts_provider_id_account_id_key").on(table.accountId, table.providerId),
-	pgPolicy("accounts_select_own", { as: "permissive", for: "select", to: ["authenticated"], using: sql`true` }),
+	pgPolicy("accounts_select_own", { as: "permissive", for: "select", to: ["authenticated"], using: sql`user_id = ${currentUserId}` }),
 ]);
 
 export const sessions = pgTable("sessions", {
@@ -101,7 +101,7 @@ export const sessions = pgTable("sessions", {
 			name: "sessions_user_id_fkey"
 		}).onDelete("cascade"),
 	unique("sessions_token_key").on(table.token),
-	pgPolicy("sessions_select_own", { as: "permissive", for: "select", to: ["authenticated"], using: sql`true` }),
+	pgPolicy("sessions_select_own", { as: "permissive", for: "select", to: ["authenticated"], using: sql`user_id = ${currentUserId}` }),
 ]);
 
 export const profiles = pgTable("profiles", {
