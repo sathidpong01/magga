@@ -48,7 +48,7 @@ export default function CollapsibleSidebar({
 }: CollapsibleSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { showSuccess } = useToast();
+  const { showError, showSuccess } = useToast();
   const { data: session } = useSession();
   const banned = isUserBanned(session);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -85,11 +85,16 @@ export default function CollapsibleSidebar({
   };
 
   const handleSignOut = async () => {
-    sessionStorage.setItem("intent_logout", "true");
-    await signOutAndSync();
-    showSuccess("ออกจากระบบสำเร็จ");
-    router.push("/");
-    router.refresh();
+    try {
+      await signOutAndSync();
+      showSuccess("ออกจากระบบสำเร็จ");
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      showError(
+        error instanceof Error ? error.message : "ออกจากระบบไม่สำเร็จ"
+      );
+    }
   };
 
   // Prevent hydration mismatch

@@ -35,7 +35,7 @@ const AuthModal = dynamic(() => import("@/app/components/features/auth/AuthModal
 
 export default function Header() {
   const { data: session, isPending } = useSession();
-  const { showSuccess } = useToast();
+  const { showError, showSuccess } = useToast();
   const pathname = usePathname();
   const router = useRouter();
   const [isScrolled, setIsScrolled] = useState(false);
@@ -418,10 +418,17 @@ export default function Header() {
                 <MenuItem 
                   onClick={async () => {
                     handleMenuClose();
-                    sessionStorage.setItem("intent_logout", "true");
-                    await signOutAndSync();
-                    showSuccess("ออกจากระบบสำเร็จ");
-                    router.refresh();
+                    try {
+                      await signOutAndSync();
+                      showSuccess("ออกจากระบบสำเร็จ");
+                      router.refresh();
+                    } catch (error) {
+                      showError(
+                        error instanceof Error
+                          ? error.message
+                          : "ออกจากระบบไม่สำเร็จ"
+                      );
+                    }
                   }}
                 >
                   <ListItemIcon>

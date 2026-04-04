@@ -37,7 +37,7 @@ import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import WarningIcon from "@mui/icons-material/Warning";
 import React from "react";
 import Link from "next/link";
-import { linkSocial, markPendingSocialAuth, syncClientSession, useSession } from "@/lib/auth-client";
+import { linkSocial, syncClientSession, useSession } from "@/lib/auth-client";
 import GoogleIcon from "@mui/icons-material/Google";
 import LinkIcon from "@mui/icons-material/Link";
 import ViewSidebarIcon from "@mui/icons-material/ViewSidebar";
@@ -557,11 +557,8 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
                 startIcon={<LinkIcon fontSize="small" />}
                 onClick={async () => {
                   try {
-                    markPendingSocialAuth("/settings");
-                    setLinkedProviderState((prev) => prev.includes("google") ? prev : [...prev, "google"]);
                     await linkSocial({ provider: "google", callbackURL: "/settings" });
                   } catch {
-                    setLinkedProviderState((prev) => prev.filter((provider) => provider !== "google"));
                     showError("เชื่อมต่อ Google ไม่สำเร็จ");
                   }
                 }}

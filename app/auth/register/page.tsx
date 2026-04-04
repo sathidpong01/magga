@@ -2,7 +2,6 @@
 
 import { useState, Suspense } from "react";
 import {
-  markPendingSocialAuth,
   signIn,
   signUp,
   syncClientSession,
@@ -287,7 +286,6 @@ function RegisterForm() {
             variant="outlined"
             startIcon={<GoogleIcon />}
             onClick={() => {
-              markPendingSocialAuth(callbackUrl);
               void signIn.social({ provider: "google", callbackURL: callbackUrl });
             }}
             sx={{

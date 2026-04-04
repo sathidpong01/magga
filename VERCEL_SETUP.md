@@ -43,9 +43,11 @@ ALTER TABLE "Manga" ADD COLUMN "authorName" TEXT;
 ```
 BETTER_AUTH_URL=https://your-project-name.vercel.app
 BETTER_AUTH_SECRET=your-secret-from-env-local
+BETTER_AUTH_TRUSTED_ORIGINS=https://your-project-name.vercel.app,https://your-custom-domain.com
 ```
 
 **⚠️ สำคัญ:** `BETTER_AUTH_URL` ต้องเป็น URL ของ production เช่น `https://magga.vercel.app` (ไม่ใช่ localhost)
+ถ้ามีหลายโดเมน เช่น Vercel domain + custom domain หลัง Cloudflare ให้ใส่ทุก origin ที่ใช้งานจริงใน `BETTER_AUTH_TRUSTED_ORIGINS`
 
 #### Admin Credentials (ถ้าใช้ Credentials Provider)
 

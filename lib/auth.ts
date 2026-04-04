@@ -8,7 +8,7 @@ import { getAuthBaseUrl, getTrustedOrigins } from "@/lib/site-url";
 export const auth = betterAuth({
   appName: "Magga",
   baseURL: getAuthBaseUrl(),
-  trustedOrigins: getTrustedOrigins(),
+  trustedOrigins: (request) => getTrustedOrigins(request),
   database: drizzleAdapter(db, {
     provider: "pg",
     schema: {

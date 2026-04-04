@@ -6,21 +6,15 @@ import dynamic from "next/dynamic";
 // ssr: false is allowed here because this is a Client Component
 const AgeVerificationModal = dynamic(() => import("../features/auth/AgeVerificationModal"), { ssr: false });
 const CookieConsent = dynamic(() => import("../features/auth/CookieConsent"), { ssr: false });
-const SessionExpiryWarning = dynamic(() => import("../features/auth/SessionExpiryWarning"), { ssr: false });
-const SessionExpiredNotice = dynamic(() => import("../features/auth/SessionExpiredNotice"), { ssr: false });
 const DevToolsProtection = dynamic(() => import("../security/DevToolsProtection"), { ssr: false });
 const ConditionalAnalytics = dynamic(() => import("../features/analytics/ConditionalAnalytics"), { ssr: false });
 const GlobalAds = dynamic(() => import("../features/ads/GlobalAds"), { ssr: false });
-const AuthSessionSync = dynamic(() => import("./AuthSessionSync"), { ssr: false });
 
 export default function LazyClientComponents() {
   return (
     <>
-      <AuthSessionSync />
       <AgeVerificationModal />
       <CookieConsent />
-      <SessionExpiryWarning />
-      <SessionExpiredNotice />
       <DevToolsProtection />
       <GlobalAds />
       <ConditionalAnalytics />

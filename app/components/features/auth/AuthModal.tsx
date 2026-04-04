@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { markPendingSocialAuth, signIn, syncClientSession } from "@/lib/auth-client";
+import { signIn, syncClientSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import {
   Dialog,
@@ -64,8 +64,11 @@ export default function AuthModal({ open, onClose, onSuccess, callbackUrl = "/" 
         setError(result.error.message || "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
       } else {
         await syncClientSession();
-        onSuccess?.();
-        onClose();
+        if (onSuccess) {
+          onSuccess();
+        } else {
+          onClose();
+        }
         router.refresh();
       }
     } catch {
@@ -80,7 +83,6 @@ export default function AuthModal({ open, onClose, onSuccess, callbackUrl = "/" 
     setLoading(true);
 
     try {
-      markPendingSocialAuth(callbackUrl);
       await signIn.social({ provider: "google", callbackURL: callbackUrl });
       onClose();
     } catch {
