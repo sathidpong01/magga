@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   clearReauthInProgress,
+  hasPendingSocialAuth,
   hasReauthInProgress,
   markReauthInProgress,
   useSession,
@@ -38,9 +39,17 @@ export default function SessionExpiredNotice() {
         sessionStorage.getItem("wasAuthenticated") === "true";
       const intentLogout = sessionStorage.getItem("intent_logout") === "true";
       const reauthInProgress = hasReauthInProgress();
+      const pendingSocialAuth = hasPendingSocialAuth();
 
-      if ((previouslyAuth || wasAuthenticated) && !intentLogout && !reauthInProgress) {
+      if (
+        (previouslyAuth || wasAuthenticated) &&
+        !intentLogout &&
+        !reauthInProgress &&
+        !pendingSocialAuth
+      ) {
         setShowNotice(true);
+      } else if (pendingSocialAuth) {
+        setShowNotice(false);
       }
       
       // Clean up storage items

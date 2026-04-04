@@ -1,7 +1,12 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import { signIn, signUp, syncClientSession } from "@/lib/auth-client";
+import {
+  markPendingSocialAuth,
+  signIn,
+  signUp,
+  syncClientSession,
+} from "@/lib/auth-client";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -281,7 +286,10 @@ function RegisterForm() {
             fullWidth
             variant="outlined"
             startIcon={<GoogleIcon />}
-            onClick={() => signIn.social({ provider: "google", callbackURL: callbackUrl })}
+            onClick={() => {
+              markPendingSocialAuth(callbackUrl);
+              void signIn.social({ provider: "google", callbackURL: callbackUrl });
+            }}
             sx={{
               py: 1.1,
               color: "#fafafa",

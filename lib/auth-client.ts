@@ -7,6 +7,7 @@ import { getAuthBaseUrl } from "@/lib/site-url";
 export const AUTH_PENDING_SOCIAL_KEY = "magga:auth-pending-social";
 export const AUTH_SESSION_REFRESH_EVENT = "magga:auth-session-refresh";
 export const AUTH_REAUTH_IN_PROGRESS_KEY = "magga:auth-reauth-in-progress";
+const AUTH_PENDING_SOCIAL_TTL_MS = 3 * 60 * 1000;
 
 export const authClient = createAuthClient({
   baseURL: getAuthBaseUrl(),
@@ -56,6 +57,7 @@ export async function syncClientSession() {
   setClientSessionState(sessionData, sessionResult?.error ?? null);
 
   if (sessionData && typeof window !== "undefined") {
+    clearPendingSocialAuth();
     window.sessionStorage.removeItem(AUTH_REAUTH_IN_PROGRESS_KEY);
   }
 
@@ -91,7 +93,26 @@ export function hasPendingSocialAuth() {
     return false;
   }
 
-  return Boolean(window.sessionStorage.getItem(AUTH_PENDING_SOCIAL_KEY));
+  const rawState = window.sessionStorage.getItem(AUTH_PENDING_SOCIAL_KEY);
+  if (!rawState) {
+    return false;
+  }
+
+  try {
+    const parsed = JSON.parse(rawState) as { startedAt?: number };
+    if (
+      typeof parsed.startedAt !== "number" ||
+      Date.now() - parsed.startedAt > AUTH_PENDING_SOCIAL_TTL_MS
+    ) {
+      window.sessionStorage.removeItem(AUTH_PENDING_SOCIAL_KEY);
+      return false;
+    }
+
+    return true;
+  } catch {
+    window.sessionStorage.removeItem(AUTH_PENDING_SOCIAL_KEY);
+    return false;
+  }
 }
 
 export function clearPendingSocialAuth() {

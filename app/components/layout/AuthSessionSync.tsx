@@ -12,9 +12,12 @@ import {
 export default function AuthSessionSync() {
   const router = useRouter();
   const syncingRef = useRef(false);
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryCountRef = useRef(0);
 
   useEffect(() => {
     let active = true;
+    const MAX_SOCIAL_SYNC_RETRIES = 10;
 
     const runSync = async (force = false) => {
       if (syncingRef.current || (!force && !hasPendingSocialAuth())) {
@@ -24,15 +27,28 @@ export default function AuthSessionSync() {
       syncingRef.current = true;
 
       try {
-        await syncClientSession();
+        const sessionData = await syncClientSession();
         if (!active) {
           return;
         }
 
-        clearPendingSocialAuth();
-        router.refresh();
-      } catch {
-        clearPendingSocialAuth();
+        if (sessionData) {
+          retryCountRef.current = 0;
+          clearPendingSocialAuth();
+          router.refresh();
+          return;
+        }
+
+        // OAuth callbacks can land before the browser exposes the new cookie.
+        if (
+          hasPendingSocialAuth() &&
+          retryCountRef.current < MAX_SOCIAL_SYNC_RETRIES
+        ) {
+          retryCountRef.current += 1;
+          retryTimeoutRef.current = setTimeout(() => {
+            void runSync(true);
+          }, 1000);
+        }
       } finally {
         syncingRef.current = false;
       }
@@ -65,6 +81,9 @@ export default function AuthSessionSync() {
 
     return () => {
       active = false;
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+      }
       window.removeEventListener("focus", handleFocus);
       window.removeEventListener("pageshow", handlePageShow);
       document.removeEventListener("visibilitychange", handleVisibility);
