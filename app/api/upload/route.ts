@@ -5,10 +5,6 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { r2Client, R2_BUCKET, getR2PublicUrl } from "@/lib/r2";
 import { readValidatedImageFile, sanitizeObjectKeySegment } from "@/lib/image-security";
 import { isUserBanned } from "@/lib/session-utils";
-import {
-  assertValidImageDimensions,
-  TRANSCODED_IMAGE_CONTENT_TYPE,
-} from "@/lib/image-upload";
 
 import sharp from "sharp";
 
@@ -85,7 +81,17 @@ export async function POST(request: Request) {
             const sharpInstance = sharp(buffer);
             const metadata = await sharpInstance.metadata();
 
-            assertValidImageDimensions(metadata);
+            // Dimension validation
+            const MIN_DIM = 10;
+            const MAX_DIM = 8000;
+            if (!metadata.width || !metadata.height ||
+                metadata.width < MIN_DIM || metadata.height < MIN_DIM ||
+                metadata.width > MAX_DIM || metadata.height > MAX_DIM) {
+              return NextResponse.json(
+                { error: "Image dimensions out of valid range (10-8000px)" },
+                { status: 400 }
+              );
+            }
 
             // Store original dimensions (or resized if we resize)
             finalWidth = metadata.width || 0;
@@ -110,7 +116,17 @@ export async function POST(request: Request) {
               .toBuffer();
 
             imageData = new Uint8Array(compressedBuffer);
-            contentType = TRANSCODED_IMAGE_CONTENT_TYPE;
+
+            // Content-type from Sharp's detected format
+            const formatToMime: Record<string, string> = {
+              jpeg: "image/jpeg",
+              jpg: "image/jpeg",
+              png: "image/png",
+              webp: "image/webp",
+              avif: "image/avif",
+              gif: "image/gif",
+            };
+            contentType = formatToMime[metadata.format || ""] || file.type;
 
             fileName = fileName.replace(/\.[^/.]+$/, "") + ".webp";
           } catch (error) {

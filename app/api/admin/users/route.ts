@@ -51,7 +51,8 @@ export async function PUT(request: NextRequest) {
     const session = await auth.api.getSession({ headers: await headers() });
     const authError = requireAdmin(session);
     if (authError) return authError;
-
+    if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    
     const body = await request.json();
     const { userId, role } = body;
 
