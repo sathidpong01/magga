@@ -45,3 +45,12 @@ export function canModifyResource(
   if (isAdminRole(session)) return true;
   return session.user?.id === resourceUserId;
 }
+
+export function isValidCallbackUrl(url: string | null): string {
+  if (!url) return "/";
+  try {
+    // Only allow relative paths starting with /
+    if (url.startsWith("/") && !url.startsWith("//")) return url;
+    return "/";
+  } catch { return "/"; }
+}

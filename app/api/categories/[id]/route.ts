@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { categories as categoriesTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth-helpers";
 import { revalidatePath } from "next/cache";
 
 type RouteParams = {
@@ -14,10 +15,9 @@ type RouteParams = {
 // PUT to update a category
 export async function PUT(request: Request, { params }: RouteParams) {
   const session = await auth.api.getSession({ headers: request.headers });
-  if (!session || (session?.user as any)?.role !== "admin") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+  const authError = requireAdmin(session);
+  if (authError) return authError;
+  
   const { name } = await request.json();
   const { id } = await params;
 
@@ -43,12 +43,11 @@ export async function PUT(request: Request, { params }: RouteParams) {
 // DELETE a category
 export async function DELETE(request: Request, { params }: RouteParams) {
   const session = await auth.api.getSession({ headers: request.headers });
-  if (!session || (session?.user as any)?.role !== "admin") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+  const authError = requireAdmin(session);
+  if (authError) return authError;
+  
   const { id } = await params;
-
+  
   try {
     await db.delete(categoriesTable).where(eq(categoriesTable.id, id));
     revalidatePath("/dashboard/admin/metadata");

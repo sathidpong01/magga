@@ -45,7 +45,13 @@ const UpdateCommentSchema = z.object({
 // ============================================================================
 
 function sanitizeContent(content: string): string {
-  return content.trim().replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return content
+    .trim()
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
 }
 
 async function getMangaSlug(mangaId: string): Promise<string | null> {
@@ -266,12 +272,14 @@ export async function voteComment(commentId: string, value: 1 | -1) {
 
   const rateLimit = await checkRateLimit(
     `vote:${session.user.id}`,
-    30,
+    10,
     15 * 60 * 1000
   );
 
   if (!rateLimit.allowed) {
-    const waitMins = Math.ceil((rateLimit.resetTime! - Date.now()) / 60000);
+    const waitMins = rateLimit.resetTime
+      ? Math.ceil((rateLimit.resetTime - Date.now()) / 60000)
+      : 1;
     return { error: `คุณโหวตเร็วเกินไป กรุณารอ ${waitMins} นาที` };
   }
 

@@ -37,9 +37,14 @@ function getSessionRefetch() {
 export async function syncClientSession() {
   const refetch = getSessionRefetch();
   if (refetch) {
-    await refetch({
-      query: { disableCookieCache: true },
-    });
+    try {
+      await refetch({
+        query: { disableCookieCache: true },
+      });
+    } catch (err) {
+      console.error("Failed to refresh session:", err);
+      throw new Error("Session synchronization failed");
+    }
     const sessionAtom = authClient.$store.atoms.session as any;
     const sessionData = sessionAtom.get()?.data ?? null;
 
@@ -51,20 +56,25 @@ export async function syncClientSession() {
     return sessionData;
   }
 
-  const sessionResult = await getSession({
-    query: { disableCookieCache: true },
-  });
-  const sessionData =
-    sessionResult?.data?.session && sessionResult?.data?.user
-      ? sessionResult.data
-      : null;
+  try {
+    const sessionResult = await getSession({
+      query: { disableCookieCache: true },
+    });
+    const sessionData =
+      sessionResult?.data?.session && sessionResult?.data?.user
+        ? sessionResult.data
+        : null;
 
-  if (sessionData && typeof window !== "undefined") {
-    clearPendingSocialAuth();
-    window.sessionStorage.removeItem(AUTH_REAUTH_IN_PROGRESS_KEY);
+    if (sessionData && typeof window !== "undefined") {
+      clearPendingSocialAuth();
+      window.sessionStorage.removeItem(AUTH_REAUTH_IN_PROGRESS_KEY);
+    }
+
+    return sessionData;
+  } catch (err) {
+    console.error("Failed to get session:", err);
+    throw new Error("Session synchronization failed");
   }
-
-  return sessionData;
 }
 
 export async function signOutAndSync() {

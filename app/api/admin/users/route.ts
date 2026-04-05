@@ -21,13 +21,10 @@ export async function GET() {
       image: usersTable.image,
       role: usersTable.role,
       createdAt: usersTable.createdAt,
-      commentsCount: sql<number>`count(distinct ${commentsTable.id})::int`,
-      submissionsCount: sql<number>`count(distinct ${submissionsTable.id})::int`,
+      commentsCount: sql<number>`(SELECT count(*)::int FROM comment WHERE comment.user_id = ${usersTable.id})`,
+      submissionsCount: sql<number>`(SELECT count(*)::int FROM submission WHERE submission.user_id = ${usersTable.id})`,
     })
       .from(usersTable)
-      .leftJoin(commentsTable, eq(usersTable.id, commentsTable.userId))
-      .leftJoin(submissionsTable, eq(usersTable.id, submissionsTable.userId))
-      .groupBy(usersTable.id)
       .orderBy(desc(usersTable.createdAt));
 
     const formattedUsers = usersQuery.map(user => ({
@@ -52,9 +49,8 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
-    if (!session || session.user?.role !== "admin") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const authError = requireAdmin(session);
+    if (authError) return authError;
 
     const body = await request.json();
     const { userId, role } = body;

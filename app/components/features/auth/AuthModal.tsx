@@ -30,9 +30,16 @@ interface AuthModalProps {
   onClose: () => void;
   onSuccess?: () => void;
   callbackUrl?: string;
+  notice?: string;
 }
 
-export default function AuthModal({ open, onClose, onSuccess, callbackUrl = "/" }: AuthModalProps) {
+export default function AuthModal({
+  open,
+  onClose,
+  onSuccess,
+  callbackUrl = "/",
+  notice,
+}: AuthModalProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -172,6 +179,21 @@ export default function AuthModal({ open, onClose, onSuccess, callbackUrl = "/" 
         </Box>
 
         <Box sx={{ px: { xs: 3, sm: 4 }, pb: { xs: 3, sm: 3.4 } }}>
+          {notice && (
+            <Alert
+              severity="info"
+              sx={{
+                mb: 2,
+                borderRadius: 2,
+                bgcolor: "rgba(56,189,248,0.12)",
+                color: "#bae6fd",
+                "& .MuiAlert-icon": { color: "#38bdf8" },
+              }}
+            >
+              {notice}
+            </Alert>
+          )}
+
           {error && (
             <Alert severity="error" sx={{ mb: 2, borderRadius: 2, bgcolor: "rgba(239,68,68,0.12)", color: "#fca5a5", "& .MuiAlert-icon": { color: "#ef4444" } }}>
               {error}

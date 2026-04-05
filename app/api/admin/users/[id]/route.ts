@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { profiles as usersTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth-helpers";
 import { eq } from "drizzle-orm";
 
 // DELETE - Delete a user
@@ -11,9 +12,8 @@ export async function DELETE(
 ) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });
-    if (!session || session.user?.role?.toLowerCase() !== "admin") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const authError = requireAdmin(session);
+    if (authError) return authError;
 
     const { id } = await params;
 

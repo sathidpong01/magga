@@ -137,8 +137,14 @@ export async function POST(req: Request) {
 
   } catch (error) {
     console.error("Submission error:", error);
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Validation failed: " + error.issues[0]?.message },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
-      { error: "Failed to submit manga" },
+      { error: "Failed to submit manga. Please try again later." },
       { status: 500 }
     );
   }

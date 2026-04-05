@@ -12,6 +12,7 @@ import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CommentBox from "./CommentBox";
 import CommentList from "./CommentList";
+import { getNextCommentCursor } from "@/lib/comment-pagination";
 
 interface CommentUser {
   id: string;
@@ -66,7 +67,7 @@ export default function CommentInteractions({
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(
     initialComments.length > 0
-      ? initialComments[initialComments.length - 1].id
+      ? getNextCommentCursor(initialComments[initialComments.length - 1].createdAt)
       : null
   );
 

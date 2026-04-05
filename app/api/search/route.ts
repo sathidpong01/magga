@@ -13,8 +13,9 @@ export async function GET(request: NextRequest) {
     const q = request.nextUrl.searchParams.get("q")?.trim();
 
     // No query — return empty
-    if (!q || q.length < 2) {
+    if (!q || q.length < 2 || q.length > 200) {
       return NextResponse.json([], {
+        status: q && q.length > 200 ? 400 : 200,
         headers: {
           "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
         },

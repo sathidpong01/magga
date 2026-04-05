@@ -5,6 +5,10 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { r2Client, R2_BUCKET, getR2PublicUrl } from "@/lib/r2";
 import { readValidatedImageFile, sanitizeObjectKeySegment } from "@/lib/image-security";
 import { isUserBanned } from "@/lib/session-utils";
+import {
+  assertValidImageDimensions,
+  TRANSCODED_IMAGE_CONTENT_TYPE,
+} from "@/lib/image-upload";
 
 import sharp from "sharp";
 
@@ -81,6 +85,8 @@ export async function POST(request: Request) {
             const sharpInstance = sharp(buffer);
             const metadata = await sharpInstance.metadata();
 
+            assertValidImageDimensions(metadata);
+
             // Store original dimensions (or resized if we resize)
             finalWidth = metadata.width || 0;
             finalHeight = metadata.height || 0;
@@ -104,7 +110,8 @@ export async function POST(request: Request) {
               .toBuffer();
 
             imageData = new Uint8Array(compressedBuffer);
-            contentType = "image/webp";
+            contentType = TRANSCODED_IMAGE_CONTENT_TYPE;
+
             fileName = fileName.replace(/\.[^/.]+$/, "") + ".webp";
           } catch (error) {
             console.error("Compression failed for", fileName, error);

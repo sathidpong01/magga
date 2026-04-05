@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { comments as commentsTable, commentVotes as commentVotesTable, profiles as profilesTable, manga as mangaTable } from "@/db/schema";
-import { eq, isNull, and, desc, asc } from "drizzle-orm";
+import { eq, isNull, and, desc, asc, sql } from "drizzle-orm";
+import { getNextCommentCursor, parseCommentCursor } from "@/lib/comment-pagination";
 
 // GET /api/comments - Fetch comments for a manga (with pagination)
 export async function GET(request: Request) {
@@ -23,10 +24,17 @@ export async function GET(request: Request) {
     ];
 
     if (imageIndexParam !== null) {
-      const imageIndexNum = parseInt(imageIndexParam);
-      baseConditions.push(eq(commentsTable.imageIndex, imageIndexNum));
+      const imageIndexNum = parseInt(imageIndexParam, 10);
+      if (!Number.isNaN(imageIndexNum)) {
+        baseConditions.push(eq(commentsTable.imageIndex, imageIndexNum));
+      }
     } else {
       baseConditions.push(isNull(commentsTable.imageIndex));
+    }
+
+    const cursorDate = parseCommentCursor(cursor);
+    if (cursorDate) {
+      baseConditions.push(sql`${commentsTable.createdAt} < ${cursorDate}`);
     }
 
     const comments = await db.query.comments.findMany({
@@ -72,7 +80,7 @@ export async function GET(request: Request) {
     let nextCursor: string | null = null;
     if (transformed.length > limit) {
       const nextItem = transformed.pop();
-      nextCursor = nextItem?.id ?? null;
+      nextCursor = getNextCommentCursor(nextItem?.createdAt);
     }
 
     return NextResponse.json({ comments: transformed, nextCursor }, {

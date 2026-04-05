@@ -6,6 +6,8 @@ import {
   signUp,
   syncClientSession,
 } from "@/lib/auth-client";
+import { isValidCallbackUrl } from "@/lib/auth-helpers";
+import { finalizeEmailRegistration } from "@/lib/register-flow";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -55,7 +57,7 @@ const textFieldSx = {
 function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
+  const callbackUrl = isValidCallbackUrl(searchParams.get("callbackUrl"));
 
   const [formData, setFormData] = useState({
     username: "",
@@ -96,17 +98,17 @@ function RegisterForm() {
         throw new Error(res.error.message || "สมัครสมาชิกไม่สำเร็จ");
       }
 
-      const loginRes = await signIn.email({
+      const registrationResult = await finalizeEmailRegistration({
         email: formData.email,
         password: formData.password,
+        callbackUrl,
+        signInEmail: signIn.email,
+        syncSession: syncClientSession,
       });
 
-      if (!loginRes.error) {
-        await syncClientSession();
-        router.push(callbackUrl);
+      router.push(registrationResult.redirectTo);
+      if (!registrationResult.manualSignInRequired) {
         router.refresh();
-      } else {
-        router.push(`/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "สมัครสมาชิกไม่สำเร็จ");

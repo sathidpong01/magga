@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { profiles as usersTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth-helpers";
 import { eq } from "drizzle-orm";
 
 export async function POST(
@@ -9,11 +10,9 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth.api.getSession({ headers: request.headers });
-
-  if (!session || (session?.user as any)?.role !== "admin") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+  const authError = requireAdmin(session);
+  if (authError) return authError;
+  
   const { id } = await params;
   const { banReason } = await request.json();
 
@@ -44,13 +43,11 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth.api.getSession({ headers: request.headers });
-
-  if (!session || (session?.user as any)?.role !== "admin") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+  const authError = requireAdmin(session);
+  if (authError) return authError;
+  
   const { id } = await params;
-
+  
   if (!id) {
     return NextResponse.json({ error: "User ID is required" }, { status: 400 });
   }
