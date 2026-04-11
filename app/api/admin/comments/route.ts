@@ -1,9 +1,18 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { comments as commentsTable, commentVotes as commentVotesTable, profiles as profilesTable, manga as mangaTable } from "@/db/schema";
-import { eq, and, ilike, or, desc, asc, count, inArray } from "drizzle-orm";
+import { eq, ilike, or, desc, asc, count, inArray, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { requireAdmin } from "@/lib/auth-helpers";
+
+function parsePageParam(value: string | null, fallback: number, max: number) {
+  const parsed = Number.parseInt(value || "", 10);
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+
+  return Math.min(max, Math.max(1, parsed));
+}
 
 // GET /api/admin/comments - Fetch all comments for admin
 export async function GET(request: Request) {
@@ -12,12 +21,9 @@ export async function GET(request: Request) {
   if (authError) return authError;
 
   const { searchParams } = new URL(request.url);
-  const page = Math.max(1, parseInt(searchParams.get("page") || "1"));
-  const limit = Math.min(
-    100,
-    Math.max(1, parseInt(searchParams.get("limit") || "20"))
-  );
-  const search = searchParams.get("search") || "";
+  const page = parsePageParam(searchParams.get("page"), 1, Number.MAX_SAFE_INTEGER);
+  const limit = parsePageParam(searchParams.get("limit"), 20, 100);
+  const search = searchParams.get("search")?.trim() || "";
 
   const allowedSortFields: Record<string, any> = {
     createdAt: commentsTable.createdAt,
@@ -25,9 +31,29 @@ export async function GET(request: Request) {
   };
   const sortByField = allowedSortFields[searchParams.get("sortBy") || ""] || commentsTable.createdAt;
   const sortOrder = searchParams.get("sortOrder") === "asc" ? asc : desc;
+  const searchPattern = `%${search}%`;
+  const where = search
+    ? or(
+        ilike(commentsTable.content, searchPattern),
+        sql`exists (
+          select 1 from ${profilesTable}
+          where ${profilesTable.id} = ${commentsTable.userId}
+          and (
+            ${profilesTable.name} ilike ${searchPattern}
+            or ${profilesTable.username} ilike ${searchPattern}
+          )
+        )`,
+        sql`exists (
+          select 1 from ${mangaTable}
+          where ${mangaTable.id} = ${commentsTable.mangaId}
+          and ${mangaTable.title} ilike ${searchPattern}
+        )`
+      )
+    : undefined;
 
   try {
     const comments = await db.query.comments.findMany({
+      where,
       orderBy: [sortOrder(sortByField)],
       offset: (page - 1) * limit,
       limit,
@@ -50,25 +76,15 @@ export async function GET(request: Request) {
       },
     });
 
-    // Filter by search in memory if needed
-    const filtered = search
-      ? comments.filter(
-          (c) =>
-            c.content.toLowerCase().includes(search.toLowerCase()) ||
-            (c.profile as any)?.name?.toLowerCase().includes(search.toLowerCase()) ||
-            (c.profile as any)?.username?.toLowerCase().includes(search.toLowerCase()) ||
-            (c.manga as any)?.title?.toLowerCase().includes(search.toLowerCase())
-        )
-      : comments;
-
     const [{ total }] = await db
       .select({ total: count() })
-      .from(commentsTable);
+      .from(commentsTable)
+      .where(where);
 
     const totalNum = Number(total);
 
     return NextResponse.json({
-      comments: filtered.map((c) => ({
+      comments: comments.map((c) => ({
         ...c,
         user: c.profile,
         parent: c.comment

@@ -201,12 +201,13 @@ export default function AuthModal({
           )}
 
           <Box component="form" onSubmit={handleSignIn}>
-            <Typography variant="caption" sx={{ color: "#c8c8c8", fontWeight: 500, letterSpacing: 0.1 }}>
+            <Typography id="auth-modal-username-label" variant="caption" sx={{ color: "#c8c8c8", fontWeight: 500, letterSpacing: 0.1 }}>
               ชื่อผู้ใช้ หรือ อีเมล
             </Typography>
             <TextField
               required
               fullWidth
+              aria-labelledby="auth-modal-username-label"
               placeholder="username หรือ you@example.com"
               autoFocus
               value={username}
@@ -226,12 +227,13 @@ export default function AuthModal({
               }}
             />
 
-            <Typography variant="caption" sx={{ color: "#c8c8c8", fontWeight: 500, letterSpacing: 0.1 }}>
+            <Typography id="auth-modal-password-label" variant="caption" sx={{ color: "#c8c8c8", fontWeight: 500, letterSpacing: 0.1 }}>
               รหัสผ่าน
             </Typography>
             <TextField
               required
               fullWidth
+              aria-labelledby="auth-modal-password-label"
               placeholder="กรอกรหัสผ่านของคุณ"
               type={showPassword ? "text" : "password"}
               value={password}
@@ -252,6 +254,7 @@ export default function AuthModal({
                     <IconButton
                       onClick={() => setShowPassword(!showPassword)}
                       edge="end"
+                      aria-label={showPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
                       sx={{ color: "#a3a3a3" }}
                     >
                       {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}

@@ -58,6 +58,7 @@ export default async function AdminPage() {
     [{ count: totalComments }],
     [{ count: pendingSubmissions }],
     [{ totalViewsAgg }],
+    [{ totalUniqueVisitors }],
     topManga,
   ] = await Promise.all([
     db.select({ count: count() }).from(mangaTable),
@@ -71,6 +72,10 @@ export default async function AdminPage() {
       .from(submissionsTable)
       .where(eq(submissionsTable.status, "PENDING")),
     db.select({ totalViewsAgg: sum(mangaTable.viewCount) }).from(mangaTable),
+    withTimeout(
+      db.select({ totalUniqueVisitors: count() }).from(mangaViewsTable),
+      [{ totalUniqueVisitors: null as number | null }],
+    ),
     db.query.manga.findMany({
       where: eq(mangaTable.isHidden, false),
       orderBy: [desc(mangaTable.viewCount)],
@@ -86,11 +91,6 @@ export default async function AdminPage() {
   ]);
 
   const totalViews = Number(totalViewsAgg || 0);
-  const totalUniqueVisitorResult = await withTimeout(
-    db.select({ totalUniqueVisitors: count() }).from(mangaViewsTable),
-    [{ totalUniqueVisitors: null as number | null }],
-  );
-  const totalUniqueVisitors = totalUniqueVisitorResult[0]?.totalUniqueVisitors ?? null;
 
   const topMangaIds = topManga.map((manga) => manga.id);
   const uniqueVisitorRows = topMangaIds.length
