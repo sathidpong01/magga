@@ -35,20 +35,28 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
   // Stats
-  const [{ count: totalManga }] = await db.select({ count: count() }).from(mangaTable);
-  const [{ count: totalCategories }] = await db.select({ count: count() }).from(categoriesTable);
-  const [{ count: totalTags }] = await db.select({ count: count() }).from(tagsTable);
-  const [{ count: draftManga }] = await db.select({ count: count() }).from(mangaTable).where(eq(mangaTable.isHidden, true));
-  const [{ count: totalUsers }] = await db.select({ count: count() }).from(usersTable);
-  const [{ count: totalComments }] = await db.select({ count: count() }).from(commentsTable);
-  const [{ count: pendingSubmissions }] = await db.select({ count: count() }).from(submissionsTable).where(eq(submissionsTable.status, "PENDING"));
-
-  // Total reads and unique visitors across all manga
-  const [{ totalViewsAgg }] = await db.select({ totalViewsAgg: sum(mangaTable.viewCount) }).from(mangaTable);
+  const [
+    [{ count: totalManga }],
+    [{ count: totalCategories }],
+    [{ count: totalTags }],
+    [{ count: draftManga }],
+    [{ count: totalUsers }],
+    [{ count: totalComments }],
+    [{ count: pendingSubmissions }],
+    [{ totalViewsAgg }],
+    [{ totalUniqueVisitors }],
+  ] = await Promise.all([
+    db.select({ count: count() }).from(mangaTable),
+    db.select({ count: count() }).from(categoriesTable),
+    db.select({ count: count() }).from(tagsTable),
+    db.select({ count: count() }).from(mangaTable).where(eq(mangaTable.isHidden, true)),
+    db.select({ count: count() }).from(usersTable),
+    db.select({ count: count() }).from(commentsTable),
+    db.select({ count: count() }).from(submissionsTable).where(eq(submissionsTable.status, "PENDING")),
+    db.select({ totalViewsAgg: sum(mangaTable.viewCount) }).from(mangaTable),
+    db.select({ totalUniqueVisitors: count() }).from(mangaViewsTable),
+  ]);
   const totalViews = Number(totalViewsAgg || 0);
-  const [{ totalUniqueVisitors }] = await db
-    .select({ totalUniqueVisitors: count() })
-    .from(mangaViewsTable);
 
   // Top 10 Popular Manga by total reads
   const topManga = await db.query.manga.findMany({

@@ -348,7 +348,7 @@ export const auth = betterAuth({
     "https://app.example.com",
     "https://*.preview.example.com",
   ],
-  
+
   // Rate limiting
   rateLimit: {
     enabled: true,
@@ -358,7 +358,7 @@ export const auth = betterAuth({
       "/api/auth/sign-up/email": { window: 60, max: 3 },
     },
   },
-  
+
   // Session security
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
@@ -370,14 +370,14 @@ export const auth = betterAuth({
       strategy: "jwe", // Encrypted session data
     },
   },
-  
+
   // OAuth security
   account: {
     encryptOAuthTokens: true,
     storeStateStrategy: "cookie",
   },
-  
-  
+
+
   // Advanced settings
   advanced: {
     useSecureCookies: true,
@@ -393,7 +393,7 @@ export const auth = betterAuth({
       handler: (promise) => waitUntil(promise),
     },
   },
-  
+
   // Security auditing
   databaseHooks: {
     session: {
