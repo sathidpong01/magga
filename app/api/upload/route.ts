@@ -62,94 +62,99 @@ export async function POST(request: Request) {
       "image/heif", // HEIF variant
     ];
 
-    const saved = await Promise.all(
-      files.map(async (file) => {
-        const { buffer } = await readValidatedImageFile(file, {
-          maxBytes: MAX_FILE_SIZE,
-          allowedMimeTypes: ALLOWED_MIME_TYPES,
-        });
+    const saved = [];
 
-        let imageData = new Uint8Array(buffer);
-        let contentType = file.type;
-        let fileName = file.name;
-        let finalWidth = 0;
-        let finalHeight = 0;
+    for (const file of files) {
+      const { buffer } = await readValidatedImageFile(file, {
+        maxBytes: MAX_FILE_SIZE,
+        allowedMimeTypes: ALLOWED_MIME_TYPES,
+      });
 
-        // 4. Resize & Compress
-        if (file.type.startsWith("image/")) {
-          try {
-            const sharpInstance = sharp(buffer);
-            const metadata = await sharpInstance.metadata();
+      let imageData = new Uint8Array(buffer);
+      let contentType = file.type;
+      let fileName = file.name;
+      let finalWidth = 0;
+      let finalHeight = 0;
 
-            // Dimension validation
-            const MIN_DIM = 10;
-            const MAX_DIM = 8000;
-            if (!metadata.width || !metadata.height ||
-                metadata.width < MIN_DIM || metadata.height < MIN_DIM ||
-                metadata.width > MAX_DIM || metadata.height > MAX_DIM) {
-              throw new Error("Image dimensions out of valid range (10-8000px)");
-            }
+      // 4. Resize & Compress
+      if (file.type.startsWith("image/")) {
+        try {
+          const sharpInstance = sharp(buffer);
+          const metadata = await sharpInstance.metadata();
 
-            // Store original dimensions (or resized if we resize)
-            finalWidth = metadata.width || 0;
-            finalHeight = metadata.height || 0;
-
-            // Only resize if width is greater than maxWidth
-            if (metadata.width && metadata.width > maxWidth) {
-              sharpInstance.resize(maxWidth, null, {
-                fit: "inside",
-                withoutEnlargement: true,
-              });
-              // Calculate new dimensions after resize
-              if (metadata.width && metadata.height) {
-                const ratio = maxWidth / metadata.width;
-                finalWidth = maxWidth;
-                finalHeight = Math.round(metadata.height * ratio);
-              }
-            }
-
-            const compressedBuffer = await sharpInstance
-              .webp({ quality: 80 })
-              .toBuffer();
-
-            imageData = new Uint8Array(compressedBuffer);
-            contentType = "image/webp";
-
-            fileName = fileName.replace(/\.[^/.]+$/, "") + ".webp";
-          } catch (error) {
-            console.error("Compression failed for", fileName, error);
-            throw error;
+          // Dimension validation
+          const MIN_DIM = 10;
+          const MAX_DIM = 8000;
+          if (
+            !metadata.width ||
+            !metadata.height ||
+            metadata.width < MIN_DIM ||
+            metadata.height < MIN_DIM ||
+            metadata.width > MAX_DIM ||
+            metadata.height > MAX_DIM
+          ) {
+            throw new Error("Image dimensions out of valid range (10-8000px)");
           }
+
+          // Store original dimensions (or resized if we resize)
+          finalWidth = metadata.width || 0;
+          finalHeight = metadata.height || 0;
+
+          // Only resize if width is greater than maxWidth
+          if (metadata.width && metadata.width > maxWidth) {
+            sharpInstance.resize(maxWidth, null, {
+              fit: "inside",
+              withoutEnlargement: true,
+            });
+            // Calculate new dimensions after resize
+            if (metadata.width && metadata.height) {
+              const ratio = maxWidth / metadata.width;
+              finalWidth = maxWidth;
+              finalHeight = Math.round(metadata.height * ratio);
+            }
+          }
+
+          const compressedBuffer = await sharpInstance
+            .webp({ quality: 80 })
+            .toBuffer();
+
+          imageData = new Uint8Array(compressedBuffer);
+
+          contentType = "image/webp";
+          fileName = fileName.replace(/\.[^/.]+$/, "") + ".webp";
+        } catch (error) {
+          console.error("Compression failed for", fileName, error);
+          throw error;
         }
+      }
 
-        // 5. Construct Path: uploads/{year}/{month}/{mangaId}/{filename}
-        const date = new Date();
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, "0");
-        const safeName = `${Date.now()}-${fileName.replace(
-          /[^a-zA-Z0-9.-]/g,
-          "_"
-        )}`;
-        const key = `uploads/${year}/${month}/${mangaId}/${safeName}`;
+      // 5. Construct Path: uploads/{year}/{month}/{mangaId}/{filename}
+      const date = new Date();
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const safeName = `${Date.now()}-${fileName.replace(
+        /[^a-zA-Z0-9.-]/g,
+        "_"
+      )}`;
+      const key = `uploads/${year}/${month}/${mangaId}/${safeName}`;
 
-        await r2Client.send(
-          new PutObjectCommand({
-            Bucket: R2_BUCKET,
-            Key: key,
-            Body: imageData,
-            ContentType: contentType,
-            CacheControl: "public, max-age=31536000, immutable",
-          })
-        );
+      await r2Client.send(
+        new PutObjectCommand({
+          Bucket: R2_BUCKET,
+          Key: key,
+          Body: imageData,
+          ContentType: contentType,
+          CacheControl: "public, max-age=31536000, immutable",
+        })
+      );
 
-        // Return object with url and dimensions for CLS prevention
-        return {
-          url: getR2PublicUrl(key),
-          width: finalWidth,
-          height: finalHeight,
-        };
-      })
-    );
+      // Return object with url and dimensions for CLS prevention
+      saved.push({
+        url: getR2PublicUrl(key),
+        width: finalWidth,
+        height: finalHeight,
+      });
+    }
 
     return NextResponse.json({ urls: saved });
   } catch (err: any) {

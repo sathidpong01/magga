@@ -94,7 +94,11 @@ export default function UploadProgress({ files, onCancel, onRetry }: UploadProgr
               </Typography>
             </Box>
           </Box>
-          <IconButton size="small" sx={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
+          <IconButton
+            size="small"
+            aria-label={expanded ? "Collapse upload list" : "Expand upload list"}
+            sx={{ transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}
+          >
             <KeyboardArrowUpIcon />
           </IconButton>
         </Box>
@@ -129,6 +133,7 @@ export default function UploadProgress({ files, onCancel, onRetry }: UploadProgr
                           {onRetry && (
                             <IconButton 
                               size="small" 
+                              aria-label={`Retry upload for ${file.name}`}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 onRetry(file.id);

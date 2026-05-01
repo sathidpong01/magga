@@ -79,6 +79,7 @@ export function SortableItem({
         {onPreview ? (
           <IconButton
             size="small"
+            aria-label={`Preview page ${typeof index === "number" ? index + 1 : ""}`}
             onClick={(event) => {
               stopEvent(event);
               onPreview();
@@ -102,6 +103,7 @@ export function SortableItem({
 
         <IconButton
           size="small"
+          aria-label={`Remove page ${typeof index === "number" ? index + 1 : ""}`}
           onClick={(event) => {
             stopEvent(event);
             onRemove();

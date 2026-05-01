@@ -81,7 +81,7 @@ export async function GET(request: Request) {
     let nextCursor: string | null = null;
     if (transformed.length > limit) {
       const nextItem = transformed.pop();
-      nextCursor = nextItem?.id ?? null;
+      nextCursor = nextItem?.createdAt ?? null;
     }
 
     return NextResponse.json({ comments: transformed, nextCursor }, {
