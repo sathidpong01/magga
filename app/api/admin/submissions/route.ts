@@ -1,9 +1,18 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { mangaSubmissions as submissionsTable, mangaSubmissionTags as submissionTagsTable, profiles as profilesTable } from "@/db/schema";
-import { eq, desc, and, ilike, or, count } from "drizzle-orm";
+import { mangaSubmissions as submissionsTable, profiles as profilesTable } from "@/db/schema";
+import { eq, desc, and, ilike, or, count, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { requireAdmin } from "@/lib/auth-helpers";
+
+function parsePageParam(value: string | null, fallback: number, max: number) {
+  const parsed = Number.parseInt(value || "", 10);
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+
+  return Math.min(max, Math.max(1, parsed));
+}
 
 export async function GET(req: Request) {
   try {
@@ -13,9 +22,9 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
-    const page = Math.max(1, parseInt(searchParams.get("page") || "1") || 1);
-    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "10") || 10));
-    const search = searchParams.get("search") || "";
+    const page = parsePageParam(searchParams.get("page"), 1, Number.MAX_SAFE_INTEGER);
+    const limit = parsePageParam(searchParams.get("limit"), 10, 100);
+    const search = searchParams.get("search")?.trim() || "";
 
     const offset = (page - 1) * limit;
 
@@ -24,8 +33,24 @@ export async function GET(req: Request) {
       conditions.push(eq(submissionsTable.status, status));
     }
 
+    if (search) {
+      const searchPattern = `%${search}%`;
+      conditions.push(
+        or(
+          ilike(submissionsTable.title, searchPattern),
+          sql`exists (
+            select 1 from ${profilesTable}
+            where ${profilesTable.id} = ${submissionsTable.userId}
+            and ${profilesTable.username} ilike ${searchPattern}
+          )`
+        )
+      );
+    }
+
+    const where = conditions.length > 0 ? and(...conditions) : undefined;
+
     const submissions = await db.query.mangaSubmissions.findMany({
-      where: conditions.length > 0 ? and(...conditions) : undefined,
+      where,
       with: {
         profile: {
           columns: { name: true, email: true, username: true },
@@ -36,26 +61,17 @@ export async function GET(req: Request) {
       limit,
     });
 
-    // Filter by search if needed (done in memory for simplicity)
-    const filtered = search
-      ? submissions.filter(
-          (s) =>
-            s.title.toLowerCase().includes(search.toLowerCase()) ||
-            (s.profile as any)?.username?.toLowerCase().includes(search.toLowerCase())
-        )
-      : submissions;
-
     // Count total
     const [{ total }] = await db
       .select({ total: count() })
       .from(submissionsTable)
-      .where(conditions.length > 0 ? and(...conditions) : undefined);
+      .where(where);
 
     const totalNum = Number(total);
 
     return NextResponse.json(
       {
-        submissions: filtered.map((s) => ({
+        submissions: submissions.map((s) => ({
           ...s,
           user: s.profile,
         })),

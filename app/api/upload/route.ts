@@ -87,10 +87,7 @@ export async function POST(request: Request) {
             if (!metadata.width || !metadata.height ||
                 metadata.width < MIN_DIM || metadata.height < MIN_DIM ||
                 metadata.width > MAX_DIM || metadata.height > MAX_DIM) {
-              return NextResponse.json(
-                { error: "Image dimensions out of valid range (10-8000px)" },
-                { status: 400 }
-              );
+              throw new Error("Image dimensions out of valid range (10-8000px)");
             }
 
             // Store original dimensions (or resized if we resize)
@@ -116,17 +113,7 @@ export async function POST(request: Request) {
               .toBuffer();
 
             imageData = new Uint8Array(compressedBuffer);
-
-            // Content-type from Sharp's detected format
-            const formatToMime: Record<string, string> = {
-              jpeg: "image/jpeg",
-              jpg: "image/jpeg",
-              png: "image/png",
-              webp: "image/webp",
-              avif: "image/avif",
-              gif: "image/gif",
-            };
-            contentType = formatToMime[metadata.format || ""] || file.type;
+            contentType = "image/webp";
 
             fileName = fileName.replace(/\.[^/.]+$/, "") + ".webp";
           } catch (error) {
