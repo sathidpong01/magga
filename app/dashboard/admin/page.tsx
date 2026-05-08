@@ -7,7 +7,7 @@ import {
   comments as commentsTable,
   mangaSubmissions as submissionsTable
 } from "@/db/schema";
-import { count, eq, sum, desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { Box, Typography, Grid, Divider, Stack } from "@mui/material";
 import CategoryIcon from "@mui/icons-material/Category";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
@@ -32,29 +32,38 @@ import {
 // Dynamic rendering for real-time data
 export const dynamic = "force-dynamic";
 
+const COUNT_SAMPLE_LIMIT = 1000;
+
+function displayBoundedCount(rows: unknown[]) {
+  return rows.length >= COUNT_SAMPLE_LIMIT ? `${COUNT_SAMPLE_LIMIT}+` : rows.length;
+}
+
 export default async function AdminPage() {
   const [
-    [{ count: totalManga }],
-    [{ count: totalCategories }],
-    [{ count: totalTags }],
-    [{ count: draftManga }],
-    [{ count: totalUsers }],
-    [{ count: totalComments }],
-    [{ count: pendingSubmissions }],
-    [{ totalViewsAgg }],
+    totalMangaRows,
+    totalCategoriesRows,
+    totalTagsRows,
+    draftMangaRows,
+    totalUsersRows,
+    totalCommentsRows,
+    pendingSubmissionsRows,
     topManga,
   ] = await Promise.all([
-    db.select({ count: count() }).from(mangaTable),
-    db.select({ count: count() }).from(categoriesTable),
-    db.select({ count: count() }).from(tagsTable),
-    db.select({ count: count() }).from(mangaTable).where(eq(mangaTable.isHidden, true)),
-    db.select({ count: count() }).from(usersTable),
-    db.select({ count: count() }).from(commentsTable),
+    db.select({ id: mangaTable.id }).from(mangaTable).limit(COUNT_SAMPLE_LIMIT),
+    db.select({ id: categoriesTable.id }).from(categoriesTable).limit(COUNT_SAMPLE_LIMIT),
+    db.select({ id: tagsTable.id }).from(tagsTable).limit(COUNT_SAMPLE_LIMIT),
     db
-      .select({ count: count() })
+      .select({ id: mangaTable.id })
+      .from(mangaTable)
+      .where(eq(mangaTable.isHidden, true))
+      .limit(COUNT_SAMPLE_LIMIT),
+    db.select({ id: usersTable.id }).from(usersTable).limit(COUNT_SAMPLE_LIMIT),
+    db.select({ id: commentsTable.id }).from(commentsTable).limit(COUNT_SAMPLE_LIMIT),
+    db
+      .select({ id: submissionsTable.id })
       .from(submissionsTable)
-      .where(eq(submissionsTable.status, "PENDING")),
-    db.select({ totalViewsAgg: sum(mangaTable.viewCount) }).from(mangaTable),
+      .where(eq(submissionsTable.status, "PENDING"))
+      .limit(COUNT_SAMPLE_LIMIT),
     db
       .select({
         id: mangaTable.id,
@@ -69,7 +78,13 @@ export default async function AdminPage() {
       .limit(10),
   ]);
 
-  const totalViews = Number(totalViewsAgg || 0);
+  const totalManga = displayBoundedCount(totalMangaRows);
+  const totalCategories = displayBoundedCount(totalCategoriesRows);
+  const totalTags = displayBoundedCount(totalTagsRows);
+  const draftManga = displayBoundedCount(draftMangaRows);
+  const totalUsers = displayBoundedCount(totalUsersRows);
+  const totalComments = displayBoundedCount(totalCommentsRows);
+  const pendingSubmissions = displayBoundedCount(pendingSubmissionsRows);
 
   const rankedManga = topManga.map((manga) => ({
     ...manga,
@@ -129,7 +144,7 @@ export default async function AdminPage() {
         <Grid size={{ xs: 6, sm: 4, md: 3 }}>
           <DashboardStat
             label="อ่านสะสม"
-            value={totalViews}
+            value="—"
             icon={<VisibilityIcon />}
           />
         </Grid>

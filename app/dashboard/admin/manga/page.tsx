@@ -13,6 +13,8 @@ import MangaDataTable from "./MangaDataTable";
 
 export const dynamic = "force-dynamic";
 
+const ADMIN_MANGA_LIMIT = 200;
+
 export default async function AdminMangaPage() {
   const [mangasQuery, allCategories, allTags, allAuthors] = await Promise.all([
     db
@@ -27,7 +29,8 @@ export default async function AdminMangaPage() {
         authorId: mangaTable.authorId,
       })
       .from(mangaTable)
-      .orderBy(desc(mangaTable.createdAt)),
+      .orderBy(desc(mangaTable.createdAt))
+      .limit(ADMIN_MANGA_LIMIT),
     db.query.categories.findMany({
       orderBy: [asc(categoriesTable.name)],
     }),
@@ -126,7 +129,7 @@ export default async function AdminMangaPage() {
 
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
             <Chip
-              label={`ทั้งหมด ${mangas.length}`}
+              label={`ล่าสุด ${mangas.length}`}
               sx={{
                 bgcolor: "#171717",
                 color: "#fafafa",
