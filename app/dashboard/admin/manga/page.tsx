@@ -14,6 +14,7 @@ import MangaDataTable from "./MangaDataTable";
 export const dynamic = "force-dynamic";
 
 const ADMIN_MANGA_LIMIT = 200;
+const ADMIN_METADATA_LIMIT = 500;
 
 export default async function AdminMangaPage() {
   const [mangasQuery, allCategories, allTags, allAuthors] = await Promise.all([
@@ -33,12 +34,15 @@ export default async function AdminMangaPage() {
       .limit(ADMIN_MANGA_LIMIT),
     db.query.categories.findMany({
       orderBy: [asc(categoriesTable.name)],
+      limit: ADMIN_METADATA_LIMIT,
     }),
     db.query.tags.findMany({
       orderBy: [asc(tagsTable.name)],
+      limit: ADMIN_METADATA_LIMIT,
     }),
     db.query.authors.findMany({
       orderBy: [asc(authorsTable.name)],
+      limit: ADMIN_METADATA_LIMIT,
     }),
   ]);
 
