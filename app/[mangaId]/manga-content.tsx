@@ -5,11 +5,12 @@ import dynamic from "next/dynamic";
 import { MangaReaderSkeleton } from "./loading-skeletons";
 import type { MangaPageRecord } from "@/lib/manga-pages";
 
-// Dynamic import WITH SSR enabled for better FCP/LCP
-// The component will render on server first, then hydrate on client
+// Keep the reader client-rendered so a large image list cannot hold the server
+// response stream open when the runtime or database is under pressure.
 const MangaReader = dynamic(
   () => import("@/app/components/features/comments/MangaReader"),
   {
+    ssr: false,
     loading: () => <MangaReaderSkeleton />,
   }
 );
