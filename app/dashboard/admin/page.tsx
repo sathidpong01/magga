@@ -1,14 +1,13 @@
 import { db } from "@/db";
 import { 
   manga as mangaTable,
-  mangaViews as mangaViewsTable,
   categories as categoriesTable,
   tags as tagsTable,
   profiles as usersTable,
   comments as commentsTable,
   mangaSubmissions as submissionsTable
 } from "@/db/schema";
-import { count, eq, sum, desc, inArray } from "drizzle-orm";
+import { count, eq, sum, desc } from "drizzle-orm";
 import { Box, Typography, Grid, Divider, Stack } from "@mui/material";
 import CategoryIcon from "@mui/icons-material/Category";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
@@ -33,21 +32,6 @@ import {
 // Dynamic rendering for real-time data
 export const dynamic = "force-dynamic";
 
-const ANALYTICS_TIMEOUT_MS = 1500;
-
-async function withTimeout<T>(promise: Promise<T>, fallback: T): Promise<T> {
-  try {
-    return await Promise.race([
-      promise,
-      new Promise<T>((resolve) => {
-        setTimeout(() => resolve(fallback), ANALYTICS_TIMEOUT_MS);
-      }),
-    ]);
-  } catch {
-    return fallback;
-  }
-}
-
 export default async function AdminPage() {
   const [
     [{ count: totalManga }],
@@ -58,7 +42,6 @@ export default async function AdminPage() {
     [{ count: totalComments }],
     [{ count: pendingSubmissions }],
     [{ totalViewsAgg }],
-    [{ totalUniqueVisitors }],
     topManga,
   ] = await Promise.all([
     db.select({ count: count() }).from(mangaTable),
@@ -72,46 +55,25 @@ export default async function AdminPage() {
       .from(submissionsTable)
       .where(eq(submissionsTable.status, "PENDING")),
     db.select({ totalViewsAgg: sum(mangaTable.viewCount) }).from(mangaTable),
-    withTimeout(
-      db.select({ totalUniqueVisitors: count() }).from(mangaViewsTable),
-      [{ totalUniqueVisitors: null as number | null }],
-    ),
-    db.query.manga.findMany({
-      where: eq(mangaTable.isHidden, false),
-      orderBy: [desc(mangaTable.viewCount)],
-      limit: 10,
-      columns: {
-        id: true,
-        title: true,
-        slug: true,
-        viewCount: true,
-        coverImage: true,
-      },
-    }),
+    db
+      .select({
+        id: mangaTable.id,
+        title: mangaTable.title,
+        slug: mangaTable.slug,
+        viewCount: mangaTable.viewCount,
+        coverImage: mangaTable.coverImage,
+      })
+      .from(mangaTable)
+      .where(eq(mangaTable.isHidden, false))
+      .orderBy(desc(mangaTable.viewCount))
+      .limit(10),
   ]);
 
   const totalViews = Number(totalViewsAgg || 0);
 
-  const topMangaIds = topManga.map((manga) => manga.id);
-  const uniqueVisitorRows = topMangaIds.length
-    ? await withTimeout(
-        db
-          .select({
-            mangaId: mangaViewsTable.mangaId,
-            uniqueVisitors: count(),
-          })
-          .from(mangaViewsTable)
-          .where(inArray(mangaViewsTable.mangaId, topMangaIds))
-          .groupBy(mangaViewsTable.mangaId),
-        [] as Array<{ mangaId: string; uniqueVisitors: number }>,
-      )
-    : [];
-  const uniqueVisitorMap = new Map(
-    uniqueVisitorRows.map((row) => [row.mangaId, row.uniqueVisitors])
-  );
   const rankedManga = topManga.map((manga) => ({
     ...manga,
-    uniqueVisitors: uniqueVisitorMap.get(manga.id) ?? null,
+    uniqueVisitors: null as number | null,
   }));
 
   return (
@@ -174,7 +136,7 @@ export default async function AdminPage() {
         <Grid size={{ xs: 6, sm: 4, md: 3 }}>
           <DashboardStat
             label="ผู้ชมแยกเรื่อง"
-            value={totalUniqueVisitors ?? "—"}
+            value="—"
             icon={<InsightsIcon />}
           />
         </Grid>
@@ -202,7 +164,7 @@ export default async function AdminPage() {
       <DashboardSurface sx={{ p: { xs: 2.5, md: 3 } }}>
         <DashboardSectionTitle
           title="เรื่องที่ถูกอ่านมากที่สุด"
-          description="จัดอันดับจากยอดอ่านสะสม พร้อมผู้ชมไม่ซ้ำรายเรื่องจากคีย์ผู้เยี่ยมชมฝั่งเบราว์เซอร์ เพื่ออ่านแนวโน้มได้แม่นขึ้นกว่าเดิม"
+          description="จัดอันดับจากยอดอ่านสะสม เพื่อให้เห็นเรื่องที่ควรตรวจและดูแลก่อน"
         />
 
         <Grid container spacing={2.25} sx={{ mb: 2.25 }}>

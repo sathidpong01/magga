@@ -1,6 +1,12 @@
 import { db } from "@/db";
-import { manga as mangaTable, categories as categoriesTable, tags as tagsTable, authors as authorsTable } from "@/db/schema";
-import { desc, asc } from "drizzle-orm";
+import {
+  authors as authorsTable,
+  categories as categoriesTable,
+  manga as mangaTable,
+  mangaTags as mangaTagsTable,
+  tags as tagsTable,
+} from "@/db/schema";
+import { asc, desc, eq, inArray } from "drizzle-orm";
 import { Box, Chip, Stack, Typography } from "@mui/material";
 import Link from "next/link";
 import MangaDataTable from "./MangaDataTable";
@@ -8,35 +14,60 @@ import MangaDataTable from "./MangaDataTable";
 export const dynamic = "force-dynamic";
 
 export default async function AdminMangaPage() {
-  const mangasQuery = await db.query.manga.findMany({
-    with: {
-      category: true,
-      mangaTags_mangaId: {
-        with: {
-          tag_tagId: true
-        }
-      },
-      author: true,
-    },
-    orderBy: [desc(mangaTable.createdAt)],
-  });
+  const [mangasQuery, allCategories, allTags, allAuthors] = await Promise.all([
+    db
+      .select({
+        id: mangaTable.id,
+        title: mangaTable.title,
+        slug: mangaTable.slug,
+        coverImage: mangaTable.coverImage,
+        isHidden: mangaTable.isHidden,
+        viewCount: mangaTable.viewCount,
+        categoryId: mangaTable.categoryId,
+        authorId: mangaTable.authorId,
+      })
+      .from(mangaTable)
+      .orderBy(desc(mangaTable.createdAt)),
+    db.query.categories.findMany({
+      orderBy: [asc(categoriesTable.name)],
+    }),
+    db.query.tags.findMany({
+      orderBy: [asc(tagsTable.name)],
+    }),
+    db.query.authors.findMany({
+      orderBy: [asc(authorsTable.name)],
+    }),
+  ]);
 
-  const mangas = mangasQuery.map(m => ({
-    ...m,
-    tags: m.mangaTags_mangaId.map((mt: any) => mt.tag_tagId)
+  const mangaIds = mangasQuery.map((manga) => manga.id);
+  const mangaTagRows = mangaIds.length
+    ? await db
+        .select({
+          mangaId: mangaTagsTable.mangaId,
+          tagId: tagsTable.id,
+          tagName: tagsTable.name,
+        })
+        .from(mangaTagsTable)
+        .innerJoin(tagsTable, eq(tagsTable.id, mangaTagsTable.tagId))
+        .where(inArray(mangaTagsTable.mangaId, mangaIds))
+    : [];
+
+  const categoriesById = new Map(allCategories.map((category) => [category.id, category]));
+  const authorsById = new Map(allAuthors.map((author) => [author.id, author]));
+  const tagsByMangaId = new Map<string, Array<{ id: string; name: string }>>();
+
+  for (const row of mangaTagRows) {
+    const tags = tagsByMangaId.get(row.mangaId) ?? [];
+    tags.push({ id: row.tagId, name: row.tagName });
+    tagsByMangaId.set(row.mangaId, tags);
+  }
+
+  const mangas = mangasQuery.map((manga) => ({
+    ...manga,
+    category: manga.categoryId ? categoriesById.get(manga.categoryId) ?? null : null,
+    author: manga.authorId ? authorsById.get(manga.authorId) ?? null : null,
+    tags: tagsByMangaId.get(manga.id) ?? [],
   }));
-
-  const allCategories = await db.query.categories.findMany({
-    orderBy: [asc(categoriesTable.name)],
-  });
-
-  const allTags = await db.query.tags.findMany({
-    orderBy: [asc(tagsTable.name)],
-  });
-
-  const allAuthors = await db.query.authors.findMany({
-    orderBy: [asc(authorsTable.name)],
-  });
 
   return (
     <Box
