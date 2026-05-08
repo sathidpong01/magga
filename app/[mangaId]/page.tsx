@@ -36,6 +36,7 @@ type MangaPageProps = {
 
 // ISR: Revalidate every 1 hour
 export const revalidate = 3600;
+export const dynamic = "force-dynamic";
 
 // Fetch manga data directly
 const getMangaBySlug = async (slug: string) => {
@@ -69,10 +70,6 @@ const getMangaBySlug = async (slug: string) => {
     return null;
   }
 };
-
-export async function generateStaticParams() {
-  return [];
-}
 
 export async function generateMetadata({ params }: MangaPageProps) {
   const { mangaId } = await params;
