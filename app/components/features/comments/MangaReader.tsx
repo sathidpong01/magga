@@ -210,6 +210,7 @@ const LazyPageWithComments = forwardRef<HTMLDivElement, LazyPageProps>(
     const [comments, setComments] = useState<any[]>([]);
     const hasFetchedRef = useRef(false);
     const [imageLoading, setImageLoading] = useState(true);
+    const imageRef = useRef<HTMLImageElement | null>(null);
 
     // Use refs for callback props to avoid dependency issues
     const getCachedCommentsRef = useRef(getCachedComments);
@@ -285,6 +286,13 @@ const LazyPageWithComments = forwardRef<HTMLDivElement, LazyPageProps>(
       }
     }, [refreshKey]);
 
+    useEffect(() => {
+      const image = imageRef.current;
+      if (image?.complete && image.naturalWidth > 0) {
+        setImageLoading(false);
+      }
+    }, [pageData.url]);
+
     const handleCommentCreated = useCallback(() => {
       onCommentCreatedRef.current();
       onFetchCommentsRef.current().then(setComments);
@@ -331,6 +339,7 @@ const LazyPageWithComments = forwardRef<HTMLDivElement, LazyPageProps>(
             }}
           />
           <Image
+            ref={imageRef}
             src={pageData.url}
             alt={`Page ${imageIndex + 1} of ${mangaTitle}`}
             // Use dimensions when available (prevents CLS), fallback to standard manga ratio for legacy data
@@ -349,6 +358,7 @@ const LazyPageWithComments = forwardRef<HTMLDivElement, LazyPageProps>(
             priority={imageIndex < 2}
             loading={imageIndex < 2 ? "eager" : "lazy"}
             onLoad={() => setImageLoading(false)}
+            onError={() => setImageLoading(false)}
           />
         </Box>
 

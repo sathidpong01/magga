@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { manga as mangaTable, mangaTags as mangaTagsTable } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import LinkChip from "@/app/components/ui/LinkChip";
 import {
@@ -70,23 +70,8 @@ const getMangaBySlug = async (slug: string) => {
   }
 };
 
-// Pre-render top 50 manga at build time
 export async function generateStaticParams() {
-  try {
-    const topMangas = await db.query.manga.findMany({
-      where: eq(mangaTable.isHidden, false),
-      columns: { slug: true },
-      orderBy: [desc(mangaTable.updatedAt)],
-      limit: 50,
-    });
-
-    return topMangas.map((manga) => ({
-      mangaId: manga.slug,
-    }));
-  } catch (error) {
-    console.error("generateStaticParams: Failed to fetch manga slugs, skipping pre-render:", error);
-    return [];
-  }
+  return [];
 }
 
 export async function generateMetadata({ params }: MangaPageProps) {
