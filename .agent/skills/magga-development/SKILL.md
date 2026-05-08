@@ -15,13 +15,13 @@ This skill provides guidelines for developing features in the Magga manga manage
 
 | Stack | Version |
 |-------|---------|
-| **Framework** | Next.js 16.1.6 (App Router) |
+| **Framework** | Next.js 16.2.6 (App Router) |
 | **Database** | PostgreSQL via `pg` + `postgres` drivers |
-| **ORM** | Drizzle ORM 0.45.1 |
-| **Authentication** | Better Auth 1.5.3 (Credentials + Google OAuth) |
-| **UI Library** | Material-UI (MUI) v7.3.8 |
+| **ORM** | Drizzle ORM 0.45.2 |
+| **Authentication** | Better Auth 1.6.9 (Credentials + Google OAuth) |
+| **UI Library** | Material-UI (MUI) v7.3.11 |
 | **Styling** | Tailwind CSS v4 |
-| **Language** | TypeScript 5.9 |
+| **Language** | TypeScript 6.0 |
 | **Storage** | Cloudflare R2 (images & avatars via `@aws-sdk/client-s3`) |
 | **Deployment** | Vercel Hobby Plan |
 
@@ -37,6 +37,15 @@ Use this skill when:
 - Implementing UI components
 - Setting up authentication flows
 - Deploying to Vercel
+
+## Version Updates
+
+Before finishing any codebase change, update the project version in `package.json` and `package-lock.json`.
+
+- Use `npm version patch --no-git-tag-version` for bug fixes, dependency updates, small UI/copy/docs/workflow changes, and low-risk maintenance.
+- Use `npm version minor --no-git-tag-version` for compatible user-facing features, new routes, new settings, or new API capabilities.
+- Use `npm version major --no-git-tag-version` for breaking changes or required manual migrations.
+- If a task edits files but should not bump the version, document the reason in the final response.
 
 ## Architecture Decision Trees
 

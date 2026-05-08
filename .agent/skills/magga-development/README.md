@@ -22,11 +22,12 @@ The agent will automatically use this skill when:
 
 - Making changes to the Magga codebase
 - Adding new features or fixing bugs
-- Working with database schema (Prisma)
+- Working with database schema (Drizzle ORM)
 - Creating UI components (React/MUI)
 - Implementing authentication flows
 - Optimizing performance
 - Deploying to Vercel
+- Updating dependencies or project workflow rules
 
 ## What's Included
 
@@ -42,7 +43,7 @@ Comprehensive checklists covering:
 
 - General best practices
 - Next.js specifics
-- Database & Prisma
+- Database & Drizzle ORM
 - Authentication & Security
 - UI/UX considerations
 - Performance optimizations
@@ -71,12 +72,12 @@ To update or extend this skill:
 
 ## Technology Stack Reference
 
-- **Framework**: Next.js 16 (App Router)
-- **Database**: Turso (LibSQL) with Prisma ORM
-- **Authentication**: NextAuth.js
-- **UI Library**: Material-UI (MUI)
+- **Framework**: Next.js 16.2.6 (App Router)
+- **Database**: PostgreSQL with Drizzle ORM
+- **Authentication**: Better Auth
+- **UI Library**: Material-UI (MUI) v7.3.11
 - **Styling**: TailwindCSS
-- **Language**: TypeScript
+- **Language**: TypeScript 6
 
 ## Useful Commands
 
@@ -85,9 +86,12 @@ To update or extend this skill:
 npm run dev
 
 # Database
-npx prisma migrate dev --name <name>
-npx prisma generate
-npx prisma studio
+npm run db:generate
+npm run db:migrate
+npm run db:studio
+
+# Versioning
+npm version patch --no-git-tag-version
 
 # Build
 npm run build
