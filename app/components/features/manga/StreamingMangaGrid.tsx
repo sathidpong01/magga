@@ -1,6 +1,11 @@
 import { db } from "@/db";
-import { manga as mangaTable, mangaTags as mangaTagsTable, tags as tagsTable } from "@/db/schema";
-import { eq, ilike, asc, desc, and, SQL, inArray, count } from "drizzle-orm";
+import {
+  categories as categoriesTable,
+  manga as mangaTable,
+  mangaTags as mangaTagsTable,
+  tags as tagsTable,
+} from "@/db/schema";
+import { eq, ilike, asc, desc, and, SQL, inArray } from "drizzle-orm";
 import InfiniteMangaGrid from "./InfiniteMangaGrid";
 
 interface Ad {
@@ -29,10 +34,9 @@ type MangaGridRow = {
   coverImage: string;
   viewCount: number;
   averageRating: number;
+  categoryId?: string | null;
   category?: { name: string } | null;
-  mangaTags_mangaId?: Array<{
-    tag_tagId?: { id: string; name: string } | null;
-  }>;
+  tags?: Array<{ id: string; name: string }>;
 };
 
 /**
@@ -75,15 +79,6 @@ export default async function StreamingMangaGrid({
   }
 
   const whereClause = conditions.length > 1 ? and(...conditions) : conditions[0];
-  const mapMangas = (rows: MangaGridRow[]) =>
-    rows.map(({ mangaTags_mangaId, ...m }) => ({
-      ...m,
-      category: m.category ?? null,
-      tags: (mangaTags_mangaId ?? [])
-        .map((mt) => mt.tag_tagId)
-        .filter((tag): tag is { id: string; name: string } => Boolean(tag)),
-    }));
-
   // Build orderBy
   let orderByClause = desc(mangaTable.createdAt);
   if (sort === "updated") {
@@ -92,63 +87,60 @@ export default async function StreamingMangaGrid({
     orderByClause = asc(mangaTable.title);
   }
 
-  const totalPromise = db.select({ count: count() }).from(mangaTable).where(whereClause);
-  let mangasQuery: MangaGridRow[];
-  let totalResult: Array<{ count: number }>;
+  const rows = await db
+    .select({
+      id: mangaTable.id,
+      slug: mangaTable.slug,
+      title: mangaTable.title,
+      coverImage: mangaTable.coverImage,
+      viewCount: mangaTable.viewCount,
+      averageRating: mangaTable.averageRating,
+      categoryId: mangaTable.categoryId,
+    })
+    .from(mangaTable)
+    .where(whereClause)
+    .orderBy(orderByClause)
+    .limit(pageSize + 1);
 
-  try {
-    [mangasQuery, totalResult] = await Promise.all([
-      db.query.manga.findMany({
-        where: whereClause,
-        orderBy: [orderByClause],
-        limit: pageSize,
-        columns: {
-          id: true,
-          slug: true,
-          title: true,
-          coverImage: true,
-          viewCount: true,
-          averageRating: true,
-        },
-        with: {
-          category: {
-            columns: { name: true },
-          },
-          mangaTags_mangaId: {
-            with: {
-              tag_tagId: {
-                columns: { id: true, name: true },
-              },
-            },
-          },
-        },
-      }),
-      totalPromise,
-    ]);
-  } catch (error) {
-    console.error("StreamingMangaGrid relation query failed, falling back to base manga query.", error);
-    [mangasQuery, totalResult] = await Promise.all([
-      db.query.manga.findMany({
-        where: whereClause,
-        orderBy: [orderByClause],
-        limit: pageSize,
-        columns: {
-          id: true,
-          slug: true,
-          title: true,
-          coverImage: true,
-          viewCount: true,
-          averageRating: true,
-        },
-      }),
-      totalPromise,
-    ]);
+  const hasMore = rows.length > pageSize;
+  const visibleRows = rows.slice(0, pageSize);
+  const mangaIds = visibleRows.map((manga) => manga.id);
+  const categoryIds = [...new Set(visibleRows.map((manga) => manga.categoryId).filter((id): id is string => Boolean(id)))];
+
+  const [categoryRows, tagRows] = await Promise.all([
+    categoryIds.length
+      ? db
+          .select({ id: categoriesTable.id, name: categoriesTable.name })
+          .from(categoriesTable)
+          .where(inArray(categoriesTable.id, categoryIds))
+      : Promise.resolve([]),
+    mangaIds.length
+      ? db
+          .select({
+            mangaId: mangaTagsTable.mangaId,
+            id: tagsTable.id,
+            name: tagsTable.name,
+          })
+          .from(mangaTagsTable)
+          .innerJoin(tagsTable, eq(tagsTable.id, mangaTagsTable.tagId))
+          .where(inArray(mangaTagsTable.mangaId, mangaIds))
+      : Promise.resolve([]),
+  ]);
+
+  const categoriesById = new Map(categoryRows.map((category) => [category.id, category]));
+  const tagsByMangaId = new Map<string, Array<{ id: string; name: string }>>();
+
+  for (const tag of tagRows) {
+    const tags = tagsByMangaId.get(tag.mangaId) ?? [];
+    tags.push({ id: tag.id, name: tag.name });
+    tagsByMangaId.set(tag.mangaId, tags);
   }
 
-  const total = totalResult[0]?.count ?? 0;
-  const mangas = mapMangas(mangasQuery);
-
-  const hasMore = mangas.length < total;
+  const mangas = visibleRows.map((manga) => ({
+    ...manga,
+    category: manga.categoryId ? categoriesById.get(manga.categoryId) ?? null : null,
+    tags: tagsByMangaId.get(manga.id) ?? [],
+  }));
 
   return (
     <InfiniteMangaGrid

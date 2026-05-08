@@ -25,7 +25,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import StarIcon from "@mui/icons-material/Star";
 import { SuspendedMangaReader } from "./manga-content";
 import { CommentSectionSkeleton } from "./loading-skeletons";
-import ServerCommentSection from "@/app/components/features/comments/ServerCommentSection";
+import CommentSection from "@/app/components/features/comments/CommentSection";
 import { cache, Suspense } from "react";
 import { AdContainer } from "@/app/components/features/ads";
 import ScrollToTop from "@/app/components/ui/ScrollToTop";
@@ -510,7 +510,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
         </Box>
         <Box sx={{ mt: 6, maxWidth: "800px", mx: "auto", mr: { xs: "auto", md: "340px" } }}>
           <Suspense fallback={<CommentSectionSkeleton />}>
-            <ServerCommentSection mangaId={manga.id} />
+            <CommentSection mangaId={manga.id} />
           </Suspense>
         </Box>
       </Container>

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { manga as mangaTable, categories as categoriesTable, tags as tagsTable, mangaTags as mangaTagsTable } from "@/db/schema";
-import { eq, ilike, and, inArray, desc, asc, count, sql } from "drizzle-orm";
+import { eq, ilike, and, inArray, desc, asc, sql } from "drizzle-orm";
 import { unstable_cache } from "next/cache";
 
 const DEFAULT_ITEMS_PER_PAGE = 12;
@@ -12,10 +12,9 @@ type MangaListRow = {
   coverImage: string;
   viewCount: number;
   averageRating: number;
+  categoryId?: string | null;
   category?: { name: string } | null;
-  mangaTags_mangaId?: Array<{
-    tag_tagId?: { id: string; name: string } | null;
-  }>;
+  tags?: Array<{ id: string; name: string }>;
 };
 
 // Cache the query for 60 seconds
@@ -30,15 +29,6 @@ const getMangasWithPagination = unstable_cache(
     excludeTagIds?: string[]
   ) => {
     const offset = (page - 1) * pageSize;
-    const mapMangas = (rows: MangaListRow[]) =>
-      rows.map(({ mangaTags_mangaId, ...m }) => ({
-        ...m,
-        category: m.category ?? null,
-        tags: (mangaTags_mangaId ?? [])
-          .map((mt) => mt.tag_tagId)
-          .filter((tag): tag is { id: string; name: string } => Boolean(tag)),
-      }));
-
     // Build Where conditions
     const conditions = [eq(mangaTable.isHidden, false)];
 
@@ -101,72 +91,69 @@ const getMangasWithPagination = unstable_cache(
 
     const whereClause = and(...conditions);
 
-    const totalPromise = db.select({ total: count() }).from(mangaTable).where(whereClause);
-    let mangaRows: MangaListRow[];
-    let totalRows: Array<{ total: number }>;
+    const mangaRows = await db
+      .select({
+        id: mangaTable.id,
+        slug: mangaTable.slug,
+        title: mangaTable.title,
+        coverImage: mangaTable.coverImage,
+        viewCount: mangaTable.viewCount,
+        averageRating: mangaTable.averageRating,
+        categoryId: mangaTable.categoryId,
+      })
+      .from(mangaTable)
+      .where(whereClause)
+      .orderBy(orderByClause)
+      .offset(offset)
+      .limit(pageSize + 1);
 
-    try {
-      [mangaRows, totalRows] = await Promise.all([
-        db.query.manga.findMany({
-          where: whereClause,
-          orderBy: orderByClause,
-          offset,
-          limit: pageSize,
-          columns: {
-            id: true,
-            slug: true,
-            title: true,
-            coverImage: true,
-            viewCount: true,
-            averageRating: true,
-          },
-          with: {
-            category: {
-              columns: { name: true },
-            },
-            mangaTags_mangaId: {
-              with: {
-                tag_tagId: {
-                  columns: { id: true, name: true },
-                },
-              },
-            },
-          },
-        }),
-        totalPromise,
-      ]);
-    } catch (error) {
-      console.error("Manga list relation query failed, falling back to base manga query.", error);
-      [mangaRows, totalRows] = await Promise.all([
-        db.query.manga.findMany({
-          where: whereClause,
-          orderBy: orderByClause,
-          offset,
-          limit: pageSize,
-          columns: {
-            id: true,
-            slug: true,
-            title: true,
-            coverImage: true,
-            viewCount: true,
-            averageRating: true,
-          },
-        }),
-        totalPromise,
-      ]);
+    const hasMore = mangaRows.length > pageSize;
+    const visibleRows = mangaRows.slice(0, pageSize);
+    const mangaIds = visibleRows.map((manga) => manga.id);
+    const categoryIds = [...new Set(visibleRows.map((manga) => manga.categoryId).filter((id): id is string => Boolean(id)))];
+
+    const [categoryRows, tagRows] = await Promise.all([
+      categoryIds.length
+        ? db
+            .select({ id: categoriesTable.id, name: categoriesTable.name })
+            .from(categoriesTable)
+            .where(inArray(categoriesTable.id, categoryIds))
+        : Promise.resolve([]),
+      mangaIds.length
+        ? db
+            .select({
+              mangaId: mangaTagsTable.mangaId,
+              id: tagsTable.id,
+              name: tagsTable.name,
+            })
+            .from(mangaTagsTable)
+            .innerJoin(tagsTable, eq(tagsTable.id, mangaTagsTable.tagId))
+            .where(inArray(mangaTagsTable.mangaId, mangaIds))
+        : Promise.resolve([]),
+    ]);
+
+    const categoriesById = new Map(categoryRows.map((category) => [category.id, category]));
+    const tagsByMangaId = new Map<string, Array<{ id: string; name: string }>>();
+
+    for (const tag of tagRows) {
+      const tags = tagsByMangaId.get(tag.mangaId) ?? [];
+      tags.push({ id: tag.id, name: tag.name });
+      tagsByMangaId.set(tag.mangaId, tags);
     }
 
-    const [{ total }] = totalRows;
-    const mangas = mapMangas(mangaRows);
-
-    const totalNum = Number(total);
+    const mangas = visibleRows.map((manga) => ({
+      ...manga,
+      category: manga.categoryId ? categoriesById.get(manga.categoryId) ?? null : null,
+      tags: tagsByMangaId.get(manga.id) ?? [],
+    }));
+    const total = offset + mangas.length + (hasMore ? 1 : 0);
 
     return {
       mangas,
-      total: totalNum,
+      total,
       page,
-      totalPages: Math.ceil(totalNum / pageSize),
-      hasMore: offset + mangas.length < totalNum,
+      totalPages: Math.ceil(total / pageSize),
+      hasMore,
     };
   },
   ["manga-list"],
