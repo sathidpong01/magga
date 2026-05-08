@@ -1,5 +1,11 @@
 import { db } from "@/db";
-import { manga as mangaTable, mangaTags as mangaTagsTable } from "@/db/schema";
+import {
+  authors as authorsTable,
+  categories as categoriesTable,
+  manga as mangaTable,
+  mangaTags as mangaTagsTable,
+  tags as tagsTable,
+} from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import LinkChip from "@/app/components/ui/LinkChip";
@@ -20,12 +26,11 @@ import StarIcon from "@mui/icons-material/Star";
 import { SuspendedMangaReader } from "./manga-content";
 import { CommentSectionSkeleton } from "./loading-skeletons";
 import ServerCommentSection from "@/app/components/features/comments/ServerCommentSection";
-import { Suspense } from "react";
+import { cache, Suspense } from "react";
 import { AdContainer } from "@/app/components/features/ads";
 import ScrollToTop from "@/app/components/ui/ScrollToTop";
 import ShareButton from "@/app/components/ui/ShareButton";
 import { getSiteUrl } from "@/lib/site-url";
-import { unstable_cache } from "next/cache";
 import { normalizeMangaPages } from "@/lib/manga-pages";
 
 type MangaPageProps = {
@@ -38,38 +43,76 @@ type MangaPageProps = {
 export const revalidate = 3600;
 export const dynamic = "force-dynamic";
 
-// Fetch manga data directly
-const getMangaBySlug = async (slug: string) => {
+// Fetch manga data with small indexed queries. Drizzle's relation query generated
+// lateral JSON aggregation here, which can exceed Supabase statement timeouts.
+const getMangaBySlug = cache(async (slug: string) => {
   try {
-    return await db.query.manga.findFirst({
-      where: eq(mangaTable.slug, slug),
-      columns: {
-        id: true,
-        slug: true,
-        title: true,
-        description: true,
-        coverImage: true,
-        pages: true,
-        authorName: true,
-        viewCount: true,
-        averageRating: true,
-        ratingCount: true,
-      },
-      with: {
-        author: {
-          columns: { id: true, name: true, socialLinks: true },
-        },
-        category: true,
-        mangaTags_mangaId: {
-          with: { tag_tagId: true },
-        },
-      },
-    });
+    const [manga] = await db
+      .select({
+        id: mangaTable.id,
+        slug: mangaTable.slug,
+        title: mangaTable.title,
+        description: mangaTable.description,
+        coverImage: mangaTable.coverImage,
+        pages: mangaTable.pages,
+        authorName: mangaTable.authorName,
+        viewCount: mangaTable.viewCount,
+        averageRating: mangaTable.averageRating,
+        ratingCount: mangaTable.ratingCount,
+        categoryId: mangaTable.categoryId,
+        authorId: mangaTable.authorId,
+      })
+      .from(mangaTable)
+      .where(eq(mangaTable.slug, slug))
+      .limit(1);
+
+    if (!manga) {
+      return null;
+    }
+
+    const [authorRows, categoryRows, tagRows] = await Promise.all([
+      manga.authorId
+        ? db
+            .select({
+              id: authorsTable.id,
+              name: authorsTable.name,
+              socialLinks: authorsTable.socialLinks,
+            })
+            .from(authorsTable)
+            .where(eq(authorsTable.id, manga.authorId))
+            .limit(1)
+        : Promise.resolve([]),
+      manga.categoryId
+        ? db
+            .select({
+              id: categoriesTable.id,
+              name: categoriesTable.name,
+            })
+            .from(categoriesTable)
+            .where(eq(categoriesTable.id, manga.categoryId))
+            .limit(1)
+        : Promise.resolve([]),
+      db
+        .select({
+          id: tagsTable.id,
+          name: tagsTable.name,
+        })
+        .from(mangaTagsTable)
+        .innerJoin(tagsTable, eq(tagsTable.id, mangaTagsTable.tagId))
+        .where(eq(mangaTagsTable.mangaId, manga.id)),
+    ]);
+
+    return {
+      ...manga,
+      author: authorRows[0] ?? null,
+      category: categoryRows[0] ?? null,
+      mangaTags_mangaId: tagRows.map((tag) => ({ tag_tagId: tag })),
+    };
   } catch (error) {
     console.error(`Error fetching manga ${slug}:`, error);
     return null;
   }
-};
+});
 
 export async function generateMetadata({ params }: MangaPageProps) {
   const { mangaId } = await params;
