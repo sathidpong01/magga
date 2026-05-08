@@ -79,3 +79,14 @@ body {
 .btn-glow:hover {
   box-shadow: 0 0 20px rgba(251, 191, 36, 0.4);
 }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

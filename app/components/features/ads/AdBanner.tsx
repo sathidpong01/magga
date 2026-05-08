@@ -14,38 +14,47 @@ interface AdBannerProps {
 }
 
 export default function AdBanner({ ad }: AdBannerProps) {
-  const handleClick = () => {
-    if (ad.linkUrl) {
-      window.open(ad.linkUrl, "_blank", "noopener,noreferrer");
-    }
+  const imageAlt = ad.title ? `โฆษณา: ${ad.title}` : "โฆษณา";
+  const content = (
+    <Box
+      component="img"
+      src={ad.imageUrl}
+      alt={imageAlt}
+      sx={{
+        width: "100%",
+        height: "auto",
+        display: "block",
+        maxHeight: 150,
+        objectFit: "contain",
+      }}
+    />
+  );
+
+  const surfaceSx = {
+    bgcolor: "transparent",
+    borderRadius: 1,
+    overflow: "hidden",
+    cursor: ad.linkUrl ? "pointer" : "default",
+    transition: "opacity 0.2s ease, outline-color 0.2s ease",
+    "&:hover": ad.linkUrl ? { opacity: 0.9 } : {},
+    "&:focus-visible": ad.linkUrl
+      ? { outline: "2px solid #fbbf24", outlineOffset: 2 }
+      : {},
+    boxShadow: "none",
   };
 
-  return (
+  return ad.linkUrl ? (
     <Paper
-      sx={{
-        bgcolor: "transparent",
-        borderRadius: 1,
-        overflow: "hidden",
-        cursor: ad.linkUrl ? "pointer" : "default",
-        transition: "all 0.2s",
-        "&:hover": ad.linkUrl ? { opacity: 0.9 } : {},
-        boxShadow: "none",
-      }}
-      onClick={handleClick}
+      component="a"
+      href={ad.linkUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`เปิดโฆษณา: ${ad.title || ad.id}`}
+      sx={surfaceSx}
     >
-      {/* Auto-ratio horizontal banner */}
-      <Box
-        component="img"
-        src={ad.imageUrl}
-        alt=""
-        sx={{
-          width: "100%",
-          height: "auto",
-          display: "block",
-          maxHeight: 150,
-          objectFit: "contain",
-        }}
-      />
+      {content}
     </Paper>
+  ) : (
+    <Paper sx={surfaceSx}>{content}</Paper>
   );
 }

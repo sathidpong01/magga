@@ -4,6 +4,7 @@ import { Box, Typography, Button } from "@mui/material";
 import SearchOffIcon from "@mui/icons-material/SearchOff";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import { maggaColors } from "@/lib/design-tokens";
 
 interface EmptyStateProps {
   title?: string;
@@ -63,9 +64,7 @@ function EmptyStateContent({
         variant="h5"
         fontWeight={600}
         sx={{
-          background: "linear-gradient(135deg, #fbbf24 0%, #38bdf8 100%)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
+          color: maggaColors.archiveGold,
           mb: 1,
         }}
       >
@@ -86,9 +85,9 @@ function EmptyStateContent({
           onClick={handleClearFilters}
           sx={{
             borderColor: "rgba(251, 191, 36, 0.5)",
-            color: "#fbbf24",
+            color: maggaColors.archiveGold,
             "&:hover": {
-              borderColor: "#fbbf24",
+              borderColor: maggaColors.archiveGold,
               bgcolor: "rgba(251, 191, 36, 0.1)",
             },
           }}

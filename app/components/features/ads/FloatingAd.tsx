@@ -38,13 +38,21 @@ export default function FloatingAd({ ad }: FloatingAdProps) {
     setIsDismissed(true);
   };
 
-  const handleClick = () => {
-    if (ad.linkUrl) {
-      window.open(ad.linkUrl, "_blank", "noopener,noreferrer");
-    }
-  };
-
   if (isDismissed || !isVisible) return null;
+
+  const imageAlt = ad.title ? `โฆษณา: ${ad.title}` : "โฆษณา";
+  const image = (
+    <Box
+      component="img"
+      src={ad.imageUrl}
+      alt={imageAlt}
+      sx={{
+        width: "100%",
+        height: "auto",
+        display: "block",
+      }}
+    />
+  );
 
   return (
     <Paper
@@ -83,22 +91,24 @@ export default function FloatingAd({ ad }: FloatingAdProps) {
         <CloseIcon fontSize="small" />
       </IconButton>
 
-      <Box 
-        onClick={handleClick} 
-        sx={{ cursor: ad.linkUrl ? "pointer" : "default" }}
-      >
-        {/* Auto-ratio vertical image */}
+      {ad.linkUrl ? (
         <Box
-          component="img"
-          src={ad.imageUrl}
-          alt=""
+          component="a"
+          href={ad.linkUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`เปิดโฆษณา: ${ad.title || ad.id}`}
           sx={{
-            width: "100%",
-            height: "auto",
+            cursor: "pointer",
             display: "block",
+            "&:focus-visible": { outline: "2px solid #fbbf24", outlineOffset: 2 },
           }}
-        />
-      </Box>
+        >
+          {image}
+        </Box>
+      ) : (
+        <Box sx={{ display: "block" }}>{image}</Box>
+      )}
     </Paper>
   );
 }

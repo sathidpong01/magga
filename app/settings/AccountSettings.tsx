@@ -473,7 +473,13 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton onClick={() => setShowPwd(!showPwd)} edge="end" sx={{ color: "#a3a3a3" }}>
+                    <IconButton
+                      onClick={() => setShowPwd(!showPwd)}
+                      edge="end"
+                      aria-label={showPwd ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
+                      aria-pressed={showPwd}
+                      sx={{ color: "#a3a3a3" }}
+                    >
                       {showPwd ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
                     </IconButton>
                   </InputAdornment>

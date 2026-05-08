@@ -14,43 +14,55 @@ interface AdCardProps {
 }
 
 export default function AdCard({ ad }: AdCardProps) {
-  const handleClick = () => {
-    if (ad.linkUrl) {
-      window.open(ad.linkUrl, "_blank", "noopener,noreferrer");
-    }
+  const imageAlt = ad.title ? `โฆษณา: ${ad.title}` : "โฆษณา";
+  const content = (
+    <Box
+      component="img"
+      src={ad.imageUrl}
+      alt={imageAlt}
+      sx={{
+        position: "absolute",
+        inset: 0,
+        width: "100%",
+        height: "100%",
+        objectFit: "cover",
+        display: "block",
+      }}
+    />
+  );
+
+  const surfaceSx = {
+    aspectRatio: "2/3",
+    position: "relative",
+    borderRadius: 1,
+    overflow: "hidden",
+    transition: "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+    "&:hover": ad.linkUrl
+      ? {
+          transform: "translateY(-4px)",
+        }
+      : {},
+    "&:focus-visible": ad.linkUrl
+      ? { outline: "2px solid #fbbf24", outlineOffset: 2 }
+      : {},
+    bgcolor: "#171717",
+    border: "1px solid rgba(255,255,255,0.05)",
+    cursor: ad.linkUrl ? "pointer" : "default",
+    display: "block",
   };
 
-  return (
+  return ad.linkUrl ? (
     <Paper
-      onClick={handleClick}
-      sx={{
-        aspectRatio: "2/3",
-        position: "relative",
-        borderRadius: 1,
-        overflow: "hidden",
-        transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-        "&:hover": {
-          transform: "translateY(-4px)",
-        },
-        bgcolor: "#171717",
-        border: "1px solid rgba(255,255,255,0.05)",
-        cursor: ad.linkUrl ? "pointer" : "default",
-      }}
+      component="a"
+      href={ad.linkUrl}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`เปิดโฆษณา: ${ad.title || ad.id}`}
+      sx={surfaceSx}
     >
-      {/* เหมือน MangaCard: รูปเต็มพื้นที่ */}
-      <Box
-        component="img"
-        src={ad.imageUrl}
-        alt=""
-        sx={{
-          position: "absolute",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          objectFit: "cover",
-          display: "block",
-        }}
-      />
+      {content}
     </Paper>
+  ) : (
+    <Paper sx={surfaceSx}>{content}</Paper>
   );
 }

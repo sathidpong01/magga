@@ -10,7 +10,7 @@ import {
   MenuItem,
   Grid,
   Collapse,
-  IconButton,
+  ButtonBase,
   Autocomplete,
   Button,
   ListItem,
@@ -55,6 +55,7 @@ export default function SearchFilters({ categories, tags }: Props) {
   const sortSelectId = useId();
   const searchInputId = useId();
   const tagsInputId = useId();
+  const filterPanelId = useId();
 
   // State for filters
   const [search, setSearch] = useState(searchParams.get("search") || "");
@@ -170,7 +171,17 @@ export default function SearchFilters({ categories, tags }: Props) {
   };
 
   return (
-    <Box sx={{ mb: 4, mx: "auto", position: "relative", width: expanded ? { xs: "100%", md: "42%" } : { xs: "60%", md: "21%" } }}>
+    <Box
+      sx={{
+        mb: 4,
+        mx: "auto",
+        position: "relative",
+        width: expanded
+          ? { xs: "100%", md: "42%" }
+          : { xs: "100%", sm: "min(360px, 70%)", md: "21%" },
+        maxWidth: { xs: "100%", md: expanded ? 620 : 360 },
+      }}
+    >
       <Paper
         elevation={0}
         sx={{
@@ -179,22 +190,34 @@ export default function SearchFilters({ categories, tags }: Props) {
           border: "1px solid",
           borderColor: "divider",
           borderRadius: 1,
-          transition: "all 0.3s ease",
-          minWidth: expanded ? "300px" : "auto",
+          transition:
+            "padding 0.3s ease, width 0.3s ease, border-color 0.2s ease",
+          minWidth: 0,
         }}
       >
         {/* Header / Collapsed View - Compact single row */}
-        <Box
+        <ButtonBase
+          aria-controls={filterPanelId}
+          aria-expanded={expanded}
+          aria-label={expanded ? "Collapse filters" : "Expand filters"}
+          onClick={handleExpandClick}
           sx={{
             display: "flex",
             alignItems: "center",
             justifyContent: expanded ? "space-between" : "center",
-            cursor: "pointer",
+            borderRadius: 1,
+            color: "inherit",
+            minHeight: 44,
             py: 0.5,
+            px: 0.5,
+            textAlign: "left",
             width: "100%",
             gap: expanded ? 0 : 2,
+            "&:focus-visible": {
+              outline: "2px solid #fbbf24",
+              outlineOffset: 2,
+            },
           }}
-          onClick={handleExpandClick}
         >
           {!expanded && (
             <>
@@ -211,17 +234,7 @@ export default function SearchFilters({ categories, tags }: Props) {
               >
                 Filter, display, tags
               </Typography>
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleExpandClick();
-                }}
-                aria-label={expanded ? "Collapse filters" : "Expand filters"}
-                sx={{ p: 0.5 }}
-              >
-                {expanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
-              </IconButton>
+              <ExpandMoreIcon fontSize="small" sx={{ color: "text.secondary", flexShrink: 0 }} />
             </>
           )}
           {expanded && (
@@ -235,23 +248,13 @@ export default function SearchFilters({ categories, tags }: Props) {
                   Filter, display, tags
                 </Typography>
               </Box>
-              <IconButton
-                size="small"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleExpandClick();
-                }}
-                aria-label={expanded ? "Collapse filters" : "Expand filters"}
-                sx={{ p: 0.5 }}
-              >
-                {expanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
-              </IconButton>
+              <ExpandLessIcon fontSize="small" sx={{ color: "text.secondary", flexShrink: 0 }} />
             </>
           )}
-        </Box>
+        </ButtonBase>
 
       {/* Expanded View */}
-      <Collapse in={expanded}>
+      <Collapse in={expanded} id={filterPanelId}>
         <Box sx={{ mt: 2 }}>
           <Grid container spacing={2}>
             {/* Row 1: Category and Sorting */}

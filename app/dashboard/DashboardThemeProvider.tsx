@@ -1,24 +1,25 @@
 "use client";
 
 import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { maggaColors, maggaRadii } from "@/lib/design-tokens";
 
 const dashboardTheme = createTheme({
   palette: {
     mode: "dark",
     background: {
-      default: "#0a0a0a",
-      paper: "#171717",
+      default: maggaColors.midnightCanvas,
+      paper: maggaColors.charcoalSurface,
     },
     text: {
-      primary: "#fafafa",
-      secondary: "#a3a3a3",
+      primary: maggaColors.textPrimary,
+      secondary: maggaColors.textSecondary,
     },
     primary: {
-      main: "#fbbf24",
+      main: maggaColors.archiveGold,
     },
   },
   shape: {
-    borderRadius: 8,
+    borderRadius: maggaRadii.md,
   },
   components: {
     MuiPaper: {

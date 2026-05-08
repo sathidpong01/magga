@@ -1,0 +1,235 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2569-05-08T23:37:01+07:00",
+  "title": "Design System: MAGGA",
+  "extensions": {
+    "colorMeta": {
+      "midnight-canvas": {
+        "role": "neutral",
+        "displayName": "Midnight Canvas",
+        "canonical": "#0a0a0a",
+        "tonalRamp": ["#050505", "#0a0a0a", "#141414", "#262626", "#404040", "#737373", "#a3a3a3", "#fafafa"]
+      },
+      "charcoal-surface": {
+        "role": "neutral",
+        "displayName": "Charcoal Surface",
+        "canonical": "#171717",
+        "tonalRamp": ["#080808", "#111111", "#171717", "#262626", "#404040", "#737373", "#d4d4d4", "#fafafa"]
+      },
+      "archive-gold": {
+        "role": "primary",
+        "displayName": "Archive Gold",
+        "canonical": "#fbbf24",
+        "tonalRamp": ["#451a03", "#78350f", "#92400e", "#b45309", "#d97706", "#f59e0b", "#fbbf24", "#fde68a"]
+      },
+      "admin-gold": {
+        "role": "primary",
+        "displayName": "Admin Gold",
+        "canonical": "#FABF06",
+        "tonalRamp": ["#3a2600", "#6b4500", "#936100", "#c28300", "#e5af05", "#FABF06", "#fbd34a", "#fff1a6"]
+      },
+      "fandom-violet": {
+        "role": "secondary",
+        "displayName": "Fandom Violet",
+        "canonical": "#8b5cf6",
+        "tonalRamp": ["#2e1065", "#4c1d95", "#5b21b6", "#6d28d9", "#7c3aed", "#8b5cf6", "#a78bfa", "#ddd6fe"]
+      },
+      "trust-emerald": {
+        "role": "secondary",
+        "displayName": "Trust Emerald",
+        "canonical": "#10b981",
+        "tonalRamp": ["#022c22", "#064e3b", "#065f46", "#047857", "#059669", "#10b981", "#34d399", "#a7f3d0"]
+      },
+      "danger-red": {
+        "role": "tertiary",
+        "displayName": "Danger Red",
+        "canonical": "#ef4444",
+        "tonalRamp": ["#450a0a", "#7f1d1d", "#991b1b", "#b91c1c", "#dc2626", "#ef4444", "#f87171", "#fecaca"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Page titles, manga hero titles, and special states."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section leads and admin page headings."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Card names, panel headers, and form section titles."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Descriptions, comments, policy copy, and settings text."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Chips, table headers, metadata labels, and compact controls."
+      }
+    },
+    "shadows": [
+      {
+        "name": "card-hover-lift",
+        "value": "0 12px 24px -8px rgba(0, 0, 0, 0.4)",
+        "purpose": "Optional hover response for cards that need tactile feedback."
+      },
+      {
+        "name": "gold-glow",
+        "value": "0 0 20px rgba(251, 191, 36, 0.4)",
+        "purpose": "Primary call-to-action hover or rare emphasis."
+      },
+      {
+        "name": "auth-panel-depth",
+        "value": "0 25px 60px rgba(0,0,0,0.5)",
+        "purpose": "Centered auth surfaces and major account flows."
+      },
+      {
+        "name": "thumbnail-lift",
+        "value": "0 4px 12px rgba(0,0,0,0.3)",
+        "purpose": "Small cover images in admin tables and lists."
+      }
+    ],
+    "motion": [
+      {
+        "name": "standard-feedback",
+        "value": "0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "Card and logo hover feedback."
+      },
+      {
+        "name": "quick-admin-state",
+        "value": "0.2s ease",
+        "purpose": "Admin table, tab, and compact control state changes."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "mobile",
+        "value": "600px"
+      },
+      {
+        "name": "tablet",
+        "value": "960px"
+      },
+      {
+        "name": "desktop",
+        "value": "1200px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Gold Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Use for submit, save, selected tab, and high-confidence actions.",
+      "html": "<button class=\"ds-btn-primary\">ฝากลงมังงะ</button>",
+      "css": ".ds-btn-primary { background: #fbbf24; color: #0a0a0a; border: 0; border-radius: 8px; padding: 8px 16px; font-family: Kanit, sans-serif; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease; } .ds-btn-primary:hover { background: #f59e0b; box-shadow: 0 0 20px rgba(251, 191, 36, 0.28); } .ds-btn-primary:focus-visible { outline: 2px solid #fafafa; outline-offset: 2px; } .ds-btn-primary:active { transform: translateY(1px); }"
+    },
+    {
+      "name": "Manga Card",
+      "kind": "card",
+      "refersTo": "manga-card",
+      "description": "The signature public cover card with immersive image, gradient overlay, category chip, and compact metadata.",
+      "html": "<article class=\"ds-manga-card\"><div class=\"ds-manga-cover\"></div><span class=\"ds-manga-chip\">Furry</span><div class=\"ds-manga-overlay\"><h3>Translated Fandom Title</h3><p>★ 4.8 · 12.4K Views</p></div></article>",
+      "css": ".ds-manga-card { position: relative; aspect-ratio: 2 / 3; width: 180px; overflow: hidden; border-radius: 8px; background: #0a0a0a; color: #fafafa; font-family: Kanit, sans-serif; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); } .ds-manga-card:hover { transform: translateY(-4px); } .ds-manga-card:focus-within { outline: 2px solid #fbbf24; outline-offset: 2px; } .ds-manga-cover { position: absolute; inset: 0; background: linear-gradient(135deg, #262626, #0a0a0a); } .ds-manga-cover::after { content: \"\"; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, transparent 100%); } .ds-manga-chip { position: absolute; top: 8px; right: 8px; background: #fbbf24; color: #0a0a0a; border-radius: 8px; padding: 2px 8px; font-size: 0.7rem; font-weight: 700; } .ds-manga-overlay { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px; } .ds-manga-overlay h3 { margin: 0 0 4px; font-size: 0.95rem; line-height: 1.1; font-weight: 600; text-shadow: 0 2px 4px rgba(0,0,0,0.8); } .ds-manga-overlay p { margin: 0; font-size: 0.82rem; color: #fafafa; opacity: 0.9; }"
+    },
+    {
+      "name": "Filter Panel",
+      "kind": "input",
+      "refersTo": "filter-panel",
+      "description": "Compact discovery control for search, sorting, categories, and tags.",
+      "html": "<section class=\"ds-filter-panel\"><button class=\"ds-filter-head\">Filter, display, tags</button><label>Category<input value=\"All\" /></label></section>",
+      "css": ".ds-filter-panel { background: #171717; color: #fafafa; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 16px; width: 280px; font-family: Kanit, sans-serif; } .ds-filter-head { width: 100%; background: transparent; color: #fafafa; border: 0; padding: 4px 0 12px; text-align: left; font-family: inherit; font-size: 0.8rem; font-weight: 500; cursor: pointer; } .ds-filter-head:hover { color: #fbbf24; } .ds-filter-head:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; } .ds-filter-panel label { display: grid; gap: 6px; color: #a3a3a3; font-size: 0.85rem; } .ds-filter-panel input { background: transparent; color: #fafafa; border: 0; border-bottom: 1px solid rgba(255,255,255,0.12); padding: 6px 0; font-family: inherit; font-size: 0.85rem; } .ds-filter-panel input:focus-visible { outline: 0; border-bottom-color: #fbbf24; }"
+    },
+    {
+      "name": "Admin Surface",
+      "kind": "card",
+      "refersTo": "admin-surface",
+      "description": "Industrial work panel for dashboard, tables, and moderation flows.",
+      "html": "<section class=\"ds-admin-surface\"><header><span>SUBMISSIONS</span><strong>24</strong></header><p>Pending translator submissions</p></section>",
+      "css": ".ds-admin-surface { background: #171717; color: #fafafa; border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 20px; font-family: Kanit, sans-serif; box-shadow: none; } .ds-admin-surface:hover { background: #1b1b1b; border-color: rgba(251,191,36,0.28); } .ds-admin-surface:focus-within { outline: 2px solid #FABF06; outline-offset: 2px; } .ds-admin-surface header { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; } .ds-admin-surface span { color: #a3a3a3; font-size: 0.72rem; font-weight: 900; letter-spacing: 0.08em; } .ds-admin-surface strong { color: #FABF06; font-size: 2rem; line-height: 1; } .ds-admin-surface p { margin: 10px 0 0; color: #a3a3a3; font-size: 0.9rem; }"
+    },
+    {
+      "name": "Category Chip",
+      "kind": "chip",
+      "refersTo": "category-chip",
+      "description": "Gold content classification marker used over covers and metadata surfaces.",
+      "html": "<span class=\"ds-category-chip\">Furry</span>",
+      "css": ".ds-category-chip { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 8px; background: #fbbf24; color: #0a0a0a; font-family: Kanit, sans-serif; font-size: 0.7rem; font-weight: 700; line-height: 1; } .ds-category-chip:hover { background: #f59e0b; } .ds-category-chip:focus-visible { outline: 2px solid #fafafa; outline-offset: 2px; }"
+    },
+    {
+      "name": "Dark Text Field",
+      "kind": "input",
+      "refersTo": "filter-panel",
+      "description": "Standard dark input for settings, auth, search, and admin forms.",
+      "html": "<label class=\"ds-field\"><span>Display name</span><input value=\"Translator\" /></label>",
+      "css": ".ds-field { display: grid; gap: 8px; color: #a3a3a3; font-family: Kanit, sans-serif; font-size: 0.85rem; font-weight: 500; } .ds-field input { background: #262626; color: #fafafa; border: 1px solid #404040; border-radius: 8px; padding: 10px 12px; font-family: inherit; font-size: 0.95rem; } .ds-field input:hover { border-color: #fbbf24; } .ds-field input:focus-visible { outline: 2px solid rgba(251,191,36,0.45); outline-offset: 2px; border-color: #fbbf24; } .ds-field input:disabled { color: #737373; background: #171717; cursor: not-allowed; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Trusted Fandom Archive",
+    "overview": "MAGGA is a dark, focused archive for Thai-translated furry manga and doujin works. The public surface should feel immersive and reader-first: covers, manga pages, authors, categories, tags, and comments do the visual work. Interface chrome stays quiet so the archive feels curated, not noisy.\n\nThe admin surface is allowed to feel more industrial: compact, dark, gold-led, table-friendly, and built for repeated moderation work. Public screens should never inherit a generic dashboard mood. Admin screens can be dense, but they still need the same credibility and restraint as the reader experience.\n\nThis system rejects the exact anti-references in PRODUCT.md: manga sites overloaded with ads, generic SaaS dashboards, and low-quality 18+ sites that feel suspicious or disposable. Mature content should be presented with control, clarity, and enough polish to feel trustworthy.",
+    "keyCharacteristics": [
+      "Dark neutral canvas with gold used as a directional signal.",
+      "Manga covers and reader pages are the main visual asset.",
+      "Public UI is immersive; admin UI is industrial and compact.",
+      "Forms, filters, and tables stay focused and credible.",
+      "Motion is present only as feedback, not spectacle."
+    ],
+    "rules": [
+      {
+        "name": "The Gold Is Navigation Rule",
+        "body": "Gold marks a path, a selected state, or a meaningful action. Do not use it as ambient decoration across a whole screen.",
+        "section": "colors"
+      },
+      {
+        "name": "The Dark Archive Rule",
+        "body": "Backgrounds stay neutral and deep. Avoid saturated full-screen color fields that compete with manga covers.",
+        "section": "colors"
+      },
+      {
+        "name": "The Mature Trust Rule",
+        "body": "Red and neon-like colors are functional only. If a screen starts to resemble a low-trust 18+ site, remove saturation before adding more UI.",
+        "section": "colors"
+      },
+      {
+        "name": "The Thai Readability Rule",
+        "body": "Never compress Thai body text to look sleek. If a label or paragraph becomes cramped, give it more space before reducing legibility.",
+        "section": "typography"
+      },
+      {
+        "name": "The Weight Before Decoration Rule",
+        "body": "Use weight, size, and placement for hierarchy. Do not introduce decorative fonts or gradient text.",
+        "section": "typography"
+      },
+      {
+        "name": "The Industrial Admin Rule",
+        "body": "Admin panels are flat at rest, bordered, and compact. Shadows are secondary to structure.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Immersive Public Rule",
+        "body": "Public cards and reader surfaces should let images create depth. UI shadows must not overpower cover art.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep manga covers, reader pages, authors, tags, and categories visually central.",
+      "Do use archive gold for directional actions and selected states.",
+      "Do keep public pages immersive and admin pages industrial.",
+      "Do preserve WCAG A minimum behavior: readable contrast, visible focus, keyboard-operable controls, and non-hover alternatives.",
+      "Do keep mobile reading and image-heavy performance in mind before adding motion, shadows, or extra client-side UI.",
+      "Do use thin borders, tonal surfaces, and compact spacing for admin workflows."
+    ],
+    "donts": [
+      "Don't make MAGGA look like a manga site overloaded with ads, popups, confusing banners, or visual clutter.",
+      "Don't make public reader and discovery surfaces look like a generic SaaS dashboard.",
+      "Don't borrow the untrustworthy visual language common to low-quality 18+ sites: aggressive colors, fake urgency, unreadable layouts, suspicious controls, or throwaway content presentation.",
+      "Don't use gradient text. Use solid color, weight, and scale.",
+      "Don't use thick colored side-stripe borders on cards, list items, callouts, or alerts.",
+      "Don't cover manga art with decorative chrome that does not help reading, discovery, submission, or moderation."
+    ]
+  }
+}

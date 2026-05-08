@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Box, Button, Container, Typography } from "@mui/material";
 import { Home as HomeIcon } from "@mui/icons-material";
+import { maggaColors, maggaMotion, maggaRadii, maggaShadows } from "@/lib/design-tokens";
 
 export default function NotFound() {
   return (
@@ -12,41 +13,13 @@ export default function NotFound() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: "#0a0a0a", // Neutral Black
-        color: "#fafafa", // Neutral 50
+        backgroundColor: maggaColors.midnightCanvas,
+        color: maggaColors.textPrimary,
         textAlign: "center",
         overflow: "hidden",
         position: "relative",
       }}
     >
-      {/* Background decorative elements */}
-      <Box
-        sx={{
-          position: "absolute",
-          top: "10%",
-          left: "5%",
-          width: "300px",
-          height: "300px",
-          background: "radial-gradient(circle, rgba(251, 191, 36, 0.1) 0%, rgba(10, 10, 10, 0) 70%)",
-          borderRadius: "50%",
-          filter: "blur(40px)",
-          zIndex: 0,
-        }}
-      />
-      <Box
-        sx={{
-          position: "absolute",
-          bottom: "10%",
-          right: "5%",
-          width: "400px",
-          height: "400px",
-          background: "radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, rgba(10, 10, 10, 0) 70%)",
-          borderRadius: "50%",
-          filter: "blur(60px)",
-          zIndex: 0,
-        }}
-      />
-
       <Container maxWidth="md" sx={{ position: "relative", zIndex: 1 }}>
         <Typography
           variant="h1"
@@ -55,19 +28,10 @@ export default function NotFound() {
             fontSize: { xs: "8rem", md: "12rem" },
             fontWeight: 900,
             lineHeight: 1,
-            background: "linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #b45309 100%)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            textShadow: "0 0 20px rgba(251, 191, 36, 0.3)",
+            color: maggaColors.archiveGold,
+            textShadow: "0 10px 28px rgba(0, 0, 0, 0.55)",
             mb: 2,
-            fontFamily: "'Inter', sans-serif",
-            letterSpacing: "-0.05em",
-            animation: "glitch 1s linear infinite",
-            "@keyframes glitch": {
-              "2%, 64%": { transform: "translate(2px,0) skew(0deg)" },
-              "4%, 60%": { transform: "translate(-2px,0) skew(0deg)" },
-              "62%": { transform: "translate(0,0) skew(5deg)" },
-            },
+            letterSpacing: 0,
           }}
         >
           404
@@ -79,25 +43,23 @@ export default function NotFound() {
           sx={{
             fontWeight: 700,
             mb: 2,
-            background: "linear-gradient(to right, #e5e5e5, #a3a3a3)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
+            color: maggaColors.textPrimary,
           }}
         >
-          Lost in the Mangaverse?
+          ไม่พบหน้าที่ต้องการ
         </Typography>
 
         <Typography
           variant="body1"
           sx={{
-            color: "#a3a3a3",
+            color: maggaColors.textSecondary,
             fontSize: "1.1rem",
             mb: 6,
             maxWidth: "600px",
             mx: "auto",
           }}
         >
-          The chapter you are looking for hasn&apos;t been drawn yet, or it might have been deleted by the author.
+          ลิงก์นี้อาจถูกลบ ย้ายที่อยู่ หรือยังไม่มีผลงานนี้ในคลัง MAGGA
         </Typography>
 
         <Link href="/" passHref style={{ textDecoration: "none" }}>
@@ -106,24 +68,24 @@ export default function NotFound() {
             size="large"
             startIcon={<HomeIcon />}
             sx={{
-              bgcolor: "#fbbf24",
-              color: "#0a0a0a",
+              bgcolor: maggaColors.archiveGold,
+              color: maggaColors.midnightCanvas,
               fontWeight: "bold",
               px: 4,
               py: 1.5,
-              borderRadius: "50px",
+              borderRadius: `${maggaRadii.pill}px`,
               fontSize: "1.1rem",
               textTransform: "none",
-              boxShadow: "0 0 20px rgba(251, 191, 36, 0.3)",
-              transition: "all 0.3s ease",
+              boxShadow: maggaShadows.goldGlow,
+              transition: `background-color ${maggaMotion.quickState}, transform ${maggaMotion.quickState}, box-shadow ${maggaMotion.quickState}`,
               "&:hover": {
-                bgcolor: "#f59e0b",
+                bgcolor: maggaColors.archiveGoldHover,
                 transform: "translateY(-2px)",
                 boxShadow: "0 0 30px rgba(251, 191, 36, 0.5)",
               },
             }}
           >
-            Go Back Home
+            กลับหน้าแรก
           </Button>
         </Link>
       </Container>

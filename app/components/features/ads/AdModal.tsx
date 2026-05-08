@@ -34,11 +34,21 @@ export default function AdModal({ ad }: AdModalProps) {
   };
 
   const handleClick = () => {
-    if (ad.linkUrl) {
-      window.open(ad.linkUrl, "_blank", "noopener,noreferrer");
-    }
     handleClose();
   };
+  const imageAlt = ad.title ? `โฆษณา: ${ad.title}` : "โฆษณา";
+  const image = (
+    <Box
+      component="img"
+      src={ad.imageUrl}
+      alt={imageAlt}
+      sx={{
+        maxWidth: "100%",
+        maxHeight: "80vh",
+        display: "block",
+      }}
+    />
+  );
 
   return (
     <Dialog
@@ -71,21 +81,25 @@ export default function AdModal({ ad }: AdModalProps) {
       </IconButton>
 
       {/* Flexible auto-ratio image */}
-      <Box 
-        onClick={handleClick}
-        sx={{ cursor: ad.linkUrl ? "pointer" : "default" }}
-      >
+      {ad.linkUrl ? (
         <Box
-          component="img"
-          src={ad.imageUrl}
-          alt=""
+          component="a"
+          href={ad.linkUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`เปิดโฆษณา: ${ad.title || ad.id}`}
+          onClick={handleClick}
           sx={{
-            maxWidth: "100%",
-            maxHeight: "80vh",
+            cursor: "pointer",
             display: "block",
+            "&:focus-visible": { outline: "2px solid #fbbf24", outlineOffset: 2 },
           }}
-        />
-      </Box>
+        >
+          {image}
+        </Box>
+      ) : (
+        <Box sx={{ display: "block" }}>{image}</Box>
+      )}
     </Dialog>
   );
 }

@@ -204,7 +204,13 @@ function RegisterForm() {
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" sx={{ color: "#a3a3a3" }}>
+                    <IconButton
+                      onClick={() => setShowPassword(!showPassword)}
+                      edge="end"
+                      aria-label={showPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
+                      aria-pressed={showPassword}
+                      sx={{ color: "#a3a3a3" }}
+                    >
                       {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
                     </IconButton>
                   </InputAdornment>
@@ -249,7 +255,13 @@ function RegisterForm() {
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton onClick={() => setShowConfirm(!showConfirm)} edge="end" sx={{ color: "#a3a3a3" }}>
+                    <IconButton
+                      onClick={() => setShowConfirm(!showConfirm)}
+                      edge="end"
+                      aria-label={showConfirm ? "ซ่อนรหัสผ่านยืนยัน" : "แสดงรหัสผ่านยืนยัน"}
+                      aria-pressed={showConfirm}
+                      sx={{ color: "#a3a3a3" }}
+                    >
                       {showConfirm ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
                     </IconButton>
                   </InputAdornment>

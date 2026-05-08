@@ -359,10 +359,11 @@ export default function MangaDataTable({
         component={Paper}
         sx={{ 
           ...surfaceSx,
-          overflow: "hidden",
+          overflowX: "auto",
+          WebkitOverflowScrolling: "touch",
         }}
       >
-        <Table sx={{ minWidth: 1120 }}>
+        <Table sx={{ minWidth: { xs: 960, md: 1120 } }}>
           <TableHead>
             <TableRow
               sx={{
@@ -381,6 +382,7 @@ export default function MangaDataTable({
                     selected.length === filteredMangas.length
                   }
                   onChange={handleSelectAll}
+                  inputProps={{ "aria-label": "เลือกมังงะทั้งหมด" }}
                   sx={{ 
                     color: "#525252",
                     "&.Mui-checked": { color: "#FABF06" },
@@ -552,11 +554,14 @@ export default function MangaDataTable({
                     <Tooltip title="ตั้งค่า">
                       <IconButton
                         size="small"
+                        aria-label={`ตั้งค่า ${manga.title}`}
                         onClick={() => handleOpenSettings(manga)}
                         sx={{
                           color: "#fbbf24",
                           bgcolor: "rgba(251, 191, 36, 0.08)",
                           borderRadius: 1.1,
+                          minWidth: 44,
+                          minHeight: 44,
                           "&:hover": { bgcolor: "rgba(251, 191, 36, 0.16)" },
                         }}
                       >
@@ -567,10 +572,17 @@ export default function MangaDataTable({
                     <Tooltip title="เปิดหน้าเรื่อง">
                       <IconButton
                         size="small"
+                        aria-label={`เปิดหน้าเรื่อง ${manga.title}`}
                         component={Link}
                         href={`/${manga.slug || manga.id}`}
                         target="_blank"
-                        sx={{ color: "#3b82f6", "&:hover": { bgcolor: "#3b82f620" } }}
+                        rel="noopener noreferrer"
+                        sx={{
+                          color: "#3b82f6",
+                          minWidth: 44,
+                          minHeight: 44,
+                          "&:hover": { bgcolor: "#3b82f620" },
+                        }}
                       >
                         <OpenInNewIcon fontSize="small" />
                       </IconButton>
@@ -579,11 +591,14 @@ export default function MangaDataTable({
                     <Tooltip title={manga.isHidden ? "แสดง" : "ซ่อน"}>
                       <IconButton
                         size="small"
+                        aria-label={`${manga.isHidden ? "แสดง" : "ซ่อน"} ${manga.title}`}
                         onClick={() =>
                           handleToggleVisibility(manga.id, manga.isHidden)
                         }
                         sx={{
                           color: "#10b981",
+                          minWidth: 44,
+                          minHeight: 44,
                           "&:hover": { bgcolor: "#10b98120" },
                         }}
                       >
@@ -598,10 +613,13 @@ export default function MangaDataTable({
                     <Tooltip title="แก้ไข">
                       <IconButton
                         size="small"
+                        aria-label={`แก้ไข ${manga.title}`}
                         component={Link}
                         href={`/dashboard/admin/manga/${manga.id}/edit`}
                         sx={{
                           color: "#f59e0b",
+                          minWidth: 44,
+                          minHeight: 44,
                           "&:hover": { bgcolor: "#f59e0b20" },
                         }}
                       >
@@ -612,9 +630,12 @@ export default function MangaDataTable({
                     <Tooltip title="ลบ">
                       <IconButton
                         size="small"
+                        aria-label={`ลบ ${manga.title}`}
                         onClick={() => handleOpenDeleteDialog(manga)}
                         sx={{
                           color: "#ef4444",
+                          minWidth: 44,
+                          minHeight: 44,
                           "&:hover": { bgcolor: "#ef444420" },
                         }}
                       >
