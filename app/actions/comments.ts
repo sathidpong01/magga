@@ -10,6 +10,8 @@ import { z } from "zod";
 import { headers } from "next/headers";
 import { isAdminRole, isUserBanned } from "@/lib/session-utils";
 
+const BANNED_ERROR = "บัญชีของคุณถูกระงับการใช้งาน";
+
 // ============================================================================
 // Schema Definitions
 // ============================================================================
@@ -75,7 +77,7 @@ export async function createComment(formData: FormData) {
   }
 
   if (isUserBanned(session)) {
-    return { error: "บัญชีของคุณถูกระงับการใช้งาน" };
+    return { error: BANNED_ERROR };
   }
 
   // Rate limiting: 20 comments per 15 minutes
@@ -172,11 +174,11 @@ export async function updateComment(formData: FormData) {
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session?.user?.id) {
-    return { error: "Unauthorized" };
+    return { error: "กรุณาเข้าสู่ระบบก่อนแก้ไขความคิดเห็น" };
   }
 
   if (isUserBanned(session)) {
-    return { error: "บัญชีของคุณถูกระงับการใช้งาน" };
+    return { error: BANNED_ERROR };
   }
 
   const rawData = {
@@ -228,11 +230,11 @@ export async function deleteComment(commentId: string) {
   const session = await auth.api.getSession({ headers: await headers() });
 
   if (!session?.user?.id) {
-    return { error: "Unauthorized" };
+    return { error: "กรุณาเข้าสู่ระบบก่อนลบความคิดเห็น" };
   }
 
   if (isUserBanned(session)) {
-    return { error: "บัญชีของคุณถูกระงับการใช้งาน" };
+    return { error: BANNED_ERROR };
   }
 
   try {
@@ -275,7 +277,7 @@ export async function voteComment(commentId: string, value: 1 | -1) {
   }
 
   if (isUserBanned(session)) {
-    return { error: "บัญชีของคุณถูกระงับการใช้งาน" };
+    return { error: BANNED_ERROR };
   }
 
   const rateLimit = await checkRateLimit(
