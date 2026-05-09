@@ -40,7 +40,6 @@ const MangaCard = ({ manga, priority = false }: MangaCardProps) => {
             transform: "translateY(-4px)",
           },
           bgcolor: "#000000",
-          height: "100%",
         }}
       >
         <Box sx={{ height: "100%", position: "relative" }}>
