@@ -4,6 +4,7 @@ import { mangaSubmissions as submissionsTable, mangaSubmissionTags as submission
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { extractMangaPageUrls } from "@/lib/manga-pages";
+import { requireAdmin } from "@/lib/auth-helpers";
 
 // GET: Fetch submission details
 export async function GET(
@@ -12,9 +13,8 @@ export async function GET(
 ) {
   try {
     const session = await auth.api.getSession({ headers: req.headers });
-    if (!session || (session?.user as any)?.role !== "admin") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const authError = requireAdmin(session);
+    if (authError) return authError;
 
     const { id } = await params;
 
@@ -68,9 +68,8 @@ export async function PUT(
 ) {
   try {
     const session = await auth.api.getSession({ headers: req.headers });
-    if (!session || (session.user as any)?.role !== "admin") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const authError = requireAdmin(session);
+    if (authError) return authError;
 
     const { id } = await params;
     const body = await req.json();
