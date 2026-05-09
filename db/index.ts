@@ -32,8 +32,15 @@ if (!connectionString) {
 const client = postgres(connectionString, { 
   prepare: false, 
   max: isBuild || isServerless ? 1 : 10,
-  idle_timeout: isBuild || isServerless ? 5 : 20,
-  connect_timeout: 10,
+  idle_timeout: isBuild || isServerless ? 3 : 20,
+  connect_timeout: 5,
+  max_lifetime: isServerless ? 30 : null,
+  connection: {
+    application_name: isServerless ? "magga-vercel" : "magga-local",
+    statement_timeout: isServerless ? 8000 : 15000,
+    lock_timeout: 3000,
+    idle_in_transaction_session_timeout: 5000,
+  },
 });
 
 const schema = { ...schemaRaw, ...relations };
