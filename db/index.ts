@@ -37,7 +37,7 @@ const client = postgres(connectionString, {
   max_lifetime: isServerless ? 30 : null,
   connection: {
     application_name: isServerless ? "magga-vercel" : "magga-local",
-    statement_timeout: isServerless ? 8000 : 15000,
+    statement_timeout: isServerless ? 12000 : 15000,
     lock_timeout: 3000,
     idle_in_transaction_session_timeout: 5000,
   },
