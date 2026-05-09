@@ -74,10 +74,6 @@ const nextConfig = {
             value: "nosniff",
           },
           {
-            key: "X-Frame-Options",
-            value: "DENY",
-          },
-          {
             key: "Referrer-Policy",
             value: "strict-origin-when-cross-origin",
           },
@@ -119,7 +115,7 @@ const nextConfig = {
               "object-src 'none'",
               "base-uri 'self'",
               "form-action 'self' https://accounts.google.com",
-              "frame-ancestors 'none'",
+              "frame-ancestors 'self' https://vercel.com https://*.vercel.com https://vercel.live",
               "upgrade-insecure-requests",
             ].join("; "),
           },
