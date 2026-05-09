@@ -175,6 +175,10 @@ export async function updateComment(formData: FormData) {
     return { error: "Unauthorized" };
   }
 
+  if (isUserBanned(session)) {
+    return { error: "บัญชีของคุณถูกระงับการใช้งาน" };
+  }
+
   const rawData = {
     commentId: formData.get("commentId") as string,
     content: formData.get("content") as string,
@@ -225,6 +229,10 @@ export async function deleteComment(commentId: string) {
 
   if (!session?.user?.id) {
     return { error: "Unauthorized" };
+  }
+
+  if (isUserBanned(session)) {
+    return { error: "บัญชีของคุณถูกระงับการใช้งาน" };
   }
 
   try {
