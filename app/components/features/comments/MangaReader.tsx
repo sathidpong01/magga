@@ -324,6 +324,8 @@ const LazyPageWithComments = forwardRef<HTMLDivElement, LazyPageProps>(
               opacity: imageLoading ? 1 : 0,
               transition: "opacity 0.3s ease-in-out",
               minHeight: 400,
+              pointerEvents: "none",
+              zIndex: 0,
               "&::after": {
                 content: '""',
                 position: "absolute",
@@ -348,12 +350,12 @@ const LazyPageWithComments = forwardRef<HTMLDivElement, LazyPageProps>(
             sizes="(max-width: 1000px) 100vw, 1000px"
             unoptimized
             style={{
+              position: "relative",
+              zIndex: 1,
               width: "100%",
               height: "auto",
               display: "block",
               borderRadius: "4px",
-              opacity: imageLoading ? 0 : 1,
-              transition: "opacity 0.3s ease-in-out",
             }}
             priority={imageIndex < 2}
             loading={imageIndex < 2 ? "eager" : "lazy"}
