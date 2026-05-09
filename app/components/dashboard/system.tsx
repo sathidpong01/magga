@@ -212,6 +212,7 @@ export function DashboardPageHeader({
       <Button
         component={Link}
         href={action.href}
+        prefetch={false}
         variant={action.variant ?? "contained"}
         sx={
           action.variant === "outlined"
@@ -404,7 +405,7 @@ export function DashboardStat({
   );
 
   return href ? (
-    <Link href={href} style={{ textDecoration: "none", display: "block" }}>
+    <Link href={href} prefetch={false} style={{ textDecoration: "none", display: "block" }}>
       {content}
     </Link>
   ) : (

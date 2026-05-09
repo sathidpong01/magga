@@ -191,6 +191,7 @@ export default function Header() {
             <Button
               component={Link}
               href={session ? "/dashboard/submit" : "/auth/signin"}
+              prefetch={false}
               variant="contained"
               startIcon={<CloudUploadIcon />}
               sx={{
@@ -216,6 +217,7 @@ export default function Header() {
               <Button
                 component={Link}
                 href="/dashboard"
+                prefetch={false}
                 variant="contained"
                 startIcon={<DashboardIcon />}
                 sx={{
@@ -359,6 +361,7 @@ export default function Header() {
                     onClick={handleMenuClose}
                     component={Link}
                     href="/dashboard/submit"
+                    prefetch={false}
                   >
                     <ListItemIcon>
                       <CloudUploadIcon sx={{ color: "#fbbf24" }} />
@@ -372,6 +375,7 @@ export default function Header() {
                     onClick={handleMenuClose}
                     component={Link}
                     href="/dashboard/submissions"
+                    prefetch={false}
                   >
                     <ListItemIcon>
                       <ListAltIcon sx={{ color: "#8b5cf6" }} />
@@ -385,6 +389,7 @@ export default function Header() {
                     onClick={handleMenuClose}
                     component={Link}
                     href="/dashboard"
+                    prefetch={false}
                   >
                     <ListItemIcon>
                       <DashboardIcon sx={{ color: "#ef4444" }} />
@@ -397,6 +402,7 @@ export default function Header() {
                   onClick={handleMenuClose}
                   component={Link}
                   href={`/profile/${(session?.user as any)?.username || session?.user?.id || ""}`}
+                  prefetch={false}
                 >
                   <ListItemIcon>
                     <PersonIcon sx={{ color: "#5eead4" }} />
@@ -408,6 +414,7 @@ export default function Header() {
                   onClick={handleMenuClose}
                   component={Link}
                   href="/settings"
+                  prefetch={false}
                 >
                   <ListItemIcon>
                     <SettingsIcon sx={{ color: "#fbbf24" }} />
@@ -443,6 +450,7 @@ export default function Header() {
                   onClick={handleMenuClose}
                   component={Link}
                   href="/auth/signin?callbackUrl=/dashboard/submit"
+                  prefetch={false}
                 >
                   <ListItemIcon>
                     <CloudUploadIcon sx={{ color: "#fbbf24" }} />

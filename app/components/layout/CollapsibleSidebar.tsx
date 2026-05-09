@@ -223,6 +223,7 @@ export default function CollapsibleSidebar({
             <Box
               component={Link}
               href={item.href}
+              prefetch={false}
               sx={{
                 display: "flex",
                 alignItems: "center",
@@ -310,6 +311,7 @@ export default function CollapsibleSidebar({
               <Box
                 component={Link}
                 href={item.href}
+                prefetch={false}
                 sx={{
                   display: "flex",
                   alignItems: "center",

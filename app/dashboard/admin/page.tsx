@@ -185,7 +185,7 @@ export default async function AdminPage() {
         <Grid container spacing={2.25} sx={{ mb: 2.25 }}>
           {rankedManga.slice(0, 3).map((manga, index) => (
             <Grid key={manga.id} size={{ xs: 12, sm: 4 }}>
-              <Link href={`/${manga.slug || manga.id}`} style={{ textDecoration: "none", display: "block" }}>
+              <Link href={`/${manga.slug || manga.id}`} prefetch={false} style={{ textDecoration: "none", display: "block" }}>
                 <Box
                   sx={{
                     ...dashboardInsetSurfaceSx,
@@ -303,6 +303,7 @@ export default async function AdminPage() {
             <Link
               key={manga.id}
               href={`/${manga.slug || manga.id}`}
+              prefetch={false}
               style={{ textDecoration: "none", display: "block" }}
             >
               <Box

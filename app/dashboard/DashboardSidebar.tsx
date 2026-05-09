@@ -20,7 +20,7 @@ export default function DashboardSidebar() {
       </Typography>
       <List>
         <ListItem disablePadding>
-          <ListItemButton component={Link} href="/dashboard/submissions">
+          <ListItemButton component={Link} href="/dashboard/submissions" prefetch={false}>
             <ListItemIcon>
               <ArticleIcon />
             </ListItemIcon>
