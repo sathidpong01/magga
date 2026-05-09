@@ -167,7 +167,7 @@ export default function InfiniteMangaGrid({
   return (
     <>
       {/* Add minHeight to prevent CLS when grid content loads */}
-      <Grid container spacing={{ xs: 1.5, sm: 2, md: 3 }} sx={{ minHeight: 400 * 3 }}>
+      <Grid container spacing={{ xs: 1.5, sm: 2, md: 3 }} sx={{ minHeight: 400 * 3, alignContent: "start" }}>
         {itemsWithAds.map((item, index) => (
           <Grid
             key={
