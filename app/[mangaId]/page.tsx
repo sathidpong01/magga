@@ -41,7 +41,6 @@ type MangaPageProps = {
 
 // ISR: Revalidate every 1 hour
 export const revalidate = 3600;
-export const dynamic = "force-dynamic";
 
 // Fetch manga data with small indexed queries. Drizzle's relation query generated
 // lateral JSON aggregation here, which can exceed Supabase statement timeouts.

@@ -1,5 +1,9 @@
+import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
+import { isAdminRole } from "@/lib/session-utils";
 import { db } from "@/db";
-import { 
+import {
   manga as mangaTable,
   categories as categoriesTable,
   tags as tagsTable,
@@ -39,6 +43,11 @@ function displayBoundedCount(rows: unknown[]) {
 }
 
 export default async function AdminPage() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!isAdminRole(session)) {
+    redirect("/auth/signin?callbackUrl=/dashboard/admin");
+  }
+
   const [
     totalMangaRows,
     totalCategoriesRows,
