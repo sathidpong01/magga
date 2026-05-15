@@ -46,6 +46,15 @@ const nextConfig = {
     });
     return config;
   },
+  async redirects() {
+    return [
+      {
+        source: "/Moxzk",
+        destination: "/moxzk",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {
