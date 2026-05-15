@@ -13,8 +13,9 @@ export default function LayoutWrapper({
 }) {
   const pathname = usePathname();
   const isDashboardPage = pathname?.startsWith("/dashboard");
+  const isStandalonePage = isDashboardPage || pathname?.startsWith("/Moxzk");
 
-  if (isDashboardPage) {
+  if (isStandalonePage) {
     return <>{children}</>;
   }
 
