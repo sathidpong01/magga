@@ -5,6 +5,7 @@ import { Box, Container } from "@mui/material";
 import Header from "./Header";
 import Footer from "./Footer";
 import { AdContainer } from "@/app/components/features/ads";
+import { isStandaloneRoute } from "./standalone-routes";
 
 export default function LayoutWrapper({
   children,
@@ -12,8 +13,7 @@ export default function LayoutWrapper({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isDashboardPage = pathname?.startsWith("/dashboard");
-  const isStandalonePage = isDashboardPage || pathname?.startsWith("/Moxzk");
+  const isStandalonePage = isStandaloneRoute(pathname);
 
   if (isStandalonePage) {
     return <>{children}</>;

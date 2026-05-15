@@ -9,8 +9,8 @@ export const metadata: Metadata = {
     title: "Moxzk - แอปแปลมังงะบน Windows",
     description:
       "คลีนภาพมังงะ แปลไทย และจัดข้อความกลับบนภาพ ในแอปเดสก์ท็อปเดียว",
-    url: "/Moxzk",
-    siteName: "MAGGA",
+    url: "/moxzk",
+    siteName: "Moxzk",
     images: [
       {
         url: "/moxzk-app.png",
