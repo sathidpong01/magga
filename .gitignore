@@ -77,3 +77,9 @@ temp-config.ts
 config.local.ts
 *.secret
 
+# AI Agent Workspaces
+.claude/
+.claire/
+.windsurf/
+
+
