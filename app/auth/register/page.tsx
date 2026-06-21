@@ -90,6 +90,7 @@ function RegisterForm() {
     try {
       const res = await signUp.email({
         name: formData.username,
+        username: formData.username,
         email: formData.email,
         password: formData.password,
       });
