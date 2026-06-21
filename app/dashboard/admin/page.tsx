@@ -47,6 +47,7 @@ export default async function AdminPage() {
   if (!isAdminRole(session)) {
     redirect("/auth/signin?callbackUrl=/dashboard/admin");
   }
+  redirect("/dashboard/admin/manga");
 
   const [
     totalMangaRows,

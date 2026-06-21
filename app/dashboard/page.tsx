@@ -13,7 +13,7 @@ export default async function DashboardPage() {
 
   // Redirect based on role
   if (isAdmin) {
-    redirect("/dashboard/admin");
+    redirect("/dashboard/admin/manga");
   } else {
     redirect("/dashboard/submissions");
   }

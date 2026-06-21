@@ -26,6 +26,8 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import ViewListIcon from "@mui/icons-material/ViewList";
+import ViewModuleIcon from "@mui/icons-material/ViewModule";
 import Link from "next/link";
 import {
   Dialog,
@@ -102,6 +104,7 @@ export default function MangaDataTable({
   const [mangas, setMangas] = useState(initialMangas);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<"table" | "grid">("table");
 
   // Settings modal state
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -350,305 +353,536 @@ export default function MangaDataTable({
             ),
           }}
         />
-        <Box sx={{ color: "#a3a3a3", fontSize: "0.875rem" }}>
-          ผลลัพธ์ {filteredMangas.length} รายการ
-        </Box>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <Box sx={{ color: "#a3a3a3", fontSize: "0.875rem" }}>
+            ผลลัพธ์ {filteredMangas.length} รายการ
+          </Box>
+          <Box
+            sx={{
+              display: "flex",
+              bgcolor: "#0B0B0B",
+              borderRadius: 1.1,
+              border: "1px solid rgba(255,255,255,0.06)",
+              p: 0.5,
+            }}
+          >
+            <Tooltip title="มุมมองตาราง">
+              <IconButton
+                size="small"
+                onClick={() => setViewMode("table")}
+                sx={{
+                  color: viewMode === "table" ? "#fbbf24" : "#a3a3a3",
+                  bgcolor: viewMode === "table" ? "rgba(251, 191, 36, 0.08)" : "transparent",
+                  borderRadius: 0.75,
+                  p: 0.5,
+                  "&:hover": {
+                    bgcolor: viewMode === "table" ? "rgba(251, 191, 36, 0.12)" : "rgba(255,255,255,0.05)",
+                  }
+                }}
+              >
+                <ViewListIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="มุมมองการ์ดปก">
+              <IconButton
+                size="small"
+                onClick={() => setViewMode("grid")}
+                sx={{
+                  color: viewMode === "grid" ? "#fbbf24" : "#a3a3a3",
+                  bgcolor: viewMode === "grid" ? "rgba(251, 191, 36, 0.08)" : "transparent",
+                  borderRadius: 0.75,
+                  p: 0.5,
+                  "&:hover": {
+                    bgcolor: viewMode === "grid" ? "rgba(251, 191, 36, 0.12)" : "rgba(255,255,255,0.05)",
+                  }
+                }}
+              >
+                <ViewModuleIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        </Stack>
       </Box>
 
-      <TableContainer
-        component={Paper}
-        sx={{ 
-          ...surfaceSx,
-          overflowX: "auto",
-          WebkitOverflowScrolling: "touch",
-        }}
-      >
-        <Table sx={{ minWidth: { xs: 960, md: 1120 } }}>
-          <TableHead>
-            <TableRow
-              sx={{
-                bgcolor: "rgba(255,255,255,0.02)",
-                "& th": { borderBottom: "1px solid rgba(255,255,255,0.06)", py: 2, px: 2 },
-              }}
-            >
-              <TableCell padding="checkbox">
-                <Checkbox
-                  indeterminate={
-                    selected.length > 0 &&
-                    selected.length < filteredMangas.length
-                  }
-                  checked={
-                    filteredMangas.length > 0 &&
-                    selected.length === filteredMangas.length
-                  }
-                  onChange={handleSelectAll}
-                  inputProps={{ "aria-label": "เลือกมังงะทั้งหมด" }}
-                  sx={{ 
-                    color: "#525252",
-                    "&.Mui-checked": { color: "#FABF06" },
-                    "&.MuiCheckbox-indeterminate": { color: "#FABF06" }
-                  }}
-                />
-              </TableCell>
-              <TableCell
-                sx={{ color: "#a3a3a3", fontWeight: 600, width: "80px" }}
-              >
-                ปก
-              </TableCell>
-              <TableCell
-                sx={{ color: "#a3a3a3", fontWeight: 600, minWidth: "200px" }}
-              >
-                ชื่อเรื่อง
-              </TableCell>
-              <TableCell
-                sx={{ color: "#a3a3a3", fontWeight: 600, width: "120px" }}
-              >
-                หมวดหมู่
-              </TableCell>
-              <TableCell
-                sx={{ color: "#a3a3a3", fontWeight: 600, minWidth: "200px" }}
-              >
-                แท็ก
-              </TableCell>
-              <TableCell
-                sx={{ color: "#a3a3a3", fontWeight: 600, width: "100px" }}
-              >
-                สถานะ
-              </TableCell>
-              <TableCell
-                sx={{ color: "#a3a3a3", fontWeight: 600, width: "80px" }}
-              >
-                ผู้ชม
-              </TableCell>
-              <TableCell
-                align="right"
-                sx={{ color: "#a3a3a3", fontWeight: 600, width: "200px" }}
-              >
-                จัดการ
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredMangas.map((manga) => (
+      {viewMode === "table" ? (
+        <TableContainer
+          component={Paper}
+          sx={{ 
+            ...surfaceSx,
+            overflowX: "auto",
+            WebkitOverflowScrolling: "touch",
+          }}
+        >
+          <Table sx={{ minWidth: { xs: 960, md: 1120 } }}>
+            <TableHead>
               <TableRow
-                key={manga.id}
-                hover
                 sx={{
-                  "&:hover": { bgcolor: "#171717" },
-                  "& td": { borderBottom: "1px solid #262626", py: 2, px: 2 },
+                  bgcolor: "rgba(255,255,255,0.02)",
+                  "& th": { borderBottom: "1px solid rgba(255,255,255,0.06)", py: 2, px: 2 },
                 }}
               >
                 <TableCell padding="checkbox">
                   <Checkbox
-                    checked={selected.includes(manga.id)}
-                    onChange={() => handleSelect(manga.id)}
+                    indeterminate={
+                      selected.length > 0 &&
+                      selected.length < filteredMangas.length
+                    }
+                    checked={
+                      filteredMangas.length > 0 &&
+                      selected.length === filteredMangas.length
+                    }
+                    onChange={handleSelectAll}
+                    inputProps={{ "aria-label": "เลือกมังงะทั้งหมด" }}
                     sx={{ 
                       color: "#525252",
-                      "&.Mui-checked": { color: "#FABF06" }
+                      "&.Mui-checked": { color: "#FABF06" },
+                      "&.MuiCheckbox-indeterminate": { color: "#FABF06" }
                     }}
                   />
                 </TableCell>
+                <TableCell
+                  sx={{ color: "#a3a3a3", fontWeight: 600, width: "80px" }}
+                >
+                  ปก
+                </TableCell>
+                <TableCell
+                  sx={{ color: "#a3a3a3", fontWeight: 600, minWidth: "200px" }}
+                >
+                  ชื่อเรื่อง
+                </TableCell>
+                <TableCell
+                  sx={{ color: "#a3a3a3", fontWeight: 600, width: "120px" }}
+                >
+                  หมวดหมู่
+                </TableCell>
+                <TableCell
+                  sx={{ color: "#a3a3a3", fontWeight: 600, minWidth: "200px" }}
+                >
+                  แท็ก
+                </TableCell>
+                <TableCell
+                  sx={{ color: "#a3a3a3", fontWeight: 600, width: "100px" }}
+                >
+                  สถานะ
+                </TableCell>
+                <TableCell
+                  sx={{ color: "#a3a3a3", fontWeight: 600, width: "80px" }}
+                >
+                  ผู้ชม
+                </TableCell>
+                <TableCell
+                  align="right"
+                  sx={{ color: "#a3a3a3", fontWeight: 600, width: "200px" }}
+                >
+                  จัดการ
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filteredMangas.map((manga) => (
+                <TableRow
+                  key={manga.id}
+                  hover
+                  sx={{
+                    "&:hover": { bgcolor: "#171717" },
+                    "& td": { borderBottom: "1px solid #262626", py: 2, px: 2 },
+                  }}
+                >
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      checked={selected.includes(manga.id)}
+                      onChange={() => handleSelect(manga.id)}
+                      sx={{ 
+                        color: "#525252",
+                        "&.Mui-checked": { color: "#FABF06" }
+                      }}
+                    />
+                  </TableCell>
+  
+                  <TableCell>
+                    <Avatar
+                      src={manga.coverImage}
+                      alt={manga.title}
+                      variant="rounded"
+                      sx={{ width: 40, height: 56 }}
+                    />
+                  </TableCell>
+  
+                  <TableCell>
+                    <Link
+                      href={`/${manga.slug || manga.id}`}
+                      style={{
+                        color: "#fafafa",
+                        textDecoration: "none",
+                        fontWeight: 500,
+                      }}
+                    >
+                      {manga.title}
+                    </Link>
+                  </TableCell>
+  
+                  <TableCell>
+                    {manga.category ? (
+                      <Chip
+                        label={manga.category.name}
+                        size="small"
+                        sx={{
+                          bgcolor: "rgba(251,191,36,0.08)",
+                          color: "#fbbf24",
+                          border: "1px solid rgba(251,191,36,0.18)",
+                          fontSize: "0.75rem",
+                          height: 24,
+                          fontWeight: 700,
+                        }}
+                      />
+                    ) : (
+                      <Box component="span" sx={{ color: "#525252" }}>-</Box>
+                    )}
+                  </TableCell>
+  
+                  <TableCell>
+                    <Stack
+                      direction="row"
+                      spacing={0.5}
+                      flexWrap="wrap"
+                      gap={0.5}
+                    >
+                      {manga.tags.slice(0, 3).map((tag) => (
+                        <Chip
+                          key={tag.id}
+                          label={tag.name}
+                          size="small"
+                          sx={{
+                            ...getMetadataChipSx(tag.name),
+                            fontSize: "0.75rem",
+                            height: 24,
+                            fontWeight: 600,
+                            borderRadius: 0.75,
+                          }}
+                        />
+                      ))}
+                      {manga.tags.length > 3 && (
+                        <Chip
+                          label={`+${manga.tags.length - 3}`}
+                          size="small"
+                          sx={{
+                            bgcolor: "#27272a",
+                            color: "#71717a",
+                            fontSize: "0.75rem",
+                            height: 24,
+                          }}
+                        />
+                      )}
+                    </Stack>
+                  </TableCell>
+  
+                  <TableCell>
+                    <Chip
+                        label={manga.isHidden ? "ซ่อน" : "เผยแพร่"}
+                        size="small"
+                        sx={{
+                        bgcolor: manga.isHidden ? "rgba(239,68,68,0.08)" : "rgba(34,197,94,0.08)",
+                        color: manga.isHidden ? "#fca5a5" : "#4ade80",
+                        border: manga.isHidden ? "1px solid rgba(239,68,68,0.16)" : "1px solid rgba(34,197,94,0.16)",
+                        fontSize: "0.75rem",
+                        height: 24,
+                        fontWeight: 600,
+                      }}
+                    />
+                  </TableCell>
+  
+                  <TableCell sx={{ color: "#a3a3a3" }}>
+                    {manga.viewCount.toLocaleString()}
+                  </TableCell>
+  
+                  <TableCell align="right">
+                    <Stack
+                      direction="row"
+                      spacing={0.5}
+                      justifyContent="flex-end"
+                    >
+                      <Tooltip title="ตั้งค่า">
+                        <IconButton
+                          size="small"
+                          aria-label={`ตั้งค่า ${manga.title}`}
+                          onClick={() => handleOpenSettings(manga)}
+                          sx={{
+                            color: "#fbbf24",
+                            bgcolor: "rgba(251, 191, 36, 0.08)",
+                            borderRadius: 1.1,
+                            minWidth: 44,
+                            minHeight: 44,
+                            "&:hover": { bgcolor: "rgba(251, 191, 36, 0.16)" },
+                          }}
+                        >
+                          <SettingsIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+  
+                      <Tooltip title="เปิดหน้าเรื่อง">
+                        <IconButton
+                          size="small"
+                          aria-label={`เปิดหน้าเรื่อง ${manga.title}`}
+                          component={Link}
+                          href={`/${manga.slug || manga.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          sx={{
+                            color: "#3b82f6",
+                            minWidth: 44,
+                            minHeight: 44,
+                            "&:hover": { bgcolor: "#3b82f620" },
+                          }}
+                        >
+                          <OpenInNewIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+  
+                      <Tooltip title={manga.isHidden ? "แสดง" : "ซ่อน"}>
+                        <IconButton
+                          size="small"
+                          aria-label={`${manga.isHidden ? "แสดง" : "ซ่อน"} ${manga.title}`}
+                          onClick={() =>
+                            handleToggleVisibility(manga.id, manga.isHidden)
+                          }
+                          sx={{
+                            color: "#10b981",
+                            minWidth: 44,
+                            minHeight: 44,
+                            "&:hover": { bgcolor: "#10b98120" },
+                          }}
+                        >
+                          {manga.isHidden ? (
+                            <VisibilityOffIcon fontSize="small" />
+                          ) : (
+                            <VisibilityIcon fontSize="small" />
+                          )}
+                        </IconButton>
+                      </Tooltip>
+  
+                      <Tooltip title="แก้ไข">
+                        <IconButton
+                          size="small"
+                          aria-label={`แก้ไข ${manga.title}`}
+                          component={Link}
+                          href={`/dashboard/admin/manga/${manga.id}/edit`}
+                          sx={{
+                            color: "#f59e0b",
+                            minWidth: 44,
+                            minHeight: 44,
+                            "&:hover": { bgcolor: "#f59e0b20" },
+                          }}
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+  
+                      <Tooltip title="ลบ">
+                        <IconButton
+                          size="small"
+                          aria-label={`ลบ ${manga.title}`}
+                          onClick={() => handleOpenDeleteDialog(manga)}
+                          sx={{
+                            color: "#ef4444",
+                            minWidth: 44,
+                            minHeight: 44,
+                            "&:hover": { bgcolor: "#ef444420" },
+                          }}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    </Stack>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      ) : (
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "repeat(auto-fill, minmax(140px, 1fr))",
+              sm: "repeat(auto-fill, minmax(180px, 1fr))",
+            },
+            gap: 3,
+          }}
+        >
+          {filteredMangas.map((manga) => {
+            const isSelected = selected.includes(manga.id);
+            return (
+              <Box
+                key={manga.id}
+                sx={{
+                  bgcolor: "#171717",
+                  borderRadius: 1.5,
+                  border: isSelected ? "1.5px solid #fbbf24" : "1px solid rgba(255,255,255,0.06)",
+                  overflow: "hidden",
+                  display: "flex",
+                  flexDirection: "column",
+                  position: "relative",
+                  transition: "all 0.15s ease",
+                  "&:hover": {
+                    transform: "translateY(-4px)",
+                    boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
+                    borderColor: isSelected ? "#fbbf24" : "rgba(255,255,255,0.14)",
+                  },
+                }}
+              >
+                {/* Checkbox Overlay */}
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: 8,
+                    left: 8,
+                    zIndex: 10,
+                    bgcolor: "rgba(10,10,10,0.6)",
+                    borderRadius: 0.5,
+                    backdropFilter: "blur(4px)",
+                    lineHeight: 0,
+                  }}
+                >
+                  <Checkbox
+                    size="small"
+                    checked={isSelected}
+                    onChange={() => handleSelect(manga.id)}
+                    sx={{
+                      color: "rgba(255,255,255,0.6)",
+                      p: 0.5,
+                      "&.Mui-checked": { color: "#fbbf24" },
+                    }}
+                  />
+                </Box>
 
-                <TableCell>
-                  <Avatar
+                {/* Status Badge */}
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: 8,
+                    right: 8,
+                    zIndex: 10,
+                    bgcolor: manga.isHidden ? "rgba(239,68,68,0.85)" : "rgba(34,197,94,0.85)",
+                    color: "#fff",
+                    fontSize: "0.7rem",
+                    fontWeight: 700,
+                    px: 1,
+                    py: 0.25,
+                    borderRadius: 0.5,
+                    backdropFilter: "blur(4px)",
+                  }}
+                >
+                  {manga.isHidden ? "ซ่อน" : "เผยแพร่"}
+                </Box>
+
+                {/* Cover Image */}
+                <Link href={`/${manga.slug || manga.id}`} style={{ display: "block", aspectRatio: "2/3", overflow: "hidden", position: "relative" }}>
+                  <Box
+                    component="img"
                     src={manga.coverImage}
                     alt={manga.title}
-                    variant="rounded"
-                    sx={{ width: 40, height: 56 }}
+                    sx={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
                   />
-                </TableCell>
+                </Link>
 
-                <TableCell>
-                  <Link
-                    href={`/${manga.slug || manga.id}`}
-                    style={{
+                {/* Content Details */}
+                <Box sx={{ p: 1.5, display: "flex", flexDirection: "column", flexGrow: 1, gap: 1 }}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{
+                      fontWeight: 700,
                       color: "#fafafa",
-                      textDecoration: "none",
-                      fontWeight: 500,
+                      lineHeight: 1.3,
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      minHeight: "2.6em",
                     }}
                   >
                     {manga.title}
-                  </Link>
-                </TableCell>
+                  </Typography>
 
-                <TableCell>
-                  {manga.category ? (
-                    <Chip
-                      label={manga.category.name}
-                      size="small"
-                      sx={{
-                        bgcolor: "rgba(251,191,36,0.08)",
-                        color: "#fbbf24",
-                        border: "1px solid rgba(251,191,36,0.18)",
-                        fontSize: "0.75rem",
-                        height: 24,
-                        fontWeight: 700,
-                      }}
-                    />
-                  ) : (
-                    <Box component="span" sx={{ color: "#525252" }}>-</Box>
-                  )}
-                </TableCell>
-
-                <TableCell>
-                  <Stack
-                    direction="row"
-                    spacing={0.5}
-                    flexWrap="wrap"
-                    gap={0.5}
-                  >
-                    {manga.tags.slice(0, 3).map((tag) => (
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                    {manga.category && (
                       <Chip
-                        key={tag.id}
-                        label={tag.name}
+                        label={manga.category.name}
                         size="small"
                         sx={{
-                          ...getMetadataChipSx(tag.name),
-                          fontSize: "0.75rem",
-                          height: 24,
-                          fontWeight: 600,
-                          borderRadius: 0.75,
-                        }}
-                      />
-                    ))}
-                    {manga.tags.length > 3 && (
-                      <Chip
-                        label={`+${manga.tags.length - 3}`}
-                        size="small"
-                        sx={{
-                          bgcolor: "#27272a",
-                          color: "#71717a",
-                          fontSize: "0.75rem",
-                          height: 24,
+                          bgcolor: "rgba(251,191,36,0.08)",
+                          color: "#fbbf24",
+                          border: "1px solid rgba(251,191,36,0.18)",
+                          fontSize: "0.65rem",
+                          height: 18,
+                          fontWeight: 700,
                         }}
                       />
                     )}
-                  </Stack>
-                </TableCell>
+                    {manga.author && (
+                      <Chip
+                        label={manga.author.name}
+                        size="small"
+                        sx={{
+                          bgcolor: "rgba(139,92,246,0.08)",
+                          color: "#c4b5fd",
+                          border: "1px solid rgba(139,92,246,0.18)",
+                          fontSize: "0.65rem",
+                          height: 18,
+                          fontWeight: 600,
+                        }}
+                      />
+                    )}
+                  </Box>
 
-                <TableCell>
-                  <Chip
-                      label={manga.isHidden ? "ซ่อน" : "เผยแพร่"}
+                  {/* Views */}
+                  <Typography variant="caption" sx={{ color: "#a3a3a3", display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <VisibilityIcon sx={{ fontSize: 14, mb: -0.25 }} /> {manga.viewCount.toLocaleString()}
+                  </Typography>
+
+                  {/* Actions Toolbar */}
+                  <Box sx={{ display: "flex", justifyContent: "space-between", borderTop: "1px solid rgba(255,255,255,0.06)", pt: 1, mt: "auto" }}>
+                    <IconButton
                       size="small"
-                      sx={{
-                      bgcolor: manga.isHidden ? "rgba(239,68,68,0.08)" : "rgba(34,197,94,0.08)",
-                      color: manga.isHidden ? "#fca5a5" : "#4ade80",
-                      border: manga.isHidden ? "1px solid rgba(239,68,68,0.16)" : "1px solid rgba(34,197,94,0.16)",
-                      fontSize: "0.75rem",
-                      height: 24,
-                      fontWeight: 600,
-                    }}
-                  />
-                </TableCell>
-
-                <TableCell sx={{ color: "#a3a3a3" }}>
-                  {manga.viewCount.toLocaleString()}
-                </TableCell>
-
-                <TableCell align="right">
-                  <Stack
-                    direction="row"
-                    spacing={0.5}
-                    justifyContent="flex-end"
-                  >
-                    <Tooltip title="ตั้งค่า">
-                      <IconButton
-                        size="small"
-                        aria-label={`ตั้งค่า ${manga.title}`}
-                        onClick={() => handleOpenSettings(manga)}
-                        sx={{
-                          color: "#fbbf24",
-                          bgcolor: "rgba(251, 191, 36, 0.08)",
-                          borderRadius: 1.1,
-                          minWidth: 44,
-                          minHeight: 44,
-                          "&:hover": { bgcolor: "rgba(251, 191, 36, 0.16)" },
-                        }}
-                      >
-                        <SettingsIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-
-                    <Tooltip title="เปิดหน้าเรื่อง">
-                      <IconButton
-                        size="small"
-                        aria-label={`เปิดหน้าเรื่อง ${manga.title}`}
-                        component={Link}
-                        href={`/${manga.slug || manga.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        sx={{
-                          color: "#3b82f6",
-                          minWidth: 44,
-                          minHeight: 44,
-                          "&:hover": { bgcolor: "#3b82f620" },
-                        }}
-                      >
-                        <OpenInNewIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-
-                    <Tooltip title={manga.isHidden ? "แสดง" : "ซ่อน"}>
-                      <IconButton
-                        size="small"
-                        aria-label={`${manga.isHidden ? "แสดง" : "ซ่อน"} ${manga.title}`}
-                        onClick={() =>
-                          handleToggleVisibility(manga.id, manga.isHidden)
-                        }
-                        sx={{
-                          color: "#10b981",
-                          minWidth: 44,
-                          minHeight: 44,
-                          "&:hover": { bgcolor: "#10b98120" },
-                        }}
-                      >
-                        {manga.isHidden ? (
-                          <VisibilityOffIcon fontSize="small" />
-                        ) : (
-                          <VisibilityIcon fontSize="small" />
-                        )}
-                      </IconButton>
-                    </Tooltip>
-
-                    <Tooltip title="แก้ไข">
-                      <IconButton
-                        size="small"
-                        aria-label={`แก้ไข ${manga.title}`}
-                        component={Link}
-                        href={`/dashboard/admin/manga/${manga.id}/edit`}
-                        sx={{
-                          color: "#f59e0b",
-                          minWidth: 44,
-                          minHeight: 44,
-                          "&:hover": { bgcolor: "#f59e0b20" },
-                        }}
-                      >
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-
-                    <Tooltip title="ลบ">
-                      <IconButton
-                        size="small"
-                        aria-label={`ลบ ${manga.title}`}
-                        onClick={() => handleOpenDeleteDialog(manga)}
-                        sx={{
-                          color: "#ef4444",
-                          minWidth: 44,
-                          minHeight: 44,
-                          "&:hover": { bgcolor: "#ef444420" },
-                        }}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </Stack>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                      onClick={() => handleOpenSettings(manga)}
+                      sx={{ color: "#fbbf24", p: 0.5 }}
+                    >
+                      <SettingsIcon sx={{ fontSize: 16 }} />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleToggleVisibility(manga.id, manga.isHidden)}
+                      sx={{ color: "#10b981", p: 0.5 }}
+                    >
+                      {manga.isHidden ? <VisibilityOffIcon sx={{ fontSize: 16 }} /> : <VisibilityIcon sx={{ fontSize: 16 }} />}
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      component={Link}
+                      href={`/dashboard/admin/manga/${manga.id}/edit`}
+                      sx={{ color: "#f59e0b", p: 0.5 }}
+                    >
+                      <EditIcon sx={{ fontSize: 16 }} />
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleOpenDeleteDialog(manga)}
+                      sx={{ color: "#ef4444", p: 0.5 }}
+                    >
+                      <DeleteIcon sx={{ fontSize: 16 }} />
+                    </IconButton>
+                  </Box>
+                </Box>
+              </Box>
+            );
+          })}
+        </Box>
+      )}
 
       {/* Quick Settings Dialog */}
       <Dialog

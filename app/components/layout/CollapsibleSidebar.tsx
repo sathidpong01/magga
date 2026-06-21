@@ -12,6 +12,7 @@ import {
   Drawer,
   useMediaQuery,
   useTheme,
+  Badge,
 } from "@mui/material";
 import Link from "next/link";
 import { signOutAndSync } from "@/lib/auth-client";
@@ -27,6 +28,7 @@ export interface SidebarItem {
   text: string;
   href: string;
   icon: ReactNode;
+  badge?: string | number | ReactNode;
 }
 
 interface CollapsibleSidebarProps {
@@ -257,21 +259,59 @@ export default function CollapsibleSidebar({
                   "& svg": { fontSize: 20 },
                 }}
               >
-                {item.icon}
+                {item.badge ? (
+                  <Badge
+                    badgeContent={item.badge}
+                    sx={{
+                      "& .MuiBadge-badge": {
+                        bgcolor: dashboardTokens.accent,
+                        color: "#000",
+                        fontWeight: 700,
+                        fontSize: "0.7rem",
+                        height: 16,
+                        minWidth: 16,
+                        p: 0,
+                      },
+                    }}
+                  >
+                    {item.icon}
+                  </Badge>
+                ) : (
+                  item.icon
+                )}
               </Box>
               {showExpanded && (
-                <Typography
-                  sx={{
-                    fontSize: "0.875rem",
-                    fontWeight: active ? 600 : 500,
-                    color: active ? dashboardTokens.text : "#d4d4d4",
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                  }}
-                >
-                  {item.text}
-                </Typography>
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexGrow: 1, minWidth: 0, gap: 1 }}>
+                  <Typography
+                    sx={{
+                      fontSize: "0.875rem",
+                      fontWeight: active ? 600 : 500,
+                      color: active ? dashboardTokens.text : "#d4d4d4",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {item.text}
+                  </Typography>
+                  {item.badge && (
+                    <Box
+                      sx={{
+                        bgcolor: active ? dashboardTokens.accent : "rgba(251, 191, 36, 0.15)",
+                        color: active ? "#000" : dashboardTokens.accent,
+                        fontSize: "0.75rem",
+                        fontWeight: 700,
+                        px: 1,
+                        py: 0.25,
+                        borderRadius: "10px",
+                        minWidth: 18,
+                        textAlign: "center",
+                      }}
+                    >
+                      {item.badge}
+                    </Box>
+                  )}
+                </Box>
               )}
             </Box>
           );

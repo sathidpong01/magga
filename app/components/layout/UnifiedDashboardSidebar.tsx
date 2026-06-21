@@ -1,5 +1,6 @@
-﻿"use client";
+"use client";
 
+import { useState, useEffect } from "react";
 import CollapsibleSidebar, {
   SidebarItem,
 } from "@/app/components/layout/CollapsibleSidebar";
@@ -20,6 +21,20 @@ export default function UnifiedDashboardSidebar() {
   const { data: session } = useSession();
   const isAdmin = isAdminRole(session);
   const banned = isUserBanned(session);
+  const [pendingCount, setPendingCount] = useState<number>(0);
+ 
+  useEffect(() => {
+    if (isAdmin) {
+      fetch("/api/admin/submissions?status=PENDING&limit=1")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data?.pagination?.total !== undefined) {
+            setPendingCount(data.pagination.total);
+          }
+        })
+        .catch((err) => console.error("Error fetching pending submissions count:", err));
+    }
+  }, [isAdmin]);
 
   // Menu items based on role
   const menuItems: SidebarItem[] = [
@@ -60,6 +75,7 @@ export default function UnifiedDashboardSidebar() {
             text: "การฝากลง",
             href: "/dashboard/admin/submissions",
             icon: <InboxIcon />,
+            badge: pendingCount > 0 ? pendingCount : undefined,
           },
           {
             text: "คอมเมนต์",
