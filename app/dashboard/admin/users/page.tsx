@@ -4,6 +4,9 @@ import UserManager from "./UserManager";
 import { Box, Chip, Stack, Typography } from "@mui/material";
 import { eq, sql, desc } from "drizzle-orm";
 
+export const dynamic = "force-dynamic";
+
+
 export default async function UsersPage() {
   const usersQuery = await db.select({
     id: usersTable.id,

@@ -6,6 +6,9 @@ import { asc } from "drizzle-orm";
 import AuthorManager from "./AuthorManager";
 import { Box, Typography } from "@mui/material";
 
+export const dynamic = "force-dynamic";
+
+
 export default async function AuthorsPage() {
   const authors = await db.query.authors.findMany({
     orderBy: [asc(authorsTable.name)],
