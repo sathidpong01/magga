@@ -1,5 +1,3 @@
-"use server";
-
 import { db } from "@/db";
 import { authors as authorsTable } from "@/db/schema";
 import { asc } from "drizzle-orm";
@@ -7,6 +5,7 @@ import AuthorManager from "./AuthorManager";
 import { Box, Typography } from "@mui/material";
 
 export const dynamic = "force-dynamic";
+
 
 
 export default async function AuthorsPage() {
