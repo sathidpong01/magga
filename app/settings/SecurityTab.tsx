@@ -100,6 +100,7 @@ export default function SecurityTab({ hasPassword, email }: Props) {
               fullWidth
               label="Current Password"
               type="password"
+              autoComplete="current-password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
               margin="normal"
@@ -121,6 +122,7 @@ export default function SecurityTab({ hasPassword, email }: Props) {
             fullWidth
             label={hasPassword ? "New Password" : "Set New Password"}
             type="password"
+            autoComplete="new-password"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             margin="normal"
@@ -143,6 +145,7 @@ export default function SecurityTab({ hasPassword, email }: Props) {
             fullWidth
             label="Confirm New Password"
             type="password"
+            autoComplete="new-password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             margin="normal"

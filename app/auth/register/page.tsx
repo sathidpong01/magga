@@ -183,6 +183,7 @@ function RegisterForm() {
               required
               fullWidth
               label="ชื่อผู้ใช้"
+              autoComplete="username"
               autoFocus
               value={formData.username}
               onChange={(e) => setFormData({ ...formData, username: e.target.value })}
@@ -194,6 +195,7 @@ function RegisterForm() {
               fullWidth
               label="อีเมล"
               type="email"
+              autoComplete="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               sx={textFieldSx}
@@ -204,6 +206,7 @@ function RegisterForm() {
               fullWidth
               label="รหัสผ่าน"
               type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               sx={textFieldSx}
@@ -257,6 +260,7 @@ function RegisterForm() {
               fullWidth
               label="ยืนยันรหัสผ่าน"
               type={showConfirm ? "text" : "password"}
+              autoComplete="new-password"
               value={formData.confirmPassword}
               onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
               sx={textFieldSx}

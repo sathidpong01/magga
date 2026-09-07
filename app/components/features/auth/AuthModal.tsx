@@ -216,6 +216,7 @@ export default function AuthModal({
               fullWidth
               aria-labelledby="auth-modal-username-label"
               placeholder="username หรือ you@example.com"
+              autoComplete="username"
               autoFocus
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -245,6 +246,7 @@ export default function AuthModal({
               aria-labelledby="auth-modal-password-label"
               placeholder="กรอกรหัสผ่านของคุณ"
               type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               sx={{

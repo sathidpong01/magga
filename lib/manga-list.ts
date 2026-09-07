@@ -12,6 +12,135 @@ import {
 
 export const DEFAULT_MANGA_PAGE_SIZE = 12;
 
+const mangaCardColumns = {
+  id: mangaTable.id,
+  slug: mangaTable.slug,
+  title: mangaTable.title,
+  coverImage: mangaTable.coverImage,
+  viewCount: mangaTable.viewCount,
+  averageRating: mangaTable.averageRating,
+  categoryId: mangaTable.categoryId,
+};
+
+type MangaCardRow = {
+  id: string;
+  slug: string;
+  title: string;
+  coverImage: string;
+  viewCount: number;
+  averageRating: number;
+  categoryId: string | null;
+  categoryName: string | null;
+};
+
+async function attachTagsToMangaRows(rows: MangaCardRow[]) {
+  const mangaIds = rows.map((manga) => manga.id);
+  const tagRows = mangaIds.length
+    ? await db
+        .select({
+          mangaId: mangaTagsTable.mangaId,
+          id: tagsTable.id,
+          name: tagsTable.name,
+        })
+        .from(mangaTagsTable)
+        .innerJoin(tagsTable, eq(tagsTable.id, mangaTagsTable.tagId))
+        .where(inArray(mangaTagsTable.mangaId, mangaIds))
+    : [];
+
+  const tagsByMangaId = new Map<string, Array<{ id: string; name: string }>>();
+  for (const tag of tagRows) {
+    const mangaTags = tagsByMangaId.get(tag.mangaId) ?? [];
+    mangaTags.push({ id: tag.id, name: tag.name });
+    tagsByMangaId.set(tag.mangaId, mangaTags);
+  }
+
+  return rows.map(({ categoryName, ...manga }) => ({
+    ...manga,
+    category: categoryName ? { name: categoryName } : null,
+    tags: tagsByMangaId.get(manga.id) ?? [],
+  }));
+}
+
+export const getMangasByCategoryName = unstable_cache(
+  async (categoryName: string) => {
+    const rows = await db
+      .select({
+        ...mangaCardColumns,
+        categoryName: categoriesTable.name,
+      })
+      .from(mangaTable)
+      .innerJoin(
+        categoriesTable,
+        eq(categoriesTable.id, mangaTable.categoryId)
+      )
+      .where(
+        and(
+          eq(categoriesTable.name, categoryName),
+          eq(mangaTable.isHidden, false)
+        )
+      )
+      .orderBy(desc(mangaTable.createdAt));
+
+    if (!rows.length) {
+      const [category] = await db
+        .select({ name: categoriesTable.name })
+        .from(categoriesTable)
+        .where(eq(categoriesTable.name, categoryName))
+        .limit(1);
+
+      return category ? { name: category.name, mangas: [] } : null;
+    }
+
+    return {
+      name: rows[0].categoryName,
+      mangas: await attachTagsToMangaRows(rows),
+    };
+  },
+  ["manga-list-by-category"],
+  { revalidate: 3600, tags: ["manga-list"] }
+);
+
+export const getMangasByTagName = unstable_cache(
+  async (tagName: string) => {
+    const rows = await db
+      .selectDistinct({
+        ...mangaCardColumns,
+        categoryName: categoriesTable.name,
+      })
+      .from(mangaTable)
+      .innerJoin(
+        mangaTagsTable,
+        eq(mangaTagsTable.mangaId, mangaTable.id)
+      )
+      .innerJoin(tagsTable, eq(tagsTable.id, mangaTagsTable.tagId))
+      .leftJoin(
+        categoriesTable,
+        eq(categoriesTable.id, mangaTable.categoryId)
+      )
+      .where(
+        and(eq(tagsTable.name, tagName), eq(mangaTable.isHidden, false))
+      )
+      .orderBy(desc(mangaTable.createdAt));
+
+    if (!rows.length) {
+      const [tag] = await db
+        .select({ name: tagsTable.name })
+        .from(tagsTable)
+        .where(eq(tagsTable.name, tagName))
+        .limit(1);
+
+      return tag ? { name: tag.name, mangas: [] } : null;
+    }
+
+    return {
+      name: tagName,
+      mangas: await attachTagsToMangaRows(rows),
+    };
+  },
+  ["manga-list-by-tag"],
+  { revalidate: 3600, tags: ["manga-list"] }
+);
+
 export const getMangasWithPagination = unstable_cache(
   async (
     page: number,
