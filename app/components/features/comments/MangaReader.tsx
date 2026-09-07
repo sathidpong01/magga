@@ -357,8 +357,8 @@ const LazyPageWithComments = forwardRef<HTMLDivElement, LazyPageProps>(
               display: "block",
               borderRadius: "4px",
             }}
-            priority={imageIndex < 2}
-            loading={imageIndex < 2 ? "eager" : "lazy"}
+            priority={imageIndex === 0}
+            loading={imageIndex === 0 ? "eager" : "lazy"}
             onLoad={() => setImageLoading(false)}
             onError={() => setImageLoading(false)}
           />

@@ -257,8 +257,8 @@ export default async function MangaPage({ params }: MangaPageProps) {
             alt={`Background of ${manga.title}`}
             role="presentation"
             fill
+            sizes="100vw"
             style={{ objectFit: "cover" }}
-            priority
           />
           <Box
             sx={{

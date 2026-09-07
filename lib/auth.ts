@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { admin, username } from "better-auth/plugins";
+import { admin } from "better-auth/plugins/admin";
+import { username } from "better-auth/plugins/username";
 import { db, schema } from "@/db";
 import { randomUUID } from "crypto";
 import { getAuthBaseUrl, getTrustedOrigins } from "@/lib/site-url";

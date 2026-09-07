@@ -1,11 +1,12 @@
 import { db } from "@/db";
 import { categories as categoriesTable, tags as tagsTable, advertisements as adsTable, mangaTags } from "@/db/schema";
 import { and, asc, eq, inArray } from "drizzle-orm";
-import { Typography, Box, Container } from "@mui/material";
+import { Box, Container } from "@mui/material";
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import { unstable_cache } from "next/cache";
-import HomeMangaGrid from "./components/features/manga/HomeMangaGrid";
+import MangaGridSkeleton from "./components/features/manga/MangaGridSkeleton";
+import StreamingMangaGrid from "./components/features/manga/StreamingMangaGrid";
 
 const SearchFilters = dynamic(
   () => import("./components/features/search/SearchFilters"),
@@ -100,14 +101,16 @@ export default async function Home({ searchParams }: Props) {
           <SearchFilters categories={categories} tags={tags} />
         </Suspense>
 
-        <HomeMangaGrid
-          search={search}
-          categoryId={categoryId}
-          tagNames={tagNameArray}
-          sort={sort}
-          ads={gridAds as any}
-          pageSize={homePageSize}
-        />
+        <Suspense fallback={<MangaGridSkeleton count={homePageSize} />}>
+          <StreamingMangaGrid
+            search={search}
+            categoryId={categoryId}
+            tagNames={tagNameArray}
+            sort={sort}
+            ads={gridAds as any}
+            pageSize={homePageSize}
+          />
+        </Suspense>
       </Box>
     </Container>
   );

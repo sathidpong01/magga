@@ -1,7 +1,7 @@
 {
   "buildCommand": "next build",
   "framework": "nextjs",
-  "installCommand": "npm install",
+  "installCommand": "npm ci",
   "regions": ["sin1"],
   "crons": [
     {

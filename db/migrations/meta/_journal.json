@@ -43,6 +43,13 @@
       "when": 1775281470000,
       "tag": "0005_harden_auth_surface",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788750624793,
+      "tag": "0006_harden_data_api_and_legacy_functions",
+      "breakpoints": true
     }
   ]
 }
