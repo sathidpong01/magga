@@ -54,7 +54,7 @@
     {
       "idx": 7,
       "version": "7",
-      "when": 1788753624877,
+      "when": 1788766123339,
       "tag": "0007_align_better_auth_plugin_schema",
       "breakpoints": true
     }

@@ -1,6 +1,6 @@
 {
-  "id": "7ce07bd4-d2f5-4b07-8700-0f87ffef1719",
-  "prevId": "5bdbc649-a8f1-41ab-910e-3653ec7945f3",
+  "id": "3165bccc-c98c-4143-8a94-3a7db9885e19",
+  "prevId": "7ce07bd4-d2f5-4b07-8700-0f87ffef1719",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -2290,6 +2290,12 @@
           "primaryKey": false,
           "notNull": false
         },
+        "display_username": {
+          "name": "display_username",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
         "password": {
           "name": "password",
           "type": "text",
@@ -2313,6 +2319,12 @@
         "ban_reason": {
           "name": "ban_reason",
           "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ban_expires": {
+          "name": "ban_expires",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
@@ -2438,6 +2450,12 @@
         },
         "user_agent": {
           "name": "user_agent",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "impersonated_by": {
+          "name": "impersonated_by",
           "type": "text",
           "primaryKey": false,
           "notNull": false
