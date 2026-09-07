@@ -52,6 +52,7 @@ next-env.d.ts
 !db/migrations/0004_clever_ares.sql
 !db/migrations/0005_harden_auth_surface.sql
 !db/migrations/0006_harden_data_api_and_legacy_functions.sql
+!db/migrations/0007_align_better_auth_plugin_schema.sql
 
 # Debug/test scripts
 scripts/test-*.ts

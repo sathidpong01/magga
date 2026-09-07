@@ -50,6 +50,13 @@
       "when": 1788750624793,
       "tag": "0006_harden_data_api_and_legacy_functions",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1788753624877,
+      "tag": "0007_align_better_auth_plugin_schema",
+      "breakpoints": true
     }
   ]
 }
