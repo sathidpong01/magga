@@ -10,10 +10,22 @@ export default function TermsPage() {
   return (
     <Container maxWidth="md" sx={{ py: 6 }}>
       <Paper sx={{ p: { xs: 3, md: 5 }, bgcolor: '#171717', borderRadius: 1, border: '1px solid rgba(255,255,255,0.08)' }}>
-        <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom sx={{ color: '#fafafa' }}>
+        <Typography
+          variant="h4"
+          component="h1"
+          gutterBottom
+          sx={{
+            fontWeight: "bold",
+            color: '#fafafa'
+          }}>
           ข้อตกลงในการใช้งาน (Terms of Service)
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
+        <Typography
+          variant="body2"
+          sx={{
+            color: "text.secondary",
+            mb: 4
+          }}>
           อัปเดตล่าสุด: ธันวาคม 2024
         </Typography>
 
@@ -37,11 +49,15 @@ export default function TermsPage() {
           <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
 
           <Section title="2. รายละเอียดการให้บริการ">
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               เว็บไซต์เป็นพื้นที่สำหรับการอ่านและเผยแพร่การ์ตูนแปลไทย รวมถึงเนื้อหาอื่น ๆ ที่เกี่ยวข้อง 
               ผู้ใช้งานสามารถอ่าน แบ่งปัน และสร้างสรรค์ผลงานได้ภายใต้ข้อตกลงและเงื่อนไขที่กำหนด
             </Typography>
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               เว็บไซต์อาจมีการเชื่อมโยงไปยังเว็บไซต์ของบุคคลภายนอกซึ่งไม่ได้อยู่ภายใต้การควบคุมของเว็บไซต์ 
               ผู้ใช้งานรับทราบว่าเว็บไซต์ไม่สามารถรับผิดชอบต่อเนื้อหา นโยบายความเป็นส่วนตัว 
               หรือการดำเนินการใด ๆ ของเว็บไซต์ภายนอกเหล่านั้น
@@ -64,7 +80,9 @@ export default function TermsPage() {
           <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
 
           <Section title="4. ข้อปฏิบัติในการใช้งาน">
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               ผู้ใช้งานต้องรับผิดชอบต่อเนื้อหาที่ตนเองอัปโหลด โพสต์ หรือเผยแพร่ในเว็บไซต์ 
               และตกลงว่าจะไม่เผยแพร่เนื้อหาที่มีลักษณะดังต่อไปนี้:
             </Typography>
@@ -79,7 +97,9 @@ export default function TermsPage() {
           <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
 
           <Section title="5. ทรัพย์สินทางปัญญา">
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               เนื้อหาที่เผยแพร่บนเว็บไซต์ ไม่ว่าจะเป็นการ์ตูน ข้อความ รูปภาพ หรือสื่อใด ๆ 
               ยังคงเป็นทรัพย์สินทางปัญญาของผู้สร้างสรรค์ผลงานหรือเจ้าของสิทธิ์ตามกฎหมาย 
               เว็บไซต์มิได้อ้างสิทธิ์ความเป็นเจ้าของเนื้อหาดังกล่าว
@@ -93,7 +113,9 @@ export default function TermsPage() {
           <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
 
           <Section title="6. เนื้อหาที่ผู้ใช้งานส่งเข้ามา (User Submissions)">
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               ผู้ใช้งานยังคงเป็นเจ้าของลิขสิทธิ์ในผลงานที่ตนเองสร้างสรรค์ แต่เมื่อเผยแพร่บนเว็บไซต์ 
               ผู้ใช้งานได้อนุญาตให้เว็บไซต์ใช้ ทำซ้ำ และเผยแพร่เพื่อการดำเนินงานของเว็บไซต์ได้
             </Typography>
@@ -133,7 +155,9 @@ export default function TermsPage() {
           <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
 
           <Section title="10. ข้อจำกัดความรับผิดในการรับประกัน">
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               ผู้ใช้งานยอมรับว่าการใช้งานเว็บไซต์มีความเสี่ยงที่อาจเกิดขึ้นได้ 
               ซึ่งทางเว็บไซต์ไม่รับประกันความถูกต้องหรือความสมบูรณ์ของข้อมูล 
               และไม่รับผิดชอบต่อความเสียหายที่เกิดจาก:
@@ -167,15 +191,21 @@ export default function TermsPage() {
           <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
 
           <Section title="13. การโอนสิทธิ์และเขตอำนาจ">
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               13.1 ผู้ใช้งานไม่มีสิทธิ์โอนหรือมอบหมายสิทธิ์ หน้าที่ หรือข้อผูกพันใด ๆ ภายใต้ข้อตกลงนี้ให้แก่บุคคลอื่น 
               เว้นแต่ได้รับอนุญาตเป็นลายลักษณ์อักษรจากเว็บไซต์ก่อนล่วงหน้า
             </Typography>
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               13.2 หากข้อกำหนดใดในข้อตกลงนี้ถูกพิจารณาโดยหน่วยงานที่มีอำนาจว่าบังคับใช้ไม่ได้ 
               ข้อกำหนดดังกล่าวจะถูกตีความ ปรับเปลี่ยน หรือแยกออกเท่าที่จำเป็น เพื่อให้ข้อตกลงโดยรวมยังคงมีผลบังคับใช้ต่อไป
             </Typography>
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               13.3 ข้อตกลงนี้อยู่ภายใต้บังคับของกฎหมายที่เกี่ยวข้องในเขตอำนาจที่เว็บไซต์ดำเนินการหลัก
             </Typography>
             <Typography>
@@ -185,7 +215,12 @@ export default function TermsPage() {
         </Box>
 
         <Box sx={{ mt: 4, pt: 3, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              fontStyle: 'italic'
+            }}>
             หมายเหตุ: เอกสารฉบับนี้มีไว้เพื่อประกาศข้อตกลงในการใช้งานเว็บไซต์ และอาจมีการปรับปรุงแก้ไขเป็นระยะ
           </Typography>
         </Box>
@@ -197,7 +232,13 @@ export default function TermsPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <Box>
-      <Typography variant="h6" fontWeight="bold" sx={{ color: '#fbbf24', mb: 2 }}>
+      <Typography
+        variant="h6"
+        sx={{
+          fontWeight: "bold",
+          color: '#fbbf24',
+          mb: 2
+        }}>
         {title}
       </Typography>
       <Box sx={{ 

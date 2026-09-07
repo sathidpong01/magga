@@ -263,9 +263,10 @@ export default function SearchFilters({ categories, tags }: Props) {
               <Typography
                 variant="subtitle2"
                 gutterBottom
-                color="text.secondary"
-                sx={{ fontSize: "0.85rem" }}
-              >
+                sx={{
+                  color: "text.secondary",
+                  fontSize: "0.85rem"
+                }}>
                 Category
               </Typography>
               <TextField
@@ -275,8 +276,6 @@ export default function SearchFilters({ categories, tags }: Props) {
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 variant="standard"
-                InputProps={{ disableUnderline: true }}
-                SelectProps={{ id: `${categorySelectId}-select` }}
                 sx={{
                   "& .MuiSelect-select": {
                     py: 0.75,
@@ -286,7 +285,10 @@ export default function SearchFilters({ categories, tags }: Props) {
                   borderBottom: "1px solid",
                   borderColor: "divider",
                 }}
-              >
+                slotProps={{
+                  input: { disableUnderline: true },
+                  select: { id: `${categorySelectId}-select` }
+                }}>
                 <MenuItem value="all">All</MenuItem>
                 {categories.map((cat) => (
                   <MenuItem key={cat.id} value={cat.name}>
@@ -301,9 +303,10 @@ export default function SearchFilters({ categories, tags }: Props) {
               <Typography
                 variant="subtitle2"
                 gutterBottom
-                color="text.secondary"
-                sx={{ fontSize: "0.85rem" }}
-              >
+                sx={{
+                  color: "text.secondary",
+                  fontSize: "0.85rem"
+                }}>
                 Sorting
               </Typography>
               <TextField
@@ -313,8 +316,6 @@ export default function SearchFilters({ categories, tags }: Props) {
                 value={sort}
                 onChange={(e) => setSort(e.target.value)}
                 variant="standard"
-                InputProps={{ disableUnderline: true }}
-                SelectProps={{ id: `${sortSelectId}-select` }}
                 sx={{
                   "& .MuiSelect-select": {
                     py: 0.75,
@@ -324,7 +325,10 @@ export default function SearchFilters({ categories, tags }: Props) {
                   borderBottom: "1px solid",
                   borderColor: "divider",
                 }}
-              >
+                slotProps={{
+                  input: { disableUnderline: true },
+                  select: { id: `${sortSelectId}-select` }
+                }}>
                 <MenuItem value="updated">Updated</MenuItem>
                 <MenuItem value="added">Added</MenuItem>
                 <MenuItem value="az">Title A-Z</MenuItem>
@@ -338,9 +342,10 @@ export default function SearchFilters({ categories, tags }: Props) {
               <Typography
                 variant="subtitle2"
                 gutterBottom
-                color="text.secondary"
-                sx={{ fontSize: "0.85rem" }}
-              >
+                sx={{
+                  color: "text.secondary",
+                  fontSize: "0.85rem"
+                }}>
                 Search
               </Typography>
               <Autocomplete
@@ -378,16 +383,18 @@ export default function SearchFilters({ categories, tags }: Props) {
                             : option.title
                         }
                         secondary={option.category || option.tags.slice(0, 30)}
-                        primaryTypographyProps={{
-                          variant: "body2",
-                          fontWeight: 500,
-                          noWrap: true,
-                        }}
-                        secondaryTypographyProps={{
-                          variant: "caption",
-                          noWrap: true,
-                        }}
-                      />
+                        slotProps={{
+                          primary: {
+                            variant: "body2",
+                            noWrap: true,
+                            sx: { fontWeight: 500 },
+                          },
+
+                          secondary: {
+                            variant: "caption",
+                            noWrap: true,
+                          }
+                        }} />
                     </ListItem>
                   );
                 }}
@@ -397,17 +404,6 @@ export default function SearchFilters({ categories, tags }: Props) {
                     id={searchInputId}
                     placeholder="Title or artist"
                     variant="standard"
-                    InputProps={{
-                      ...params.InputProps,
-                      disableUnderline: true,
-                      startAdornment: (
-                        <SearchIcon color="action" sx={{ mr: 1 }} />
-                      ),
-                    }}
-                    inputProps={{
-                      ...params.inputProps,
-                      id: searchInputId,
-                    }}
                     sx={{
                       "& input": { py: 0.75, fontSize: "0.85rem" },
                       borderBottom: "1px solid",
@@ -416,7 +412,22 @@ export default function SearchFilters({ categories, tags }: Props) {
                         minHeight: "40px",
                       },
                     }}
-                  />
+                    slotProps={{
+                      ...params.slotProps,
+
+                      input: {
+                        ...params.slotProps.input,
+                        disableUnderline: true,
+                        startAdornment: (
+                          <SearchIcon color="action" sx={{ mr: 1 }} />
+                        ),
+                      },
+
+                      htmlInput: {
+                        ...params.slotProps.htmlInput,
+                        id: searchInputId,
+                      }
+                    }} />
                 )}
                 noOptionsText={
                   inputValue.length >= 2
@@ -431,9 +442,10 @@ export default function SearchFilters({ categories, tags }: Props) {
               <Typography
                 variant="subtitle2"
                 gutterBottom
-                color="text.secondary"
-                sx={{ fontSize: "0.85rem" }}
-              >
+                sx={{
+                  color: "text.secondary",
+                  fontSize: "0.85rem"
+                }}>
                 Tags
               </Typography>
               <Autocomplete
@@ -448,15 +460,19 @@ export default function SearchFilters({ categories, tags }: Props) {
                     id={tagsInputId}
                     variant="standard"
                     placeholder="Search for tag"
-                    InputProps={{
-                      ...params.InputProps,
-                      disableUnderline: true,
-                    }}
-                    inputProps={{
-                      ...params.inputProps,
-                      id: tagsInputId,
-                    }}
-                  />
+                    slotProps={{
+                      ...params.slotProps,
+
+                      input: {
+                        ...params.slotProps.input,
+                        disableUnderline: true,
+                      },
+
+                      htmlInput: {
+                        ...params.slotProps.htmlInput,
+                        id: tagsInputId,
+                      }
+                    }} />
                 )}
                 sx={{
                   borderBottom: "1px solid",

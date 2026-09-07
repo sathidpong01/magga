@@ -9,7 +9,15 @@ import LanguageIcon from "@mui/icons-material/Language";
 export default function Sidebar() {
   return (
     <Box sx={{ width: "100%", maxWidth: 280 }}>
-      <Typography variant="caption" color="text.secondary" sx={{ px: 2, mb: 1, display: "block", fontWeight: "bold" }}>
+      <Typography
+        variant="caption"
+        sx={{
+          color: "text.secondary",
+          px: 2,
+          mb: 1,
+          display: "block",
+          fontWeight: "bold"
+        }}>
         GENERAL SETTINGS
       </Typography>
       <List sx={{ mb: 2 }}>
@@ -22,7 +30,9 @@ export default function Sidebar() {
             <ListItemIcon sx={{ minWidth: 40, color: "inherit" }}>
               <PersonIcon />
             </ListItemIcon>
-            <ListItemText primary="Account" primaryTypographyProps={{ fontWeight: "medium" }} />
+            <ListItemText primary="Account" slotProps={{
+              primary: { sx: { fontWeight: "medium" } }
+            }} />
           </ListItemButton>
         </ListItem>
         <ListItem disablePadding>

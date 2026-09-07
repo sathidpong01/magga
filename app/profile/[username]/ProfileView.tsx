@@ -21,7 +21,7 @@ import CameraAltIcon from "@mui/icons-material/CameraAlt";
 import EditIcon from "@mui/icons-material/Edit";
 import HomeIcon from "@mui/icons-material/Home";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
+import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutlined";
 import CalendarMonthRoundedIcon from "@mui/icons-material/CalendarMonthRounded";
 import PersonOutlineRoundedIcon from "@mui/icons-material/PersonOutlineRounded";
 import GoogleIcon from "@mui/icons-material/Google";
@@ -229,7 +229,12 @@ export default function ProfileView({ profileUser, isOwnProfile }: Props) {
 
             <Box sx={{ minWidth: 0, flexGrow: 1 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.75, flexWrap: "wrap" }}>
-                <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: -0.5 }}>
+                <Typography
+                  variant="h4"
+                  sx={{
+                    fontWeight: 800,
+                    letterSpacing: -0.5
+                  }}>
                   {displayName}
                 </Typography>
                 {profileUser.role === "admin" && (
@@ -320,7 +325,9 @@ export default function ProfileView({ profileUser, isOwnProfile }: Props) {
               <Typography variant="caption" sx={{ color: "#fbbf24", display: "block", lineHeight: 1.3 }}>
                 โปรไฟล์
               </Typography>
-              <Typography variant="body2" fontWeight={500}>
+              <Typography variant="body2" sx={{
+                fontWeight: 500
+              }}>
                 ตั้งชื่อแสดงและรายละเอียดบัญชี
               </Typography>
             </Box>
@@ -347,7 +354,9 @@ export default function ProfileView({ profileUser, isOwnProfile }: Props) {
               <Typography variant="caption" sx={{ color: "#fbbf24", display: "block", lineHeight: 1.3 }}>
                 การเข้าสู่ระบบ
               </Typography>
-              <Typography variant="body2" fontWeight={500}>
+              <Typography variant="body2" sx={{
+                fontWeight: 500
+              }}>
                 จัดการ Google และความปลอดภัย
               </Typography>
             </Box>
@@ -374,7 +383,9 @@ export default function ProfileView({ profileUser, isOwnProfile }: Props) {
               <Typography variant="caption" sx={{ color: "#5eead4", display: "block", lineHeight: 1.3 }}>
                 ประวัติ
               </Typography>
-              <Typography variant="body2" fontWeight={500}>
+              <Typography variant="body2" sx={{
+                fontWeight: 500
+              }}>
                 ความคิดเห็นทั้งหมด
               </Typography>
             </Box>
@@ -392,14 +403,16 @@ export default function ProfileView({ profileUser, isOwnProfile }: Props) {
       <Dialog
         open={Boolean(previewSrc)}
         onClose={() => !uploading && (setPreviewSrc(null), setPreviewFile(null))}
-        PaperProps={{
-          sx: {
-            bgcolor: "#171717",
-            border: "1px solid rgba(255,255,255,0.1)",
-            color: "#fafafa",
-            maxWidth: 360,
-            borderRadius: 4,
-          },
+        slotProps={{
+          paper: {
+            sx: {
+              bgcolor: "#171717",
+              border: "1px solid rgba(255,255,255,0.1)",
+              color: "#fafafa",
+              maxWidth: 360,
+              borderRadius: 4,
+            },
+          }
         }}
       >
         <DialogTitle sx={{ fontWeight: 700 }}>ยืนยันการเปลี่ยนรูปโปรไฟล์</DialogTitle>

@@ -126,12 +126,14 @@ export default function ShareButton({ title, slug }: ShareButtonProps) {
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleClose}
-        PaperProps={{
-          sx: {
-            bgcolor: "#171717",
-            border: "1px solid rgba(255,255,255,0.1)",
-            color: "#fafafa",
-            minWidth: 180,
+        slotProps={{
+          paper: {
+            sx: {
+              bgcolor: "#171717",
+              border: "1px solid rgba(255,255,255,0.1)",
+              color: "#fafafa",
+              minWidth: 180,
+            },
           },
         }}
         transformOrigin={{ horizontal: "right", vertical: "top" }}

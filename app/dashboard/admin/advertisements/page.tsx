@@ -125,32 +125,34 @@ const adDialogPanelSx = {
 };
 
 const adDialogSelectMenuProps = {
-  PaperProps: {
-    sx: {
-      mt: 0.75,
-      bgcolor: "#191919",
-      color: "#ececec",
-      border: "1px solid rgba(255,255,255,0.08)",
-      borderRadius: 1.25,
-      backgroundImage: "none",
-      boxShadow: "0 18px 50px rgba(0,0,0,0.42)",
-      "& .MuiMenuItem-root": {
-        fontWeight: 700,
-        fontSize: "0.9rem",
-        color: "#d4d4d4",
-        minHeight: 42,
-        textTransform: "none",
-        "&:hover": {
-          bgcolor: "rgba(255,255,255,0.05)",
-          color: "#fafafa",
-        },
-        "&.Mui-selected": {
-          bgcolor: "rgba(251,191,36,0.12)",
-          color: "#f7d27a",
-        },
-        "&.Mui-selected:hover": {
-          bgcolor: "rgba(251,191,36,0.18)",
-          color: "#fbe4a3",
+  slotProps: {
+    paper: {
+      sx: {
+        mt: 0.75,
+        bgcolor: "#191919",
+        color: "#ececec",
+        border: "1px solid rgba(255,255,255,0.08)",
+        borderRadius: 1.25,
+        backgroundImage: "none",
+        boxShadow: "0 18px 50px rgba(0,0,0,0.42)",
+        "& .MuiMenuItem-root": {
+          fontWeight: 700,
+          fontSize: "0.9rem",
+          color: "#d4d4d4",
+          minHeight: 42,
+          textTransform: "none",
+          "&:hover": {
+            bgcolor: "rgba(255,255,255,0.05)",
+            color: "#fafafa",
+          },
+          "&.Mui-selected": {
+            bgcolor: "rgba(251,191,36,0.12)",
+            color: "#f7d27a",
+          },
+          "&.Mui-selected:hover": {
+            bgcolor: "rgba(251,191,36,0.18)",
+            color: "#fbe4a3",
+          },
         },
       },
     },
@@ -211,9 +213,10 @@ function PlacementPreview({
                 >
                   <Typography
                     variant="caption"
-                    color="text.secondary"
-                    sx={{ fontSize: 8 }}
-                  >
+                    sx={{
+                      color: "text.secondary",
+                      fontSize: 8
+                    }}>
                     AD
                   </Typography>
                 </Box>
@@ -333,9 +336,12 @@ function PlacementPreview({
             />
             <Typography
               variant="caption"
-              color="text.secondary"
-              sx={{ display: "block", textAlign: "center", mb: 1 }}
-            >
+              sx={{
+                color: "text.secondary",
+                display: "block",
+                textAlign: "center",
+                mb: 1
+              }}>
               จบตอน
             </Typography>
             <Box
@@ -468,7 +474,11 @@ function PlacementPreview({
         );
 
       default:
-        return <Typography color="text.secondary">เลือกตำแหน่ง</Typography>;
+        return (
+          <Typography sx={{
+            color: "text.secondary"
+          }}>เลือกตำแหน่ง</Typography>
+        );
     }
   };
 
@@ -980,7 +990,9 @@ export default function AdvertisementsPage() {
               {ads.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                    <Typography color="text.secondary">ยังไม่มีโฆษณา</Typography>
+                    <Typography sx={{
+                      color: "text.secondary"
+                    }}>ยังไม่มีโฆษณา</Typography>
                   </TableCell>
                 </TableRow>
               )}
@@ -1011,15 +1023,17 @@ export default function AdvertisementsPage() {
         maxWidth="md"
         fullWidth
         fullScreen={isMobile}
-        PaperProps={{
-          sx: {
-            bgcolor: "#141414",
-            color: "#fafafa",
-            borderRadius: isMobile ? 0 : 1.25,
-            border: isMobile ? "none" : "1px solid rgba(255,255,255,0.08)",
-            backgroundImage: "none",
-            boxShadow: "none"
-          },
+        slotProps={{
+          paper: {
+            sx: {
+              bgcolor: "#141414",
+              color: "#fafafa",
+              borderRadius: isMobile ? 0 : 1.25,
+              border: isMobile ? "none" : "1px solid rgba(255,255,255,0.08)",
+              backgroundImage: "none",
+              boxShadow: "none"
+            },
+          }
         }}
       >
         <DialogTitle sx={{ fontWeight: 800, textTransform: "none", letterSpacing: "0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
@@ -1194,9 +1208,11 @@ export default function AdvertisementsPage() {
                       repeatCount: Math.max(1, parseInt(e.target.value) || 1),
                     })
                   }
-                  inputProps={{ min: 1, max: 10 }}
                   sx={{ mt: 2, ...adDialogFieldSx }}
                   helperText="จำนวนครั้งที่โฆษณานี้จะแทรกในกริดมังงะ (1-10)"
+                  slotProps={{
+                    htmlInput: { min: 1, max: 10 }
+                  }}
                 />
               )}
             </Box>
@@ -1255,13 +1271,15 @@ export default function AdvertisementsPage() {
         onClose={handleCloseDeleteDialog}
         maxWidth="xs"
         fullWidth
-        PaperProps={{
-          sx: {
-            bgcolor: "#141414",
-            borderRadius: 1.25,
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            backgroundImage: "none"
-          },
+        slotProps={{
+          paper: {
+            sx: {
+              bgcolor: "#141414",
+              borderRadius: 1.25,
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              backgroundImage: "none"
+            },
+          }
         }}
       >
         <DialogTitle sx={{ fontWeight: 900, textTransform: "none", letterSpacing: "0", fontSize: "1rem" }}>

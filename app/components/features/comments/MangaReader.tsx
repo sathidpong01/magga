@@ -397,12 +397,15 @@ const LazyPageWithComments = forwardRef<HTMLDivElement, LazyPageProps>(
             <Box sx={{ p: 1.5, flexShrink: 0 }}>
               <Typography
                 variant="subtitle2"
-                fontWeight={600}
-                sx={{ color: "white" }}
-              >
+                sx={{
+                  fontWeight: 600,
+                  color: "white"
+                }}>
                 {pageLabel}
               </Typography>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{
+                color: "text.secondary"
+              }}>
                 {isVisible ? `${commentCount} ความคิดเห็น` : "กำลังโหลด..."}
               </Typography>
             </Box>

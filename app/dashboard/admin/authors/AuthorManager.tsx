@@ -240,10 +240,11 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
       >
         <Stack
           direction="row"
-          justifyContent="space-between"
-          alignItems="center"
-          sx={{ mb: 2 }}
-        >
+          sx={{
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 2
+          }}>
           <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#fafafa", letterSpacing: "0.03em" }}>
             {editingAuthor ? "แก้ไขผู้แต่ง" : "เพิ่มผู้แต่ง"}
           </Typography>
@@ -344,7 +345,9 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                     <Stack
                       direction={{ xs: "column", md: "row" }}
                       spacing={1.5}
-                      alignItems="flex-end"
+                      sx={{
+                        alignItems: "flex-end"
+                      }}
                     >
                       <Box sx={{ flex: 2 }}>
                         <Typography
@@ -361,20 +364,22 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                           fullWidth
                           size="small"
                           placeholder="https://twitter.com/... หรือ pixiv.net/..."
-                          InputProps={{
-                            startAdornment: (
-                              <InputAdornment position="start">
-                                <LinkIcon
-                                  sx={{ color: "#525252", fontSize: 18 }}
-                                />
-                              </InputAdornment>
-                            ),
-                          }}
                           sx={{
                             "& .MuiOutlinedInput-root": {
                               bgcolor: "#262626",
                               borderRadius: 0.75,
                             },
+                          }}
+                          slotProps={{
+                            input: {
+                              startAdornment: (
+                                <InputAdornment position="start">
+                                  <LinkIcon
+                                    sx={{ color: "#525252", fontSize: 18 }}
+                                  />
+                                </InputAdornment>
+                              ),
+                            }
                           }}
                         />
                       </Box>
@@ -408,7 +413,9 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                         >
                           URL ไอคอน
                         </Typography>
-                        <Stack direction="row" spacing={1} alignItems="center">
+                        <Stack direction="row" spacing={1} sx={{
+                          alignItems: "center"
+                        }}>
                           <TextField
                             value={link.icon}
                             onChange={(e) =>
@@ -563,9 +570,10 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                       <Stack
                         direction="row"
                         spacing={0.5}
-                        flexWrap="wrap"
-                        gap={0.5}
-                      >
+                        sx={{
+                          flexWrap: "wrap",
+                          gap: 0.5
+                        }}>
                         {links.length > 0 ? (
                           links.map((link, i) => (
                             <Chip
@@ -653,15 +661,17 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
       <Dialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
-        PaperProps={{
-          sx: {
-            bgcolor: "#141414",
-            color: "#fafafa",
-            borderRadius: 1.25,
-            border: "1px solid rgba(255,255,255,0.08)",
-            backgroundImage: "none",
-            boxShadow: "none"
-          },
+        slotProps={{
+          paper: {
+            sx: {
+              bgcolor: "#141414",
+              color: "#fafafa",
+              borderRadius: 1.25,
+              border: "1px solid rgba(255,255,255,0.08)",
+              backgroundImage: "none",
+              boxShadow: "none"
+            },
+          }
         }}
       >
         <DialogTitle sx={{ fontWeight: 900, letterSpacing: "0", fontSize: "1rem" }}>

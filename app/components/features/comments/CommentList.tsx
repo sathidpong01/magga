@@ -221,9 +221,10 @@ function CommentItem({
           <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
             <Typography
               variant="subtitle2"
-              fontWeight={600}
-              sx={{ color: "white" }}
-            >
+              sx={{
+                fontWeight: 600,
+                color: "white"
+              }}>
               {comment.user.name || comment.user.username || "ผู้ใช้"}
             </Typography>
             <Typography variant="caption" sx={{ color: "text.secondary" }}>
@@ -248,7 +249,7 @@ function CommentItem({
                   anchorEl={menuAnchor}
                   open={Boolean(menuAnchor)}
                   onClose={() => setMenuAnchor(null)}
-                  PaperProps={{ sx: { bgcolor: "#171717", color: "#fafafa", border: "1px solid rgba(255,255,255,0.1)" } }}
+                  slotProps={{ paper: { sx: { bgcolor: "#171717", color: "#fafafa", border: "1px solid rgba(255,255,255,0.1)" } } }}
                 >
                   {isOwner && (
                     <MenuItem
@@ -282,7 +283,7 @@ function CommentItem({
                   anchorEl={otherMenuAnchor}
                   open={Boolean(otherMenuAnchor)}
                   onClose={() => setOtherMenuAnchor(null)}
-                  PaperProps={{ sx: { bgcolor: "#171717", color: "#fafafa", border: "1px solid rgba(255,255,255,0.1)" } }}
+                  slotProps={{ paper: { sx: { bgcolor: "#171717", color: "#fafafa", border: "1px solid rgba(255,255,255,0.1)" } } }}
                 >
                   {comment.user.username && (
                     <MenuItem
@@ -538,7 +539,9 @@ export default function CommentList({
   if (comments.length === 0) {
     return (
       <Box sx={{ py: 4, textAlign: "center" }}>
-        <Typography color="text.secondary">ยังไม่มีความคิดเห็น</Typography>
+        <Typography sx={{
+          color: "text.secondary"
+        }}>ยังไม่มีความคิดเห็น</Typography>
       </Box>
     );
   }

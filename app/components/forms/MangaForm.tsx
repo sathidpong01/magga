@@ -857,7 +857,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
   };
 
   return (
-      <>
+    <>
       <Box component="form" onSubmit={(e) => handleSubmitWithDraft(e, false)}>
         <DashboardPageHeader
           eyebrow={mode === "admin" ? "CONTENT MANAGER" : "SUBMISSION"}
@@ -946,7 +946,9 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     required
                     variant="filled"
                     sx={filledFieldSx}
-                    InputProps={filledInputProps}
+                    slotProps={{
+                      input: filledInputProps
+                    }}
                   />
                 </Grid>
 <Grid  size={12}>
@@ -959,39 +961,41 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     variant="filled"
                     sx={filledFieldSx}
                     helperText={`ตัวอย่างลิงก์: /${slug || "your-slug"}`}
-                    InputProps={{
-                      ...filledInputProps,
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <Tooltip title="สร้างจากชื่อเรื่อง">
-                            <IconButton
-                              aria-label="Generate slug"
-                              onClick={() => {
-                                const newSlug = title
-                                  .toLowerCase()
-                                  .trim()
-                                  .replace(/[\s]+/g, "-")
-                                  .replace(/[^\w\-\u0E00-\u0E7F]+/g, "")
-                                  .replace(/\-\-+/g, "-");
-                                setSlug(newSlug);
-                              }}
-                              edge="end"
-                              sx={{
-                                color: "rgba(255,255,255,0.82)",
-                                bgcolor: "transparent",
-                                border: "none",
-                                boxShadow: "none",
-                                "&:hover": {
+                    slotProps={{
+                      input: {
+                        ...filledInputProps,
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <Tooltip title="สร้างจากชื่อเรื่อง">
+                              <IconButton
+                                aria-label="Generate slug"
+                                onClick={() => {
+                                  const newSlug = title
+                                    .toLowerCase()
+                                    .trim()
+                                    .replace(/[\s]+/g, "-")
+                                    .replace(/[^\w\-\u0E00-\u0E7F]+/g, "")
+                                    .replace(/\-\-+/g, "-");
+                                  setSlug(newSlug);
+                                }}
+                                edge="end"
+                                sx={{
+                                  color: "rgba(255,255,255,0.82)",
                                   bgcolor: "transparent",
-                                  color: "#ffffff",
-                                },
-                              }}
-                            >
-                              <AutoFixHighIcon />
-                            </IconButton>
-                          </Tooltip>
-                        </InputAdornment>
-                      ),
+                                  border: "none",
+                                  boxShadow: "none",
+                                  "&:hover": {
+                                    bgcolor: "transparent",
+                                    color: "#ffffff",
+                                  },
+                                }}
+                              >
+                                <AutoFixHighIcon />
+                              </IconButton>
+                            </Tooltip>
+                          </InputAdornment>
+                        ),
+                      }
                     }}
                   />
                 </Grid>
@@ -1005,7 +1009,9 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     rows={4}
                     variant="filled"
                     sx={filledFieldSx}
-                    InputProps={filledInputProps}
+                    slotProps={{
+                      input: filledInputProps
+                    }}
                   />
                 </Grid>
 <Grid   size={{ xs: 12, md: 6 }}>
@@ -1090,9 +1096,13 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                         variant="filled"
                         placeholder="เลือกหรือสร้างผู้แต่ง"
                         sx={filledFieldSx}
-                        InputProps={{
-                          ...params.InputProps,
-                          ...filledInputProps,
+                        slotProps={{
+                          ...params.slotProps,
+
+                          input: {
+                            ...params.slotProps.input,
+                            ...filledInputProps,
+                          }
                         }}
                       />
                     )}
@@ -1108,7 +1118,9 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     placeholder="เช่น Aokana, Doujin Circle"
                     helperText="สำหรับแสดงใน og:title เมื่อแชร์ลิงก์ (auto-filled from author)"
                     sx={filledFieldSx}
-                    InputProps={filledInputProps}
+                    slotProps={{
+                      input: filledInputProps
+                    }}
                   />
                 </Grid>
 
@@ -1192,7 +1204,9 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                                     placeholder="https://example.com"
                                     size="small"
                                     sx={filledFieldSx}
-                                    InputProps={filledInputProps}
+                                    slotProps={{
+                                      input: filledInputProps
+                                    }}
                                   />
                                     <Tooltip title="ดึงชื่อและไอคอนอัตโนมัติ">
                                       <span>
@@ -1253,7 +1267,9 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                                     placeholder="เช่น Website, Twitter"
                                     size="small"
                                     sx={filledFieldSx}
-                                    InputProps={filledInputProps}
+                                    slotProps={{
+                                      input: filledInputProps
+                                    }}
                                   />
                                 </Grid>
 <Grid   size={{ xs: 12, sm: 6 }}>
@@ -1272,7 +1288,9 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                                     placeholder="https://example.com/icon.png"
                                     size="small"
                                     sx={filledFieldSx}
-                                    InputProps={filledInputProps}
+                                    slotProps={{
+                                      input: filledInputProps
+                                    }}
                                   />
                                 </Grid>
                               </Grid>
@@ -1348,9 +1366,13 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                         label="หมวดหมู่"
                         variant="filled"
                         sx={filledFieldSx}
-                        InputProps={{
-                          ...params.InputProps,
-                          ...filledInputProps,
+                        slotProps={{
+                          ...params.slotProps,
+
+                          input: {
+                            ...params.slotProps.input,
+                            ...filledInputProps,
+                          }
                         }}
                       />
                     )}
@@ -1406,27 +1428,29 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                       return filtered;
                     }}
                     isOptionEqualToValue={(option, value) =>
+                      typeof option !== "string" &&
+                      typeof value !== "string" &&
                       option.id === value.id
                     }
                     renderOption={(props, option) => {
                       const { key, ...optionProps } = props;
                       return (
                         <li key={key} {...optionProps}>
-                          {option.name}
+                          {typeof option === "string" ? option : option.name}
                         </li>
                       );
                     }}
-                    renderTags={(value, getTagProps) =>
+                    renderValue={(value, getItemProps) =>
                       value.map((option, index) => {
-                        const { key, ...tagProps } = getTagProps({ index });
+                        const { key, ...tagProps } = getItemProps({ index });
 
                         return (
                           <Chip
-                            key={key ?? option.id}
-                            label={option.name}
+                            key={key ?? (typeof option === "string" ? option : option.id)}
+                            label={typeof option === "string" ? option : option.name}
                             {...tagProps}
                             sx={{
-                              ...getMetadataChipSx(option.name),
+                              ...getMetadataChipSx(typeof option === "string" ? option : option.name),
                               height: 30,
                               px: 0.25,
                               fontSize: "0.82rem",
@@ -1444,9 +1468,13 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                         label="แท็ก"
                         placeholder="เลือกหรือสร้างแท็ก"
                         sx={filledFieldSx}
-                        InputProps={{
-                          ...params.InputProps,
-                          ...filledInputProps,
+                        slotProps={{
+                          ...params.slotProps,
+
+                          input: {
+                            ...params.slotProps.input,
+                            ...filledInputProps,
+                          }
                         }}
                       />
                     )}
@@ -1663,21 +1691,21 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
         open={Boolean(previewPage)}
         onClose={handleClosePreview}
         fullScreen
-        PaperProps={{
-          sx: {
-            bgcolor: "rgba(0,0,0,0.82)",
-            color: dashboardTokens.text,
-            backgroundImage: "none",
-            overflow: "hidden",
-            boxShadow: "none",
-          },
-        }}
         slotProps={{
           backdrop: {
             sx: { bgcolor: "rgba(0,0,0,0.68)", backdropFilter: "blur(2px)" },
           },
-        }}
-      >
+
+          paper: {
+            sx: {
+              bgcolor: "rgba(0,0,0,0.82)",
+              color: dashboardTokens.text,
+              backgroundImage: "none",
+              overflow: "hidden",
+              boxShadow: "none",
+            },
+          }
+        }}>
         <DialogContent
           sx={{
             p: 0,

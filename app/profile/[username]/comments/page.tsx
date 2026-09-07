@@ -16,7 +16,7 @@ import { useSession } from "@/lib/auth-client";
 import { useParams, useRouter } from "next/navigation";
 import HomeIcon from "@mui/icons-material/Home";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
-import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
+import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 interface CommentWithManga {
@@ -151,7 +151,9 @@ export default function MyCommentsPage() {
           <ChatBubbleOutlineIcon sx={{ color: "#5eead4", fontSize: 24 }} />
         </Box>
         <Box>
-          <Typography variant="h5" fontWeight={800}>ความคิดเห็นของฉัน</Typography>
+          <Typography variant="h5" sx={{
+            fontWeight: 800
+          }}>ความคิดเห็นของฉัน</Typography>
           <Typography variant="body2" sx={{ color: "#a3a3a3" }}>
             {comments.length} ความคิดเห็น{hasMore ? "+" : ""}
           </Typography>

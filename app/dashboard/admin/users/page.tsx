@@ -56,9 +56,10 @@ export default async function UsersPage() {
         <Stack
           direction={{ xs: "column", md: "row" }}
           spacing={2}
-          justifyContent="space-between"
-          alignItems={{ xs: "flex-start", md: "center" }}
-        >
+          sx={{
+            justifyContent: "space-between",
+            alignItems: { xs: "flex-start", md: "center" }
+          }}>
           <Box sx={{ maxWidth: 720 }}>
             <Typography
               variant="overline"
@@ -90,7 +91,9 @@ export default async function UsersPage() {
             </Typography>
           </Box>
 
-          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+          <Stack direction="row" spacing={1} useFlexGap sx={{
+            flexWrap: "wrap"
+          }}>
             <Chip label={`ทั้งหมด ${users.length}`} sx={{ bgcolor: "#171717", color: "#fafafa", border: "1px solid rgba(255,255,255,0.08)", fontWeight: 700 }} />
             <Chip label={`แอดมิน ${admins}`} sx={{ bgcolor: "rgba(251,191,36,0.08)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.18)", fontWeight: 700 }} />
             <Chip label={`ระงับ ${suspended}`} sx={{ bgcolor: "rgba(239,68,68,0.08)", color: "#f87171", border: "1px solid rgba(239,68,68,0.18)", fontWeight: 700 }} />

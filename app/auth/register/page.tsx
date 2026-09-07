@@ -153,7 +153,12 @@ function RegisterForm() {
               onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
             />
           </Box>
-          <Typography variant="h5" fontWeight={700} sx={{ mb: 0.5 }}>
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: 700,
+              mb: 0.5
+            }}>
             ยินดีต้อนรับสู่ MAGGA
           </Typography>
           <Typography variant="body2" sx={{ color: "#a3a3a3" }}>
@@ -202,20 +207,22 @@ function RegisterForm() {
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               sx={textFieldSx}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowPassword(!showPassword)}
-                      edge="end"
-                      aria-label={showPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
-                      aria-pressed={showPassword}
-                      sx={{ color: "#a3a3a3" }}
-                    >
-                      {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                        aria-label={showPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
+                        aria-pressed={showPassword}
+                        sx={{ color: "#a3a3a3" }}
+                      >
+                        {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }
               }}
             />
 
@@ -253,20 +260,22 @@ function RegisterForm() {
               value={formData.confirmPassword}
               onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
               sx={textFieldSx}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowConfirm(!showConfirm)}
-                      edge="end"
-                      aria-label={showConfirm ? "ซ่อนรหัสผ่านยืนยัน" : "แสดงรหัสผ่านยืนยัน"}
-                      aria-pressed={showConfirm}
-                      sx={{ color: "#a3a3a3" }}
-                    >
-                      {showConfirm ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowConfirm(!showConfirm)}
+                        edge="end"
+                        aria-label={showConfirm ? "ซ่อนรหัสผ่านยืนยัน" : "แสดงรหัสผ่านยืนยัน"}
+                        aria-pressed={showConfirm}
+                        sx={{ color: "#a3a3a3" }}
+                      >
+                        {showConfirm ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }
               }}
             />
 

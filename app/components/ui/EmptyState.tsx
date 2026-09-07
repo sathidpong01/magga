@@ -62,20 +62,21 @@ function EmptyStateContent({
 
       <Typography
         variant="h5"
-        fontWeight={600}
         sx={{
+          fontWeight: 600,
           color: maggaColors.archiveGold,
-          mb: 1,
-        }}
-      >
+          mb: 1
+        }}>
         {title}
       </Typography>
 
       <Typography
         variant="body1"
-        color="text.secondary"
-        sx={{ mb: 3, maxWidth: 400 }}
-      >
+        sx={{
+          color: "text.secondary",
+          mb: 3,
+          maxWidth: 400
+        }}>
         {description}
       </Typography>
 

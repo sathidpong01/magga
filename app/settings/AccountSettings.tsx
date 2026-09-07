@@ -321,7 +321,13 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
           {(formData.name || formData.username || "U").charAt(0).toUpperCase()}
         </Avatar>
         <Box sx={{ minWidth: 0 }}>
-          <Typography variant="h4" fontWeight={800} sx={{ letterSpacing: -0.4, mb: 0.4 }}>
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: 800,
+              letterSpacing: -0.4,
+              mb: 0.4
+            }}>
             ตั้งค่าบัญชี
           </Typography>
           <Typography variant="body2" sx={{ color: "#a3a3a3" }}>
@@ -336,7 +342,9 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
           <RowIcon icon={<PersonIcon fontSize="small" />} />
           <Box>
             <Typography variant="caption" sx={{ color: "#5eead4", display: "block", lineHeight: 1.3 }}>ชื่อแสดง</Typography>
-            <Typography variant="body1" fontWeight={500}>{formData.name || "ยังไม่ได้ตั้งค่า"}</Typography>
+            <Typography variant="body1" sx={{
+              fontWeight: 500
+            }}>{formData.name || "ยังไม่ได้ตั้งค่า"}</Typography>
           </Box>
         </AccordionSummary>
         <AccordionDetails sx={{ px: 2.5, pb: 2.5 }}>
@@ -351,7 +359,9 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             helperText="ชื่อนี้จะแสดงในโปรไฟล์และความคิดเห็น"
             sx={inputSx}
-            FormHelperTextProps={{ sx: { color: "#737373" } }}
+            slotProps={{
+              formHelperText: { sx: { color: "#737373" } }
+            }}
           />
           <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
             <Button
@@ -372,7 +382,9 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
           <RowIcon icon={<PersonIcon fontSize="small" />} />
           <Box>
             <Typography variant="caption" sx={{ color: "#5eead4", display: "block", lineHeight: 1.3 }}>ชื่อผู้ใช้</Typography>
-            <Typography variant="body1" fontWeight={500}>{formData.username || "ยังไม่ได้ตั้งค่า"}</Typography>
+            <Typography variant="body1" sx={{
+              fontWeight: 500
+            }}>{formData.username || "ยังไม่ได้ตั้งค่า"}</Typography>
           </Box>
         </AccordionSummary>
         <AccordionDetails sx={{ px: 2.5, pb: 2.5 }}>
@@ -406,7 +418,9 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
           <RowIcon icon={<EmailIcon fontSize="small" />} />
           <Box>
             <Typography variant="caption" sx={{ color: "#5eead4", display: "block", lineHeight: 1.3 }}>อีเมล</Typography>
-            <Typography variant="body1" fontWeight={500}>{formData.email || "ยังไม่ได้ตั้งค่า"}</Typography>
+            <Typography variant="body1" sx={{
+              fontWeight: 500
+            }}>{formData.email || "ยังไม่ได้ตั้งค่า"}</Typography>
           </Box>
         </AccordionSummary>
         <AccordionDetails sx={{ px: 2.5, pb: 2.5 }}>
@@ -441,7 +455,9 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
           <RowIcon icon={<LockIcon fontSize="small" />} />
           <Box>
             <Typography variant="caption" sx={{ color: "#5eead4", display: "block", lineHeight: 1.3 }}>รหัสผ่าน</Typography>
-            <Typography variant="body1" fontWeight={500}>{hasPassword ? "เปลี่ยนรหัสผ่าน" : "ตั้งรหัสผ่าน"}</Typography>
+            <Typography variant="body1" sx={{
+              fontWeight: 500
+            }}>{hasPassword ? "เปลี่ยนรหัสผ่าน" : "ตั้งรหัสผ่าน"}</Typography>
           </Box>
         </AccordionSummary>
         <AccordionDetails sx={{ px: 2.5, pb: 2.5 }}>
@@ -470,20 +486,22 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
               onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
               autoComplete="new-password"
               sx={inputSx}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowPwd(!showPwd)}
-                      edge="end"
-                      aria-label={showPwd ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
-                      aria-pressed={showPwd}
-                      sx={{ color: "#a3a3a3" }}
-                    >
-                      {showPwd ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPwd(!showPwd)}
+                        edge="end"
+                        aria-label={showPwd ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
+                        aria-pressed={showPwd}
+                        sx={{ color: "#a3a3a3" }}
+                      >
+                        {showPwd ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }
               }}
             />
             <TextField
@@ -535,10 +553,14 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
       {/* บัญชีที่เชื่อมต่อ */}
       <Accordion expanded={expanded === "linked"} onChange={handleAccordion("linked")} sx={accordionSx}>
         <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: "#a3a3a3" }} />} sx={summarySx}>
-          <RowIcon icon={<LinkIcon fontSize="small" />} />
+          <RowIcon icon={<LinkIcon sx={{
+            fontSize: "small"
+          }} />} />
           <Box>
             <Typography variant="caption" sx={{ color: "#5eead4", display: "block", lineHeight: 1.3 }}>บัญชีที่เชื่อมต่อ</Typography>
-            <Typography variant="body1" fontWeight={500}>
+            <Typography variant="body1" sx={{
+              fontWeight: 500
+            }}>
               {linkedProviderState.includes("google") ? "เชื่อมต่อ Google แล้ว" : "เชื่อมต่อกับ Google"}
             </Typography>
           </Box>
@@ -548,7 +570,9 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <GoogleIcon sx={{ color: linkedProviderState.includes("google") ? "#4285F4" : "#a3a3a3", fontSize: 28 }} />
               <Box>
-                <Typography variant="body2" fontWeight={600}>Google</Typography>
+                <Typography variant="body2" sx={{
+                  fontWeight: 600
+                }}>Google</Typography>
                 <Typography variant="caption" sx={{ color: "#a3a3a3" }}>
                   {linkedProviderState.includes("google") ? "เชื่อมต่อแล้ว — สามารถใช้เข้าสู่ระบบได้" : "ยังไม่ได้เชื่อมต่อ"}
                 </Typography>
@@ -560,7 +584,9 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
               <Button
                 size="small"
                 variant="outlined"
-                startIcon={<LinkIcon fontSize="small" />}
+                startIcon={<LinkIcon sx={{
+                  fontSize: "small"
+                }} />}
                 onClick={async () => {
                   try {
                     await linkSocial({ provider: "google", callbackURL: "/settings" });
@@ -588,7 +614,9 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
           <RowIcon icon={<ChatBubbleIcon fontSize="small" />} />
           <Box>
             <Typography variant="caption" sx={{ color: "#5eead4", display: "block", lineHeight: 1.3 }}>ความคิดเห็นการ์ตูน</Typography>
-            <Typography variant="body1" fontWeight={500}>
+            <Typography variant="body1" sx={{
+              fontWeight: 500
+            }}>
               {commentPrefs.size === 0 ? "ซ่อนทั้งหมด"
                 : commentPrefs.size === 2 ? "แสดงทั้งสองแบบ"
                 : commentPrefs.has("sidebar") ? "แสดงข้างรูป (ทีละหน้า)"
@@ -620,7 +648,9 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
                 >
                   <Icon sx={{ color: active ? "#fbbf24" : "#a3a3a3", fontSize: 22 }} />
                   <Box sx={{ flexGrow: 1 }}>
-                    <Typography variant="body2" fontWeight={600}>{label}</Typography>
+                    <Typography variant="body2" sx={{
+                      fontWeight: 600
+                    }}>{label}</Typography>
                     <Typography variant="caption" sx={{ color: "#a3a3a3" }}>{desc}</Typography>
                   </Box>
                   {commentPrefSaving
@@ -643,7 +673,9 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="caption" sx={{ color: "#5eead4", display: "block", lineHeight: 1.3 }}>ผู้ใช้ที่บล็อก</Typography>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Typography variant="body1" fontWeight={500}>จัดการผู้ใช้ที่บล็อก</Typography>
+              <Typography variant="body1" sx={{
+                fontWeight: 500
+              }}>จัดการผู้ใช้ที่บล็อก</Typography>
               {liveBlockedUserCount > 0 && (
                 <Chip label={liveBlockedUserCount} size="small" sx={{ height: 20, fontSize: "0.7rem", bgcolor: "rgba(255,255,255,0.08)", color: "#a3a3a3" }} />
               )}
@@ -662,7 +694,9 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
           <Box sx={{ flexGrow: 1 }}>
             <Typography variant="caption" sx={{ color: "#5eead4", display: "block", lineHeight: 1.3 }}>แท็กที่บล็อก</Typography>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Typography variant="body1" fontWeight={500}>จัดการแท็กที่บล็อก</Typography>
+              <Typography variant="body1" sx={{
+                fontWeight: 500
+              }}>จัดการแท็กที่บล็อก</Typography>
               {liveBlockedTagCount > 0 && (
                 <Chip label={liveBlockedTagCount} size="small" sx={{ height: 20, fontSize: "0.7rem", bgcolor: "rgba(255,255,255,0.08)", color: "#a3a3a3" }} />
               )}
@@ -678,7 +712,9 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
       <Dialog
         open={openEmailConfirm}
         onClose={() => setOpenEmailConfirm(false)}
-        PaperProps={{ sx: { bgcolor: "#171717", border: "1px solid rgba(255,255,255,0.1)", color: "#fafafa" } }}
+        slotProps={{
+          paper: { sx: { bgcolor: "#171717", border: "1px solid rgba(255,255,255,0.1)", color: "#fafafa" } }
+        }}
       >
         <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <WarningIcon sx={{ color: "#fbbf24" }} />
@@ -791,7 +827,9 @@ function BlockedUsersPanel({ onCountChange }: { onCountChange?: (n: number) => v
             {(item.blockedUser?.name || "?").charAt(0).toUpperCase()}
           </Avatar>
           <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="body2" fontWeight={500}>{item.blockedUser?.name || "ผู้ใช้"}</Typography>
+            <Typography variant="body2" sx={{
+              fontWeight: 500
+            }}>{item.blockedUser?.name || "ผู้ใช้"}</Typography>
             {item.blockedUser?.username && (
               <Typography variant="caption" sx={{ color: "#a3a3a3" }}>@{item.blockedUser.username}</Typography>
             )}

@@ -8,7 +8,7 @@ import {
   CircularProgress,
   Button,
 } from "@mui/material";
-import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
+import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CommentBox from "./CommentBox";
 import CommentList from "./CommentList";
@@ -126,10 +126,17 @@ export default function CommentInteractions({
       {/* Header */}
       <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3 }}>
         <ChatBubbleOutlineIcon sx={{ color: "text.secondary" }} />
-        <Typography variant="h5" fontWeight={600} sx={{ color: "white" }}>
+        <Typography
+          variant="h5"
+          sx={{
+            fontWeight: 600,
+            color: "white"
+          }}>
           {title}
         </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <Typography variant="body2" sx={{
+          color: "text.secondary"
+        }}>
           ({totalCount}
           {hasMore ? "+" : ""})
         </Typography>

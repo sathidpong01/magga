@@ -244,11 +244,12 @@ export function DashboardPageHeader({
   return (
     <Stack
       direction={{ xs: "column", md: "row" }}
-      justifyContent="space-between"
-      alignItems={{ xs: "flex-start", md: "flex-end" }}
       spacing={2}
-      sx={{ mb: 3.5 }}
-    >
+      sx={{
+        justifyContent: "space-between",
+        alignItems: { xs: "flex-start", md: "flex-end" },
+        mb: 3.5
+      }}>
       <Box>
         {eyebrow ? (
           <Typography
@@ -291,10 +292,11 @@ export function DashboardPageHeader({
         <Stack
           direction="row"
           spacing={1.25}
-          alignItems="center"
-          flexWrap="wrap"
           useFlexGap
-        >
+          sx={{
+            alignItems: "center",
+            flexWrap: "wrap"
+          }}>
           {children}
           {actionNode}
         </Stack>
@@ -368,7 +370,9 @@ export function DashboardStat({
           : undefined,
       }}
     >
-      <Stack direction="row" spacing={1.5} alignItems="flex-start">
+      <Stack direction="row" spacing={1.5} sx={{
+        alignItems: "flex-start"
+      }}>
         <Box
           sx={{
             width: 44,

@@ -15,7 +15,13 @@ export default function ReportPage() {
       <Paper sx={{ p: { xs: 3, md: 5 }, bgcolor: '#171717', borderRadius: 1, border: '1px solid rgba(255,255,255,0.08)' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
           <ReportProblemIcon sx={{ color: '#fbbf24', fontSize: 32 }} />
-          <Typography variant="h4" component="h1" fontWeight="bold" sx={{ color: '#fafafa' }}>
+          <Typography
+            variant="h4"
+            component="h1"
+            sx={{
+              fontWeight: "bold",
+              color: '#fafafa'
+            }}>
             รายงานการละเมิด
           </Typography>
         </Box>
@@ -42,36 +48,40 @@ export default function ReportPage() {
 
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <Section title="ขั้นตอนในการเขียนคำร้อง DMCA">
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               รายละเอียดที่ต้องระบุในคำร้อง DMCA ได้แก่:
             </Typography>
             
             <Box sx={{ pl: 2 }}>
-              <Typography paragraph sx={{ mb: 2 }}>
+              <Typography sx={{ mb: 2 }}>
                 <Box component="strong" sx={{ color: '#fbbf24' }}>ก) ระบุตัวตน:</Box> แจ้งว่าคุณเป็นเจ้าของลิขสิทธิ์ผลงานหรือสิทธิ์แต่เพียงผู้เดียวที่ถูกละเมิด 
                 หรือเป็นผู้ที่ได้รับมอบอำนาจให้กระทำการแทนเจ้าของ พร้อมแนบลายเซ็นจริงหรือลายเซ็นอิเล็กทรอนิกส์
               </Typography>
 
-              <Typography paragraph sx={{ mb: 2 }}>
+              <Typography sx={{ mb: 2 }}>
                 <Box component="strong" sx={{ color: '#fbbf24' }}>ข) ระบุผลงาน:</Box> ระบุผลงานที่คุณเชื่อว่าถูกละเมิดลิขสิทธิ์ หากมีหลายผลงาน ให้ระบุเป็นรายการ
               </Typography>
 
-              <Typography paragraph sx={{ mb: 2 }}>
+              <Typography sx={{ mb: 2 }}>
                 <Box component="strong" sx={{ color: '#fbbf24' }}>ค) ระบุตำแหน่งของเนื้อหาที่ละเมิดลิขสิทธิ์:</Box> ระบุ URL ของหน้าที่ละเมิดลิขสิทธิ์ในเว็บไซต์ 
                 ห้ามส่งไฟล์แนบใดๆ เช่น รูปภาพ หรือไฟล์ PDF ให้ใส่ URL ทั้งหมดในเนื้อหาจดหมาย เพื่อการดำเนินการที่รวดเร็วยิ่งขึ้น
               </Typography>
 
-              <Typography paragraph sx={{ mb: 2 }}>
+              <Typography sx={{ mb: 2 }}>
                 <Box component="strong" sx={{ color: '#fbbf24' }}>ง) ข้อมูลติดต่อของคุณ:</Box> ระบุชื่อ ที่อยู่ และอีเมล 
                 หากกระทำการแทนเจ้าของลิขสิทธิ์ ให้ระบุความเกี่ยวข้องของคุณ (เช่น ทนายความ, ตัวแทน)
               </Typography>
 
-              <Typography paragraph sx={{ mb: 2 }}>
+              <Typography sx={{ mb: 2 }}>
                 <Box component="strong" sx={{ color: '#fbbf24' }}>จ) ยืนยันว่าคุณเชื่อโดยสุจริต:</Box> ระบุว่าคุณเชื่อโดยสุจริตว่าการใช้เนื้อหาดังกล่าวไม่ได้รับอนุญาตจากเจ้าของลิขสิทธิ์ 
                 ตัวแทน หรือไม่ชอบด้วยกฎหมาย
               </Typography>
 
-              <Typography paragraph>
+              <Typography sx={{
+                marginBottom: "16px"
+              }}>
                 <Box component="strong" sx={{ color: '#fbbf24' }}>ฉ) ยืนยันความถูกต้องของข้อมูล:</Box> ระบุข้อความต่อไปนี้เพื่อรับรองความถูกต้องของข้อมูลภายใต้บทลงโทษของการให้การเท็จ:
               </Typography>
               
@@ -92,7 +102,9 @@ export default function ReportPage() {
                 คำร้องจะต้องมีครบทั้ง 6 ข้อ หากข้อมูลไม่ครบถ้วน จะไม่สามารถดำเนินการได้
               </Typography>
             </Alert>
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               ตามที่ระบุไว้ในกฎหมาย 17 U.S. Code § 512(c)(3):
             </Typography>
             <Typography variant="body2" sx={{ color: '#737373', fontStyle: 'italic', pl: 2 }}>
@@ -107,7 +119,9 @@ export default function ReportPage() {
           <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
 
           <Section title="การดำเนินการหลังจากได้รับคำร้อง">
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               คำร้องที่กรอกข้อมูลถูกต้อง จะถูกดำเนินการลบเนื้อหา 100% 
               หาก MAGGA ได้รับแจ้งการละเมิดลิขสิทธิ์ที่ถูกต้อง จะดำเนินการลบเนื้อหาที่ละเมิดอย่างรวดเร็ว
             </Typography>
@@ -143,7 +157,9 @@ export default function ReportPage() {
         </Box>
 
         <Box sx={{ mt: 4, pt: 3, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{
+            color: "text.secondary"
+          }}>
             ติดต่อเรา: <Link href="https://www.facebook.com/nightsu9/" target="_blank" style={{ color: '#fbbf24' }}>Facebook @nightsu9</Link>
           </Typography>
         </Box>
@@ -155,7 +171,13 @@ export default function ReportPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <Box>
-      <Typography variant="h6" fontWeight="bold" sx={{ color: '#fbbf24', mb: 2 }}>
+      <Typography
+        variant="h6"
+        sx={{
+          fontWeight: "bold",
+          color: '#fbbf24',
+          mb: 2
+        }}>
         {title}
       </Typography>
       <Box sx={{ 

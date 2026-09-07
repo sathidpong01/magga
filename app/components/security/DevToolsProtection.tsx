@@ -267,12 +267,11 @@ export default function DevToolsProtection() {
         {/* Title */}
         <Typography
           variant="h4"
-          fontWeight="bold"
           sx={{
+            fontWeight: "bold",
             color: "#a78bfa",
-            mb: 1,
-          }}
-        >
+            mb: 1
+          }}>
           การเข้าถึงถูกปฏิเสธ
         </Typography>
 

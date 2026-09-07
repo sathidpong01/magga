@@ -8,8 +8,8 @@ import {
   Typography,
   Alert,
 } from "@mui/material";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutlined";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
 
 interface NotificationModalProps {
   open: boolean;
@@ -53,13 +53,15 @@ export default function NotificationModal({
       onClose={onClose}
       maxWidth="sm"
       fullWidth
-      PaperProps={{
-        sx: {
-          bgcolor: "#171717",
-          color: "#fafafa",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
-          borderRadius: 1,
-        },
+      slotProps={{
+        paper: {
+          sx: {
+            bgcolor: "#171717",
+            color: "#fafafa",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            borderRadius: 1,
+          },
+        }
       }}
     >
       <DialogTitle

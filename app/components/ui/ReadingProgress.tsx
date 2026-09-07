@@ -207,7 +207,9 @@ export default function ReadingProgress({
               }}
             />
           </Box>
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" sx={{
+            color: "text.secondary"
+          }}>
             {Math.round(progress)}%
           </Typography>
         </Box>

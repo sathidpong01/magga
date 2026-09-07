@@ -67,12 +67,17 @@ const darkTheme = createTheme({
         root: {
           textTransform: "none",
           fontWeight: 500,
-        },
-        containedPrimary: {
-          boxShadow: "0 4px 14px 0 rgba(139, 92, 246, 0.39)",
-          "&:hover": {
-            boxShadow: "0 6px 20px rgba(139, 92, 246, 0.23)",
-          },
+          variants: [
+            {
+              props: { variant: "contained", color: "primary" },
+              style: {
+                boxShadow: "0 4px 14px 0 rgba(139, 92, 246, 0.39)",
+                "&:hover": {
+                  boxShadow: "0 6px 20px rgba(139, 92, 246, 0.23)",
+                },
+              },
+            },
+          ],
         },
       },
     },

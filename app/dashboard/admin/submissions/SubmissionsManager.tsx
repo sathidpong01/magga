@@ -179,7 +179,6 @@ export default function SubmissionsManager({
           value={statusFilter}
           onChange={handleStatusChange}
           textColor="inherit"
-          TabIndicatorProps={{ sx: { bgcolor: "#FABF06", height: 3, borderRadius: "3px 3px 0 0" } }}
           sx={{
             borderBottom: 1,
             borderColor: "rgba(255,255,255,0.06)",
@@ -197,6 +196,9 @@ export default function SubmissionsManager({
                 opacity: 1,
               },
             },
+          }}
+          slotProps={{
+            indicator: { sx: { bgcolor: "#FABF06", height: 3, borderRadius: "3px 3px 0 0" } }
           }}
         >
           <Tab label="ทั้งหมด" value="ALL" />
@@ -224,14 +226,16 @@ export default function SubmissionsManager({
                 "&.Mui-focused fieldset": { borderColor: "#FABF06" },
               },
             }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ color: "#FABF06", fontSize: 20 }} />
-                </InputAdornment>
-              ),
-            }}
             size="medium"
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: "#FABF06", fontSize: 20 }} />
+                  </InputAdornment>
+                ),
+              }
+            }}
           />
         </Box>
       </Paper>

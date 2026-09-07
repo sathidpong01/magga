@@ -438,10 +438,19 @@ export default async function MangaPage({ params }: MangaPageProps) {
                 })()}
 
                 {/* Stats row */}
-                <Stack direction="row" spacing={3} alignItems="center" sx={{ mb: 2, color: "text.secondary" }}>
+                <Stack
+                  direction="row"
+                  spacing={3}
+                  sx={{
+                    alignItems: "center",
+                    mb: 2,
+                    color: "text.secondary"
+                  }}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                     <VisibilityIcon sx={{ fontSize: 20 }} />
-                    <Typography variant="subtitle1" fontWeight={500}>
+                    <Typography variant="subtitle1" sx={{
+                      fontWeight: 500
+                    }}>
                       {Number(manga.viewCount).toLocaleString()} Views
                     </Typography>
                   </Box>

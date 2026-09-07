@@ -10,10 +10,22 @@ export default function PrivacyPage() {
   return (
     <Container maxWidth="md" sx={{ py: 6 }}>
       <Paper sx={{ p: { xs: 3, md: 5 }, bgcolor: '#171717', borderRadius: 1, border: '1px solid rgba(255,255,255,0.08)' }}>
-        <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom sx={{ color: '#fafafa' }}>
+        <Typography
+          variant="h4"
+          component="h1"
+          gutterBottom
+          sx={{
+            fontWeight: "bold",
+            color: '#fafafa'
+          }}>
           นโยบายความเป็นส่วนตัว (Privacy Policy)
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
+        <Typography
+          variant="body2"
+          sx={{
+            color: "text.secondary",
+            mb: 4
+          }}>
           อัปเดตล่าสุด: ธันวาคม 2024
         </Typography>
 
@@ -29,10 +41,14 @@ export default function PrivacyPage() {
 
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <Section title="1. การเก็บข้อมูล">
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               ในการใช้งานเว็บไซต์นี้ ผู้ใช้งานอาจถูกขอให้ลงทะเบียนเพื่อสร้างบัญชี โดยทั่วไป เว็บไซต์จะเก็บเพียงข้อมูลที่จำเป็น ได้แก่ อีเมลที่ถูกต้อง เพื่อใช้ในการเข้าสู่ระบบและการระบุตัวตนในระบบ ผู้ใช้งานไม่จำเป็นต้องให้ข้อมูลส่วนบุคคลอื่น ๆ เว้นแต่เป็นความสมัครใจ
             </Typography>
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               นอกจากนี้ เว็บไซต์อาจเก็บรวบรวมข้อมูลทั่วไปโดยอัตโนมัติจากบันทึกของเซิร์ฟเวอร์ เช่น ที่อยู่ IP ประเภทของเบราว์เซอร์ ระบบปฏิบัติการ วันที่และเวลาในการเข้าชม ตลอดจนข้อมูลจากคุกกี้เพื่อวัตถุประสงค์ด้านการจัดการระบบและการปรับปรุงประสบการณ์การใช้งาน
             </Typography>
             <Typography>
@@ -43,7 +59,9 @@ export default function PrivacyPage() {
           <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
 
           <Section title="2. การใช้ข้อมูล">
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               ข้อมูลที่เว็บไซต์เก็บรวบรวมมีจุดประสงค์เพื่อการจัดการเว็บไซต์และการให้บริการแก่ผู้ใช้งานเท่านั้น โดยอาจถูกนำมาใช้ในกรณีดังต่อไปนี้:
             </Typography>
             <Box component="ul">
@@ -61,7 +79,9 @@ export default function PrivacyPage() {
           <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
 
           <Section title="3. การเปิดเผยข้อมูลส่วนบุคคล">
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               เว็บไซต์มุ่งรักษาความเป็นส่วนตัวของผู้ใช้งาน และไม่ดำเนินการบันทึกหรือเก็บข้อมูลการใช้งานโดยไม่จำเป็น โดยหลักทั่วไป เว็บไซต์จะไม่เก็บข้อมูลที่ละเอียดอ่อน และจะไม่ติดตามตำแหน่งที่ตั้งของผู้ใช้งาน
             </Typography>
             <Typography>
@@ -72,7 +92,9 @@ export default function PrivacyPage() {
           <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
 
           <Section title="4. การถ่ายโอนข้อมูลระหว่างประเทศ">
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               ข้อมูลที่ผู้ใช้งานมอบให้แก่เว็บไซต์ อาจถูกจัดเก็บและประมวลผลในเซิร์ฟเวอร์ที่ตั้งอยู่ในประเทศอื่น ซึ่งอาจมีกฎหมายด้านการคุ้มครองข้อมูลที่แตกต่างจากประเทศที่ผู้ใช้งานอาศัยอยู่
             </Typography>
             <Typography>
@@ -83,7 +105,9 @@ export default function PrivacyPage() {
           <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
 
           <Section title="5. ความปลอดภัยของข้อมูลส่วนบุคคล">
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               ผู้ดูแลเว็บไซต์จะดำเนินมาตรการด้านเทคนิคและการจัดการที่เหมาะสม เพื่อรักษาความปลอดภัยของข้อมูลส่วนบุคคลที่ผู้ใช้งานได้ให้ไว้ โดยรวมถึงการใช้ระบบป้องกันด้วยรหัสผ่านและการเข้ารหัสข้อมูล
             </Typography>
             <Typography>
@@ -94,7 +118,9 @@ export default function PrivacyPage() {
           <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
 
           <Section title="6. คุกกี้">
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               เว็บไซต์ใช้คุกกี้ทั้งแบบชั่วคราวและแบบถาวร เพื่อช่วยจดจำการตั้งค่าของผู้ใช้งาน และเพื่อปรับปรุงประสบการณ์การใช้งานให้เหมาะสม คุกกี้ที่จัดเก็บโดยเว็บไซต์มีวัตถุประสงค์ในทางเทคนิค เช่น การจัดการการเข้าสู่ระบบ การรักษาสถานะของเซสชัน และการยืนยันอายุผู้ใช้งาน
             </Typography>
             <Typography>
@@ -141,7 +167,9 @@ export default function PrivacyPage() {
           <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
 
           <Section title="10. การเปลี่ยนแปลงนโยบายความเป็นส่วนตัว">
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               เว็บไซต์ขอสงวนสิทธิ์ในการปรับปรุงหรือเปลี่ยนแปลงนโยบายนี้ตามความเหมาะสม โดยอาจแจ้งผู้ใช้งานผ่าน:
             </Typography>
             <Box component="ul">
@@ -156,7 +184,9 @@ export default function PrivacyPage() {
           <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
 
           <Section title="11. สิทธิของผู้ใช้งานเกี่ยวกับข้อมูลส่วนบุคคล">
-            <Typography paragraph>
+            <Typography sx={{
+              marginBottom: "16px"
+            }}>
               ผู้ใช้งานมีสิทธิ์ในการจัดการและควบคุมข้อมูลส่วนบุคคลของตนภายใต้เงื่อนไขที่กฎหมายกำหนด ดังนี้:
             </Typography>
             <Box component="ul">
@@ -177,7 +207,12 @@ export default function PrivacyPage() {
         </Box>
 
         <Box sx={{ mt: 4, pt: 3, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: "text.secondary",
+              fontStyle: 'italic'
+            }}>
             หมายเหตุ: เอกสารฉบับนี้มีไว้เพื่อประกาศนโยบายความเป็นส่วนตัวของเว็บไซต์ และอาจมีการปรับปรุงแก้ไขเป็นระยะ
           </Typography>
         </Box>
@@ -189,7 +224,13 @@ export default function PrivacyPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <Box>
-      <Typography variant="h6" fontWeight="bold" sx={{ color: '#fbbf24', mb: 2 }}>
+      <Typography
+        variant="h6"
+        sx={{
+          fontWeight: "bold",
+          color: '#fbbf24',
+          mb: 2
+        }}>
         {title}
       </Typography>
       <Box sx={{ 

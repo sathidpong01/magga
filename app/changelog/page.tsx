@@ -207,10 +207,11 @@ export default function ChangelogPage() {
         <Typography
           variant="h3"
           component="h1"
-          fontWeight="bold"
           gutterBottom
-          sx={{ color: "#fafafa" }}
-        >
+          sx={{
+            fontWeight: "bold",
+            color: "#fafafa"
+          }}>
           บันทึกการอัพเดท
         </Typography>
         <Typography variant="subtitle1" sx={{ color: "#a3a3a3" }}>
@@ -248,9 +249,10 @@ export default function ChangelogPage() {
                 <Typography
                   variant="h5"
                   component="h2"
-                  fontWeight="bold"
-                  sx={{ color: "#fafafa" }}
-                >
+                  sx={{
+                    fontWeight: "bold",
+                    color: "#fafafa"
+                  }}>
                   {item.title}
                 </Typography>
                 <Chip
@@ -295,10 +297,12 @@ export default function ChangelogPage() {
                   </Box>
                   <ListItemText
                     primary={change}
-                    primaryTypographyProps={{
-                      variant: "body1",
-                      color: "#d4d4d4",
-                      component: "h3", // Semantic heading for accessibility if needed, or just keep as body text
+                    slotProps={{
+                      primary: {
+                        variant: "body1",
+                        color: "#d4d4d4",
+                        component: "h3", // Semantic heading for accessibility if needed, or just keep as body text
+                      }
                     }}
                   />
                 </ListItem>

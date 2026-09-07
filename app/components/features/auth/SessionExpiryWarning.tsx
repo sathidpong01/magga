@@ -99,14 +99,16 @@ export default function SessionExpiryWarning() {
       onClose={() => {}}
       maxWidth="xs"
       fullWidth
-      PaperProps={{
-        sx: {
-          bgcolor: "#171717",
-          border: `1px solid ${
-            isUrgent ? "rgba(239, 68, 68, 0.4)" : "rgba(255,255,255,0.1)"
-          }`,
-          borderRadius: 1,
-        },
+      slotProps={{
+        paper: {
+          sx: {
+            bgcolor: "#171717",
+            border: `1px solid ${
+              isUrgent ? "rgba(239, 68, 68, 0.4)" : "rgba(255,255,255,0.1)"
+            }`,
+            borderRadius: 1,
+          },
+        }
       }}
     >
       <DialogTitle

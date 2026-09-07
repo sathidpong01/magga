@@ -42,7 +42,9 @@ export default function Footer() {
       }}
     >
       <Container maxWidth="lg">
-        <Grid container spacing={4} alignItems="flex-start">
+        <Grid container spacing={4} sx={{
+          alignItems: "flex-start"
+        }}>
           {/* Logo & Description */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Box sx={{ mb: 2 }}>

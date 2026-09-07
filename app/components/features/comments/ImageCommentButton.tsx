@@ -10,7 +10,7 @@ import {
   Divider,
   CircularProgress,
 } from "@mui/material";
-import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
+import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutlined";
 import CloseIcon from "@mui/icons-material/Close";
 import CommentBox from "./CommentBox";
 import CommentList from "./CommentList";
@@ -115,12 +115,14 @@ export default function ImageCommentButton({ mangaId, imageIndex, pageLabel }: I
         anchor="right"
         open={isOpen}
         onClose={() => setIsOpen(false)}
-        PaperProps={{
-          sx: {
-            width: { xs: "100%", sm: 420 },
-            bgcolor: "#0f0f0f",
-            color: "white",
-          },
+        slotProps={{
+          paper: {
+            sx: {
+              width: { xs: "100%", sm: 420 },
+              bgcolor: "#0f0f0f",
+              color: "white",
+            },
+          }
         }}
       >
         {/* Header */}
@@ -134,10 +136,14 @@ export default function ImageCommentButton({ mangaId, imageIndex, pageLabel }: I
           }}
         >
           <Box>
-            <Typography variant="h6" fontWeight={600}>
+            <Typography variant="h6" sx={{
+              fontWeight: 600
+            }}>
               ความคิดเห็น
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{
+              color: "text.secondary"
+            }}>
               {pageLabel || `หน้า ${imageIndex + 1}`} • {commentCount} ความคิดเห็น
             </Typography>
           </Box>

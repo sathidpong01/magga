@@ -304,13 +304,15 @@ export default function Header() {
             anchorEl={anchorEl}
             open={Boolean(anchorEl)}
             onClose={handleMenuClose}
-            PaperProps={{
-              sx: {
-                mt: 1.5,
-                bgcolor: "#171717",
-                border: "1px solid rgba(255,255,255,0.1)",
-                color: "#fafafa",
-                minWidth: 200,
+            slotProps={{
+              paper: {
+                sx: {
+                  mt: 1.5,
+                  bgcolor: "#171717",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  color: "#fafafa",
+                  minWidth: 200,
+                },
               },
             }}
             transformOrigin={{ horizontal: "right", vertical: "top" }}

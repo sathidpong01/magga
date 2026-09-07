@@ -88,7 +88,9 @@ export default function UploadProgress({ files, onCancel, onRetry }: UploadProgr
               <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
                 {uploadingCount > 0 ? 'Uploading files...' : errorCount > 0 ? 'Upload Failed' : 'Upload Complete'}
               </Typography>
-              <Typography variant="caption" color="text.secondary">
+              <Typography variant="caption" sx={{
+                color: "text.secondary"
+              }}>
                 {completedCount} / {files.length} completed
                 {errorCount > 0 && ` • ${errorCount} failed`}
               </Typography>
@@ -145,7 +147,9 @@ export default function UploadProgress({ files, onCancel, onRetry }: UploadProgr
                           )}
                         </Box>
                       ) : (
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography variant="caption" sx={{
+                          color: "text.secondary"
+                        }}>
                           {Math.round(file.progress)}%
                         </Typography>
                       )}

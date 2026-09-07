@@ -101,10 +101,13 @@ const MangaCard = ({ manga, priority = false }: MangaCardProps) => {
             <Typography
               variant="body1"
               component="h2"
-              fontWeight={600}
               sx={{
+                fontWeight: 600,
                 mb: 0.125,
-                textShadow: "0 2px 4px rgba(0,0,0,0.8)", // Stronger shadow
+
+                // Stronger shadow
+                textShadow: "0 2px 4px rgba(0,0,0,0.8)",
+
                 overflow: "hidden",
                 textOverflow: "ellipsis",
                 display: "-webkit-box",
@@ -112,9 +115,8 @@ const MangaCard = ({ manga, priority = false }: MangaCardProps) => {
                 WebkitBoxOrient: "vertical",
                 lineHeight: 1.1,
                 fontSize: "0.95rem",
-                color: "#fff",
-              }}
-            >
+                color: "#fff"
+              }}>
               {manga.title}
             </Typography>
             <Box

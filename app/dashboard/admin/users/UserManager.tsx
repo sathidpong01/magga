@@ -286,7 +286,9 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
         <Stack
           direction={{ xs: "column", md: "row" }}
           spacing={2}
-          alignItems={{ xs: "stretch", md: "center" }}
+          sx={{
+            alignItems: { xs: "stretch", md: "center" }
+          }}
         >
           <TextField
             id="search-users"
@@ -298,12 +300,14 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
               flex: 1,
               ...inputSx,
             }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ color: "#a3a3a3", fontSize: 20 }} />
-                </InputAdornment>
-              ),
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: "#a3a3a3", fontSize: 20 }} />
+                  </InputAdornment>
+                ),
+              }
             }}
           />
           <FormControl size="small" sx={{ minWidth: 150 }}>
@@ -339,7 +343,14 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
         </Stack>
       </Paper>
 
-      <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mb: 2 }}>
+      <Stack
+        direction="row"
+        spacing={1}
+        useFlexGap
+        sx={{
+          flexWrap: "wrap",
+          mb: 2
+        }}>
         <Chip
           label={`แอดมิน ${totalAdmins}`}
           sx={{
@@ -441,7 +452,9 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                   }}
                 >
                   <TableCell>
-                    <Stack direction="row" spacing={1.5} alignItems="center">
+                    <Stack direction="row" spacing={1.5} sx={{
+                      alignItems: "center"
+                    }}>
                       <Avatar
                         src={user.image || undefined}
                         sx={{ width: 36, height: 36, bgcolor: "#404040" }}
@@ -508,7 +521,9 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                           <Stack
                           direction="row"
                           spacing={0.5}
-                          alignItems="center"
+                          sx={{
+                            alignItems: "center"
+                          }}
                         >
                           <PersonIcon sx={{ fontSize: 16, color: "#a3a3a3" }} />
                           <Typography component="span">ผู้ใช้</Typography>
@@ -518,7 +533,9 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                         <Stack
                           direction="row"
                           spacing={0.5}
-                          alignItems="center"
+                          sx={{
+                            alignItems: "center"
+                          }}
                         >
                           <AdminPanelSettingsIcon
                             sx={{ fontSize: 16, color: "#fbbf24" }}
@@ -573,7 +590,9 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                     <Stack
                       direction="row"
                       spacing={1}
-                      justifyContent="flex-end"
+                      sx={{
+                        justifyContent: "flex-end"
+                      }}
                     >
                       {user.banned ? (
                         <Tooltip
@@ -648,11 +667,13 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
       <Dialog
         open={banDialogOpen}
         onClose={() => setBanDialogOpen(false)}
-        PaperProps={{
-          sx: { 
-            ...surfaceSx,
-            color: "#fafafa", 
-          },
+        slotProps={{
+          paper: {
+            sx: {
+              ...surfaceSx,
+              color: "#fafafa",
+            },
+          }
         }}
       >
         <DialogTitle sx={{ fontWeight: 900, letterSpacing: "0.02em", fontSize: "1rem" }}>
@@ -709,11 +730,13 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
       <Dialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
-        PaperProps={{
-          sx: { 
-            ...surfaceSx,
-            color: "#fafafa", 
-          },
+        slotProps={{
+          paper: {
+            sx: {
+              ...surfaceSx,
+              color: "#fafafa",
+            },
+          }
         }}
       >
         <DialogTitle sx={{ fontWeight: 900, letterSpacing: "0.02em", fontSize: "1rem" }}>

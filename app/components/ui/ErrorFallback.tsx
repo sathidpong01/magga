@@ -1,7 +1,7 @@
 "use client";
 
 import { Box, Typography, Button } from "@mui/material";
-import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
 import RefreshIcon from "@mui/icons-material/Refresh";
 
 interface ErrorFallbackProps {
@@ -52,17 +52,21 @@ export default function ErrorFallback({
 
       <Typography
         variant="h5"
-        fontWeight={600}
-        sx={{ color: "#ef4444", mb: 1 }}
-      >
+        sx={{
+          fontWeight: 600,
+          color: "#ef4444",
+          mb: 1
+        }}>
         {title}
       </Typography>
 
       <Typography
         variant="body1"
-        color="text.secondary"
-        sx={{ mb: 1, maxWidth: 400 }}
-      >
+        sx={{
+          color: "text.secondary",
+          mb: 1,
+          maxWidth: 400
+        }}>
         {description}
       </Typography>
 

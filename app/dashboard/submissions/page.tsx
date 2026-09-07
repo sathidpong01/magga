@@ -335,7 +335,9 @@ export default function MySubmissionsPage() {
       <Dialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
-        PaperProps={{ sx: dashboardDialogPaperSx }}
+        slotProps={{
+          paper: { sx: dashboardDialogPaperSx }
+        }}
       >
         <DialogTitle sx={{ fontWeight: 800 }}>ยืนยันการลบ</DialogTitle>
         <DialogContent>

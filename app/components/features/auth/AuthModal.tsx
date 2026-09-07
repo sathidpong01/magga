@@ -119,18 +119,18 @@ export default function AuthModal({
       fullWidth
       slotProps={{
         backdrop: { sx: { backgroundColor: "rgba(0,0,0,0.85)", backdropFilter: "blur(4px)" } },
-      }}
-      PaperProps={{
-        sx: {
-          overflow: "hidden",
-          bgcolor: "#111111",
-          color: "#fafafa",
-          borderRadius: 2,
-          border: "1px solid rgba(255,255,255,0.08)",
-          boxShadow: "0 22px 60px rgba(0,0,0,0.52)",
-        },
-      }}
-    >
+
+        paper: {
+          sx: {
+            overflow: "hidden",
+            bgcolor: "#111111",
+            color: "#fafafa",
+            borderRadius: 2,
+            border: "1px solid rgba(255,255,255,0.08)",
+            boxShadow: "0 22px 60px rgba(0,0,0,0.52)",
+          },
+        }
+      }}>
       <DialogContent sx={{ p: 0 }}>
         <Box
           sx={{
@@ -169,7 +169,14 @@ export default function AuthModal({
               />
             </Box>
 
-            <Typography variant="h5" fontWeight={600} sx={{ mb: 0.55, letterSpacing: -0.12, lineHeight: 1.18 }}>
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 600,
+                mb: 0.55,
+                letterSpacing: -0.12,
+                lineHeight: 1.18
+              }}>
               ยินดีต้อนรับกลับ
             </Typography>
             <Typography variant="body2" sx={{ color: "#8f8f8f", maxWidth: 320, lineHeight: 1.55, fontWeight: 400, fontSize: "0.92rem" }}>
@@ -218,12 +225,14 @@ export default function AuthModal({
                 mb: 1.5,
                 "& .MuiOutlinedInput-root": { ...textFieldSx["& .MuiOutlinedInput-root"], minHeight: 52 },
               }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <AlternateEmailRoundedIcon sx={{ color: "#6b6b6b", fontSize: 18 }} />
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <AlternateEmailRoundedIcon sx={{ color: "#6b6b6b", fontSize: 18 }} />
+                    </InputAdornment>
+                  ),
+                }
               }}
             />
 
@@ -243,24 +252,26 @@ export default function AuthModal({
                 mt: 0.65,
                 "& .MuiOutlinedInput-root": { ...textFieldSx["& .MuiOutlinedInput-root"], minHeight: 52 },
               }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <LockRoundedIcon sx={{ color: "#6b6b6b", fontSize: 18 }} />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowPassword(!showPassword)}
-                      edge="end"
-                      aria-label={showPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
-                      sx={{ color: "#a3a3a3" }}
-                    >
-                      {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <LockRoundedIcon sx={{ color: "#6b6b6b", fontSize: 18 }} />
+                    </InputAdornment>
+                  ),
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                        aria-label={showPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
+                        sx={{ color: "#a3a3a3" }}
+                      >
+                        {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }
               }}
             />
 

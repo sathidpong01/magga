@@ -80,7 +80,9 @@ export default function SecurityTab({ hasPassword, email }: Props) {
       <Paper sx={{ p: 3, bgcolor: "#171717", border: "1px solid rgba(255,255,255,0.1)" }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 3 }}>
           <LockIcon sx={{ color: "#fbbf24", fontSize: 28 }} />
-          <Typography variant="h6" fontWeight="bold">
+          <Typography variant="h6" sx={{
+            fontWeight: "bold"
+          }}>
             Password Management
           </Typography>
         </Box>
@@ -175,7 +177,12 @@ export default function SecurityTab({ hasPassword, email }: Props) {
       </Paper>
 
       <Box sx={{ mt: 4 }}>
-        <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: "bold",
+            mb: 2
+          }}>
           Connected Accounts
         </Typography>
         <Paper sx={{ p: 2, bgcolor: "#171717", border: "1px solid rgba(255,255,255,0.1)" }}>
@@ -183,8 +190,12 @@ export default function SecurityTab({ hasPassword, email }: Props) {
             <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <GoogleIcon sx={{ color: "#fff" }} />
               <Box>
-                <Typography variant="subtitle1" fontWeight="bold">Google</Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="subtitle1" sx={{
+                  fontWeight: "bold"
+                }}>Google</Typography>
+                <Typography variant="body2" sx={{
+                  color: "text.secondary"
+                }}>
                   {email}
                 </Typography>
               </Box>
@@ -196,7 +207,13 @@ export default function SecurityTab({ hasPassword, email }: Props) {
             </Box>
           </Box>
         </Paper>
-        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+        <Typography
+          variant="caption"
+          sx={{
+            color: "text.secondary",
+            display: 'block',
+            mt: 1
+          }}>
             * Your account is automatically linked to Google when you sign in with the same email address.
         </Typography>
       </Box>

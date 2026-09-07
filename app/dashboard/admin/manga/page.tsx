@@ -97,9 +97,10 @@ export default async function AdminMangaPage() {
         <Stack
           direction={{ xs: "column", md: "row" }}
           spacing={2}
-          justifyContent="space-between"
-          alignItems={{ xs: "flex-start", md: "center" }}
-        >
+          sx={{
+            justifyContent: "space-between",
+            alignItems: { xs: "flex-start", md: "center" }
+          }}>
           <Box sx={{ maxWidth: 720 }}>
             <Typography
               variant="overline"
@@ -131,7 +132,9 @@ export default async function AdminMangaPage() {
             </Typography>
           </Box>
 
-          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+          <Stack direction="row" spacing={1} useFlexGap sx={{
+            flexWrap: "wrap"
+          }}>
             <Chip
               label={`ล่าสุด ${mangas.length}`}
               sx={{

@@ -33,20 +33,8 @@ export default function AgeVerificationModal() {
   return (
     <Dialog
       open={open}
-      disableEscapeKeyDown
       aria-labelledby="age-verification-title"
       aria-describedby="age-verification-description"
-      PaperProps={{
-        sx: {
-          borderRadius: 1,
-          textAlign: "center",
-          p: 4,
-          maxWidth: "440px",
-          background: "linear-gradient(145deg, #1a1a2e 0%, #0f0f1a 50%, #1a1025 100%)",
-          border: "1px solid rgba(168, 85, 247, 0.15)",
-          boxShadow: "0 20px 40px -12px rgba(0, 0, 0, 0.6)",
-        },
-      }}
       slotProps={{
         backdrop: {
           sx: {
@@ -54,8 +42,19 @@ export default function AgeVerificationModal() {
             backgroundColor: "rgba(0, 0, 0, 0.7)",
           },
         },
-      }}
-    >
+
+        paper: {
+          sx: {
+            borderRadius: 1,
+            textAlign: "center",
+            p: 4,
+            maxWidth: "440px",
+            background: "linear-gradient(145deg, #1a1a2e 0%, #0f0f1a 50%, #1a1025 100%)",
+            border: "1px solid rgba(168, 85, 247, 0.15)",
+            boxShadow: "0 20px 40px -12px rgba(0, 0, 0, 0.6)",
+          },
+        }
+      }}>
       <DialogContent sx={{ p: 0 }}>
         {/* Header */}
         <Typography

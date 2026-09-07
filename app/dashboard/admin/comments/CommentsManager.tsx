@@ -250,14 +250,16 @@ export default function CommentsManager({
                 "&.Mui-focused fieldset": { borderColor: "#FABF06" },
               },
             }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ color: "#FABF06", fontSize: 20 }} />
-                </InputAdornment>
-              ),
-            }}
             size="medium"
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: "#FABF06", fontSize: 20 }} />
+                  </InputAdornment>
+                ),
+              }
+            }}
           />
         </Box>
 
@@ -570,14 +572,16 @@ export default function CommentsManager({
       <Dialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
-        PaperProps={{
-          sx: {
-            bgcolor: "#141414",
-            color: "#fafafa",
-            borderRadius: 1.25,
-            backgroundImage: "none",
-            border: "1px solid rgba(255,255,255,0.06)",
-          },
+        slotProps={{
+          paper: {
+            sx: {
+              bgcolor: "#141414",
+              color: "#fafafa",
+              borderRadius: 1.25,
+              backgroundImage: "none",
+              border: "1px solid rgba(255,255,255,0.06)",
+            },
+          }
         }}
       >
         <DialogTitle sx={{ fontWeight: 900, letterSpacing: "0", fontSize: "1rem" }}>

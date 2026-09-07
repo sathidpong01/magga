@@ -27,17 +27,6 @@ export default function BanNoticeModal({
     <Dialog
       open={open}
       onClose={onClose}
-      PaperProps={{
-        sx: {
-          bgcolor: "#0f0f0f",
-          color: "#fafafa",
-          borderRadius: 1,
-          border: "1px solid #333",
-          minWidth: 320,
-          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
-          p: 1,
-        },
-      }}
       slotProps={{
         backdrop: {
           sx: {
@@ -45,8 +34,19 @@ export default function BanNoticeModal({
             bgcolor: "rgba(0, 0, 0, 0.8)",
           },
         },
-      }}
-    >
+
+        paper: {
+          sx: {
+            bgcolor: "#0f0f0f",
+            color: "#fafafa",
+            borderRadius: 1,
+            border: "1px solid #333",
+            minWidth: 320,
+            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+            p: 1,
+          },
+        }
+      }}>
       <Box sx={{ textAlign: "center", pt: 2, pb: 1 }}>
         <DialogTitle
           sx={{

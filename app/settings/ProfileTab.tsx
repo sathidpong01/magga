@@ -73,7 +73,9 @@ export default function ProfileTab({ user }: Props) {
       <Paper sx={{ p: 3, bgcolor: "#171717", border: "1px solid rgba(255,255,255,0.1)" }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 4 }}>
           <PersonIcon sx={{ color: "#fbbf24", fontSize: 28 }} />
-          <Typography variant="h6" fontWeight="bold">
+          <Typography variant="h6" sx={{
+            fontWeight: "bold"
+          }}>
             Profile Information
           </Typography>
         </Box>
@@ -90,7 +92,9 @@ export default function ProfileTab({ user }: Props) {
             alt={formData.name}
             sx={{ width: 100, height: 100, mb: 2, border: "2px solid #fbbf24" }}
           />
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" sx={{
+            color: "text.secondary"
+          }}>
             Avatar is managing by Gravatar or Google
           </Typography>
         </Box>

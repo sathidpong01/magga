@@ -342,12 +342,14 @@ export default function MangaDataTable({
             width: 300,
             ...inputSx,
           }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon sx={{ color: "#a3a3a3", fontSize: 20 }} />
-              </InputAdornment>
-            ),
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: "#a3a3a3", fontSize: 20 }} />
+                </InputAdornment>
+              ),
+            }
           }}
         />
         <Box sx={{ color: "#a3a3a3", fontSize: "0.875rem" }}>
@@ -382,11 +384,13 @@ export default function MangaDataTable({
                     selected.length === filteredMangas.length
                   }
                   onChange={handleSelectAll}
-                  inputProps={{ "aria-label": "เลือกมังงะทั้งหมด" }}
                   sx={{ 
                     color: "#525252",
                     "&.Mui-checked": { color: "#FABF06" },
                     "&.MuiCheckbox-indeterminate": { color: "#FABF06" }
+                  }}
+                  slotProps={{
+                    input: { "aria-label": "เลือกมังงะทั้งหมด" }
                   }}
                 />
               </TableCell>
@@ -494,9 +498,10 @@ export default function MangaDataTable({
                   <Stack
                     direction="row"
                     spacing={0.5}
-                    flexWrap="wrap"
-                    gap={0.5}
-                  >
+                    sx={{
+                      flexWrap: "wrap",
+                      gap: 0.5
+                    }}>
                     {manga.tags.slice(0, 3).map((tag) => (
                       <Chip
                         key={tag.id}
@@ -549,7 +554,9 @@ export default function MangaDataTable({
                   <Stack
                     direction="row"
                     spacing={0.5}
-                    justifyContent="flex-end"
+                    sx={{
+                      justifyContent: "flex-end"
+                    }}
                   >
                     <Tooltip title="ตั้งค่า">
                       <IconButton
@@ -656,9 +663,11 @@ export default function MangaDataTable({
         onClose={() => setSettingsOpen(false)}
         maxWidth="sm"
         fullWidth
-        PaperProps={{
-          sx: {
-            ...surfaceSx,
+        slotProps={{
+          paper: {
+            sx: {
+              ...surfaceSx,
+            }
           }
         }}
       >

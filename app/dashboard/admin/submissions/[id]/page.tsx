@@ -321,9 +321,10 @@ export default function SubmissionDetailPage({
             <Stack
               direction="row"
               spacing={2}
-              alignItems="center"
-              sx={{ mb: 2 }}
-            >
+              sx={{
+                alignItems: "center",
+                mb: 2
+              }}>
                 label={submission.status}
                 sx={{ 
                   fontWeight: 900, 
@@ -366,7 +367,9 @@ export default function SubmissionDetailPage({
             </Stack>
 
             {/* Quick Info Pills */}
-            <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+            <Stack direction="row" spacing={1} useFlexGap sx={{
+              flexWrap: "wrap"
+            }}>
               <Chip
                 icon={<ImageIcon />}
                 label={`${pages.length} หน้า`}
@@ -501,9 +504,11 @@ export default function SubmissionDetailPage({
                     setEditForm({ ...editForm, title: e.target.value })
                   }
                   variant="filled"
-                  InputProps={{
-                    disableUnderline: true,
-                    sx: { borderRadius: 1 },
+                  slotProps={{
+                    input: {
+                      disableUnderline: true,
+                      sx: { borderRadius: 1 },
+                    }
                   }}
                 />
                 <TextField
@@ -514,9 +519,11 @@ export default function SubmissionDetailPage({
                     setEditForm({ ...editForm, slug: e.target.value })
                   }
                   variant="filled"
-                  InputProps={{
-                    disableUnderline: true,
-                    sx: { borderRadius: 1 },
+                  slotProps={{
+                    input: {
+                      disableUnderline: true,
+                      sx: { borderRadius: 1 },
+                    }
                   }}
                 />
                 <TextField
@@ -529,9 +536,11 @@ export default function SubmissionDetailPage({
                     setEditForm({ ...editForm, description: e.target.value })
                   }
                   variant="filled"
-                  InputProps={{
-                    disableUnderline: true,
-                    sx: { borderRadius: 1 },
+                  slotProps={{
+                    input: {
+                      disableUnderline: true,
+                      sx: { borderRadius: 1 },
+                    }
                   }}
                 />
                 <Grid container spacing={2}>
@@ -577,10 +586,14 @@ export default function SubmissionDetailPage({
                           {...params}
                           label="แท็ก"
                           variant="filled"
-                          InputProps={{
-                            ...params.InputProps,
-                            disableUnderline: true,
-                            sx: { borderRadius: 1 },
+                          slotProps={{
+                            ...params.slotProps,
+
+                            input: {
+                              ...params.slotProps.input,
+                              disableUnderline: true,
+                              sx: { borderRadius: 1 },
+                            }
                           }}
                         />
                       )}
@@ -712,7 +725,9 @@ export default function SubmissionDetailPage({
                       textAlign: "center",
                     }}
                   >
-                    <Typography variant="caption" fontWeight={600}>
+                    <Typography variant="caption" sx={{
+                      fontWeight: 600
+                    }}>
                       {idx + 1}
                     </Typography>
                   </Box>
@@ -769,12 +784,16 @@ export default function SubmissionDetailPage({
                 }}
               />
               <Box>
-                <Typography variant="subtitle1" fontWeight={600}>
+                <Typography variant="subtitle1" sx={{
+                  fontWeight: 600
+                }}>
                   {submission.user.name ||
                     submission.user.username ||
                     "ไม่ระบุชื่อ"}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" sx={{
+                  color: "text.secondary"
+                }}>
                   {submission.user.email}
                 </Typography>
               </Box>
@@ -857,7 +876,9 @@ export default function SubmissionDetailPage({
         open={!!previewImage}
         onClose={() => setPreviewImage(null)}
         maxWidth="lg"
-        PaperProps={{ sx: { bgcolor: "transparent", boxShadow: "none" } }}
+        slotProps={{
+          paper: { sx: { bgcolor: "transparent", boxShadow: "none" } }
+        }}
       >
         <Box onClick={() => setPreviewImage(null)} sx={{ cursor: "pointer" }}>
           {previewImage && (
@@ -879,13 +900,15 @@ export default function SubmissionDetailPage({
         onClose={() => setApproveOpen(false)}
         maxWidth="sm"
         fullWidth
-        PaperProps={{ 
-          sx: { 
-            bgcolor: "#141414", 
-            borderRadius: 1.25,
-            backgroundImage: "none",
-            border: "1px solid rgba(255,255,255,0.06)"
-          } 
+        slotProps={{
+          paper: {
+            sx: {
+              bgcolor: "#141414",
+              borderRadius: 1.25,
+              backgroundImage: "none",
+              border: "1px solid rgba(255,255,255,0.06)"
+            }
+          }
         }}
       >
         <DialogTitle sx={{ fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "1rem", color: "#fafafa" }}>
@@ -920,7 +943,9 @@ export default function SubmissionDetailPage({
             onChange={(e) => setReviewNote(e.target.value)}
             sx={{ mt: 2 }}
             variant="filled"
-            InputProps={{ disableUnderline: true, sx: { borderRadius: 1 } }}
+            slotProps={{
+              input: { disableUnderline: true, sx: { borderRadius: 1 } }
+            }}
           />
         </DialogContent>
         <DialogActions sx={{ p: 2.5, bgcolor: "rgba(0,0,0,0.2)" }}>
@@ -960,13 +985,15 @@ export default function SubmissionDetailPage({
         onClose={() => setRejectOpen(false)}
         maxWidth="sm"
         fullWidth
-        PaperProps={{ 
-          sx: { 
-            bgcolor: "#141414", 
-            borderRadius: 1.25,
-            backgroundImage: "none",
-            border: "1px solid rgba(255,255,255,0.06)"
-          } 
+        slotProps={{
+          paper: {
+            sx: {
+              bgcolor: "#141414",
+              borderRadius: 1.25,
+              backgroundImage: "none",
+              border: "1px solid rgba(255,255,255,0.06)"
+            }
+          }
         }}
       >
         <DialogTitle sx={{ fontWeight: 900, textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "1rem", color: "#fafafa" }}>
@@ -988,8 +1015,10 @@ export default function SubmissionDetailPage({
             value={rejectionReason}
             onChange={(e) => setRejectionReason(e.target.value)}
             variant="filled"
-            InputProps={{ disableUnderline: true, sx: { borderRadius: 1, bgcolor: "#0B0B0B", fontWeight: 600 } }}
             placeholder="e.g. Blur image, inappropriate content..."
+            slotProps={{
+              input: { disableUnderline: true, sx: { borderRadius: 1, bgcolor: "#0B0B0B", fontWeight: 600 } }
+            }}
           />
           <TextField
             label="INTERNAL NOTE (OPTIONAL)"
@@ -1000,7 +1029,9 @@ export default function SubmissionDetailPage({
             onChange={(e) => setReviewNote(e.target.value)}
             sx={{ mt: 2 }}
             variant="filled"
-            InputProps={{ disableUnderline: true, sx: { borderRadius: 1, bgcolor: "#0B0B0B", fontWeight: 600 } }}
+            slotProps={{
+              input: { disableUnderline: true, sx: { borderRadius: 1, bgcolor: "#0B0B0B", fontWeight: 600 } }
+            }}
           />
         </DialogContent>
         <DialogActions sx={{ p: 2.5, bgcolor: "rgba(0,0,0,0.2)" }}>

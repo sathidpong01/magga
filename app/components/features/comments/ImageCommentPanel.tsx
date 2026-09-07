@@ -10,7 +10,7 @@ import {
   Divider,
   CircularProgress,
 } from "@mui/material";
-import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
+import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutlined";
 import CloseIcon from "@mui/icons-material/Close";
 import CommentBox from "./CommentBox";
 import CommentList from "./CommentList";
@@ -146,12 +146,15 @@ export default function ImageCommentPanel({
         <Box sx={{ p: 1.5, flexShrink: 0 }}>
           <Typography
             variant="subtitle2"
-            fontWeight={600}
-            sx={{ color: "white" }}
-          >
+            sx={{
+              fontWeight: 600,
+              color: "white"
+            }}>
             {pageLabel}
           </Typography>
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" sx={{
+            color: "text.secondary"
+          }}>
             {commentCount} ความคิดเห็น
           </Typography>
         </Box>
@@ -226,13 +229,15 @@ export default function ImageCommentPanel({
           anchor="right"
           open={isMobileOpen}
           onClose={() => setIsMobileOpen(false)}
-          PaperProps={{
-            sx: {
-              width: "100%",
-              maxWidth: 380,
-              bgcolor: "#0f0f0f",
-              color: "white",
-            },
+          slotProps={{
+            paper: {
+              sx: {
+                width: "100%",
+                maxWidth: 380,
+                bgcolor: "#0f0f0f",
+                color: "white",
+              },
+            }
           }}
         >
           <Box
@@ -245,10 +250,14 @@ export default function ImageCommentPanel({
             }}
           >
             <Box>
-              <Typography variant="h6" fontWeight={600}>
+              <Typography variant="h6" sx={{
+                fontWeight: 600
+              }}>
                 ความคิดเห็น
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{
+                color: "text.secondary"
+              }}>
                 {pageLabel} • {commentCount} ความคิดเห็น
               </Typography>
             </Box>

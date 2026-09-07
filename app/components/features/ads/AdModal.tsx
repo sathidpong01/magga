@@ -55,13 +55,15 @@ export default function AdModal({ ad }: AdModalProps) {
       open={open}
       onClose={handleClose}
       maxWidth="sm"
-      PaperProps={{
-        sx: {
-          bgcolor: "transparent",
-          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
-          overflow: "hidden",
-          borderRadius: 1,
-        },
+      slotProps={{
+        paper: {
+          sx: {
+            bgcolor: "transparent",
+            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+            overflow: "hidden",
+            borderRadius: 1,
+          },
+        }
       }}
     >
       <IconButton

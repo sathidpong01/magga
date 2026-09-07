@@ -187,7 +187,6 @@ export default function MetadataManager({
             setActiveTab(newValue);
             setSearch("");
           }}
-          TabIndicatorProps={{ sx: { bgcolor: "#FABF06" } }}
           sx={{
             mb: 3,
             borderBottom: "1px solid rgba(255,255,255,0.06)",
@@ -202,6 +201,9 @@ export default function MetadataManager({
             "& .Mui-selected": {
               color: "#FABF06 !important",
             },
+          }}
+          slotProps={{
+            indicator: { sx: { bgcolor: "#FABF06" } }
           }}
         >
           <Tab
@@ -231,12 +233,14 @@ export default function MetadataManager({
               "&.Mui-focused fieldset": { borderColor: "#FABF06" },
             },
           }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon sx={{ color: "#a3a3a3", fontSize: 20 }} />
-              </InputAdornment>
-            ),
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: "#a3a3a3", fontSize: 20 }} />
+                </InputAdornment>
+              ),
+            }
           }}
         />
 
@@ -244,10 +248,11 @@ export default function MetadataManager({
         <Stack
           direction="row"
           spacing={1}
-          flexWrap="wrap"
-          gap={1}
-          sx={{ mb: 2 }}
-        >
+          sx={{
+            flexWrap: "wrap",
+            gap: 1,
+            mb: 2
+          }}>
           {activeTab === 0
             ? filteredCategories.map((cat) => (
                 <Chip
@@ -347,12 +352,14 @@ export default function MetadataManager({
         }}
         maxWidth="sm"
         fullWidth
-        PaperProps={{
-          sx: {
-            bgcolor: "#0a0a0a",
-            borderRadius: 1,
-            border: "1px solid #262626",
-          },
+        slotProps={{
+          paper: {
+            sx: {
+              bgcolor: "#0a0a0a",
+              borderRadius: 1,
+              border: "1px solid #262626",
+            },
+          }
         }}
       >
         <DialogTitle
@@ -435,12 +442,14 @@ export default function MetadataManager({
         }}
         maxWidth="sm"
         fullWidth
-        PaperProps={{
-          sx: {
-            bgcolor: "#0a0a0a",
-            borderRadius: 1,
-            border: "1px solid #262626",
-          },
+        slotProps={{
+          paper: {
+            sx: {
+              bgcolor: "#0a0a0a",
+              borderRadius: 1,
+              border: "1px solid #262626",
+            },
+          }
         }}
       >
         <DialogContent sx={{ pt: 4, pb: 3, textAlign: "center" }}>

@@ -79,12 +79,14 @@ export default function SessionExpiredNotice() {
       onClose={handleClose}
       maxWidth="xs"
       fullWidth
-      PaperProps={{
-        sx: {
-          bgcolor: "#171717",
-          border: "1px solid rgba(255,255,255,0.1)",
-          borderRadius: 1,
-        },
+      slotProps={{
+        paper: {
+          sx: {
+            bgcolor: "#171717",
+            border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: 1,
+          },
+        }
       }}
     >
       <DialogTitle

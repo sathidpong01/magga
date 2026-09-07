@@ -533,12 +533,14 @@ export default function CollapsibleSidebar({
         <Drawer
           open={mobileOpen}
           onClose={() => setMobileOpen(false)}
-          PaperProps={{
-            sx: {
-              bgcolor: "#141414",
-              width: EXPANDED_WIDTH,
-              borderRight: `1px solid ${dashboardTokens.border}`,
-            },
+          slotProps={{
+            paper: {
+              sx: {
+                bgcolor: "#141414",
+                width: EXPANDED_WIDTH,
+                borderRight: `1px solid ${dashboardTokens.border}`,
+              },
+            }
           }}
         >
           {sidebarContent}
