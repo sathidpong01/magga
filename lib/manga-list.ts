@@ -137,7 +137,7 @@ export const getMangasByTagName = unstable_cache(
       mangas: await attachTagsToMangaRows(rows),
     };
   },
-  ["manga-list-by-tag"],
+  ["manga-list-by-tag-v2"],
   { revalidate: 3600, tags: ["manga-list"] }
 );
 
