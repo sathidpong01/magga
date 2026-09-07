@@ -103,7 +103,7 @@ export const getMangasByCategoryName = unstable_cache(
 export const getMangasByTagName = unstable_cache(
   async (tagName: string) => {
     const rows = await db
-      .selectDistinct({
+      .select({
         ...mangaCardColumns,
         categoryName: categoriesTable.name,
       })
