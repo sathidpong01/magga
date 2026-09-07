@@ -25,16 +25,17 @@ type Props = {
 // ISR: Revalidate every 1 hour
 export const revalidate = 3600;
 
-// Cache categories for 5 minutes
+// Metadata changes infrequently; align its cache lifetime with the page ISR
+// to avoid unnecessary Supabase reconnects on the Hobby/Free tiers.
 const getCategories = unstable_cache(
   async () => {
     return db.query.categories.findMany({ orderBy: [asc(categoriesTable.name)] });
   },
   ["categories"],
-  { revalidate: 300, tags: ["categories"] }
+  { revalidate: 3600, tags: ["categories"] }
 );
 
-// Cache tags for 5 minutes
+// Cache tags for 1 hour
 const getTags = unstable_cache(
   async () => {
     // Tags that are used in at least one manga
@@ -47,10 +48,10 @@ const getTags = unstable_cache(
     });
   },
   ["tags"],
-  { revalidate: 300, tags: ["tags"] }
+  { revalidate: 3600, tags: ["tags"] }
 );
 
-// Cache grid ads for 5 minutes
+// Cache grid ads for 1 hour
 const getGridAds = unstable_cache(
   async () => {
     return db.query.advertisements.findMany({
@@ -67,7 +68,7 @@ const getGridAds = unstable_cache(
     });
   },
   ["grid-ads"],
-  { revalidate: 300, tags: ["advertisements"] }
+  { revalidate: 3600, tags: ["advertisements"] }
 );
 
 export default async function Home({ searchParams }: Props) {
