@@ -159,6 +159,7 @@ export default function Footer() {
                 <Button
                   component={NextLink}
                   href="/auth/signin"
+                  prefetch={false}
                   variant="text"
                   size="small"
                   sx={{

@@ -102,6 +102,7 @@ export default function Header() {
           {/* Logo Section */}
           <Link
             href="/"
+            prefetch={false}
             style={{
               textDecoration: "none",
               display: "flex",
