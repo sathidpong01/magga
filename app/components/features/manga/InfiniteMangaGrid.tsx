@@ -7,6 +7,7 @@ import MangaCard, { MangaWithDetails } from "./MangaCard";
 import { AdCard } from "@/app/components/features/ads";
 import EmptyState from "@/app/components/ui/EmptyState";
 import { useSession } from "@/lib/auth-client";
+import { maggaColors } from "@/lib/design-tokens";
 
 interface Ad {
   id: string;
