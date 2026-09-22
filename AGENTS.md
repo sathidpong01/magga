@@ -24,6 +24,39 @@ Every agent change must update the project version before completion.
 - Run focused validation after changes. Use `npm run lint` and `npm test` when feasible; add `npm run build` for release-sensitive or framework/package updates.
 - For dependency updates, run `npm outdated --json` after installation and report any remaining audit risk separately from outdated packages.
 
+## Design System & Theme Guidelines
+
+All frontend pages, components, and modifications MUST strictly comply with Magga's design system:
+
+1. **No Purple Policy (ห้ามใช้สีม่วงโดยเด็ดขาด)**:
+   - Do NOT use purple or violet colors (`#8b5cf6`, `#7c3aed`, `#a78bfa`, `rgba(139, 92, 246, ...)`, `fandomViolet`, or any purple class/token).
+   - The primary brand color is **Archive Gold** (`#d97706` / hover `#f59e0b`).
+
+2. **Single Source of Truth (`lib/design-tokens.ts`)**:
+   - Always import and use tokens from `@/lib/design-tokens` (`maggaColors`, `maggaRadii`, `maggaShadows`):
+     - Background: `maggaColors.background` (`#141416` Charcoal Neutral Dark — not pitch black).
+     - Surface / Cards: `maggaColors.surface` (`#1e1e22` Charcoal Surface).
+     - Elevated Surface: `maggaColors.surfaceElevated` (`#26262c`).
+     - Accent Gold: `maggaColors.archiveGold` (`#d97706`) / `archiveGoldHover` (`#f59e0b`) / `archiveGoldSoft` (`rgba(217, 119, 6, 0.15)`).
+     - Text: `maggaColors.textPrimary` (`#f4f4f5`), `textSecondary` (`#a1a1aa`), `textMuted` (`#71717a`).
+     - Borders: `maggaColors.border` (`rgba(255, 255, 255, 0.08)`).
+
+3. **Manga Card & Grid Standard (Tailspace 3:4 Anatomy)**:
+   - Cover Aspect Ratio: **3:4 aspect ratio** with `10px` border radius (`maggaRadii.card`).
+   - Category Badge: Positioned at top-right of cover image with frosted glass (`backdropFilter: "blur(8px)"`, height `28px`, fontSize `0.8rem`, `fontWeight: 600`).
+   - Title: Located **below** the cover image, strictly **1 line** (`whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"`).
+   - Author: Located **below** the title, strictly **1 line**, clickable filter linking to `/?author=${encodeURIComponent(authorName)}`.
+   - Stats row: Located below author with rating ⭐, views 👁️, and comments.
+
+4. **Author Header Card (สไตล์ Tailspace)**:
+   - Breadcrumbs: `หน้าแรก > ผู้แต่ง > [ชื่อผู้แต่ง]` at the top.
+   - Hero card in `#17181c` with large bold title (`variant="h1"`), status pill badge, comics count, clear filter button ("แสดงผลงานทั้งหมด"), and platform-branded social link pills (Patreon, X, Telegram, Pixiv, Website).
+
+5. **Layout Shift (CLS) Prevention**:
+   - Always specify fixed dimensions or `minHeight` on dynamic content containers (e.g. title/author boxes, search bars).
+   - Always wrap floating/fixed widgets (e.g. Cookie Consent) in MUI's `<Portal>` to isolate them from document layout flow.
+   - Skeletons must precisely match the rendered component's dimensions.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

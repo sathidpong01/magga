@@ -133,7 +133,10 @@ Creating new API endpoint?
 - [ ] Responsive design (mobile, tablet, desktop)
 - [ ] Loading states with skeletons
 - [ ] Error boundaries for error handling
-- [ ] Consistent styling with MUI theme
+- [ ] Consistent styling with MUI theme and `maggaColors` from `@/lib/design-tokens`
+- [ ] **Strict No Purple Policy**: No `#8b5cf6`, `#7c3aed`, or purple tints; use Archive Gold (`#d97706` / `#f59e0b`)
+- [ ] Manga cards use 3:4 aspect ratio, frosted glass category badge, 1-line title, and 1-line author
+- [ ] Refer to `DESIGN_SYSTEM.md` for full component specifications
 - [ ] Form validation with helpful error messages
 
 ### ✅ Performance
