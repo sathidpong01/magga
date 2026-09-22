@@ -28,6 +28,12 @@ _Avoid_: auth middleware, session checker, permission service
 The verified identity and authorization state of the actor initiating a request or server action.
 _Avoid_: user context, current user, session wrapper
 
+### Security & Integrity
+
+**Content Sanitization**:
+The module responsible for escaping untrusted user input, scrubbing rich HTML, cleaning storage path segments, and redacting sensitive data from outgoing responses.
+_Avoid_: string cleaner, filter utility, XSS scrubber
+
 ### Content & Publishing
 
 **Manga**:

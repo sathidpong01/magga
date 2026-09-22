@@ -4,6 +4,7 @@ import {
   buildPostRegistrationSignInUrl,
   finalizeEmailRegistration,
 } from "@/lib/register-flow";
+import { sanitizeContent } from "@/lib/sanitize";
 
 describe("isValidCallbackUrl", () => {
   it("returns / for null input", () => {
@@ -42,21 +43,9 @@ describe("isValidCallbackUrl", () => {
 });
 
 describe("sanitizeContent", () => {
-  // We need to test the sanitizeContent function from comments.ts
-  // Since it's not exported, we'll test the logic inline
-  function sanitizeContent(content: string): string {
-    return content
-      .trim()
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#x27;");
-  }
-
   it("escapes HTML angle brackets", () => {
     expect(sanitizeContent("<script>alert(1)</script>")).toBe(
-      "&lt;script&gt;alert(1)&lt;/script&gt;"
+      "&lt;script&gt;alert(1)&lt;&#x2F;script&gt;"
     );
   });
 

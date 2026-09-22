@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { sanitizeResponse } from "../lib/api-sanitization";
 import {
   sanitizeFilename,
   sanitizeHtml,
   sanitizeInput,
+  sanitizeText,
+  sanitizePathSegment,
+  sanitizeResponse,
 } from "../lib/sanitize";
 import { validatePassword } from "../lib/password-validation";
 
@@ -19,7 +21,18 @@ describe("sanitize helpers", () => {
     expect(sanitizeFilename("../my cover 01?.jpg")).toBe("my_cover_01_.jpg");
   });
 
-  it("removes sensitive fields recursively", () => {
+  it("escapes ampersands and special characters in sanitizeText", () => {
+    expect(sanitizeText("Tom & Jerry <friends> 'cool' / \"cartoons\"")).toBe(
+      "Tom &amp; Jerry &lt;friends&gt; &#x27;cool&#x27; &#x2F; &quot;cartoons&quot;"
+    );
+  });
+
+  it("normalizes path and key segments safely", () => {
+    expect(sanitizePathSegment("  my-manga/chapter_01!!  ")).toBe("my-manga-chapter_01");
+    expect(sanitizePathSegment("", "fallback-id")).toBe("fallback-id");
+  });
+
+  it("removes sensitive fields recursively in sanitizeResponse", () => {
     expect(
       sanitizeResponse({
         id: "1",

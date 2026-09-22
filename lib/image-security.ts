@@ -100,15 +100,7 @@ export function detectImageFormat(buffer: Buffer): SupportedImageFormat | null {
   return null;
 }
 
-export function sanitizeObjectKeySegment(value: string, fallback = "default") {
-  const normalized = value
-    .trim()
-    .replace(/[^a-zA-Z0-9_-]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-
-  return normalized || fallback;
-}
+export { sanitizeObjectKeySegment } from "./sanitize";
 
 export async function readValidatedImageFile(
   file: File,

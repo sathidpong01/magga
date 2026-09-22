@@ -9,6 +9,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { headers } from "next/headers";
 import { isAdminRole, isUserBanned } from "@/lib/auth-helpers";
+import { sanitizeContent } from "@/lib/sanitize";
 
 const BANNED_ERROR = "บัญชีของคุณถูกระงับการใช้งาน";
 
@@ -45,16 +46,6 @@ const UpdateCommentSchema = z.object({
 // ============================================================================
 // Helper Functions
 // ============================================================================
-
-function sanitizeContent(content: string): string {
-  return content
-    .trim()
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#x27;");
-}
 
 async function getMangaSlug(mangaId: string): Promise<string | null> {
   const [manga] = await db
