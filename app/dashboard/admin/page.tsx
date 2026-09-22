@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import { isAdminRole } from "@/lib/session-utils";
+import { isAdminRole } from "@/lib/auth-helpers";
 import { db } from "@/db";
 import {
   manga as mangaTable,

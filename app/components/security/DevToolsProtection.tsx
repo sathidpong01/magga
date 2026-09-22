@@ -1,9 +1,9 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
-import { isAdminRole } from "@/lib/session-utils";
+import { isAdminRole } from "@/lib/auth-client";
 import { Box, Typography, Button, Paper } from "@mui/material";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import HomeIcon from "@mui/icons-material/Home";

@@ -18,6 +18,16 @@ _Avoid_: upload type, file category
 An adapter satisfying the storage seam to persist and retrieve media objects across different storage backends.
 _Avoid_: S3 client, storage driver
 
+### Identity & Authorization
+
+**Auth Intake**:
+The module responsible for validating incoming requests or sessions, verifying banned status, enforcing roles, and presenting an authorized caller context.
+_Avoid_: auth middleware, session checker, permission service
+
+**Caller Context**:
+The verified identity and authorization state of the actor initiating a request or server action.
+_Avoid_: user context, current user, session wrapper
+
 ### Content & Publishing
 
 **Manga**:

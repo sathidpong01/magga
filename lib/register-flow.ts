@@ -1,4 +1,4 @@
-import { isValidCallbackUrl } from "@/lib/auth-helpers";
+import { isValidCallbackUrl } from "@/lib/auth-client";
 
 type SignInEmail = (input: {
   email: string;

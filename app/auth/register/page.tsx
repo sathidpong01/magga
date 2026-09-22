@@ -6,7 +6,7 @@ import {
   signUp,
   syncClientSession,
 } from "@/lib/auth-client";
-import { isValidCallbackUrl } from "@/lib/auth-helpers";
+import { isValidCallbackUrl } from "@/lib/auth-client";
 import { finalizeEmailRegistration } from "@/lib/register-flow";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";

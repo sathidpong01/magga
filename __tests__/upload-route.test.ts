@@ -1,28 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  getSession: vi.fn(),
+  authenticateRequest: vi.fn(),
   checkRateLimit: vi.fn(),
-  isUserBanned: vi.fn(),
-  isAdminRole: vi.fn(),
   storeAssets: vi.fn(),
 }));
 
-vi.mock("@/lib/auth", () => ({
-  auth: {
-    api: {
-      getSession: mocks.getSession,
-    },
-  },
+vi.mock("@/lib/auth-helpers", () => ({
+  authenticateRequest: mocks.authenticateRequest,
 }));
 
 vi.mock("@/lib/rate-limit", () => ({
   checkRateLimit: mocks.checkRateLimit,
-}));
-
-vi.mock("@/lib/session-utils", () => ({
-  isUserBanned: mocks.isUserBanned,
-  isAdminRole: mocks.isAdminRole,
 }));
 
 vi.mock("@/lib/storage", () => ({
@@ -35,12 +24,13 @@ describe("POST /api/upload", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    mocks.getSession.mockResolvedValue({
-      user: { id: "user-1", email: "user@example.com" },
+    mocks.authenticateRequest.mockResolvedValue({
+      ok: true,
+      caller: {
+        user: { id: "user-1", email: "user@example.com", role: "user" },
+      },
     });
     mocks.checkRateLimit.mockResolvedValue({ allowed: true });
-    mocks.isUserBanned.mockReturnValue(false);
-    mocks.isAdminRole.mockReturnValue(false);
     mocks.storeAssets.mockResolvedValue([
       {
         url: "https://cdn.example.com/page.png",

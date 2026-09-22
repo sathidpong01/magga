@@ -8,7 +8,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { headers } from "next/headers";
-import { isAdminRole, isUserBanned } from "@/lib/session-utils";
+import { isAdminRole, isUserBanned } from "@/lib/auth-helpers";
 
 const BANNED_ERROR = "บัญชีของคุณถูกระงับการใช้งาน";
 

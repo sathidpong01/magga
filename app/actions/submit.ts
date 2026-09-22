@@ -7,7 +7,7 @@ import { manga as mangaTable, mangaSubmissions as submissionsTable, mangaSubmiss
 import { eq, sql, ilike } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { isUserBanned } from "@/lib/session-utils";
+import { isUserBanned } from "@/lib/auth-helpers";
 
 // ============================================================================
 // Schema Definitions

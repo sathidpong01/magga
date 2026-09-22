@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { mangaSubmissions as submissionsTable, mangaSubmissionTags as submissionTagsTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import { isUserBanned } from "@/lib/session-utils";
+import { isUserBanned } from "@/lib/auth-helpers";
 import { z } from "zod";
 import { extractMangaPageUrls } from "@/lib/manga-pages";
 

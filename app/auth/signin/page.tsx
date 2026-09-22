@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Box, CircularProgress } from "@mui/material";
-import { isValidCallbackUrl } from "@/lib/auth-helpers";
+import { isValidCallbackUrl } from "@/lib/auth-client";
 import AuthModal from "@/app/components/features/auth/AuthModal";
 
 function SignInModal() {

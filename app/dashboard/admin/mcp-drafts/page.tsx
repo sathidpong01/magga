@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/db';
 import { draftFilters, readAdminDrafts } from '@/lib/mcp/admin-read';
-import { isAdminRole } from '@/lib/session-utils';
+import { isAdminRole } from "@/lib/auth-helpers";
 import { publicReference } from '@/lib/mcp/drafts';
 import styles from './page.module.css';
 import RefreshButton from './RefreshButton';

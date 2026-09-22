@@ -1,10 +1,10 @@
-﻿"use client";
+"use client";
 
 import CollapsibleSidebar, {
   SidebarItem,
 } from "@/app/components/layout/CollapsibleSidebar";
 import { useSession } from "@/lib/auth-client";
-import { isAdminRole, isUserBanned } from "@/lib/session-utils";
+import { isAdminRole, isUserBanned } from "@/lib/auth-client";
 import AddBoxIcon from "@mui/icons-material/AddBox";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import HomeIcon from "@mui/icons-material/Home";

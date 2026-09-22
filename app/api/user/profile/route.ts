@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { isUserBanned } from "@/lib/session-utils";
+import { isUserBanned } from "@/lib/auth-helpers";
 import { db } from "@/db";
 import { profiles as usersTable } from "@/db/schema";
 import { eq, or, and, ne } from "drizzle-orm";

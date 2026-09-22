@@ -1,28 +1,20 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { storeAssets } from "@/lib/storage";
-import { isUserBanned, isAdminRole } from "@/lib/session-utils";
+import { authenticateRequest } from "@/lib/auth-helpers";
 
 export async function POST(request: Request) {
-  const session = await auth.api.getSession({ headers: request.headers });
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  if (isUserBanned(session)) {
-    return NextResponse.json({ error: "บัญชีของคุณถูกระงับการใช้งาน" }, { status: 403 });
-  }
+  const auth = await authenticateRequest(request);
+  if (!auth.ok) return auth.response;
+  const { caller } = auth;
 
   // A chapter can contain roughly 140 pages; leave room for multiple chapters, covers, and retries.
   // Admins get a higher limit for batch publishing.
   // This is a write-side abuse guard only and does not affect image readers.
-  const userId =
-    (session.user as { id?: string })?.id || session.user?.email || "unknown";
-  const isAdmin = isAdminRole(session);
+  const isAdmin = caller.user.role === "admin";
   const maxUploads = isAdmin ? 1000 : 500;
   const limitCheck = await checkRateLimit(
-    `upload:${userId}`,
+    `upload:${caller.user.id}`,
     maxUploads,
     60 * 60 * 1000 // per 1 hour
   );

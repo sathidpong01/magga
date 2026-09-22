@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/db';
-import { isAdminRole } from '@/lib/session-utils';
+import { isAdminRole } from "@/lib/auth-helpers";
 import { createBrowserReviewService } from '@/lib/mcp/review';
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { approvalSelection } from '@/lib/mcp/approval-selection';

@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "@/lib/auth-client";
-import { isUserBanned } from "@/lib/session-utils";
+import { useSession, isUserBanned } from "@/lib/auth-client";
 import {
   Box,
   Grid,

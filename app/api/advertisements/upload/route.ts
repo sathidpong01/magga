@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { requireAdmin } from "@/lib/auth-helpers";
+import { authenticateRequest } from "@/lib/auth-helpers";
 import { storeAsset } from "@/lib/storage";
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth.api.getSession({ headers: request.headers });
-
-    const authError = requireAdmin(session);
-    if (authError) return authError;
+    const auth = await authenticateRequest(request, { role: "admin" });
+    if (!auth.ok) return auth.response;
 
     const formData = await request.formData();
     const file = formData.get("file") as File | null;

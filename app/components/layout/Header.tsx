@@ -20,7 +20,7 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { useSession, signOutAndSync } from "@/lib/auth-client";
-import { isAdminRole, isUserBanned } from "@/lib/session-utils";
+import { isAdminRole, isUserBanned } from "@/lib/auth-client";
 import MenuIcon from "@mui/icons-material/Menu";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
