@@ -26,9 +26,9 @@ export default function DashboardLayout({
           sx={{
             flexGrow: 1,
             minWidth: 0,
-            px: { xs: 2.5, sm: 3.5, md: 4, lg: 5 },
-            py: { xs: 3, md: 4.5 },
-            pt: { xs: `${56 + 24}px`, md: 4.5 },
+            px: { xs: 2, sm: 3, md: 3.5, lg: 4 },
+            py: { xs: 2, md: 2.5 },
+            pt: { xs: `${56 + 16}px`, md: 2.5 },
             width: "100%",
           }}
         >

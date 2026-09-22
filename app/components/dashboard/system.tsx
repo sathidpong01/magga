@@ -199,12 +199,14 @@ export function DashboardPageHeader({
   description,
   action,
   children,
+  sx,
 }: {
   eyebrow?: string;
   title: string;
   description?: string;
   action?: HeaderAction;
   children?: React.ReactNode;
+  sx?: SxProps<Theme>;
 }) {
   const actionNode = action ? (
     action.href ? (
@@ -243,21 +245,25 @@ export function DashboardPageHeader({
     <Stack
       direction={{ xs: "column", md: "row" }}
       spacing={2}
-      sx={{
-        justifyContent: "space-between",
-        alignItems: { xs: "flex-start", md: "flex-end" },
-        mb: 4
-      }}>
+      sx={[
+        {
+          justifyContent: "space-between",
+          alignItems: { xs: "flex-start", md: "flex-end" },
+          mb: 3.5,
+        },
+        ...(Array.isArray(sx) ? sx : [sx]),
+      ]}
+    >
       <Box>
         {eyebrow ? (
           <Typography
             sx={{
               color: dashboardTokens.accent,
-              fontSize: "0.8rem",
+              fontSize: "0.78rem",
               fontWeight: 700,
               letterSpacing: "0.06em",
               textTransform: "uppercase",
-              mb: 0.75,
+              mb: 0.5,
             }}
           >
             {eyebrow}
@@ -277,11 +283,11 @@ export function DashboardPageHeader({
         {description ? (
           <Typography
             sx={{
-              mt: 1,
+              mt: 0.75,
               color: dashboardTokens.textMuted,
               maxWidth: 720,
-              fontSize: "0.95rem",
-              lineHeight: 1.6,
+              fontSize: "0.9rem",
+              lineHeight: 1.5,
             }}
           >
             {description}
@@ -329,15 +335,15 @@ export function DashboardSectionTitle({
   description?: string;
 }) {
   return (
-    <Box sx={{ mb: 2.5 }}>
+    <Box sx={{ mb: 2 }}>
       <Typography
         variant="h6"
-        sx={{ color: dashboardTokens.text, fontWeight: 700, mb: 0.5 }}
+        sx={{ color: dashboardTokens.text, fontWeight: 700, mb: 0.25, fontSize: "1.05rem" }}
       >
         {title}
       </Typography>
       {description ? (
-        <Typography sx={{ color: dashboardTokens.textSoft, fontSize: "0.9rem", lineHeight: 1.6 }}>
+        <Typography sx={{ color: dashboardTokens.textSoft, fontSize: "0.85rem", lineHeight: 1.5 }}>
           {description}
         </Typography>
       ) : null}
@@ -350,16 +356,18 @@ export function DashboardStat({
   value,
   icon,
   href,
+  compact = false,
 }: {
   label: string;
   value: string | number;
   icon: React.ReactNode;
   href?: string;
+  compact?: boolean;
 }) {
   const content = (
     <DashboardSurface
       sx={{
-        p: 2.5,
+        p: compact ? 1.5 : 2.5,
         height: "100%",
         display: "flex",
         flexDirection: "column",
@@ -367,9 +375,9 @@ export function DashboardStat({
         transition: "transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
         "&:hover": href
           ? {
-              transform: "translateY(-3px)",
+              transform: "translateY(-2px)",
               borderColor: alpha(dashboardTokens.accent, 0.35),
-              boxShadow: "0 8px 24px -4px rgba(0, 0, 0, 0.4)",
+              boxShadow: "0 6px 20px -4px rgba(0, 0, 0, 0.4)",
             }
           : undefined,
       }}
@@ -379,23 +387,26 @@ export function DashboardStat({
         sx={{
           alignItems: "center",
           justifyContent: "space-between",
-          mb: 1.5,
+          mb: compact ? 0.75 : 1.5,
         }}
       >
         <Typography
           sx={{
             color: dashboardTokens.textMuted,
-            fontSize: "0.85rem",
+            fontSize: compact ? "0.78rem" : "0.85rem",
             fontWeight: 500,
             letterSpacing: "0.01em",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
           }}
         >
           {label}
         </Typography>
         <Box
           sx={{
-            width: 36,
-            height: 36,
+            width: compact ? 30 : 36,
+            height: compact ? 30 : 36,
             borderRadius: dashboardRadii.field,
             display: "flex",
             alignItems: "center",
@@ -403,6 +414,7 @@ export function DashboardStat({
             bgcolor: dashboardTokens.accentSoft,
             color: dashboardTokens.accent,
             flexShrink: 0,
+            "& svg": { fontSize: compact ? 18 : 22 },
           }}
         >
           {icon}
@@ -411,7 +423,7 @@ export function DashboardStat({
       <Typography
         sx={{
           color: dashboardTokens.text,
-          fontSize: { xs: "1.75rem", md: "2rem" },
+          fontSize: compact ? { xs: "1.35rem", md: "1.5rem" } : { xs: "1.75rem", md: "2rem" },
           fontWeight: 700,
           lineHeight: 1.1,
           letterSpacing: "-0.02em",
