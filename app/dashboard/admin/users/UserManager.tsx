@@ -381,9 +381,9 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
         <Chip
           label={`การฝากลง ${totalSubmissions.toLocaleString()}`}
           sx={{
-            bgcolor: "rgba(139,92,246,0.08)",
-            color: "#c4b5fd",
-            border: "1px solid rgba(139,92,246,0.16)",
+            bgcolor: "rgba(217,119,6,0.1)",
+            color: "#fbbf24",
+            border: "1px solid rgba(217,119,6,0.2)",
             fontWeight: 700,
           }}
         />

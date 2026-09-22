@@ -18,7 +18,7 @@ const darkTheme = createTheme({
       paper: maggaColors.charcoalSurface,
     },
     primary: {
-      main: maggaColors.fandomViolet,
+      main: maggaColors.archiveGold,
     },
     secondary: {
       main: maggaColors.trustEmerald,
@@ -71,13 +71,44 @@ const darkTheme = createTheme({
             {
               props: { variant: "contained", color: "primary" },
               style: {
-                boxShadow: "0 4px 14px 0 rgba(139, 92, 246, 0.39)",
+                boxShadow: "none",
                 "&:hover": {
-                  boxShadow: "0 6px 20px rgba(139, 92, 246, 0.23)",
+                  boxShadow: "0 4px 12px rgba(217, 119, 6, 0.3)",
                 },
               },
             },
           ],
+        },
+      },
+    },
+    MuiMenuItem: {
+      styleOverrides: {
+        root: {
+          fontSize: "0.85rem",
+          borderRadius: 6,
+          margin: "2px 6px",
+          transition: "background-color 0.15s ease, color 0.15s ease",
+          "&.Mui-selected": {
+            backgroundColor: "rgba(217, 119, 6, 0.15) !important",
+            color: "#f59e0b",
+            fontWeight: 600,
+            "&:hover": {
+              backgroundColor: "rgba(217, 119, 6, 0.22) !important",
+            },
+          },
+          "&:hover": {
+            backgroundColor: "rgba(255, 255, 255, 0.06)",
+          },
+        },
+      },
+    },
+    MuiMenu: {
+      styleOverrides: {
+        paper: {
+          backgroundColor: "#18181b",
+          border: "1px solid rgba(255, 255, 255, 0.08)",
+          borderRadius: 10,
+          boxShadow: "0 12px 32px rgba(0, 0, 0, 0.5)",
         },
       },
     },

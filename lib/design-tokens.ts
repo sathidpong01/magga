@@ -19,7 +19,7 @@ export const maggaColors = {
   archiveGoldSoft: "rgba(217, 119, 6, 0.15)",
   archiveGoldBorder: "rgba(217, 119, 6, 0.35)",
   adminGold: "#FABF06",
-  fandomViolet: "#8b5cf6",
+  fandomViolet: "#d97706",
   trustEmerald: "#10b981",
   dangerRed: "#ef4444",
 } as const;

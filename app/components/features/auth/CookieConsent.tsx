@@ -90,16 +90,18 @@ export default function CookieConsent() {
             variant="contained"
             onClick={handleAccept}
             sx={{
-              bgcolor: "#fbbf24",
+              bgcolor: "#f59e0b",
               color: "#000",
               fontWeight: 600,
               fontSize: "0.75rem",
               px: 2,
               py: 0.5,
               minHeight: 28,
-              borderRadius: 0.5,
+              borderRadius: "6px",
+              boxShadow: "none",
               "&:hover": {
-                bgcolor: "#f59e0b",
+                bgcolor: "#d97706",
+                boxShadow: "none",
               },
             }}
           >

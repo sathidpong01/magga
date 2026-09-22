@@ -116,8 +116,12 @@ export default function SessionExpiredNotice() {
           variant="contained"
           size="small"
           sx={{
-            bgcolor: "#8b5cf6",
-            "&:hover": { bgcolor: "#7c3aed" },
+            bgcolor: "#f59e0b",
+            color: "#000",
+            fontWeight: 600,
+            borderRadius: "6px",
+            boxShadow: "none",
+            "&:hover": { bgcolor: "#d97706", boxShadow: "none" },
           }}
         >
           เข้าสู่ระบบ

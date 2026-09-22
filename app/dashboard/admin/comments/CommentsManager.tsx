@@ -378,7 +378,7 @@ export default function CommentsManager({
                   selected={selected.includes(comment.id)}
                   sx={{
                     "&:hover": { bgcolor: "rgba(255,255,255,0.02)" },
-                    "&.Mui-selected": { bgcolor: "rgba(139, 92, 246, 0.1)" },
+                    "&.Mui-selected": { bgcolor: "rgba(217, 119, 6, 0.12)" },
                   }}
                 >
                   <TableCell
@@ -422,10 +422,10 @@ export default function CommentsManager({
                           fontWeight: 900,
                           letterSpacing: "0",
                           borderRadius: 0.75,
-                          bgcolor: "rgba(139, 92, 246, 0.15)",
-                          color: "#a78bfa",
+                          bgcolor: "rgba(217, 119, 6, 0.15)",
+                          color: "#f59e0b",
                           fontSize: "0.65rem",
-                          border: "1px solid rgba(139, 92, 246, 0.1)",
+                          border: "1px solid rgba(217, 119, 6, 0.2)",
                         }}
                       />
                     )}
@@ -482,7 +482,7 @@ export default function CommentsManager({
                       href={`/${comment.manga.slug || comment.manga.id}`}
                       target="_blank"
                       style={{
-                        color: "#8b5cf6",
+                        color: "#f59e0b",
                         textDecoration: "none",
                         fontSize: "0.8rem",
                       }}

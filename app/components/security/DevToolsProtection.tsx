@@ -243,8 +243,8 @@ export default function DevToolsProtection() {
           width: "100%",
           p: 4,
           borderRadius: 3,
-          bgcolor: "#1e1e2e",
-          border: "1px solid rgba(139, 92, 246, 0.3)",
+          bgcolor: "#1e1e22",
+          border: "1px solid rgba(217, 119, 6, 0.3)",
           boxShadow: "0 20px 60px rgba(0, 0, 0, 0.5)",
           textAlign: "center",
         }}
@@ -255,7 +255,7 @@ export default function DevToolsProtection() {
             width: 80,
             height: 80,
             borderRadius: "50%",
-            bgcolor: "rgba(139, 92, 246, 0.15)",
+            bgcolor: "rgba(245, 158, 11, 0.15)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -263,7 +263,7 @@ export default function DevToolsProtection() {
             mb: 3,
           }}
         >
-          <WarningAmberIcon sx={{ fontSize: 48, color: "#a78bfa" }} />
+          <WarningAmberIcon sx={{ fontSize: 48, color: "#f59e0b" }} />
         </Box>
 
         {/* Title */}
@@ -271,7 +271,7 @@ export default function DevToolsProtection() {
           variant="h4"
           sx={{
             fontWeight: "bold",
-            color: "#a78bfa",
+            color: "#fbbf24",
             mb: 1
           }}>
           การเข้าถึงถูกปฏิเสธ
@@ -299,7 +299,7 @@ export default function DevToolsProtection() {
             <Typography
               variant="subtitle2"
               sx={{
-                color: "#a78bfa",
+                color: "#f59e0b",
                 mb: 2,
                 display: "flex",
                 alignItems: "center",
@@ -339,14 +339,16 @@ export default function DevToolsProtection() {
           variant="contained"
           startIcon={<HomeIcon />}
           sx={{
-            bgcolor: "#8b5cf6",
-            color: "#fff",
+            bgcolor: "#f59e0b",
+            color: "#000",
             fontWeight: "bold",
             px: 4,
             py: 1.5,
-            borderRadius: 1,
+            borderRadius: "8px",
+            boxShadow: "none",
             "&:hover": {
-              bgcolor: "#7c3aed",
+              bgcolor: "#d97706",
+              boxShadow: "none",
             },
           }}
         >

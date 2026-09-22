@@ -409,7 +409,7 @@ export default function Header() {
                     prefetch={false}
                   >
                     <ListItemIcon>
-                      <ListAltIcon sx={{ color: "#8b5cf6" }} />
+                      <ListAltIcon sx={{ color: "#f59e0b" }} />
                     </ListItemIcon>
                     รายการของฉัน
                   </MenuItem>
