@@ -169,353 +169,375 @@ export default function SearchFilters({ categories, tags }: Props) {
     }
   };
 
+  const activeFilterCount =
+    (category !== "all" ? 1 : 0) +
+    (sort !== "added" ? 1 : 0) +
+    selectedTags.length;
+
   return (
     <Box
       sx={{
-        mb: 4,
+        mb: 3.5,
         mx: "auto",
         position: "relative",
-        width: expanded
-          ? { xs: "100%", md: "42%" }
-          : { xs: "100%", sm: "min(360px, 70%)", md: "21%" },
-        maxWidth: { xs: "100%", md: expanded ? 620 : 360 },
+        width: "100%",
+        maxWidth: 680,
       }}
     >
       <Paper
         elevation={0}
         sx={{
-          p: expanded ? 2 : 1.25,
+          p: { xs: 1, sm: 1.25 },
           backgroundColor: maggaColors.surface,
           border: "1px solid",
-          borderColor: maggaColors.border,
-          borderRadius: "10px",
-          boxShadow: "0 4px 16px rgba(0, 0, 0, 0.25)",
-          transition:
-            "padding 0.3s ease, width 0.3s ease, border-color 0.2s ease, box-shadow 0.2s ease",
-          minWidth: 0,
-          "&:hover": {
-            borderColor: "rgba(255, 255, 255, 0.18)",
+          borderColor: expanded ? maggaColors.archiveGoldBorder : maggaColors.border,
+          borderRadius: "12px",
+          boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
+          transition: "border-color 0.2s ease, box-shadow 0.2s ease",
+          "&:focus-within": {
+            borderColor: maggaColors.archiveGoldBorder,
           },
         }}
       >
-        {/* Header / Trigger - Sleek single row */}
-        <ButtonBase
-          aria-controls={filterPanelId}
-          aria-expanded={expanded}
-          aria-label={expanded ? "Collapse filters" : "Expand filters"}
-          onClick={handleExpandClick}
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            borderRadius: "7px",
-            color: "inherit",
-            minHeight: 38,
-            py: 0.5,
-            px: 1,
-            textAlign: "left",
-            width: "100%",
-            "&:focus-visible": {
-              outline: `2px solid ${maggaColors.archiveGold}`,
-              outlineOffset: 2,
-            },
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <FilterIcon fontSize="small" sx={{ color: expanded ? maggaColors.archiveGold : "text.secondary", fontSize: "1.1rem", transition: "color 0.2s" }} />
-            <Typography
-              variant="body2"
-              sx={{
-                fontWeight: 500,
-                fontSize: "0.825rem",
-                color: expanded ? "text.primary" : "text.secondary",
-                transition: "color 0.2s ease",
+        {/* Main Bar: Search Input + Filters Button */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          {/* Search Autocomplete Input */}
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Autocomplete
+              freeSolo
+              options={searchResults}
+              getOptionLabel={(option) =>
+                typeof option === "string" ? option : option.title
+              }
+              inputValue={inputValue}
+              onInputChange={(_, newValue) => {
+                setInputValue(newValue);
+                setSearch(newValue);
               }}
-            >
-              Filter, display, tags
-            </Typography>
-          </Box>
-          <ExpandMoreIcon
-            fontSize="small"
-            sx={{
-              color: expanded ? maggaColors.archiveGold : "text.secondary",
-              transition: "transform 0.2s ease, color 0.2s ease",
-              transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
-            }}
-          />
-        </ButtonBase>
-
-      {/* Expanded View */}
-      <Collapse in={expanded} id={filterPanelId}>
-        <Box sx={{ mt: 2 }}>
-          <Grid container spacing={2}>
-            {/* Row 1: Category and Sorting */}
-            {/* Category */}
-<Grid   size={{ xs: 12, md: 6 }}>
-              <Typography
-                variant="subtitle2"
-                gutterBottom
-                sx={{
-                  color: "text.secondary",
-                  fontSize: "0.85rem"
-                }}>
-                Category
-              </Typography>
-              <TextField
-                select
-                fullWidth
-                id={categorySelectId}
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                variant="standard"
-                sx={{
-                  "& .MuiSelect-select": {
-                    py: 0.75,
-                    fontSize: "0.85rem",
-                    fontWeight: 500,
-                  },
-                  borderBottom: "1px solid",
-                  borderColor: "divider",
-                }}
-                slotProps={{
-                  input: { disableUnderline: true },
-                  select: { id: `${categorySelectId}-select` }
-                }}>
-                <MenuItem value="all">All</MenuItem>
-                {categories.map((cat) => (
-                  <MenuItem key={cat.id} value={cat.name}>
-                    {cat.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
-
-            {/* Sorting */}
-<Grid   size={{ xs: 12, md: 6 }}>
-              <Typography
-                variant="subtitle2"
-                gutterBottom
-                sx={{
-                  color: "text.secondary",
-                  fontSize: "0.85rem"
-                }}>
-                Sorting
-              </Typography>
-              <TextField
-                select
-                fullWidth
-                id={sortSelectId}
-                value={sort}
-                onChange={(e) => setSort(e.target.value)}
-                variant="standard"
-                sx={{
-                  "& .MuiSelect-select": {
-                    py: 0.75,
-                    fontSize: "0.85rem",
-                    fontWeight: 500,
-                  },
-                  borderBottom: "1px solid",
-                  borderColor: "divider",
-                }}
-                slotProps={{
-                  input: { disableUnderline: true },
-                  select: { id: `${sortSelectId}-select` }
-                }}>
-                <MenuItem value="updated">Updated</MenuItem>
-                <MenuItem value="added">Added</MenuItem>
-                <MenuItem value="az">Title A-Z</MenuItem>
-                <MenuItem value="random">Random</MenuItem>
-              </TextField>
-            </Grid>
-
-            {/* Row 2: Search and Tags */}
-            {/* Search */}
-<Grid   size={{ xs: 12, md: 6 }}>
-              <Typography
-                variant="subtitle2"
-                gutterBottom
-                sx={{
-                  color: "text.secondary",
-                  fontSize: "0.85rem"
-                }}>
-                Search
-              </Typography>
-              <Autocomplete
-                freeSolo
-                options={searchResults}
-                getOptionLabel={(option) =>
-                  typeof option === "string" ? option : option.title
+              onChange={(_, newValue) => {
+                if (newValue && typeof newValue !== "string") {
+                  handleSelectResult(newValue);
                 }
-                inputValue={inputValue}
-                onInputChange={(_, newValue) => {
-                  setInputValue(newValue);
-                  setSearch(newValue); // Also update filter search
-                }}
-                onChange={(_, newValue) => {
-                  if (newValue && typeof newValue !== "string") {
-                    handleSelectResult(newValue);
-                  }
-                }}
-                renderOption={(props, option) => {
-                  const { key, ...otherProps } = props;
-                  return (
-                    <ListItem key={key} {...otherProps} sx={{ gap: 1.5 }}>
-                      <ListItemAvatar sx={{ minWidth: 40 }}>
-                        <Avatar
-                          src={option.coverImage}
-                          alt={option.title}
-                          variant="rounded"
-                          sx={{ width: 40, height: 56 }}
-                        />
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={
-                          option.authorName
-                            ? `[${option.authorName}] ${option.title}`
-                            : option.title
-                        }
-                        secondary={option.category || option.tags.slice(0, 30)}
-                        slotProps={{
-                          primary: {
-                            variant: "body2",
-                            noWrap: true,
-                            sx: { fontWeight: 500 },
-                          },
-
-                          secondary: {
-                            variant: "caption",
-                            noWrap: true,
-                          }
-                        }} />
-                    </ListItem>
-                  );
-                }}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    id={searchInputId}
-                    placeholder="Title or artist"
-                    variant="standard"
-                    sx={{
-                      "& input": { py: 0.75, fontSize: "0.85rem" },
-                      borderBottom: "1px solid",
-                      borderColor: "divider",
-                      "& .MuiAutocomplete-inputRoot": {
-                        minHeight: "40px",
-                      },
-                    }}
-                    slotProps={{
-                      ...params.slotProps,
-
-                      input: {
-                        ...params.slotProps.input,
-                        disableUnderline: true,
-                        startAdornment: (
-                          <SearchIcon color="action" sx={{ mr: 1 }} />
-                        ),
-                      },
-
-                      htmlInput: {
-                        ...params.slotProps.htmlInput,
-                        id: searchInputId,
-                      }
-                    }} />
-                )}
-                noOptionsText={
-                  inputValue.length >= 2
-                    ? "ไม่พบผลลัพธ์"
-                    : "พิมพ์อย่างน้อย 2 ตัวอักษร"
-                }
-              />
-            </Grid>
-
-            {/* Tags */}
-<Grid   size={{ xs: 12, md: 6 }}>
-              <Typography
-                variant="subtitle2"
-                gutterBottom
-                sx={{
-                  color: "text.secondary",
-                  fontSize: "0.85rem"
-                }}>
-                Tags
-              </Typography>
-              <Autocomplete
-                multiple
-                options={tags}
-                getOptionLabel={(option) => option.name}
-                value={selectedTags}
-                onChange={(_, newValue) => setSelectedTags(newValue)}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    id={tagsInputId}
-                    variant="standard"
-                    placeholder="Search for tag"
-                    slotProps={{
-                      ...params.slotProps,
-
-                      input: {
-                        ...params.slotProps.input,
-                        disableUnderline: true,
-                      },
-
-                      htmlInput: {
-                        ...params.slotProps.htmlInput,
-                        id: tagsInputId,
-                      }
-                    }} />
-                )}
-                sx={{
-                  borderBottom: "1px solid",
-                  borderColor: "divider",
-                  "& .MuiAutocomplete-inputRoot": {
-                    py: 0.5,
-                    flexWrap: "wrap",
-                    gap: 0.5,
-                    minHeight: "40px",
-                  },
-                  "& .MuiAutocomplete-tag": {
-                    margin: "2px",
-                  },
-                }}
-              />
-            </Grid>
-
-            {/* Action Buttons */}
-            <Grid
-              sx={{
-                display: "flex",
-                justifyContent: "flex-end",
-                gap: 2,
-                mt: 1,
               }}
-              size={12}
-            >
-              {(search || category !== "all" || selectedTags.length > 0 || sort !== "added") && (
-                <Button
-                  variant="outlined"
-                  onClick={handleClearFilters}
-                  size="small"
+              renderOption={(props, option) => {
+                const { key, ...otherProps } = props;
+                return (
+                  <ListItem key={key} {...otherProps} sx={{ gap: 1.5 }}>
+                    <ListItemAvatar sx={{ minWidth: 40 }}>
+                      <Avatar
+                        src={option.coverImage}
+                        alt={option.title}
+                        variant="rounded"
+                        sx={{ width: 40, height: 56, borderRadius: "6px" }}
+                      />
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={
+                        option.authorName
+                          ? `[${option.authorName}] ${option.title}`
+                          : option.title
+                      }
+                      secondary={option.category || option.tags.slice(0, 30)}
+                      slotProps={{
+                        primary: {
+                          variant: "body2",
+                          noWrap: true,
+                          sx: { fontWeight: 500, color: maggaColors.textPrimary },
+                        },
+                        secondary: {
+                          variant: "caption",
+                          noWrap: true,
+                          sx: { color: maggaColors.textMuted },
+                        },
+                      }}
+                    />
+                  </ListItem>
+                );
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  id={searchInputId}
+                  placeholder="ค้นหาชื่อเรื่องหรือนักวาด..."
+                  variant="standard"
                   sx={{
-                    borderRadius: "6px",
-                    borderColor: maggaColors.border,
-                    color: maggaColors.textSecondary,
-                    fontSize: "0.8rem",
-                    "&:hover": {
-                      borderColor: maggaColors.archiveGold,
+                    "& input": {
+                      py: 0.85,
+                      fontSize: "0.88rem",
                       color: maggaColors.textPrimary,
-                      bgcolor: maggaColors.archiveGoldSoft,
+                    },
+                    "& .MuiInput-root": {
+                      pl: 1,
+                      "&::before, &::after": { display: "none" },
+                    },
+                    "& .MuiAutocomplete-inputRoot": {
+                      minHeight: "38px",
+                      display: "flex",
+                      alignItems: "center",
                     },
                   }}
-                >
-                  Clear
-                </Button>
+                  slotProps={{
+                    ...params.slotProps,
+                    input: {
+                      ...params.slotProps.input,
+                      disableUnderline: true,
+                      startAdornment: (
+                        <SearchIcon
+                          sx={{
+                            color: maggaColors.textMuted,
+                            fontSize: "1.15rem",
+                            mr: 1,
+                          }}
+                        />
+                      ),
+                    },
+                    htmlInput: {
+                      ...params.slotProps.htmlInput,
+                      id: searchInputId,
+                    },
+                  }}
+                />
               )}
-            </Grid>
-          </Grid>
+              noOptionsText={
+                inputValue.length >= 2
+                  ? "ไม่พบผลลัพธ์"
+                  : "พิมพ์อย่างน้อย 2 ตัวอักษร"
+              }
+            />
+          </Box>
+
+          {/* Filters & tags Button (Tailspace Style) */}
+          <ButtonBase
+            aria-controls={filterPanelId}
+            aria-expanded={expanded}
+            aria-label={expanded ? "ซ่อนตัวกรอง" : "เปิดตัวกรอง & แท็ก"}
+            onClick={handleExpandClick}
+            sx={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 0.75,
+              px: { xs: 1.25, sm: 1.75 },
+              py: 0.85,
+              borderRadius: "8px",
+              bgcolor: expanded ? maggaColors.archiveGoldSoft : "rgba(255, 255, 255, 0.04)",
+              border: "1px solid",
+              borderColor: expanded ? maggaColors.archiveGoldBorder : "rgba(255, 255, 255, 0.08)",
+              color: expanded ? maggaColors.archiveGold : maggaColors.textSecondary,
+              fontSize: "0.825rem",
+              fontWeight: 500,
+              whiteSpace: "nowrap",
+              transition: "all 0.2s ease",
+              "&:hover": {
+                bgcolor: maggaColors.archiveGoldSoft,
+                borderColor: maggaColors.archiveGoldBorder,
+                color: maggaColors.archiveGold,
+              },
+            }}
+          >
+            <FilterIcon sx={{ fontSize: "1rem" }} />
+            <Box component="span" sx={{ display: { xs: "none", sm: "inline" } }}>
+              ตัวกรอง & แท็ก
+            </Box>
+            {activeFilterCount > 0 && (
+              <Box
+                component="span"
+                sx={{
+                  bgcolor: maggaColors.archiveGold,
+                  color: "#000",
+                  borderRadius: "50%",
+                  width: 18,
+                  height: 18,
+                  fontSize: "0.68rem",
+                  fontWeight: 700,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {activeFilterCount}
+              </Box>
+            )}
+            <ExpandMoreIcon
+              sx={{
+                fontSize: "1.1rem",
+                transition: "transform 0.2s ease",
+                transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
+              }}
+            />
+          </ButtonBase>
         </Box>
-      </Collapse>
+
+        {/* Collapsible Panel for Category, Sort, Tags */}
+        <Collapse in={expanded} id={filterPanelId}>
+          <Box sx={{ pt: 2, pb: 0.5, px: 0.5, borderTop: "1px solid rgba(255, 255, 255, 0.06)", mt: 1.25 }}>
+            <Grid container spacing={2}>
+              {/* Category */}
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography
+                  variant="subtitle2"
+                  gutterBottom
+                  sx={{ color: maggaColors.textSecondary, fontSize: "0.8rem", fontWeight: 500 }}
+                >
+                  หมวดหมู่ (Category)
+                </Typography>
+                <TextField
+                  select
+                  fullWidth
+                  id={categorySelectId}
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  variant="standard"
+                  sx={{
+                    "& .MuiSelect-select": {
+                      py: 0.65,
+                      fontSize: "0.85rem",
+                      fontWeight: 500,
+                      color: maggaColors.textPrimary,
+                    },
+                    borderBottom: "1px solid",
+                    borderColor: maggaColors.border,
+                  }}
+                  slotProps={{
+                    input: { disableUnderline: true },
+                    select: { id: `${categorySelectId}-select` },
+                  }}
+                >
+                  <MenuItem value="all">ทั้งหมด (All)</MenuItem>
+                  {categories.map((cat) => (
+                    <MenuItem key={cat.id} value={cat.name}>
+                      {cat.name}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+
+              {/* Sorting */}
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography
+                  variant="subtitle2"
+                  gutterBottom
+                  sx={{ color: maggaColors.textSecondary, fontSize: "0.8rem", fontWeight: 500 }}
+                >
+                  เรียงลำดับ (Sorting)
+                </Typography>
+                <TextField
+                  select
+                  fullWidth
+                  id={sortSelectId}
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value)}
+                  variant="standard"
+                  sx={{
+                    "& .MuiSelect-select": {
+                      py: 0.65,
+                      fontSize: "0.85rem",
+                      fontWeight: 500,
+                      color: maggaColors.textPrimary,
+                    },
+                    borderBottom: "1px solid",
+                    borderColor: maggaColors.border,
+                  }}
+                  slotProps={{
+                    input: { disableUnderline: true },
+                    select: { id: `${sortSelectId}-select` },
+                  }}
+                >
+                  <MenuItem value="updated">อัปเดตล่าสุด (Updated)</MenuItem>
+                  <MenuItem value="added">เพิ่มล่าสุด (Added)</MenuItem>
+                  <MenuItem value="az">ชื่อเรื่อง ก-ฮ (Title A-Z)</MenuItem>
+                  <MenuItem value="random">สุ่มเรื่อง (Random)</MenuItem>
+                </TextField>
+              </Grid>
+
+              {/* Tags */}
+              <Grid size={12}>
+                <Typography
+                  variant="subtitle2"
+                  gutterBottom
+                  sx={{ color: maggaColors.textSecondary, fontSize: "0.8rem", fontWeight: 500 }}
+                >
+                  แท็ก (Tags)
+                </Typography>
+                <Autocomplete
+                  multiple
+                  options={tags}
+                  getOptionLabel={(option) => option.name}
+                  value={selectedTags}
+                  onChange={(_, newValue) => setSelectedTags(newValue)}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      id={tagsInputId}
+                      variant="standard"
+                      placeholder="เลือกแท็กที่ต้องการ..."
+                      slotProps={{
+                        ...params.slotProps,
+                        input: {
+                          ...params.slotProps.input,
+                          disableUnderline: true,
+                        },
+                        htmlInput: {
+                          ...params.slotProps.htmlInput,
+                          id: tagsInputId,
+                        },
+                      }}
+                    />
+                  )}
+                  sx={{
+                    borderBottom: "1px solid",
+                    borderColor: maggaColors.border,
+                    "& .MuiAutocomplete-inputRoot": {
+                      py: 0.5,
+                      flexWrap: "wrap",
+                      gap: 0.5,
+                      minHeight: "38px",
+                      color: maggaColors.textPrimary,
+                    },
+                    "& .MuiAutocomplete-tag": {
+                      margin: "2px",
+                      borderRadius: "6px",
+                      backgroundColor: "rgba(255, 255, 255, 0.08)",
+                      color: maggaColors.textPrimary,
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                    },
+                  }}
+                />
+              </Grid>
+
+              {/* Action Buttons */}
+              <Grid
+                sx={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: 1.5,
+                  mt: 0.5,
+                }}
+                size={12}
+              >
+                {(search || category !== "all" || selectedTags.length > 0 || sort !== "added") && (
+                  <Button
+                    variant="outlined"
+                    onClick={handleClearFilters}
+                    size="small"
+                    sx={{
+                      borderRadius: "6px",
+                      borderColor: maggaColors.border,
+                      color: maggaColors.textSecondary,
+                      fontSize: "0.8rem",
+                      "&:hover": {
+                        borderColor: maggaColors.archiveGold,
+                        color: maggaColors.textPrimary,
+                        bgcolor: maggaColors.archiveGoldSoft,
+                      },
+                    }}
+                  >
+                    ล้างตัวกรอง (Clear)
+                  </Button>
+                )}
+              </Grid>
+            </Grid>
+          </Box>
+        </Collapse>
       </Paper>
     </Box>
   );

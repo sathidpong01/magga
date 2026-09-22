@@ -68,15 +68,14 @@ export default function Header() {
       position="sticky"
       elevation={0}
       sx={{
-        backgroundColor: "transparent",
-        backgroundImage: isScrolled
-          ? "linear-gradient(to bottom, #141416 20%, #141416 40%, #141416 60%, transparent 100%)"
-          : "none",
-        transition: "all 0.3s ease-in-out",
+        backgroundColor: isScrolled ? "rgba(20, 20, 22, 0.9)" : "transparent",
+        backdropFilter: isScrolled ? "blur(12px)" : "none",
+        WebkitBackdropFilter: isScrolled ? "blur(12px)" : "none",
+        borderBottom: isScrolled ? "1px solid rgba(255, 255, 255, 0.07)" : "1px solid transparent",
+        transition: "background-color 0.25s ease, border-color 0.25s ease, backdrop-filter 0.25s ease",
         top: 0,
         zIndex: 1100,
         boxShadow: "none",
-        borderBottom: "none",
       }}
     >
       {/* Ban Warning Banner - Show on ALL pages */}
@@ -98,7 +97,13 @@ export default function Header() {
       )}
 
       <Container maxWidth="xl">
-        <Toolbar disableGutters sx={{ height: 70 }}>
+        <Toolbar
+          disableGutters
+          sx={{
+            minHeight: { xs: 56, sm: 60 },
+            height: { xs: 56, sm: 60 },
+          }}
+        >
           {/* Logo Section */}
           <Link
             href="/"
@@ -194,16 +199,21 @@ export default function Header() {
               href={session ? "/dashboard/submit" : "/auth/signin"}
               prefetch={false}
               variant="contained"
-              startIcon={<CloudUploadIcon />}
+              startIcon={<CloudUploadIcon sx={{ fontSize: 18 }} />}
               sx={{
                 bgcolor:
-                  pathname === "/dashboard/submit" ? "#f59e0b" : "#fbbf24",
-                color: "black",
-                fontWeight: 700,
-                "&:hover": { bgcolor: "#f59e0b" },
+                  pathname === "/dashboard/submit" ? "#d97706" : "#f59e0b",
+                color: "#000000",
+                fontWeight: 600,
+                fontSize: "0.85rem",
+                borderRadius: "8px",
+                textTransform: "none",
+                px: 2,
+                py: 0.75,
+                "&:hover": { bgcolor: "#d97706" },
                 boxShadow:
                   pathname === "/dashboard/submit"
-                    ? "0 0 0 2px rgba(255,255,255,0.5)"
+                    ? "0 0 0 2px rgba(255,255,255,0.4)"
                     : "none",
                 // Hide for admin but keep space
                 visibility: isAdmin ? "hidden" : "visible",
@@ -220,16 +230,21 @@ export default function Header() {
                 href="/dashboard"
                 prefetch={false}
                 variant="contained"
-                startIcon={<DashboardIcon />}
+                startIcon={<DashboardIcon sx={{ fontSize: 18 }} />}
                 sx={{
                   bgcolor: pathname?.startsWith("/dashboard")
                     ? "#991b1b"
                     : "#b91c1c",
                   color: "white",
                   fontWeight: 600,
+                  fontSize: "0.85rem",
+                  borderRadius: "8px",
+                  textTransform: "none",
+                  px: 2,
+                  py: 0.75,
                   "&:hover": { bgcolor: "#991b1b" },
                   boxShadow: pathname?.startsWith("/dashboard")
-                    ? "0 0 0 2px rgba(255,255,255,0.5)"
+                    ? "0 0 0 2px rgba(255,255,255,0.4)"
                     : "none",
                 }}
               >
@@ -250,7 +265,7 @@ export default function Header() {
                   sx={{
                     width: 36,
                     height: 36,
-                    borderRadius: "50%",
+                    borderRadius: "8px",
                     bgcolor: "rgba(255,255,255,0.08)",
                   }}
                 />
@@ -259,14 +274,15 @@ export default function Header() {
                   onClick={handleMenuOpen}
                   aria-label="Open user menu"
                   sx={{
-                    border: "1px solid rgba(255,255,255,0.1)",
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    borderRadius: "8px",
                     p: 0.5,
                   }}
                 >
                   <Avatar
                     src={session.user?.image || undefined}
                     alt={session.user?.name || "User"}
-                    sx={{ width: 32, height: 32, bgcolor: "#262626" }}
+                    sx={{ width: 32, height: 32, borderRadius: "6px", bgcolor: "#262626" }}
                   >
                     {session.user?.name?.charAt(0) || <PersonIcon />}
                   </Avatar>
@@ -277,9 +293,19 @@ export default function Header() {
                   onClick={() => setAuthModalOpen(true)}
                   sx={{
                     color: "#fafafa",
-                    borderColor: "rgba(255,255,255,0.2)",
+                    borderColor: "rgba(255,255,255,0.15)",
+                    bgcolor: "rgba(255,255,255,0.03)",
                     fontWeight: 600,
-                    "&:hover": { borderColor: "#fbbf24", color: "#fbbf24", bgcolor: "rgba(251,191,36,0.06)" },
+                    fontSize: "0.85rem",
+                    borderRadius: "8px",
+                    textTransform: "none",
+                    px: 2,
+                    py: 0.75,
+                    "&:hover": {
+                      borderColor: "#f59e0b",
+                      color: "#f59e0b",
+                      bgcolor: "rgba(245, 158, 11, 0.08)",
+                    },
                   }}
                 >
                   เข้าสู่ระบบ
@@ -309,10 +335,12 @@ export default function Header() {
               paper: {
                 sx: {
                   mt: 1.5,
-                  bgcolor: "#171717",
-                  border: "1px solid rgba(255,255,255,0.1)",
+                  bgcolor: "#18181b",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: "10px",
                   color: "#fafafa",
                   minWidth: 200,
+                  boxShadow: "0 12px 32px rgba(0,0,0,0.5)",
                 },
               },
             }}

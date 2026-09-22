@@ -33,38 +33,44 @@ export default function Footer() {
     <Box
       component="footer"
       sx={{
-        py: 5,
+        py: { xs: 4, sm: 5 },
         px: 2,
         mt: "auto",
-        backgroundColor: "#0a0a0a",
-        borderTop: "1px solid rgba(255,255,255,0.05)",
-        color: "#a3a3a3",
+        backgroundColor: "#111113",
+        borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+        color: "#a1a1aa",
       }}
     >
       <Container maxWidth="lg">
-        <Grid container spacing={4} sx={{
-          alignItems: "flex-start"
-        }}>
+        <Grid
+          container
+          spacing={4}
+          sx={{
+            alignItems: "flex-start",
+          }}
+        >
           {/* Logo & Description */}
           <Grid size={{ xs: 12, md: 6 }}>
-            <Box sx={{ mb: 2 }}>
+            <Box sx={{ mb: 1.5 }}>
               <Image
                 src="/logo.svg"
                 alt="MAGGA Logo"
-                width={120}
-                height={120}
+                width={110}
+                height={32}
                 style={{
-                  filter: "drop-shadow(0 0 20px rgba(139, 92, 246, 0.3))",
+                  width: "auto",
+                  height: "auto",
+                  maxHeight: "32px",
                 }}
               />
             </Box>
             <Typography
-              variant="body1"
+              variant="body2"
               sx={{
-                color: "#9a9a9a",
-                fontSize: "0.95rem",
-                lineHeight: 1.8,
-                maxWidth: 450,
+                color: "#8e8e93",
+                fontSize: "0.875rem",
+                lineHeight: 1.7,
+                maxWidth: 440,
               }}
             >
               เว็บอ่านโดจินแปลไทย 18+ แนว Furry ที่ครบเครื่องที่สุด
@@ -79,22 +85,22 @@ export default function Footer() {
             size={{ xs: 12, md: 6 }}
           >
             <Typography
-              variant="subtitle1"
+              variant="subtitle2"
               component="p"
               sx={{
-                color: "#fafafa",
-                fontWeight: 700,
-                mb: 2,
-                fontSize: "1rem",
+                color: "#e4e4e7",
+                fontWeight: 600,
+                mb: 1.5,
+                fontSize: "0.875rem",
               }}
             >
-              นโยบาย
+              นโยบาย & ข้อมูล
             </Typography>
             <Box
               sx={{
                 display: "flex",
                 flexDirection: "column",
-                gap: 1.5,
+                gap: 1.25,
                 alignItems: { xs: "flex-start", md: "flex-end" },
               }}
             >
@@ -105,9 +111,10 @@ export default function Footer() {
                   href={link.href}
                   underline="hover"
                   sx={{
-                    color: "#a3a3a3",
-                    fontSize: "0.95rem",
-                    "&:hover": { color: "#fbbf24" },
+                    color: "#a1a1aa",
+                    fontSize: "0.875rem",
+                    transition: "color 0.2s ease",
+                    "&:hover": { color: "#f59e0b" },
                   }}
                 >
                   {link.label}
@@ -117,9 +124,9 @@ export default function Footer() {
           </Grid>
         </Grid>
 
-        <Divider sx={{ my: 4, borderColor: "rgba(255,255,255,0.08)" }} />
+        <Divider sx={{ my: { xs: 3, sm: 3.5 }, borderColor: "rgba(255, 255, 255, 0.06)" }} />
 
-        {/* Copyright */}
+        {/* Copyright & Extra Links */}
         <Box
           sx={{
             display: "flex",
@@ -131,22 +138,22 @@ export default function Footer() {
         >
           <Typography
             variant="body2"
-            sx={{ color: "#737373", fontSize: "0.85rem" }}
+            sx={{ color: "#71717a", fontSize: "0.8rem" }}
           >
             Copyright © {new Date().getFullYear()} MAGGA. All rights reserved.
           </Typography>
 
-          <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2.5 }}>
             <Link
               component={NextLink}
               href="/changelog"
               underline="hover"
               sx={{
-                color: "#fbbf24",
-                fontWeight: 600,
-                fontSize: "0.9rem",
+                color: "#f59e0b",
+                fontWeight: 500,
+                fontSize: "0.85rem",
                 "&:hover": {
-                  color: "#fcd34d",
+                  color: "#fbbf24",
                 },
               }}
             >
@@ -163,11 +170,12 @@ export default function Footer() {
                   variant="text"
                   size="small"
                   sx={{
-                    color: "#525252",
+                    color: "#71717a",
                     fontSize: "0.8rem",
                     minWidth: "auto",
                     p: 0,
-                    "&:hover": { color: "#a3a3a3", bgcolor: "transparent" },
+                    textTransform: "none",
+                    "&:hover": { color: "#a1a1aa", bgcolor: "transparent" },
                   }}
                 >
                   Sign In
@@ -181,9 +189,9 @@ export default function Footer() {
               rel="noopener noreferrer"
               underline="hover"
               sx={{
-                color: "#ffffff",
-                fontSize: "0.85rem",
-                "&:hover": { color: "#a3a3a3" },
+                color: "#a1a1aa",
+                fontSize: "0.8rem",
+                "&:hover": { color: "#f59e0b" },
               }}
             >
               Create by Nightsu ❤️
