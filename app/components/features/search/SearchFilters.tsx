@@ -123,6 +123,16 @@ export default function SearchFilters({ categories, tags }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, tags]);
 
+  // Sync search input from URL search params
+  useEffect(() => {
+    const urlSearch = searchParams.get("search") || "";
+    if (urlSearch !== search) {
+      setSearch(urlSearch);
+      setInputValue(urlSearch);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
   const applyFilters = useCallback(() => {
     const params = new URLSearchParams();
 

@@ -16,6 +16,7 @@ export interface MangaWithDetails {
   averageRating: number;
   tags: { id: string; name: string }[];
   category: { name: string } | null;
+  authorName?: string | null;
 }
 
 interface MangaCardProps {
@@ -25,36 +26,35 @@ interface MangaCardProps {
 
 const MangaCard = ({ manga, priority = false }: MangaCardProps) => {
   return (
-    <Link
-      href={`/${manga.slug}`}
-      prefetch={false}
-      style={{ display: "block", textDecoration: "none", height: "100%" }}
-    >
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          height: "100%",
-          cursor: "pointer",
-          transition: "transform 0.2s ease",
-          "&:hover": {
-            transform: "translateY(-3px)",
-            "& .manga-cover-wrap": {
-              borderColor: maggaColors.archiveGoldBorder,
-              boxShadow: maggaShadows.cardAmberHoverLift,
-              "& .manga-cover-img": {
-                transform: "scale(1.03)",
-              },
-            },
-            "& .manga-title-text": {
-              color: "#ffffff",
-              textDecoration: "underline",
-              textUnderlineOffset: "3px",
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        transition: "transform 0.2s ease",
+        "&:hover": {
+          transform: "translateY(-3px)",
+          "& .manga-cover-wrap": {
+            borderColor: maggaColors.archiveGoldBorder,
+            boxShadow: maggaShadows.cardAmberHoverLift,
+            "& .manga-cover-img": {
+              transform: "scale(1.03)",
             },
           },
-        }}
+          "& .manga-title-text": {
+            color: "#ffffff",
+            textDecoration: "underline",
+            textUnderlineOffset: "3px",
+          },
+        },
+      }}
+    >
+      {/* Cover Container (Tailspace 3:4 Aspect Ratio) */}
+      <Link
+        href={`/${manga.slug}`}
+        prefetch={false}
+        style={{ display: "block", textDecoration: "none" }}
       >
-        {/* Cover Container (Tailspace 3:4 Aspect Ratio) */}
         <Box
           className="manga-cover-wrap"
           sx={{
@@ -67,6 +67,7 @@ const MangaCard = ({ manga, priority = false }: MangaCardProps) => {
             borderColor: maggaColors.border,
             boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3)",
             transition: "border-color 0.25s ease, box-shadow 0.25s ease",
+            cursor: "pointer",
           }}
         >
           <Image
@@ -127,19 +128,25 @@ const MangaCard = ({ manga, priority = false }: MangaCardProps) => {
             </Box>
           )}
         </Box>
+      </Link>
 
-        {/* Metadata Under Cover (Tailspace Anatomy) */}
-        <Box
-          sx={{
-            pt: 1,
-            px: 0.25,
-            pb: 0.5,
-            display: "flex",
-            flexDirection: "column",
-            gap: 0.25,
-          }}
+      {/* Metadata Under Cover (Tailspace Anatomy) */}
+      <Box
+        sx={{
+          pt: 1,
+          px: 0.25,
+          pb: 0.5,
+          display: "flex",
+          flexDirection: "column",
+          gap: 0.35,
+        }}
+      >
+        {/* Title - Strictly 1 Line */}
+        <Link
+          href={`/${manga.slug}`}
+          prefetch={false}
+          style={{ textDecoration: "none", display: "block" }}
         >
-          {/* Title */}
           <Typography
             className="manga-title-text"
             variant="body2"
@@ -149,67 +156,111 @@ const MangaCard = ({ manga, priority = false }: MangaCardProps) => {
               color: maggaColors.textPrimary,
               overflow: "hidden",
               textOverflow: "ellipsis",
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-              lineHeight: 1.3,
+              whiteSpace: "nowrap",
               fontSize: "0.92rem",
-              minHeight: "2.6em",
+              lineHeight: 1.3,
               transition: "color 0.15s ease",
             }}
           >
             {manga.title}
           </Typography>
+        </Link>
 
-          {/* Stats Row */}
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 0.75,
-              fontSize: "0.75rem",
-              color: maggaColors.textSecondary,
-              mt: 0.25,
-            }}
-          >
-            {manga.averageRating > 0 && (
-              <>
-                <Box
-                  component="span"
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 0.35,
-                    color: maggaColors.textPrimary,
-                    fontWeight: 500,
-                  }}
-                >
-                  <Box
-                    component="span"
-                    sx={{ color: maggaColors.archiveGold, fontSize: "0.8rem" }}
-                  >
-                    ⭐
-                  </Box>{" "}
-                  {manga.averageRating.toFixed(1)}
-                </Box>
-                <Box component="span" sx={{ opacity: 0.4 }}>•</Box>
-              </>
-            )}
+        {/* Author Line - 1 Line, Clickable Filter */}
+        <Box sx={{ minHeight: "1.2rem", display: "flex", alignItems: "center" }}>
+          {manga.authorName ? (
+            <Link
+              href={`/?search=${encodeURIComponent(manga.authorName)}`}
+              prefetch={false}
+              style={{
+                textDecoration: "none",
+                display: "inline-block",
+                maxWidth: "100%",
+              }}
+            >
+              <Typography
+                variant="caption"
+                sx={{
+                  color: maggaColors.textSecondary,
+                  fontSize: "0.78rem",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  display: "block",
+                  lineHeight: 1.25,
+                  transition: "color 0.15s ease",
+                  "&:hover": {
+                    color: maggaColors.archiveGoldHover,
+                    textDecoration: "underline",
+                  },
+                }}
+              >
+                {manga.authorName}
+              </Typography>
+            </Link>
+          ) : (
             <Typography
               variant="caption"
-              sx={{ color: maggaColors.textMuted, fontSize: "0.72rem" }}
+              sx={{
+                color: maggaColors.textMuted,
+                fontSize: "0.78rem",
+                fontStyle: "italic",
+                lineHeight: 1.25,
+              }}
             >
-              {manga.viewCount >= 1000000
-                ? `${(manga.viewCount / 1000000).toFixed(1)}M`
-                : manga.viewCount >= 1000
-                ? `${(manga.viewCount / 1000).toFixed(1)}K`
-                : manga.viewCount}{" "}
-              Views
+              ไม่ระบุผู้แต่ง
             </Typography>
-          </Box>
+          )}
+        </Box>
+
+        {/* Stats Row */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 0.75,
+            fontSize: "0.75rem",
+            color: maggaColors.textSecondary,
+            mt: 0.15,
+          }}
+        >
+          {manga.averageRating > 0 && (
+            <>
+              <Box
+                component="span"
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.35,
+                  color: maggaColors.textPrimary,
+                  fontWeight: 500,
+                }}
+              >
+                <Box
+                  component="span"
+                  sx={{ color: maggaColors.archiveGold, fontSize: "0.8rem" }}
+                >
+                  ⭐
+                </Box>{" "}
+                {manga.averageRating.toFixed(1)}
+              </Box>
+              <Box component="span" sx={{ opacity: 0.4 }}>•</Box>
+            </>
+          )}
+          <Typography
+            variant="caption"
+            sx={{ color: maggaColors.textMuted, fontSize: "0.72rem" }}
+          >
+            {manga.viewCount >= 1000000
+              ? `${(manga.viewCount / 1000000).toFixed(1)}M`
+              : manga.viewCount >= 1000
+              ? `${(manga.viewCount / 1000).toFixed(1)}K`
+              : manga.viewCount}{" "}
+            Views
+          </Typography>
         </Box>
       </Box>
-    </Link>
+    </Box>
   );
 };
 

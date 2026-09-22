@@ -20,6 +20,7 @@ const mangaCardColumns = {
   viewCount: mangaTable.viewCount,
   averageRating: mangaTable.averageRating,
   categoryId: mangaTable.categoryId,
+  authorName: mangaTable.authorName,
 };
 
 type MangaCardRow = {
@@ -31,6 +32,7 @@ type MangaCardRow = {
   averageRating: number;
   categoryId: string | null;
   categoryName: string | null;
+  authorName: string | null;
 };
 
 async function attachTagsToMangaRows(rows: MangaCardRow[]) {
@@ -154,7 +156,11 @@ export const getMangasWithPagination = unstable_cache(
     const offset = (page - 1) * pageSize;
     const conditions = [eq(mangaTable.isHidden, false)];
 
-    if (search) conditions.push(ilike(mangaTable.title, `%${search}%`));
+    if (search) {
+      conditions.push(
+        sql`(${mangaTable.title} ILIKE ${'%' + search + '%'} OR ${mangaTable.authorName} ILIKE ${'%' + search + '%'})`
+      );
+    }
     if (categoryId && categoryId !== "all") {
       conditions.push(eq(mangaTable.categoryId, categoryId));
     }
@@ -212,6 +218,7 @@ export const getMangasWithPagination = unstable_cache(
         viewCount: mangaTable.viewCount,
         averageRating: mangaTable.averageRating,
         categoryId: mangaTable.categoryId,
+        authorName: mangaTable.authorName,
       })
       .from(mangaTable)
       .where(and(...conditions))

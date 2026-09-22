@@ -40,19 +40,20 @@ export default function MangaCardSkeleton() {
       </Box>
 
       {/* Details Below Cover Skeleton */}
-      <Box sx={{ pt: 1, px: 0.25, pb: 0.5, display: "flex", flexDirection: "column", gap: 0.5 }}>
-        {/* Title Lines */}
+      <Box sx={{ pt: 1, px: 0.25, pb: 0.5, display: "flex", flexDirection: "column", gap: 0.35 }}>
+        {/* Title Line */}
         <Skeleton
           variant="text"
-          width="90%"
+          width="85%"
           height={20}
           sx={{ bgcolor: "rgba(255, 255, 255, 0.08)" }}
         />
+        {/* Author Line */}
         <Skeleton
           variant="text"
-          width="60%"
-          height={20}
-          sx={{ bgcolor: "rgba(255, 255, 255, 0.06)" }}
+          width="45%"
+          height={16}
+          sx={{ bgcolor: "rgba(255, 255, 255, 0.05)" }}
         />
 
         {/* Stats Skeleton */}
