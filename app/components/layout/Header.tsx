@@ -187,7 +187,7 @@ export default function Header() {
             sx={{
               display: { xs: "none", md: "flex" },
               alignItems: "center",
-              gap: 2,
+              gap: 1.5,
               // Reserve minimum space for buttons to prevent CLS
               minWidth: 180,
               justifyContent: "flex-end",
@@ -258,7 +258,7 @@ export default function Header() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "flex-end",
-                minWidth: 96,
+                minWidth: session ? "auto" : 88,
               }}
             >
               {isPending ? (
