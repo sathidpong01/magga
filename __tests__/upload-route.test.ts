@@ -5,8 +5,8 @@ const mocks = vi.hoisted(() => ({
   checkRateLimit: vi.fn(),
   readValidatedImageFile: vi.fn(),
   isUserBanned: vi.fn(),
+  isAdminRole: vi.fn(),
   send: vi.fn(),
-  sharp: vi.fn(),
   getR2PublicUrl: vi.fn((key: string) => `https://cdn.example.com/${key}`),
 }));
 
@@ -29,6 +29,7 @@ vi.mock("@/lib/image-security", () => ({
 
 vi.mock("@/lib/session-utils", () => ({
   isUserBanned: mocks.isUserBanned,
+  isAdminRole: mocks.isAdminRole,
 }));
 
 vi.mock("@/lib/r2", () => ({
@@ -47,10 +48,6 @@ vi.mock("@aws-sdk/client-s3", () => ({
   },
 }));
 
-vi.mock("sharp", () => ({
-  default: mocks.sharp,
-}));
-
 import { POST } from "@/app/api/upload/route";
 
 describe("POST /api/upload", () => {
@@ -65,52 +62,11 @@ describe("POST /api/upload", () => {
       buffer: Buffer.from("original-image"),
     });
     mocks.isUserBanned.mockReturnValue(false);
+    mocks.isAdminRole.mockReturnValue(false);
     mocks.send.mockResolvedValue({});
-    mocks.sharp.mockReturnValue({
-      metadata: vi.fn().mockResolvedValue({
-        width: 1200,
-        height: 800,
-        format: "png",
-      }),
-      resize: vi.fn().mockReturnThis(),
-      webp: vi.fn().mockReturnThis(),
-      toBuffer: vi.fn().mockResolvedValue(Buffer.from("webp-image")),
-    });
   });
 
-  it("returns 400 when image dimensions are out of range", async () => {
-    mocks.sharp.mockReturnValue({
-      metadata: vi.fn().mockResolvedValue({
-        width: 9001,
-        height: 800,
-        format: "png",
-      }),
-      resize: vi.fn().mockReturnThis(),
-      webp: vi.fn().mockReturnThis(),
-      toBuffer: vi.fn(),
-    });
-
-    const formData = new FormData();
-    formData.append(
-      "files",
-      new File([Buffer.from("bad-image")], "bad.png", { type: "image/png" })
-    );
-
-    const response = await POST(
-      new Request("http://localhost/api/upload", {
-        method: "POST",
-        body: formData,
-      })
-    );
-
-    expect(response.status).toBe(400);
-    await expect(response.json()).resolves.toEqual({
-      error: "Image dimensions out of valid range (10-8000px)",
-    });
-    expect(mocks.send).not.toHaveBeenCalled();
-  });
-
-  it("stores transcoded uploads as image/webp", async () => {
+  it("stores original image bytes without server-side transcoding", async () => {
     const formData = new FormData();
     formData.append(
       "files",
@@ -129,7 +85,30 @@ describe("POST /api/upload", () => {
     expect(mocks.send).toHaveBeenCalledTimes(1);
     expect(mocks.send.mock.calls[0][0]).toMatchObject({
       Bucket: "test-bucket",
-      ContentType: "image/webp",
+      ContentType: "image/png",
     });
+  });
+
+  it("allows a full chapter-sized batch instead of stopping at 50 files", async () => {
+    const formData = new FormData();
+    formData.append(
+      "files",
+      new File([Buffer.from("chapter-page")], "page.webp", { type: "image/webp" })
+    );
+
+    const response = await POST(
+      new Request("http://localhost/api/upload", {
+        method: "POST",
+        body: formData,
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(mocks.checkRateLimit).toHaveBeenCalledWith(
+      "upload:user-1",
+      expect.any(Number),
+      60 * 60 * 1000
+    );
+    expect(mocks.checkRateLimit.mock.calls[0][1]).toBeGreaterThanOrEqual(147);
   });
 });

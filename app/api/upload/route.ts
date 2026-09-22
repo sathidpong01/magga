@@ -4,9 +4,7 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { r2Client, R2_BUCKET, getR2PublicUrl } from "@/lib/r2";
 import { readValidatedImageFile, sanitizeObjectKeySegment } from "@/lib/image-security";
-import { isUserBanned } from "@/lib/session-utils";
-
-import sharp from "sharp";
+import { isUserBanned, isAdminRole } from "@/lib/session-utils";
 
 export async function POST(request: Request) {
   const session = await auth.api.getSession({ headers: request.headers });
@@ -18,12 +16,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "บัญชีของคุณถูกระงับการใช้งาน" }, { status: 403 });
   }
 
-  // Rate limiting: 50 uploads per hour per user
+  // A chapter can contain roughly 140 pages; leave room for multiple chapters, covers, and retries.
+  // Admins get a higher limit for batch publishing.
+  // This is a write-side abuse guard only and does not affect image readers.
   const userId =
     (session.user as { id?: string })?.id || session.user?.email || "unknown";
+  const isAdmin = isAdminRole(session);
+  const maxUploads = isAdmin ? 1000 : 500;
   const limitCheck = await checkRateLimit(
     `upload:${userId}`,
-    50, // max 50 uploads
+    maxUploads,
     60 * 60 * 1000 // per 1 hour
   );
 
@@ -42,24 +44,20 @@ export async function POST(request: Request) {
       "uncategorized"
     );
 
-    // Upload type: 'cover' = 400px, 'page' = 1920px (default)
-    const uploadType = (form.get("type") as string) || "page";
-    const maxWidth = uploadType === "cover" ? 400 : 1920;
-
     if (!files || files.length === 0) {
       return NextResponse.json({ error: "No files uploaded" }, { status: 400 });
     }
 
-    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    // Vercel Functions accept request bodies up to 4.5 MB. Reserve room for
+    // multipart framing so the API can return a useful validation error.
+    const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4 MB
     const ALLOWED_MIME_TYPES = [
       "image/jpeg",
       "image/png",
       "image/webp",
       "image/gif",
       "image/avif",
-      "image/bmp", // BMP support
-      "image/heic", // iPhone HEIC (converted by Sharp)
-      "image/heif", // HEIF variant
+      "image/bmp",
     ];
 
     const saved = [];
@@ -70,63 +68,11 @@ export async function POST(request: Request) {
         allowedMimeTypes: ALLOWED_MIME_TYPES,
       });
 
-      let imageData = new Uint8Array(buffer);
-      let contentType = file.type;
-      let fileName = file.name;
-      let finalWidth = 0;
-      let finalHeight = 0;
-
-      // 4. Resize & Compress
-      if (file.type.startsWith("image/")) {
-        try {
-          const sharpInstance = sharp(buffer);
-          const metadata = await sharpInstance.metadata();
-
-          // Dimension validation
-          const MIN_DIM = 10;
-          const MAX_DIM = 8000;
-          if (
-            !metadata.width ||
-            !metadata.height ||
-            metadata.width < MIN_DIM ||
-            metadata.height < MIN_DIM ||
-            metadata.width > MAX_DIM ||
-            metadata.height > MAX_DIM
-          ) {
-            throw new Error("Image dimensions out of valid range (10-8000px)");
-          }
-
-          // Store original dimensions (or resized if we resize)
-          finalWidth = metadata.width || 0;
-          finalHeight = metadata.height || 0;
-
-          // Only resize if width is greater than maxWidth
-          if (metadata.width && metadata.width > maxWidth) {
-            sharpInstance.resize(maxWidth, null, {
-              fit: "inside",
-              withoutEnlargement: true,
-            });
-            // Calculate new dimensions after resize
-            if (metadata.width && metadata.height) {
-              const ratio = maxWidth / metadata.width;
-              finalWidth = maxWidth;
-              finalHeight = Math.round(metadata.height * ratio);
-            }
-          }
-
-          const compressedBuffer = await sharpInstance
-            .webp({ quality: 80 })
-            .toBuffer();
-
-          imageData = new Uint8Array(compressedBuffer);
-
-          contentType = "image/webp";
-          fileName = fileName.replace(/\.[^/.]+$/, "") + ".webp";
-        } catch (error) {
-          console.error("Compression failed for", fileName, error);
-          throw error;
-        }
-      }
+      // Page images are optimized before upload. Keep their bytes unchanged so
+      // this request stays lightweight and readers fetch directly from R2.
+      const imageData = new Uint8Array(buffer);
+      const contentType = file.type;
+      const fileName = file.name;
 
       // 5. Construct Path: uploads/{year}/{month}/{mangaId}/{filename}
       const date = new Date();
@@ -151,8 +97,8 @@ export async function POST(request: Request) {
       // Return object with url and dimensions for CLS prevention
       saved.push({
         url: getR2PublicUrl(key),
-        width: finalWidth,
-        height: finalHeight,
+        width: 0,
+        height: 0,
       });
     }
 

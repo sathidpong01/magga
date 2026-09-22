@@ -569,7 +569,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                   setUploadFiles((prev) =>
                     prev.map((f) =>
                       f.id === item.id
-                        ? { ...f, progress: 100, status: "completed" }
+                        ? { ...f, progress: 100, status: "completed", error: undefined }
                         : f
                     )
                   );
@@ -578,22 +578,30 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                   reject(new Error("รูปแบบข้อมูลตอบกลับไม่ถูกต้อง"));
                 }
               } else {
+                let errorMsg = "อัปโหลดไฟล์ไม่สำเร็จ";
+                try {
+                  const response = JSON.parse(xhr.responseText);
+                  if (response?.error) {
+                    errorMsg = typeof response.error === "string" ? response.error : JSON.stringify(response.error);
+                  }
+                } catch {}
                 setUploadFiles((prev) =>
                   prev.map((f) =>
-                    f.id === item.id ? { ...f, status: "error" } : f
+                    f.id === item.id ? { ...f, status: "error", error: errorMsg } : f
                   )
                 );
-                reject(new Error("อัปโหลดไฟล์ไม่สำเร็จ"));
+                reject(new Error(errorMsg));
               }
             };
 
             xhr.onerror = () => {
+              const networkErrorMsg = "เกิดปัญหาเครือข่ายระหว่างอัปโหลด";
               setUploadFiles((prev) =>
                 prev.map((f) =>
-                  f.id === item.id ? { ...f, status: "error" } : f
+                  f.id === item.id ? { ...f, status: "error", error: networkErrorMsg } : f
                 )
               );
-              reject(new Error("เกิดปัญหาเครือข่ายระหว่างอัปโหลด"));
+              reject(new Error(networkErrorMsg));
             };
 
             xhr.withCredentials = true;
@@ -794,24 +802,31 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
           setUploadedUrls((prev) => ({ ...prev, [fileId]: url }));
           setUploadFiles((prev) =>
             prev.map((f) =>
-              f.id === fileId ? { ...f, progress: 100, status: "completed" } : f
+              f.id === fileId ? { ...f, progress: 100, status: "completed", error: undefined } : f
             )
           );
         } catch (e) {
           setUploadFiles((prev) =>
-            prev.map((f) => (f.id === fileId ? { ...f, status: "error" } : f))
+            prev.map((f) => (f.id === fileId ? { ...f, status: "error", error: "รูปแบบข้อมูลตอบกลับไม่ถูกต้อง" } : f))
           );
         }
       } else {
+        let errorMsg = "อัปโหลดไฟล์ไม่สำเร็จ";
+        try {
+          const response = JSON.parse(xhr.responseText);
+          if (response?.error) {
+            errorMsg = typeof response.error === "string" ? response.error : JSON.stringify(response.error);
+          }
+        } catch {}
         setUploadFiles((prev) =>
-          prev.map((f) => (f.id === fileId ? { ...f, status: "error" } : f))
+          prev.map((f) => (f.id === fileId ? { ...f, status: "error", error: errorMsg } : f))
         );
       }
     };
 
     xhr.onerror = () => {
       setUploadFiles((prev) =>
-        prev.map((f) => (f.id === fileId ? { ...f, status: "error" } : f))
+        prev.map((f) => (f.id === fileId ? { ...f, status: "error", error: "เกิดปัญหาเครือข่ายระหว่างอัปโหลด" } : f))
       );
     };
 

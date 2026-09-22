@@ -1,5 +1,5 @@
-﻿import React, { useState } from 'react';
-import { Box, Paper, Typography, LinearProgress, IconButton, Collapse, Badge, CircularProgress } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, Paper, Typography, LinearProgress, IconButton, Collapse, Badge, CircularProgress, Tooltip } from '@mui/material';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import CloseIcon from '@mui/icons-material/Close';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -130,8 +130,10 @@ export default function UploadProgress({ files, onCancel, onRetry }: UploadProgr
                       {file.status === 'completed' ? (
                         <CheckCircleIcon sx={{ fontSize: 16, color: '#4ade80' }} />
                       ) : file.status === 'error' ? (
-                        <Box sx={{ display: 'flex', gap: 1 }}>
-                          <ErrorIcon sx={{ fontSize: 16, color: '#ef4444' }} />
+                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                          <Tooltip title={file.error || "เกิดข้อผิดพลาดในการอัปโหลด"} arrow>
+                            <ErrorIcon sx={{ fontSize: 16, color: '#ef4444', cursor: 'pointer' }} />
+                          </Tooltip>
                           {onRetry && (
                             <IconButton 
                               size="small" 
