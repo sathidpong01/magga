@@ -172,13 +172,11 @@ export default async function AdminMangaPage() {
                 fontWeight: 700,
               }}
             />
-            <Button
-              component={Link}
-              href="/dashboard/admin/manga/create"
-              sx={dashboardPrimaryButtonSx}
-            >
-              + เพิ่มมังงะใหม่
-            </Button>
+            <Link href="/dashboard/admin/manga/create" style={{ textDecoration: "none" }}>
+              <Button sx={dashboardPrimaryButtonSx}>
+                + เพิ่มมังงะใหม่
+              </Button>
+            </Link>
           </Stack>
         </Stack>
       </DashboardSurface>

@@ -1,4 +1,6 @@
-﻿import { Skeleton, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
+"use client";
+
+import { Skeleton, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
 
 export default function SubmissionsLoading() {
   return (
@@ -24,7 +26,7 @@ export default function SubmissionsLoading() {
       </Paper>
 
       {/* Table */}
-      <TableContainer component={Paper} sx={{ bgcolor: '#171717', borderRadius: 1 }}>
+      <TableContainer sx={{ bgcolor: '#171717', borderRadius: 1 }}>
         <Table>
           <TableHead>
             <TableRow>

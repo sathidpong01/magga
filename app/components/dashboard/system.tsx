@@ -210,21 +210,20 @@ export function DashboardPageHeader({
 }) {
   const actionNode = action ? (
     action.href ? (
-      <Button
-        component={Link}
-        href={action.href}
-        prefetch={false}
-        variant={action.variant ?? "contained"}
-        sx={
-          action.variant === "outlined"
-            ? dashboardSecondaryButtonSx
-            : action.variant === "text"
-              ? dashboardGhostButtonSx
-              : dashboardPrimaryButtonSx
-        }
-      >
-        {action.label}
-      </Button>
+      <Link href={action.href} prefetch={false} style={{ textDecoration: "none" }}>
+        <Button
+          variant={action.variant ?? "contained"}
+          sx={
+            action.variant === "outlined"
+              ? dashboardSecondaryButtonSx
+              : action.variant === "text"
+                ? dashboardGhostButtonSx
+                : dashboardPrimaryButtonSx
+          }
+        >
+          {action.label}
+        </Button>
+      </Link>
     ) : (
       <Button
         onClick={action.onClick}

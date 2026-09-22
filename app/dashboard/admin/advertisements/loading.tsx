@@ -1,4 +1,6 @@
-﻿import { Skeleton, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
+"use client";
+
+import { Skeleton, Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
 
 export default function AdvertisementsLoading() {
   return (
@@ -10,7 +12,7 @@ export default function AdvertisementsLoading() {
       </Box>
 
       {/* Table */}
-      <TableContainer component={Paper} sx={{ bgcolor: "#171717", borderRadius: 1 }}>
+      <TableContainer sx={{ bgcolor: "#171717", borderRadius: 1 }}>
         <Table>
           <TableHead>
             <TableRow>

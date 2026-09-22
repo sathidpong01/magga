@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Box,
   Skeleton,
@@ -61,7 +63,6 @@ export default function MangaListLoading() {
 
       {/* Manga Table */}
       <TableContainer
-        component={Paper}
         sx={{ bgcolor: "#0a0a0a", borderRadius: 1 }}
       >
         <Table>
