@@ -1,7 +1,13 @@
 export const maggaColors = {
+  background: "#0a0a0a",
   midnightCanvas: "#0a0a0a",
+  surface: "#171717",
   charcoalSurface: "#171717",
+  surfaceAlt: "#262626",
+  surfaceMuted: "#141414",
   ironSurface: "#262626",
+  border: "rgba(255,255,255,0.08)",
+  borderStrong: "rgba(255,255,255,0.14)",
   softDivider: "#404040",
   textPrimary: "#fafafa",
   textSecondary: "#a3a3a3",
