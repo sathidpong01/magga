@@ -439,8 +439,8 @@ export default function MangaDataTable({
                 key={manga.id}
                 hover
                 sx={{
-                  "&:hover": { bgcolor: "#171717" },
-                  "& td": { borderBottom: "1px solid #262626", py: 2, px: 2 },
+                  "&:hover": { bgcolor: dashboardTokens.surfaceAlt },
+                  "& td": { borderBottom: `1px solid ${dashboardTokens.border}`, py: 2, px: 2 },
                 }}
               >
                 <TableCell padding="checkbox">

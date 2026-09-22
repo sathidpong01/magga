@@ -19,7 +19,7 @@ export const dashboardTokens = {
   borderStrong: "rgba(255,255,255,0.14)",
   text: maggaColors.textPrimary,
   textMuted: maggaColors.textSecondary,
-  textSoft: maggaColors.textMuted,
+  textSoft: "#9ca3af",
   accent: maggaColors.archiveGold,
   accentStrong: maggaColors.archiveGoldHover,
   accentSoft: "rgba(217, 119, 6, 0.12)",
@@ -271,6 +271,7 @@ export function DashboardPageHeader({
         ) : null}
         <Typography
           variant="h4"
+          component="h1"
           sx={{
             color: dashboardTokens.text,
             fontWeight: 700,
@@ -338,6 +339,7 @@ export function DashboardSectionTitle({
     <Box sx={{ mb: 2 }}>
       <Typography
         variant="h6"
+        component="h2"
         sx={{ color: dashboardTokens.text, fontWeight: 700, mb: 0.25, fontSize: "1.05rem" }}
       >
         {title}

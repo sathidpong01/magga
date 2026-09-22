@@ -446,9 +446,9 @@ export default function MetadataManager({
         slotProps={{
           paper: {
             sx: {
-              bgcolor: "#0a0a0a",
-              borderRadius: 1,
-              border: "1px solid #262626",
+              bgcolor: dashboardTokens.surfaceMuted,
+              borderRadius: dashboardRadii.surface,
+              border: `1px solid ${dashboardTokens.border}`,
             },
           }
         }}

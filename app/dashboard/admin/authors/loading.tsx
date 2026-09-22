@@ -10,10 +10,15 @@ import {
   TableCell,
   TableBody,
 } from "@mui/material";
+import {
+  dashboardSurfaceSx,
+  dashboardTokens,
+  dashboardRadii,
+} from "@/app/components/dashboard/system";
 
 export default function AuthorsLoading() {
   return (
-    <Box sx={{ p: 3 }}>
+    <Box>
       {/* Header */}
       <Box
         sx={{
@@ -23,35 +28,35 @@ export default function AuthorsLoading() {
           alignItems: "center",
         }}
       >
-        <Skeleton
-          variant="text"
-          width={200}
-          height={40}
-          sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 1 }}
-        />
+        <Box>
+          <Skeleton
+            variant="text"
+            width={200}
+            height={38}
+            sx={{ bgcolor: "rgba(255,255,255,0.08)", borderRadius: "6px" }}
+          />
+          <Skeleton
+            variant="text"
+            width={280}
+            height={20}
+            sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: "4px", mt: 0.5 }}
+          />
+        </Box>
         <Skeleton
           variant="rectangular"
           width={100}
-          height={40}
-          sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 1 }}
+          height={38}
+          sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: dashboardRadii.button }}
         />
       </Box>
 
       {/* Add New Author Form */}
-      <Paper
-        sx={{
-          p: 3,
-          mb: 3,
-          bgcolor: "#171717",
-          border: "1px solid rgba(255,255,255,0.08)",
-          borderRadius: 1,
-        }}
-      >
+      <Paper sx={{ p: 3, mb: 3, ...dashboardSurfaceSx }}>
         <Skeleton
           variant="text"
           width={180}
           height={28}
-          sx={{ bgcolor: "rgba(255,255,255,0.05)", mb: 2, borderRadius: 1 }}
+          sx={{ bgcolor: "rgba(255,255,255,0.08)", mb: 2, borderRadius: "6px" }}
         />
 
         <Stack spacing={2}>
@@ -61,12 +66,12 @@ export default function AuthorsLoading() {
               variant="text"
               width={80}
               height={20}
-              sx={{ bgcolor: "rgba(255,255,255,0.05)", mb: 1 }}
+              sx={{ bgcolor: "rgba(255,255,255,0.06)", mb: 1 }}
             />
             <Skeleton
               variant="rectangular"
-              height={56}
-              sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 1 }}
+              height={48}
+              sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: dashboardRadii.field }}
             />
           </Box>
 
@@ -76,32 +81,32 @@ export default function AuthorsLoading() {
               variant="text"
               width={150}
               height={20}
-              sx={{ bgcolor: "rgba(255,255,255,0.05)", mb: 1 }}
+              sx={{ bgcolor: "rgba(255,255,255,0.06)", mb: 1 }}
             />
             <Box
               sx={{
                 display: "grid",
                 gridTemplateColumns: "1fr auto 1fr auto",
-                gap: 1,
+                gap: 1.5,
                 alignItems: "center",
                 mb: 1,
               }}
             >
               <Skeleton
                 variant="rectangular"
-                height={48}
-                sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 1 }}
+                height={42}
+                sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: dashboardRadii.field }}
               />
               <Skeleton
                 variant="rectangular"
-                height={48}
+                height={42}
                 width={150}
-                sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 1 }}
+                sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: dashboardRadii.field }}
               />
               <Skeleton
                 variant="rectangular"
-                height={48}
-                sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 1 }}
+                height={42}
+                sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: dashboardRadii.field }}
               />
               <Skeleton
                 variant="circular"
@@ -110,59 +115,64 @@ export default function AuthorsLoading() {
                 sx={{ bgcolor: "rgba(255,255,255,0.05)" }}
               />
             </Box>
-            <Skeleton
-              variant="text"
-              width={150}
-              height={32}
-              sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 1 }}
-            />
           </Box>
         </Stack>
       </Paper>
 
       {/* Authors Table */}
-      <Paper
-        sx={{
-          bgcolor: "#171717",
-          border: "1px solid rgba(255,255,255,0.08)",
-          borderRadius: 1,
-        }}
-      >
-        <Box sx={{ p: 2, borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+      <Paper sx={{ ...dashboardSurfaceSx, overflow: "hidden" }}>
+        <Box sx={{ p: 2, borderBottom: `1px solid ${dashboardTokens.border}` }}>
           <Skeleton
             variant="text"
             width={150}
             height={28}
-            sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 1 }}
+            sx={{ bgcolor: "rgba(255,255,255,0.08)", borderRadius: "6px" }}
           />
         </Box>
 
         <TableContainer>
           <Table>
             <TableHead>
-              <TableRow sx={{ "& th": { borderBottom: "1px solid #262626" } }}>
+              <TableRow
+                sx={{
+                  "& th": {
+                    borderBottom: `1px solid ${dashboardTokens.border}`,
+                    bgcolor: "rgba(255,255,255,0.02)",
+                    py: 1.75,
+                    px: 2,
+                  },
+                }}
+              >
                 {["ชื่อ", "ช่องทาง Social", "จัดการ"].map((header) => (
                   <TableCell key={header}>
                     <Skeleton
                       variant="text"
                       width={80}
-                      sx={{ bgcolor: "rgba(255,255,255,0.05)" }}
+                      height={20}
+                      sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: "4px" }}
                     />
                   </TableCell>
                 ))}
               </TableRow>
             </TableHead>
             <TableBody>
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              {[1, 2, 3, 4, 5, 6].map((i) => (
                 <TableRow
                   key={i}
-                  sx={{ "& td": { borderBottom: "1px solid #262626" } }}
+                  sx={{
+                    "& td": {
+                      borderBottom: `1px solid rgba(255,255,255,0.05)`,
+                      py: 1.5,
+                      px: 2,
+                    },
+                  }}
                 >
                   <TableCell>
                     <Skeleton
                       variant="text"
                       width={120}
-                      sx={{ bgcolor: "rgba(255,255,255,0.05)" }}
+                      height={20}
+                      sx={{ bgcolor: "rgba(255,255,255,0.08)", borderRadius: "4px" }}
                     />
                   </TableCell>
                   <TableCell>
@@ -175,25 +185,25 @@ export default function AuthorsLoading() {
                           height={24}
                           sx={{
                             bgcolor: "rgba(255,255,255,0.05)",
-                            borderRadius: 1,
+                            borderRadius: dashboardRadii.badge,
                           }}
                         />
                       ))}
                     </Box>
                   </TableCell>
                   <TableCell>
-                    <Box sx={{ display: "flex", gap: 1 }}>
+                    <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
                       <Skeleton
-                        variant="circular"
+                        variant="rectangular"
                         width={32}
                         height={32}
-                        sx={{ bgcolor: "rgba(255,255,255,0.05)" }}
+                        sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: "6px" }}
                       />
                       <Skeleton
-                        variant="circular"
+                        variant="rectangular"
                         width={32}
                         height={32}
-                        sx={{ bgcolor: "rgba(255,255,255,0.05)" }}
+                        sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: "6px" }}
                       />
                     </Box>
                   </TableCell>

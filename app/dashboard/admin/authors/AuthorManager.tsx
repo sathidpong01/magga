@@ -367,8 +367,8 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                           placeholder="https://twitter.com/... หรือ pixiv.net/..."
                           sx={{
                             "& .MuiOutlinedInput-root": {
-                              bgcolor: "#262626",
-                              borderRadius: 0.75,
+                              bgcolor: dashboardTokens.surfaceMuted,
+                              borderRadius: dashboardRadii.field,
                             },
                           }}
                           slotProps={{
@@ -376,7 +376,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                               startAdornment: (
                                 <InputAdornment position="start">
                                   <LinkIcon
-                                    sx={{ color: "#525252", fontSize: 18 }}
+                                    sx={{ color: dashboardTokens.textMuted, fontSize: 18 }}
                                   />
                                 </InputAdornment>
                               ),
@@ -387,7 +387,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                       <Box sx={{ flex: 1 }}>
                         <Typography
                           variant="caption"
-                          sx={{ color: "#737373", mb: 0.5, display: "block" }}
+                          sx={{ color: dashboardTokens.textSoft, mb: 0.5, display: "block" }}
                         >
                           ป้ายชื่อ
                         </Typography>
@@ -401,8 +401,8 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                           placeholder="ชื่อแสดง (เช่น Twitter)"
                           sx={{
                             "& .MuiOutlinedInput-root": {
-                              bgcolor: "#262626",
-                              borderRadius: 0.75,
+                              bgcolor: dashboardTokens.surfaceMuted,
+                              borderRadius: dashboardRadii.field,
                             },
                           }}
                         />
@@ -410,7 +410,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                       <Box sx={{ flex: 1 }}>
                         <Typography
                           variant="caption"
-                          sx={{ color: "#737373", mb: 0.5, display: "block" }}
+                          sx={{ color: dashboardTokens.textSoft, mb: 0.5, display: "block" }}
                         >
                           URL ไอคอน
                         </Typography>
@@ -427,8 +427,8 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                               placeholder="วาง URL ไอคอน"
                             sx={{
                               "& .MuiOutlinedInput-root": {
-                                bgcolor: "#262626",
-                                borderRadius: 0.75,
+                                bgcolor: dashboardTokens.surfaceMuted,
+                                borderRadius: dashboardRadii.field,
                               },
                             }}
                           />
@@ -452,9 +452,9 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                               disabled={!link.url || isFetching === index}
                               size="small"
                               sx={{
-                                bgcolor: "#262626",
-                                "&:hover": { bgcolor: "#404040" },
-                                color: "#a3a3a3",
+                                bgcolor: dashboardTokens.surfaceAlt,
+                                "&:hover": { bgcolor: dashboardTokens.surfaceMuted },
+                                color: dashboardTokens.textMuted,
                               }}
                             >
                               {isFetching === index ? (

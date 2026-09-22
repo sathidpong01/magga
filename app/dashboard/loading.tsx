@@ -1,31 +1,31 @@
 import { Box, Skeleton, Stack } from "@mui/material";
-import { DashboardSurface } from "@/app/components/dashboard/system";
+import { DashboardSurface, dashboardRadii } from "@/app/components/dashboard/system";
 
 export default function DashboardLoading() {
   return (
     <Box>
       {/* Header */}
-      <Stack spacing={1} sx={{ mb: 4.5 }}>
+      <Stack spacing={1} sx={{ mb: 4 }}>
         <Skeleton
           variant="text"
           width={220}
-          height={46}
-          sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: 2 }}
+          height={40}
+          sx={{ bgcolor: "rgba(255,255,255,0.08)", borderRadius: "6px" }}
         />
         <Skeleton
           variant="text"
-          width={360}
-          height={26}
-          sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 2 }}
+          width={340}
+          height={22}
+          sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: "4px" }}
         />
       </Stack>
 
-      {/* Header surface */}
+      {/* Header surface stats */}
       <Box
         sx={{
           display: "grid",
           gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
-          gap: 3,
+          gap: 2.5,
           mb: 4,
         }}
       >
@@ -33,27 +33,28 @@ export default function DashboardLoading() {
           <DashboardSurface
             key={i}
             sx={{
-              p: 3,
-              minHeight: 148,
+              p: 2.5,
+              minHeight: 140,
             }}
           >
             <Stack spacing={2}>
               <Skeleton
                 variant="rectangular"
-                width={44}
-                height={44}
-                sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: 2 }}
+                width={40}
+                height={40}
+                sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: dashboardRadii.field }}
               />
               <Skeleton
                 variant="text"
                 width="60%"
-                sx={{ bgcolor: "rgba(255,255,255,0.05)" }}
+                height={18}
+                sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: "4px" }}
               />
               <Skeleton
                 variant="text"
                 width={100}
-                height={38}
-                sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 2 }}
+                height={34}
+                sx={{ bgcolor: "rgba(255,255,255,0.08)", borderRadius: "4px" }}
               />
             </Stack>
           </DashboardSurface>
@@ -69,28 +70,30 @@ export default function DashboardLoading() {
         <Skeleton
           variant="text"
           width={180}
-          height={32}
-          sx={{ bgcolor: "rgba(255,255,255,0.05)", mb: 2.5 }}
+          height={28}
+          sx={{ bgcolor: "rgba(255,255,255,0.08)", mb: 2.5, borderRadius: "6px" }}
         />
         <Stack spacing={2}>
           {[1, 2, 3, 4].map((i) => (
             <Box key={i} sx={{ display: "flex", gap: 2, alignItems: "center" }}>
               <Skeleton
                 variant="circular"
-                width={48}
-                height={48}
-                sx={{ bgcolor: "rgba(255,255,255,0.05)" }}
+                width={44}
+                height={44}
+                sx={{ bgcolor: "rgba(255,255,255,0.06)" }}
               />
               <Box sx={{ flex: 1 }}>
                 <Skeleton
                   variant="text"
                   width="40%"
-                  sx={{ bgcolor: "rgba(255,255,255,0.05)", mb: 0.5 }}
+                  height={20}
+                  sx={{ bgcolor: "rgba(255,255,255,0.08)", mb: 0.5, borderRadius: "4px" }}
                 />
                 <Skeleton
                   variant="text"
                   width="60%"
-                  sx={{ bgcolor: "rgba(255,255,255,0.05)" }}
+                  height={16}
+                  sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: "4px" }}
                 />
               </Box>
             </Box>

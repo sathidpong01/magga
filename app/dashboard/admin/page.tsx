@@ -263,6 +263,7 @@ export default async function AdminPage() {
                       </Box>
 
                       <Typography
+                        component="h3"
                         sx={{
                           color: dashboardTokens.text,
                           fontWeight: 600,
@@ -286,7 +287,7 @@ export default async function AdminPage() {
                       >
                         {manga.viewCount?.toLocaleString() || 0} ครั้ง
                       </Typography>
-                      <Typography sx={{ color: dashboardTokens.textMuted, fontSize: "0.72rem", mt: 0.25 }}>
+                      <Typography sx={{ color: dashboardTokens.textMuted, fontSize: "0.75rem", mt: 0.25 }}>
                         ผู้ชมไม่ซ้ำ {manga.uniqueVisitors?.toLocaleString() ?? "—"}
                       </Typography>
                     </Box>
@@ -386,7 +387,7 @@ export default async function AdminPage() {
                       <Typography variant="body2" sx={{ fontWeight: 700, color: dashboardTokens.accent, fontSize: "0.82rem", lineHeight: 1.2, fontVariantNumeric: "tabular-nums" }}>
                         {manga.viewCount?.toLocaleString() || 0}
                       </Typography>
-                      <Typography variant="caption" sx={{ color: dashboardTokens.textMuted, fontSize: "0.68rem", display: "block" }}>
+                      <Typography variant="caption" sx={{ color: dashboardTokens.textMuted, fontSize: "0.75rem", display: "block" }}>
                         ผู้ชม {manga.uniqueVisitors?.toLocaleString() ?? "—"}
                       </Typography>
                     </Box>

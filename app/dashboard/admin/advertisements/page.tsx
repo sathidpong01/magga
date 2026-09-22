@@ -190,11 +190,11 @@ function PlacementPreview({
               sx={{
                 width: 70,
                 height: 100,
-                bgcolor: "#171717",
-                borderRadius: 0.5,
+                bgcolor: "#1e1e22",
+                borderRadius: "8px",
                 overflow: "hidden",
                 position: "relative",
-                border: "1px solid rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.08)",
               }}
             >
               {previewImage ? (
@@ -212,7 +212,7 @@ function PlacementPreview({
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    bgcolor: "#262626",
+                    bgcolor: "#24242a",
                   }}
                 >
                   <Typography
@@ -388,8 +388,8 @@ function PlacementPreview({
               width: "100%",
               height: 160,
               position: "relative",
-              bgcolor: "#1a1a1a",
-              borderRadius: 0.5,
+              bgcolor: "#1e1e22",
+              borderRadius: "10px",
             }}
           >
             <Skeleton
@@ -400,7 +400,7 @@ function PlacementPreview({
                 left: 8,
                 right: 8,
                 height: 80,
-                borderRadius: 0.5,
+                borderRadius: "8px",
               }}
             />
             <Paper
@@ -409,11 +409,11 @@ function PlacementPreview({
                 bottom: 8,
                 right: 8,
                 width: 80,
-                bgcolor: "#171717",
-                borderRadius: 1,
+                bgcolor: "#24242a",
+                borderRadius: "8px",
                 overflow: "hidden",
                 boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
-                border: "1px solid rgba(255,255,255,0.1)",
+                border: "1px solid rgba(255,255,255,0.08)",
               }}
             >
               {previewImage ? (

@@ -3,7 +3,6 @@
 import {
   Box,
   Skeleton,
-  Paper,
   TableContainer,
   Table,
   TableHead,
@@ -11,10 +10,15 @@ import {
   TableCell,
   TableBody,
 } from "@mui/material";
+import {
+  dashboardTableContainerSx,
+  dashboardTokens,
+  dashboardRadii,
+} from "@/app/components/dashboard/system";
 
 export default function MangaListLoading() {
   return (
-    <Box sx={{ p: 3 }}>
+    <Box>
       {/* Header */}
       <Box
         sx={{
@@ -24,52 +28,64 @@ export default function MangaListLoading() {
           alignItems: "center",
         }}
       >
-        <Skeleton
-          variant="text"
-          width={220}
-          height={40}
-          sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 1 }}
-        />
+        <Box>
+          <Skeleton
+            variant="text"
+            width={240}
+            height={38}
+            sx={{ bgcolor: "rgba(255,255,255,0.08)", borderRadius: "6px" }}
+          />
+          <Skeleton
+            variant="text"
+            width={320}
+            height={20}
+            sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: "4px", mt: 0.5 }}
+          />
+        </Box>
         <Skeleton
           variant="rectangular"
-          width={160}
+          width={150}
           height={40}
-          sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 1 }}
+          sx={{ bgcolor: "rgba(255,255,255,0.08)", borderRadius: dashboardRadii.button }}
         />
       </Box>
 
-      {/* Search & Count */}
+      {/* Search & Action Bar */}
       <Box
         sx={{
-          mb: 2,
+          mb: 2.5,
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          gap: 2,
         }}
       >
         <Skeleton
           variant="rectangular"
-          width={300}
-          height={40}
-          sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 1 }}
+          width={320}
+          height={42}
+          sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: dashboardRadii.field }}
         />
         <Skeleton
           variant="text"
-          width={100}
+          width={110}
           height={24}
-          sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 1 }}
+          sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: "4px" }}
         />
       </Box>
 
       {/* Manga Table */}
-      <TableContainer
-        sx={{ bgcolor: "#0a0a0a", borderRadius: 1 }}
-      >
+      <TableContainer sx={dashboardTableContainerSx}>
         <Table>
           <TableHead>
             <TableRow
               sx={{
-                "& th": { borderBottom: "1px solid #262626", py: 2, px: 2 },
+                "& th": {
+                  borderBottom: `1px solid ${dashboardTokens.border}`,
+                  bgcolor: "rgba(255,255,255,0.02)",
+                  py: 1.75,
+                  px: 2,
+                },
               }}
             >
               {[
@@ -85,8 +101,9 @@ export default function MangaListLoading() {
                 <TableCell key={header}>
                   <Skeleton
                     variant="text"
-                    width={header === "" || header === "ปก" ? 40 : 80}
-                    sx={{ bgcolor: "rgba(255,255,255,0.05)" }}
+                    width={header === "" || header === "ปก" ? 36 : 70}
+                    height={20}
+                    sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: "4px" }}
                   />
                 </TableCell>
               ))}
@@ -97,7 +114,11 @@ export default function MangaListLoading() {
               <TableRow
                 key={i}
                 sx={{
-                  "& td": { borderBottom: "1px solid #262626", py: 2, px: 2 },
+                  "& td": {
+                    borderBottom: `1px solid rgba(255,255,255,0.05)`,
+                    py: 1.5,
+                    px: 2,
+                  },
                 }}
               >
                 <TableCell>
@@ -105,87 +126,74 @@ export default function MangaListLoading() {
                     variant="rectangular"
                     width={18}
                     height={18}
-                    sx={{ bgcolor: "rgba(255,255,255,0.05)" }}
+                    sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: "4px" }}
                   />
                 </TableCell>
                 <TableCell>
                   <Skeleton
                     variant="rectangular"
-                    width={40}
+                    width={42}
                     height={56}
-                    sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 1 }}
+                    sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: "6px" }}
                   />
                 </TableCell>
                 <TableCell>
                   <Skeleton
                     variant="text"
-                    width={200}
-                    sx={{ bgcolor: "rgba(255,255,255,0.05)" }}
+                    width="min(240px, 80%)"
+                    height={22}
+                    sx={{ bgcolor: "rgba(255,255,255,0.08)", borderRadius: "4px" }}
                   />
                 </TableCell>
                 <TableCell>
                   <Skeleton
                     variant="rectangular"
-                    width={70}
+                    width={72}
                     height={24}
-                    sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 1 }}
+                    sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: "6px" }}
                   />
                 </TableCell>
                 <TableCell>
                   <Box sx={{ display: "flex", gap: 0.5 }}>
                     <Skeleton
                       variant="rectangular"
-                      width={60}
+                      width={55}
                       height={24}
-                      sx={{
-                        bgcolor: "rgba(255,255,255,0.05)",
-                        borderRadius: 1,
-                      }}
+                      sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: "6px" }}
                     />
                     <Skeleton
                       variant="rectangular"
-                      width={60}
+                      width={55}
                       height={24}
-                      sx={{
-                        bgcolor: "rgba(255,255,255,0.05)",
-                        borderRadius: 1,
-                      }}
-                    />
-                    <Skeleton
-                      variant="rectangular"
-                      width={60}
-                      height={24}
-                      sx={{
-                        bgcolor: "rgba(255,255,255,0.05)",
-                        borderRadius: 1,
-                      }}
+                      sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: "6px" }}
                     />
                   </Box>
                 </TableCell>
                 <TableCell>
                   <Skeleton
                     variant="rectangular"
-                    width={70}
+                    width={68}
                     height={24}
-                    sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: 1 }}
+                    sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: "6px" }}
                   />
                 </TableCell>
                 <TableCell>
                   <Skeleton
                     variant="text"
-                    width={60}
-                    sx={{ bgcolor: "rgba(255,255,255,0.05)" }}
+                    width={50}
+                    height={20}
+                    sx={{ bgcolor: "rgba(255,255,255,0.07)", borderRadius: "4px" }}
                   />
                 </TableCell>
                 <TableCell>
-                  <Box sx={{ display: "flex", gap: 0.5 }}>
-                    {[1, 2, 3, 4, 5].map((j) => (
+                  <Box sx={{ display: "flex", gap: 0.5, justifyContent: "flex-end" }}>
+                    {[1, 2, 3].map((j) => (
                       <Skeleton
                         key={j}
-                        variant="circular"
-                        width={32}
-                        height={32}
-                        sx={{ bgcolor: "rgba(255,255,255,0.05)" }}
+                        variant="rectangular"
+                        width={30}
+                        height={30}
+                        sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: "6px" }}
                       />
                     ))}
                   </Box>

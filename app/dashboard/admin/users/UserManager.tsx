@@ -42,7 +42,7 @@ import BlockIcon from "@mui/icons-material/Block";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { authFetch } from "@/lib/auth-fetch";
 import { useToast } from "@/app/contexts/ToastContext";
-import { dashboardTokens } from "@/app/components/dashboard/system";
+import { dashboardTokens, dashboardRadii } from "@/app/components/dashboard/system";
 
 type UserWithCounts = {
   id: string;
@@ -512,9 +512,9 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                           minWidth: 100,
                           bgcolor:
                           user.role?.toLowerCase() === "admin"
-                            ? "rgba(251, 191, 36, 0.12)"
-                            : "#262626",
-                          borderRadius: 1.1,
+                            ? dashboardTokens.accentSoft
+                            : dashboardTokens.surfaceMuted,
+                          borderRadius: dashboardRadii.field,
                         "& .MuiSelect-select": { py: 0.5 },
                       }}
                     >
