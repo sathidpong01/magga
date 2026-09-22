@@ -1,72 +1,76 @@
-"use client";
-
-import { Skeleton, Card, CardContent, Box } from "@mui/material";
+import { Skeleton, Box } from "@mui/material";
+import { maggaColors } from "@/lib/design-tokens";
 
 export default function MangaCardSkeleton() {
   return (
-    <Card sx={{ 
-      aspectRatio: "2/3",
-      position: "relative",
-      borderRadius: 0.8,
-      overflow: "hidden",
-      bgcolor: "#171717",
-      boxShadow: "0 10px 30px -10px rgba(0,0,0,0.5)",
-    }}>
-      {/* Full height image skeleton */}
-      <Skeleton 
-        variant="rectangular" 
-        width="100%" 
-        height="100%"
-        sx={{ bgcolor: "rgba(255, 255, 255, 0.05)" }}
-      />
-      
-      {/* Overlay Content */}
-      <Box sx={{ 
-        position: "absolute", 
-        bottom: 0, 
-        left: 0, 
-        right: 0, 
-        p: 3,
-        background: "linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, transparent 100%)"
-      }}>
-        {/* Category Chip Skeleton */}
-        <Skeleton 
-          variant="rounded" 
-          width={60} 
-          height={20} 
-          sx={{ mb: 1, bgcolor: "rgba(251, 191, 36, 0.2)" }} 
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      {/* 3:4 Cover Skeleton */}
+      <Box
+        sx={{
+          aspectRatio: "3/4",
+          position: "relative",
+          borderRadius: "10px",
+          overflow: "hidden",
+          bgcolor: maggaColors.surface,
+          border: "1px solid",
+          borderColor: maggaColors.border,
+          boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+        }}
+      >
+        <Skeleton
+          variant="rectangular"
+          width="100%"
+          height="100%"
+          animation="wave"
+          sx={{ bgcolor: "rgba(255, 255, 255, 0.05)" }}
         />
+        {/* Category Chip Skeleton on top right */}
+        <Skeleton
+          variant="rounded"
+          width={50}
+          height={22}
+          sx={{
+            position: "absolute",
+            top: 8,
+            right: 8,
+            borderRadius: "5px",
+            bgcolor: "rgba(255, 255, 255, 0.08)",
+          }}
+        />
+      </Box>
 
-        {/* Title Skeleton */}
-        <Skeleton 
-          variant="text" 
-          width="90%" 
-          height={32} 
-          sx={{ mb: 0.5, bgcolor: "rgba(255, 255, 255, 0.1)" }} 
+      {/* Details Below Cover Skeleton */}
+      <Box sx={{ pt: 1, px: 0.25, pb: 0.5, display: "flex", flexDirection: "column", gap: 0.5 }}>
+        {/* Title Lines */}
+        <Skeleton
+          variant="text"
+          width="90%"
+          height={20}
+          sx={{ bgcolor: "rgba(255, 255, 255, 0.08)" }}
         />
-        <Skeleton 
-          variant="text" 
-          width="60%" 
-          height={32} 
-          sx={{ mb: 1, bgcolor: "rgba(255, 255, 255, 0.1)" }} 
+        <Skeleton
+          variant="text"
+          width="60%"
+          height={20}
+          sx={{ bgcolor: "rgba(255, 255, 255, 0.06)" }}
         />
 
         {/* Stats Skeleton */}
-        <Box sx={{ display: "flex", gap: 1 }}>
-          <Skeleton 
-            variant="text" 
-            width={40} 
-            height={20} 
-            sx={{ bgcolor: "rgba(255, 255, 255, 0.1)" }} 
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.25 }}>
+          <Skeleton
+            variant="text"
+            width={35}
+            height={16}
+            sx={{ bgcolor: "rgba(217, 119, 6, 0.15)" }}
           />
-          <Skeleton 
-            variant="text" 
-            width={60} 
-            height={20} 
-            sx={{ bgcolor: "rgba(255, 255, 255, 0.1)" }} 
+          <Skeleton
+            variant="text"
+            width={45}
+            height={16}
+            sx={{ bgcolor: "rgba(255, 255, 255, 0.06)" }}
           />
         </Box>
       </Box>
-    </Card>
+    </Box>
   );
 }

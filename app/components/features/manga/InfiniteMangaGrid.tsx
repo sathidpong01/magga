@@ -207,22 +207,24 @@ export default function InfiniteMangaGrid({
             disabled={isLoading}
             startIcon={
               isLoading ? (
-                <CircularProgress size={18} sx={{ color: "#fbbf24" }} />
+                <CircularProgress size={18} sx={{ color: maggaColors.archiveGold }} />
               ) : (
                 <ExpandMoreIcon />
               )
             }
             sx={{
-              borderColor: "rgba(251, 191, 36, 0.4)",
-              color: "#fbbf24",
-              borderRadius: 0.75,
+              borderColor: maggaColors.archiveGoldBorder,
+              color: maggaColors.archiveGold,
+              borderRadius: "8px",
               px: 4,
               py: 1,
               textTransform: "none",
-              fontWeight: 600,
+              fontWeight: 500,
+              transition: "all 0.2s ease",
               "&:hover": {
-                borderColor: "#fbbf24",
-                bgcolor: "rgba(251, 191, 36, 0.08)",
+                borderColor: maggaColors.archiveGold,
+                bgcolor: maggaColors.archiveGoldSoft,
+                color: "#ffffff",
               },
               "&.Mui-disabled": {
                 borderColor: "rgba(255,255,255,0.1)",

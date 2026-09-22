@@ -184,14 +184,18 @@ export default function SearchFilters({ categories, tags }: Props) {
       <Paper
         elevation={0}
         sx={{
-          p: expanded ? 2 : 1.5,
-          backgroundColor: "background.paper",
+          p: expanded ? 2 : 1.25,
+          backgroundColor: maggaColors.surface,
           border: "1px solid",
-          borderColor: "divider",
-          borderRadius: 1,
+          borderColor: maggaColors.border,
+          borderRadius: "10px",
+          boxShadow: "0 4px 16px rgba(0, 0, 0, 0.25)",
           transition:
-            "padding 0.3s ease, width 0.3s ease, border-color 0.2s ease",
+            "padding 0.3s ease, width 0.3s ease, border-color 0.2s ease, box-shadow 0.2s ease",
           minWidth: 0,
+          "&:hover": {
+            borderColor: "rgba(255, 255, 255, 0.18)",
+          },
         }}
       >
         {/* Header / Trigger - Sleek single row */}
@@ -204,9 +208,9 @@ export default function SearchFilters({ categories, tags }: Props) {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            borderRadius: 1,
+            borderRadius: "7px",
             color: "inherit",
-            minHeight: 40,
+            minHeight: 38,
             py: 0.5,
             px: 1,
             textAlign: "left",
@@ -218,11 +222,11 @@ export default function SearchFilters({ categories, tags }: Props) {
           }}
         >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <FilterIcon fontSize="small" sx={{ color: "text.secondary", fontSize: "1.1rem" }} />
+            <FilterIcon fontSize="small" sx={{ color: expanded ? maggaColors.archiveGold : "text.secondary", fontSize: "1.1rem", transition: "color 0.2s" }} />
             <Typography
               variant="body2"
               sx={{
-                fontWeight: 600,
+                fontWeight: 500,
                 fontSize: "0.825rem",
                 color: expanded ? "text.primary" : "text.secondary",
                 transition: "color 0.2s ease",
@@ -234,8 +238,8 @@ export default function SearchFilters({ categories, tags }: Props) {
           <ExpandMoreIcon
             fontSize="small"
             sx={{
-              color: "text.secondary",
-              transition: "transform 0.2s ease",
+              color: expanded ? maggaColors.archiveGold : "text.secondary",
+              transition: "transform 0.2s ease, color 0.2s ease",
               transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
             }}
           />
@@ -489,7 +493,22 @@ export default function SearchFilters({ categories, tags }: Props) {
               size={12}
             >
               {(search || category !== "all" || selectedTags.length > 0 || sort !== "added") && (
-                <Button variant="outlined" onClick={handleClearFilters} size="small">
+                <Button
+                  variant="outlined"
+                  onClick={handleClearFilters}
+                  size="small"
+                  sx={{
+                    borderRadius: "6px",
+                    borderColor: maggaColors.border,
+                    color: maggaColors.textSecondary,
+                    fontSize: "0.8rem",
+                    "&:hover": {
+                      borderColor: maggaColors.archiveGold,
+                      color: maggaColors.textPrimary,
+                      bgcolor: maggaColors.archiveGoldSoft,
+                    },
+                  }}
+                >
                   Clear
                 </Button>
               )}

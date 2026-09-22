@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MAGGA — Tailspace Layout x Charcoal Neutral Dark with Accent Picker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;600&family=Kanit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+  <style>
+    /* Reset & Base */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Kanit', sans-serif;
+      background: #0f1012;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Control Bar */
+    .control-header {
+      position: sticky;
+      top: 0;
+      z-index: 999;
+      background: rgba(18, 18, 20, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 14px 24px;
+    }
+    .control-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .control-title h1 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #f4f4f5;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .control-title p {
+      font-size: 0.8rem;
+      color: #71717a;
+      margin-top: 2px;
+    }
+
+    /* Mood Switcher Tabs */
+    .mood-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 5px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .mood-btn {
+      background: transparent;
+      border: none;
+      color: #a1a1aa;
+      font-family: 'Kanit', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 500;
+      padding: 7px 14px;
+      border-radius: 7px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .mood-btn:hover {
+      color: #f4f4f5;
+      background: rgba(255, 255, 255, 0.06);
+    }
+    .mood-btn.active {
+      background: #27272a;
+      color: #ffffff;
+      font-weight: 600;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+    .mood-btn.highlight-picked {
+      border: 1px solid #71717a;
+      background: #222226;
+      color: #fafafa;
+    }
+    .mood-btn.highlight-picked.active {
+      background: #3f3f46;
+      border-color: #a1a1aa;
+    }
+
+    /* Accent Color Selector Toolbar */
+    .accent-selector-bar {
+      max-width: 1400px;
+      margin: 16px auto 0;
+      padding: 12px 20px;
+      background: #18181b;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .accent-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.86rem;
+      color: #d4d4d8;
+      font-weight: 500;
+    }
+    .accent-swatches {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .swatch-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #202024;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #a1a1aa;
+      font-size: 0.8rem;
+      font-family: 'Kanit', sans-serif;
+      padding: 6px 14px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .swatch-btn:hover {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    .swatch-btn.active {
+      background: #2a2a30;
+      color: #fff;
+      font-weight: 500;
+      border-color: rgba(255, 255, 255, 0.3);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    }
+    .swatch-circle {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    /* Explanation Banner */
+    .mood-description-bar {
+      max-width: 1400px;
+      margin: 12px auto 0;
+      padding: 14px 20px;
+      background: #141416;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .desc-text {
+      flex: 1;
+      min-width: 280px;
+    }
+    .desc-text h3 {
+      font-size: 0.96rem;
+      font-weight: 600;
+      color: #fafafa;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .desc-text p {
+      font-size: 0.84rem;
+      color: #a1a1aa;
+      margin-top: 4px;
+      line-height: 1.5;
+    }
+    .desc-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .desc-tag {
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      color: #d4d4d8;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    /* Preview Canvas Area */
+    .preview-canvas {
+      flex: 1;
+      max-width: 1400px;
+      width: 100%;
+      margin: 18px auto 40px;
+      padding: 0 16px;
+    }
+
+    /* =======================================================
+       THEME: TAILSPACE x CHARCOAL NEUTRAL DARK
+       ======================================================= */
+    .theme-tailspace-charcoal {
+      --bg: #141416;
+      --surface: #1e1e22;
+      --surface-elevated: #26262c;
+      --surface-border: rgba(255, 255, 255, 0.08);
+      --surface-border-subtle: rgba(255, 255, 255, 0.05);
+      --ink: #f4f4f5;
+      --ink-secondary: #a1a1aa;
+      --ink-muted: #71717a;
+      
+      /* Dynamic Accent (controlled via JS) */
+      --accent: #d97706; /* Default: Muted Amber */
+      --accent-soft: rgba(217, 119, 6, 0.15);
+      --accent-border: rgba(217, 119, 6, 0.35);
+
+      --font-display: 'Plus Jakarta Sans', sans-serif;
+      --font-body: 'Kanit', sans-serif;
+      --radius-card: 10px;
+      --radius-btn: 8px;
+      --radius-pill: 9999px;
+    }
+    .theme-tailspace-charcoal .mock-site {
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--font-body);
+      border: 1px solid var(--surface-border);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+    }
+    /* Header */
+    .theme-tailspace-charcoal .mock-header {
+      border-bottom: 1px solid var(--surface-border);
+      padding: 12px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(26, 26, 30, 0.7);
+      backdrop-filter: blur(12px);
+    }
+    .theme-tailspace-charcoal .logo-group {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .theme-tailspace-charcoal .logo {
+      font-family: var(--font-display);
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .theme-tailspace-charcoal .logo-sub {
+      font-size: 0.7rem;
+      color: var(--accent);
+      background: var(--accent-soft);
+      padding: 2px 7px;
+      border-radius: 4px;
+      border: 1px solid var(--accent-border);
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    .theme-tailspace-charcoal .nav-pills {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .theme-tailspace-charcoal .nav-pills a {
+      color: var(--ink-secondary);
+      text-decoration: none;
+      font-size: 0.85rem;
+      padding: 6px 12px;
+      border-radius: var(--radius-btn);
+      transition: all 0.15s ease;
+      font-weight: 400;
+    }
+    .theme-tailspace-charcoal .nav-pills a:hover {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .theme-tailspace-charcoal .nav-pills a.active {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.08);
+      font-weight: 500;
+    }
+    .theme-tailspace-charcoal .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .theme-tailspace-charcoal .btn-neutral-outline {
+      background: transparent;
+      border: 1px solid var(--surface-border);
+      color: var(--ink-secondary);
+      font-size: 0.82rem;
+      padding: 6px 14px;
+      border-radius: var(--radius-btn);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .theme-tailspace-charcoal .btn-neutral-outline:hover {
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .theme-tailspace-charcoal .btn-accent-solid {
+      background: var(--surface-elevated);
+      border: 1px solid var(--accent-border);
+      color: var(--accent);
+      font-size: 0.82rem;
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: var(--radius-btn);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .theme-tailspace-charcoal .btn-accent-solid:hover {
+      background: var(--accent-soft);
+      border-color: var(--accent);
+      color: #ffffff;
+    }
+
+    /* Sub-nav Segmented Control (Tailspace Style) */
+    .theme-tailspace-charcoal .sub-bar {
+      padding: 16px 28px 0;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+    .theme-tailspace-charcoal .segmented-control {
+      display: inline-flex;
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 10px;
+      padding: 3px;
+      gap: 2px;
+    }
+    .theme-tailspace-charcoal .segmented-item {
+      padding: 6px 16px;
+      font-size: 0.84rem;
+      color: var(--ink-secondary);
+      text-decoration: none;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+    .theme-tailspace-charcoal .segmented-item:hover {
+      color: #ffffff;
+    }
+    .theme-tailspace-charcoal .segmented-item.active {
+      background: #2a2a30;
+      color: #ffffff;
+      font-weight: 500;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--accent-border);
+    }
+    .theme-tailspace-charcoal .segmented-item.active svg {
+      color: var(--accent);
+    }
+
+    /* Search & Filter Controls */
+    .theme-tailspace-charcoal .filter-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .theme-tailspace-charcoal .search-box {
+      position: relative;
+      width: 260px;
+    }
+    .theme-tailspace-charcoal .search-box input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      color: var(--ink);
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      padding: 7px 12px 7px 32px;
+      border-radius: var(--radius-btn);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .theme-tailspace-charcoal .search-box input:focus {
+      border-color: var(--accent-border);
+    }
+    .theme-tailspace-charcoal .search-icon {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--ink-muted);
+      font-size: 0.8rem;
+    }
+    .theme-tailspace-charcoal .kbd-shortcut {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.65rem;
+      color: var(--ink-muted);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 1px 5px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .theme-tailspace-charcoal .btn-filter {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      color: var(--ink-secondary);
+      font-size: 0.82rem;
+      padding: 6px 12px;
+      border-radius: var(--radius-btn);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .theme-tailspace-charcoal .btn-filter:hover {
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.18);
+    }
+
+    /* Page Peek Switch */
+    .theme-tailspace-charcoal .peek-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      padding: 5px 12px;
+      border-radius: var(--radius-btn);
+      font-size: 0.8rem;
+      color: var(--ink-secondary);
+      cursor: pointer;
+      user-select: none;
+    }
+    .theme-tailspace-charcoal .switch-dot {
+      width: 28px;
+      height: 16px;
+      background: #3f3f46;
+      border-radius: 10px;
+      position: relative;
+      transition: background 0.2s;
+    }
+    .theme-tailspace-charcoal .switch-dot::after {
+      content: "";
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #fff;
+      top: 2px;
+      left: 2px;
+      transition: transform 0.2s;
+    }
+    .theme-tailspace-charcoal .peek-toggle.active .switch-dot {
+      background: var(--accent);
+    }
+    .theme-tailspace-charcoal .peek-toggle.active .switch-dot::after {
+      transform: translateX(12px);
+    }
+
+    /* Section Info & Count */
+    .theme-tailspace-charcoal .section-info-bar {
+      padding: 18px 28px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--ink-muted);
+      font-size: 0.82rem;
+    }
+    .theme-tailspace-charcoal .section-count strong {
+      color: var(--ink);
+      font-weight: 500;
+    }
+
+    /* Manga Grid (Tailspace Card Anatomy) */
+    .theme-tailspace-charcoal .manga-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 20px;
+      padding: 6px 28px 36px;
+    }
+    .theme-tailspace-charcoal .manga-card {
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      position: relative;
+      border-radius: var(--radius-card);
+      transition: transform 0.2s ease;
+    }
+    .theme-tailspace-charcoal .manga-card:hover {
+      transform: translateY(-3px);
+    }
+    .theme-tailspace-charcoal .card-cover-wrap {
+      aspect-ratio: 3/4;
+      border-radius: var(--radius-card);
+      overflow: hidden;
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .theme-tailspace-charcoal .manga-card:hover .card-cover-wrap {
+      border-color: var(--accent-border);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
+    }
+    .theme-tailspace-charcoal .card-cover-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+    .theme-tailspace-charcoal .manga-card:hover .card-cover-wrap img {
+      transform: scale(1.03);
+    }
+
+    /* Badges on cover (Tailspace Frosted Glass Style) */
+    .theme-tailspace-charcoal .badge-container-top {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      right: 8px;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+    .theme-tailspace-charcoal .frosted-badge {
+      background: rgba(18, 18, 22, 0.8);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #e4e4e7;
+      font-size: 0.68rem;
+      font-weight: 500;
+      padding: 2px 7px;
+      border-radius: 5px;
+      letter-spacing: 0.02em;
+    }
+    .theme-tailspace-charcoal .frosted-badge.accent-highlight {
+      border-color: var(--accent-border);
+      color: var(--accent);
+      background: rgba(18, 18, 22, 0.9);
+    }
+
+    /* Metadata Under Cover (Tailspace Style) */
+    .theme-tailspace-charcoal .card-details {
+      padding: 8px 2px 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .theme-tailspace-charcoal .comic-title {
+      font-size: 0.92rem;
+      font-weight: 500;
+      color: var(--ink);
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: color 0.15s;
+    }
+    .theme-tailspace-charcoal .manga-card:hover .comic-title {
+      color: #ffffff;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+    .theme-tailspace-charcoal .artist-row {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.78rem;
+      color: var(--ink-secondary);
+    }
+    .theme-tailspace-charcoal .artist-name {
+      color: var(--ink-secondary);
+      font-weight: 400;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .theme-tailspace-charcoal .artist-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: var(--accent-soft);
+      border: 1px solid var(--accent-border);
+      color: var(--accent);
+      font-size: 0.55rem;
+    }
+    .theme-tailspace-charcoal .stats-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.72rem;
+      color: var(--ink-muted);
+      margin-top: 2px;
+    }
+    .theme-tailspace-charcoal .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .theme-tailspace-charcoal .stat-star {
+      color: var(--accent);
+    }
+
+    /* Footer */
+    .theme-tailspace-charcoal .mock-footer {
+      border-top: 1px solid var(--surface-border-subtle);
+      padding: 20px 28px;
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--ink-muted);
+      background: #111113;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Controller -->
+  <header class="control-header">
+    <div class="control-container">
+      <div class="control-title">
+        <h1>🎨 MAGGA Design Explorer</h1>
+        <p>Tailspace Layout x Charcoal Neutral Dark (ทดลอง Accent Color)</p>
+      </div>
+
+      <div class="mood-tabs" id="moodTabs">
+        <button class="mood-btn highlight-picked active" data-mood="tailspace-charcoal">
+          ✨ Tailspace x Charcoal (เลือกอยู่)
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Accent Color Selector -->
+  <div class="accent-selector-bar">
+    <div class="accent-title">
+      <span>💡 เลือกโทนสีที่เด่นขึ้นมานิดนึง (Accent) เพื่อดูความสบายตา:</span>
+    </div>
+    <div class="accent-swatches" id="accentSwatches">
+      <button class="swatch-btn active" data-accent="amber">
+        <span class="swatch-circle" style="background: #f59e0b;"></span>
+        1. Muted Amber (ทองอำพันละมุน / Night Shift)
+      </button>
+      <button class="swatch-btn" data-accent="sage">
+        <span class="swatch-circle" style="background: #34d399;"></span>
+        2. Soft Sage (เขียวเซจผ่อนคลาย / Eye-Rest)
+      </button>
+      <button class="swatch-btn" data-accent="slate">
+        <span class="swatch-circle" style="background: #60a5fa;"></span>
+        3. Slate Periwinkle (ฟ้าครามหม่น / Calm Tech)
+      </button>
+      <button class="swatch-btn" data-accent="silver">
+        <span class="swatch-circle" style="background: #e4e4e7;"></span>
+        4. Pure Silver (ขาวเงินหม่น / Monochrome)
+      </button>
+    </div>
+  </div>
+
+  <!-- Explanation Banner -->
+  <div class="mood-description-bar" id="descBar">
+    <div class="desc-text">
+      <h3 id="descTitle">🍯 1. Muted Amber (สีทองอำพันละมุน / สไตล์ Night Shift)</h3>
+      <p id="descBody">
+        <strong>ทำไมถึงสบายตา:</strong> แสงสีส้ม/อำพันเป็นช่วงคลื่นแสงอุ่นที่เลียนแบบแสงเทียนหรือโหมด Night Shift ของมือถือ ช่วยลดแสงสีฟ้า (Blue light) ไม่แยงตาในที่มืด และรักษาอัตลักษณ์สีทองเดิมของ MAGGA ไว้ได้อย่างหรูหราโดยไม่สดจ้าจนเกินไป
+      </p>
+    </div>
+    <div class="desc-tags" id="descTags">
+      <span class="desc-tag">Hex: #d97706 / #f59e0b</span>
+      <span class="desc-tag">Feeling: อบอุ่น สบายตา นุ่มนวล พรีเมียม</span>
+    </div>
+  </div>
+
+  <!-- Preview Area -->
+  <main class="preview-canvas" id="previewCanvas">
+    <div class="mock-wrapper theme-tailspace-charcoal" id="mockWrapper">
+      <div class="mock-site">
+        <!-- Header -->
+        <div class="mock-header">
+          <div class="logo-group">
+            <div class="logo">
+              MAGGA
+              <span class="logo-sub">manga</span>
+            </div>
+            <div class="nav-pills">
+              <a href="#" class="active">หน้าแรก</a>
+              <a href="#">หมวดหมู่</a>
+              <a href="#">แท็กยอดนิยม</a>
+              <a href="#">นักวาด</a>
+            </div>
+          </div>
+
+          <div class="header-actions">
+            <button class="btn-neutral-outline">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+              ส่งผลงาน
+            </button>
+            <button class="btn-accent-solid">เข้าสู่ระบบ</button>
+          </div>
+        </div>
+
+        <!-- Sub-bar (Tailspace Segmented Controls + Page Peek) -->
+        <div class="sub-bar">
+          <div class="segmented-control">
+            <div class="segmented-item active">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 7v14M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>
+              การ์ตูนทั้งหมด
+            </div>
+            <div class="segmented-item">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+              โพสต์พูดคุย
+            </div>
+            <div class="segmented-item">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              อัปเดตล่าสุด
+            </div>
+          </div>
+
+          <div class="filter-group">
+            <div class="peek-toggle active">
+              <span>เปิดดูตัวอย่าง (Peek)</span>
+              <div class="switch-dot"></div>
+            </div>
+
+            <div class="search-box">
+              <span class="search-icon">🔍</span>
+              <input type="text" placeholder="ค้นหาการ์ตูนหรือนักวาด..." value="หมาป่า" readonly />
+              <span class="kbd-shortcut">⌘K</span>
+            </div>
+
+            <button class="btn-filter">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/></svg>
+              ตัวกรอง & แท็ก
+            </button>
+          </div>
+        </div>
+
+        <!-- Section Info Bar -->
+        <div class="section-info-bar">
+          <div class="section-count">
+            แสดง <strong>1–6</strong> จากทั้งหมด <strong>1,420</strong> เรื่อง
+          </div>
+          <div>
+            เรียงตาม: <span style="color: #fff; cursor: pointer;">อัปเดตล่าสุด ▾</span>
+          </div>
+        </div>
+
+        <!-- Manga Grid (Tailspace Structure) -->
+        <div class="manga-grid">
+          <div class="manga-card">
+            <div class="card-cover-wrap">
+              <img src="https://images.unsplash.com/photo-1564349683136-77e08dba1ef6?w=500&auto=format&fit=crop&q=80" alt="Silver Wolf" />
+              <div class="badge-container-top">
+                <span class="frosted-badge accent-highlight">NEW</span>
+                <span class="frosted-badge">Furry</span>
+              </div>
+            </div>
+            <div class="card-details">
+              <div class="comic-title">ราชันย์หมาป่าสีเงิน (Silver Wolf)</div>
+              <div class="artist-row">
+                <span class="artist-name">WolfCraft</span>
+                <span class="artist-badge" title="Verified Artist">✓</span>
+              </div>
+              <div class="stats-row">
+                <span class="stat-item">📄 32 หน้า</span>
+                <span class="stat-item"><span class="stat-star">⭐</span> 4.9</span>
+                <span class="stat-item">👁️ 45.2K</span>
+                <span class="stat-item">💬 18</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="manga-card">
+            <div class="card-cover-wrap">
+              <img src="https://images.unsplash.com/photo-1530595467537-0b5996c41f2d?w=500&auto=format&fit=crop&q=80" alt="BearClaw" />
+              <div class="badge-container-top">
+                <span class="frosted-badge">WIP</span>
+                <span class="frosted-badge">Action</span>
+              </div>
+            </div>
+            <div class="card-details">
+              <div class="comic-title">บันทึกหมีนักรบแห่งป่าเหนือ</div>
+              <div class="artist-row">
+                <span class="artist-name">BearClaw</span>
+                <span class="artist-badge" title="Verified Artist">✓</span>
+              </div>
+              <div class="stats-row">
+                <span class="stat-item">📄 64 หน้า</span>
+                <span class="stat-item"><span class="stat-star">⭐</span> 4.8</span>
+                <span class="stat-item">👁️ 28.1K</span>
+                <span class="stat-item">💬 24</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="manga-card">
+            <div class="card-cover-wrap">
+              <img src="https://images.unsplash.com/photo-1474511320723-9a56873867b5?w=500&auto=format&fit=crop&q=80" alt="Kitsune" />
+              <div class="badge-container-top">
+                <span class="frosted-badge">END</span>
+                <span class="frosted-badge">Slice of Life</span>
+              </div>
+            </div>
+            <div class="card-details">
+              <div class="comic-title">เคโมะคาเฟ่ วันสบายๆ กับคุณจิ้งจอก</div>
+              <div class="artist-row">
+                <span class="artist-name">KitsuneMochi</span>
+              </div>
+              <div class="stats-row">
+                <span class="stat-item">📄 18 หน้า</span>
+                <span class="stat-item"><span class="stat-star">⭐</span> 4.7</span>
+                <span class="stat-item">👁️ 19.4K</span>
+                <span class="stat-item">💬 12</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="manga-card">
+            <div class="card-cover-wrap">
+              <img src="https://images.unsplash.com/photo-1561731216-c3a4d99437d5?w=500&auto=format&fit=crop&q=80" alt="Tiger" />
+              <div class="badge-container-top">
+                <span class="frosted-badge">WIP</span>
+                <span class="frosted-badge">Mystery</span>
+              </div>
+            </div>
+            <div class="card-details">
+              <div class="comic-title">เงาพยัคฆ์: คดีปริศนายามราตรี</div>
+              <div class="artist-row">
+                <span class="artist-name">TigerShadow</span>
+                <span class="artist-badge" title="Verified Artist">✓</span>
+              </div>
+              <div class="stats-row">
+                <span class="stat-item">📄 42 หน้า</span>
+                <span class="stat-item"><span class="stat-star">⭐</span> 4.9</span>
+                <span class="stat-item">👁️ 32.0K</span>
+                <span class="stat-item">💬 31</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="manga-card">
+            <div class="card-cover-wrap">
+              <img src="https://images.unsplash.com/photo-1543946207-39bd91e70ca7?w=500&auto=format&fit=crop&q=80" alt="Alpine" />
+              <div class="badge-container-top">
+                <span class="frosted-badge accent-highlight">NEW</span>
+                <span class="frosted-badge">Fantasy</span>
+              </div>
+            </div>
+            <div class="card-details">
+              <div class="comic-title">ผู้พิทักษ์แห่งดินแดนเขาสูง</div>
+              <div class="artist-row">
+                <span class="artist-name">AlpineFur</span>
+              </div>
+              <div class="stats-row">
+                <span class="stat-item">📄 26 หน้า</span>
+                <span class="stat-item"><span class="stat-star">⭐</span> 4.8</span>
+                <span class="stat-item">👁️ 14.8K</span>
+                <span class="stat-item">💬 9</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="manga-card">
+            <div class="card-cover-wrap">
+              <img src="https://images.unsplash.com/photo-1534188753412-3e26d0d618d6?w=500&auto=format&fit=crop&q=80" alt="Spring" />
+              <div class="badge-container-top">
+                <span class="frosted-badge">END</span>
+                <span class="frosted-badge">Romance</span>
+              </div>
+            </div>
+            <div class="card-details">
+              <div class="comic-title">มนต์รักสายลมฤดูใบไม้ผลิ</div>
+              <div class="artist-row">
+                <span class="artist-name">SpringBreeze</span>
+                <span class="artist-badge" title="Verified Artist">✓</span>
+              </div>
+              <div class="stats-row">
+                <span class="stat-item">📄 50 หน้า</span>
+                <span class="stat-item"><span class="stat-star">⭐</span> 4.9</span>
+                <span class="stat-item">👁️ 22.6K</span>
+                <span class="stat-item">💬 15</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="mock-footer">
+          MAGGA Manga Archive © 2026 — แพลตฟอร์มการ์ตูนออนไลน์แปลไทย
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const accentConfigs = {
+      amber: {
+        accent: '#d97706',
+        accentSoft: 'rgba(217, 119, 6, 0.15)',
+        accentBorder: 'rgba(217, 119, 6, 0.35)',
+        title: '🍯 1. Muted Amber (สีทองอำพันละมุน / สไตล์ Night Shift)',
+        desc: '<strong>ทำไมถึงสบายตา:</strong> เป็นโทนแสงอุ่น (Warm light) เลียนแบบแสงเทียนหรือโหมดถนอมสายตา Night Shift ช่วยตัดแสงฟ้าในที่มืด ไม่แยงตา และรักษา DNA สีทองเดิมของ MAGGA ไว้ได้อย่างหรูหราโดยไม่จ้าเกินไป',
+        tag1: 'Hex: #d97706 / #f59e0b',
+        tag2: 'Feeling: อบอุ่น สบายตา นุ่มนวล พรีเมียม'
+      },
+      sage: {
+        accent: '#10b981',
+        accentSoft: 'rgba(16, 185, 129, 0.14)',
+        accentBorder: 'rgba(16, 185, 129, 0.32)',
+        title: '🍃 2. Soft Sage (สีเขียวเซจผ่อนคลาย / โทนธรรมชาติ)',
+        desc: '<strong>ทำไมถึงสบายตา:</strong> สีเขียวเป็นสีที่ประสาทตาของมนุษย์มองแล้วกล้ามเนื้อตาผ่อนคลายที่สุด (Resting wavelength) ให้ความรู้สึกสดชื่น ผ่อนคลาย สะอาด ปลอดภัย แบบ Tailspace แต่ไม่ฉูดฉาด',
+        tag1: 'Hex: #10b981 / #34d399 (Muted)',
+        tag2: 'Feeling: ผ่อนคลาย สดชื่น สะอาด เป็นมิตร'
+      },
+      slate: {
+        accent: '#60a5fa',
+        accentSoft: 'rgba(96, 165, 250, 0.14)',
+        accentBorder: 'rgba(96, 165, 250, 0.32)',
+        title: '🌌 3. Slate Periwinkle (สีฟ้าครามหม่น / สไตล์ Calm Tech)',
+        desc: '<strong>ทำไมถึงสบายตา:</strong> โทนสีฟ้าอมม่วงหม่น สไตล์ Linear หรือ Raycast เป็นสีที่ให้ความรู้สึกนิ่ง เงียบสงบ เป็นระเบียบ ช่วยสร้างสมาธิในการอ่าน ไม่แย่งความเด่นจากรูปภาพ',
+        tag1: 'Hex: #60a5fa / #818cf8',
+        tag2: 'Feeling: สงบ สุขุม ทันสมัย มีสมาธิ'
+      },
+      silver: {
+        accent: '#e4e4e7',
+        accentSoft: 'rgba(255, 255, 255, 0.08)',
+        accentBorder: 'rgba(255, 255, 255, 0.2)',
+        title: '⚪ 4. Pure Silver (สีเงิน/ขาวหม่น / Monochrome คลีนแท้)',
+        desc: '<strong>ทำไมถึงสบายตา:</strong> ไม่มีเม็ดสีใดๆ เลย เป็นโหมดขาว-ดำ-เทาล้วน (Zen Minimal) ทำให้หน้าเว็บไร้สิ่งรบกวน 100% มีเพียงสีของภาพปกการ์ตูนเท่านั้นที่เปล่งประกาย',
+        tag1: 'Hex: #e4e4e7 / #ffffff',
+        tag2: 'Feeling: คลีนที่สุด เงียบสงบ ไม่มีสิ่งกวนใจ'
+      }
+    };
+
+    function applyAccent(key) {
+      const cfg = accentConfigs[key];
+      const wrapper = document.getElementById('mockWrapper');
+      wrapper.style.setProperty('--accent', cfg.accent);
+      wrapper.style.setProperty('--accent-soft', cfg.accentSoft);
+      wrapper.style.setProperty('--accent-border', cfg.accentBorder);
+
+      document.getElementById('descTitle').innerHTML = cfg.title;
+      document.getElementById('descBody').innerHTML = cfg.desc;
+      document.getElementById('descTags').innerHTML = `
+        <span class="desc-tag">${cfg.tag1}</span>
+        <span class="desc-tag">${cfg.tag2}</span>
+      `;
+    }
+
+    document.querySelectorAll('.swatch-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.swatch-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        applyAccent(btn.dataset.accent);
+      });
+    });
+
+    // Initial apply
+    applyAccent('amber');
+  </script>
+</body>
+</html>

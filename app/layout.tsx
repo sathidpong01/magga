@@ -62,7 +62,7 @@ export default function RootLayout({
   return (
     <html lang="th" suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
-        <meta name="theme-color" content="#0a0a0a" />
+        <meta name="theme-color" content="#141416" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         {/* Preconnect to R2 CDN for faster image loading */}

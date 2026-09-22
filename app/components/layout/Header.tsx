@@ -70,7 +70,7 @@ export default function Header() {
       sx={{
         backgroundColor: "transparent",
         backgroundImage: isScrolled
-          ? "linear-gradient(to bottom, #0a0a0a 20%, #0a0a0a 40%, #0a0a0a 60%, transparent 100%)"
+          ? "linear-gradient(to bottom, #141416 20%, #141416 40%, #141416 60%, transparent 100%)"
           : "none",
         transition: "all 0.3s ease-in-out",
         top: 0,
