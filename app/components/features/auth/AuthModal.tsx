@@ -100,15 +100,15 @@ export default function AuthModal({
   };
 
   const textFieldSx = {
-    "& .MuiInputLabel-root": { color: maggaColors.textMuted, fontWeight: 400 },
+    "& .MuiInputLabel-root": { color: maggaColors.textMuted, fontWeight: 500 },
     "& .MuiOutlinedInput-root": {
-      color: "#fafafa",
-      bgcolor: maggaColors.surfaceAlt,
-      borderRadius: 2,
+      color: maggaColors.textPrimary,
+      bgcolor: "#141416",
+      borderRadius: "10px",
       fontSize: "0.95rem",
       "& fieldset": { borderColor: maggaColors.border },
-      "&:hover fieldset": { borderColor: "rgba(251,191,36,0.35)" },
-      "&.Mui-focused fieldset": { borderColor: maggaColors.archiveGold },
+      "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.16)" },
+      "&.Mui-focused fieldset": { borderColor: maggaColors.archiveGold, boxShadow: `0 0 0 1px ${maggaColors.archiveGoldSoft}` },
     },
   };
 
@@ -119,16 +119,15 @@ export default function AuthModal({
       maxWidth="xs"
       fullWidth
       slotProps={{
-        backdrop: { sx: { backgroundColor: "rgba(0,0,0,0.85)", backdropFilter: "blur(4px)" } },
-
+        backdrop: { sx: { backgroundColor: "rgba(0,0,0,0.85)", backdropFilter: "blur(6px)" } },
         paper: {
           sx: {
             overflow: "hidden",
             bgcolor: maggaColors.surface,
-            color: "#fafafa",
-            borderRadius: 2,
+            color: maggaColors.textPrimary,
+            borderRadius: "14px",
             border: `1px solid ${maggaColors.border}`,
-            boxShadow: "0 22px 60px rgba(0,0,0,0.52)",
+            boxShadow: "0 24px 60px rgba(0,0,0,0.55)",
           },
         }
       }}>
@@ -137,8 +136,8 @@ export default function AuthModal({
           sx={{
             position: "relative",
             px: { xs: 3, sm: 4 },
-            pt: { xs: 2.4, sm: 2.8 },
-            pb: { xs: 1.5, sm: 1.8 },
+            pt: { xs: 3, sm: 3.5 },
+            pb: { xs: 1.5, sm: 2 },
           }}
         >
           <IconButton
@@ -146,20 +145,22 @@ export default function AuthModal({
             size="small"
             sx={{
               position: "absolute",
-              top: 14,
-              right: 14,
-              color: "#8a8a8a",
-              border: "1px solid rgba(255,255,255,0.08)",
+              top: 16,
+              right: 16,
+              color: maggaColors.textMuted,
+              border: `1px solid ${maggaColors.border}`,
               bgcolor: "rgba(255,255,255,0.02)",
-              borderRadius: 1.5,
-              "&:hover": { color: "#fafafa", bgcolor: "rgba(255,255,255,0.05)" },
+              borderRadius: "8px",
+              width: 32,
+              height: 32,
+              "&:hover": { color: "#fff", bgcolor: "rgba(255,255,255,0.06)" },
             }}
           >
             <CloseIcon fontSize="small" />
           </IconButton>
 
-          <Box sx={{ pr: 6 }}>
-            <Box sx={{ display: "flex", alignItems: "center", mb: 1.2 }}>
+          <Box sx={{ pr: 5 }}>
+            <Box sx={{ display: "flex", alignItems: "center", mb: 1.25 }}>
               <Image
                 src="/logo.svg"
                 alt="MAGGA"
@@ -173,26 +174,27 @@ export default function AuthModal({
             <Typography
               variant="h5"
               sx={{
-                fontWeight: 600,
-                mb: 0.55,
-                letterSpacing: -0.12,
-                lineHeight: 1.18
+                fontWeight: 700,
+                mb: 0.5,
+                letterSpacing: "-0.02em",
+                lineHeight: 1.2,
+                color: maggaColors.textPrimary,
               }}>
               ยินดีต้อนรับกลับ
             </Typography>
-            <Typography variant="body2" sx={{ color: "#8f8f8f", maxWidth: 320, lineHeight: 1.55, fontWeight: 400, fontSize: "0.92rem" }}>
+            <Typography variant="body2" sx={{ color: maggaColors.textMuted, maxWidth: 320, lineHeight: 1.55, fontSize: "0.9rem" }}>
               เข้าสู่ระบบเพื่อใช้งานโปรไฟล์ ความคิดเห็น และการตั้งค่าของคุณต่อเนื่อง
             </Typography>
           </Box>
         </Box>
 
-        <Box sx={{ px: { xs: 3, sm: 4 }, pb: { xs: 3, sm: 3.4 } }}>
+        <Box sx={{ px: { xs: 3, sm: 4 }, pb: { xs: 3, sm: 3.5 } }}>
           {notice && (
             <Alert
               severity="info"
               sx={{
                 mb: 2,
-                borderRadius: 2,
+                borderRadius: "10px",
                 bgcolor: "rgba(56,189,248,0.12)",
                 color: "#bae6fd",
                 "& .MuiAlert-icon": { color: "#38bdf8" },
@@ -203,13 +205,13 @@ export default function AuthModal({
           )}
 
           {error && (
-            <Alert severity="error" sx={{ mb: 2, borderRadius: 2, bgcolor: "rgba(239,68,68,0.12)", color: "#fca5a5", "& .MuiAlert-icon": { color: "#ef4444" } }}>
+            <Alert severity="error" sx={{ mb: 2, borderRadius: "10px", bgcolor: "rgba(239,68,68,0.12)", color: "#fca5a5", "& .MuiAlert-icon": { color: "#ef4444" } }}>
               {error}
             </Alert>
           )}
 
           <Box component="form" onSubmit={handleSignIn}>
-            <Typography id="auth-modal-username-label" variant="caption" sx={{ color: "#c8c8c8", fontWeight: 500, letterSpacing: 0.1 }}>
+            <Typography id="auth-modal-username-label" variant="caption" sx={{ color: maggaColors.textSecondary, fontWeight: 600, letterSpacing: "0.01em", fontSize: "0.82rem" }}>
               ชื่อผู้ใช้ หรือ อีเมล
             </Typography>
             <TextField
@@ -224,21 +226,21 @@ export default function AuthModal({
               sx={{
                 ...textFieldSx,
                 mt: 0.65,
-                mb: 1.5,
-                "& .MuiOutlinedInput-root": { ...textFieldSx["& .MuiOutlinedInput-root"], minHeight: 52 },
+                mb: 1.75,
+                "& .MuiOutlinedInput-root": { ...textFieldSx["& .MuiOutlinedInput-root"], minHeight: 48 },
               }}
               slotProps={{
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">
-                      <AlternateEmailRoundedIcon sx={{ color: "#6b6b6b", fontSize: 18 }} />
+                      <AlternateEmailRoundedIcon sx={{ color: maggaColors.textMuted, fontSize: 18 }} />
                     </InputAdornment>
                   ),
                 }
               }}
             />
 
-            <Typography id="auth-modal-password-label" variant="caption" sx={{ color: "#c8c8c8", fontWeight: 500, letterSpacing: 0.1 }}>
+            <Typography id="auth-modal-password-label" variant="caption" sx={{ color: maggaColors.textSecondary, fontWeight: 600, letterSpacing: "0.01em", fontSize: "0.82rem" }}>
               รหัสผ่าน
             </Typography>
             <TextField
@@ -253,13 +255,13 @@ export default function AuthModal({
               sx={{
                 ...textFieldSx,
                 mt: 0.65,
-                "& .MuiOutlinedInput-root": { ...textFieldSx["& .MuiOutlinedInput-root"], minHeight: 52 },
+                "& .MuiOutlinedInput-root": { ...textFieldSx["& .MuiOutlinedInput-root"], minHeight: 48 },
               }}
               slotProps={{
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">
-                      <LockRoundedIcon sx={{ color: "#6b6b6b", fontSize: 18 }} />
+                      <LockRoundedIcon sx={{ color: maggaColors.textMuted, fontSize: 18 }} />
                     </InputAdornment>
                   ),
                   endAdornment: (
@@ -268,7 +270,7 @@ export default function AuthModal({
                         onClick={() => setShowPassword(!showPassword)}
                         edge="end"
                         aria-label={showPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
-                        sx={{ color: "#a3a3a3" }}
+                        sx={{ color: maggaColors.textMuted }}
                       >
                         {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
                       </IconButton>
@@ -284,43 +286,45 @@ export default function AuthModal({
               variant="contained"
               disabled={loading}
               sx={{
-                mt: 2,
-                mb: 1.6,
-                py: 1.05,
+                mt: 2.25,
+                mb: 1.5,
+                py: 1.1,
                 bgcolor: maggaColors.archiveGold,
                 color: "#000",
                 fontWeight: 700,
                 fontSize: "0.95rem",
-                borderRadius: 2,
+                borderRadius: "10px",
                 letterSpacing: 0,
                 boxShadow: "none",
-                "&:hover": { bgcolor: "#f59e0b", boxShadow: "none" },
-                "&.Mui-disabled": { bgcolor: "#a38520", color: "#555" },
+                textTransform: "none",
+                "&:hover": { bgcolor: maggaColors.archiveGoldHover, boxShadow: "none" },
+                "&.Mui-disabled": { bgcolor: "rgba(217, 119, 6, 0.4)", color: "rgba(0, 0, 0, 0.5)" },
               }}
             >
-              {loading ? <CircularProgress size={22} sx={{ color: "#555" }} /> : "เข้าสู่ระบบ"}
+              {loading ? <CircularProgress size={22} sx={{ color: "#000" }} /> : "เข้าสู่ระบบ"}
             </Button>
           </Box>
 
-          <Divider sx={{ my: 2.1, borderColor: "rgba(255,255,255,0.07)", "& .MuiDivider-wrapper": { color: "#767676", fontSize: "0.8rem" } }}>
+          <Divider sx={{ my: 2, borderColor: maggaColors.border, "& .MuiDivider-wrapper": { color: maggaColors.textMuted, fontSize: "0.8rem" } }}>
             หรือ
           </Divider>
 
           <Button
             fullWidth
             variant="outlined"
-            startIcon={<GoogleIcon sx={{ fontSize: 22 }} />}
+            startIcon={<GoogleIcon sx={{ fontSize: 20 }} />}
             onClick={handleGoogleLogin}
             disabled={loading}
             sx={{
-              py: 0.98,
-              color: "#fafafa",
-              borderColor: "rgba(255,255,255,0.12)",
-              borderRadius: 2,
-              fontWeight: 500,
-              fontSize: "0.95rem",
+              py: 1.05,
+              color: maggaColors.textPrimary,
+              borderColor: maggaColors.border,
+              borderRadius: "10px",
+              fontWeight: 600,
+              fontSize: "0.92rem",
               bgcolor: "rgba(255,255,255,0.02)",
-              "&:hover": { borderColor: maggaColors.archiveGold, bgcolor: "rgba(251,191,36,0.06)" },
+              textTransform: "none",
+              "&:hover": { borderColor: maggaColors.archiveGold, bgcolor: "rgba(217, 119, 6, 0.08)" },
             }}
           >
             {loading ? "กำลังดำเนินการ..." : "ดำเนินการผ่าน Google"}
@@ -328,9 +332,9 @@ export default function AuthModal({
 
           <Box
             sx={{
-              mt: 3,
+              mt: 2.75,
               pt: 2,
-              borderTop: "1px solid rgba(255,255,255,0.06)",
+              borderTop: `1px solid ${maggaColors.border}`,
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
@@ -338,14 +342,14 @@ export default function AuthModal({
               flexWrap: "wrap",
             }}
           >
-            <Typography variant="body2" sx={{ color: "#9a9a9a", fontSize: "0.92rem" }}>
+            <Typography variant="body2" sx={{ color: maggaColors.textMuted, fontSize: "0.9rem" }}>
               ยังไม่มีบัญชี?
             </Typography>
-            <Typography variant="body2" sx={{ fontSize: "0.92rem" }}>
+            <Typography variant="body2" sx={{ fontSize: "0.9rem" }}>
               <Link
                 href="/auth/register"
                 onClick={onClose}
-                style={{ color: maggaColors.archiveGold, textDecoration: "none", fontWeight: 600 }}
+                style={{ color: maggaColors.archiveGoldHover, textDecoration: "none", fontWeight: 600 }}
               >
                 สมัครสมาชิก
               </Link>
