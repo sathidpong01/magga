@@ -57,6 +57,11 @@ export default function UnifiedDashboardSidebar() {
             icon: <CategoryIcon />,
           },
           {
+            text: "ข้อเสนอ MCP",
+            href: "/dashboard/admin/mcp-drafts",
+            icon: <ListAltIcon />,
+          },
+          {
             text: "การฝากลง",
             href: "/dashboard/admin/submissions",
             icon: <InboxIcon />,

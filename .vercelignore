@@ -1,0 +1,12 @@
+.local/
+.playwright-cli/
+.env
+.env*.local
+.env.backup
+.agents/
+.codex/
+.claude/
+graphify-out/
+node_modules/
+.next/
+coverage/

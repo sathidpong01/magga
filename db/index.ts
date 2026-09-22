@@ -24,6 +24,14 @@ if (!connectionString) {
   throw new Error("Missing PostgreSQL connection string.");
 }
 
+const isLocalMcp = process.env.MCP_LOCAL_DATABASE === 'true';
+if (isLocalMcp) {
+  const target = new URL(connectionString);
+  if (target.hostname !== '127.0.0.1' || target.port !== '55432' || target.pathname !== '/postgres') {
+    throw new Error('Local MCP database mode requires the isolated loopback endpoint.');
+  }
+}
+
 // Disable prepare to support connection pooling like PgBouncer in Supabase
 // Limit pool size to 1 during Next.js builds to prevent exhausting database connections
 // (Next.js spawns up to 5 workers during build, each with their own connection pool)
@@ -31,7 +39,7 @@ if (!connectionString) {
 // using the pooled URL to keep pressure on the pooler low across concurrent invocations.
 const client = postgres(connectionString, { 
   prepare: false, 
-  max: isBuild || isServerless ? 1 : 10,
+  max: isBuild || isServerless || isLocalMcp ? 1 : 10,
   idle_timeout: isBuild || isServerless ? 3 : 20,
   connect_timeout: 5,
   max_lifetime: isServerless ? 30 : null,

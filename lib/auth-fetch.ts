@@ -18,9 +18,6 @@ export async function authFetch(
   // Auto logout on 401 Unauthorized (session expired)
   if (res.status === 401) {
     await syncClientSession();
-    if (typeof window !== "undefined") {
-      window.location.href = `/auth/signin`;
-    }
   }
 
   return res;

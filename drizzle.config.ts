@@ -6,7 +6,7 @@ dotenv.config({ path: '.env.local' });
 
 export default defineConfig({
   out: './db/migrations',
-  schema: './db/schema.ts',
+  schema: ['./db/schema.ts', './db/mcp-schema.ts'],
   dialect: 'postgresql',
   dbCredentials: {
     url: process.env.DATABASE_URL || process.env.POSTGRES_URL_NON_POOLING!,

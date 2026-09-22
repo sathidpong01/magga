@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   readValidatedImageFile: vi.fn(),
   isUserBanned: vi.fn(),
   send: vi.fn(),
+  sharp: vi.fn(),
   getR2PublicUrl: vi.fn((key: string) => `https://cdn.example.com/${key}`),
 }));
 
@@ -46,6 +47,10 @@ vi.mock("@aws-sdk/client-s3", () => ({
   },
 }));
 
+vi.mock("sharp", () => ({
+  default: mocks.sharp,
+}));
+
 import { POST } from "@/app/api/upload/route";
 
 describe("POST /api/upload", () => {
@@ -61,12 +66,29 @@ describe("POST /api/upload", () => {
     });
     mocks.isUserBanned.mockReturnValue(false);
     mocks.send.mockResolvedValue({});
+    mocks.sharp.mockReturnValue({
+      metadata: vi.fn().mockResolvedValue({
+        width: 1200,
+        height: 800,
+        format: "png",
+      }),
+      resize: vi.fn().mockReturnThis(),
+      webp: vi.fn().mockReturnThis(),
+      toBuffer: vi.fn().mockResolvedValue(Buffer.from("webp-image")),
+    });
   });
 
-  it("returns 400 when image validation fails", async () => {
-    mocks.readValidatedImageFile.mockRejectedValue(
-      new Error("Invalid file signature for bad.png.")
-    );
+  it("returns 400 when image dimensions are out of range", async () => {
+    mocks.sharp.mockReturnValue({
+      metadata: vi.fn().mockResolvedValue({
+        width: 9001,
+        height: 800,
+        format: "png",
+      }),
+      resize: vi.fn().mockReturnThis(),
+      webp: vi.fn().mockReturnThis(),
+      toBuffer: vi.fn(),
+    });
 
     const formData = new FormData();
     formData.append(
@@ -83,12 +105,12 @@ describe("POST /api/upload", () => {
 
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toEqual({
-      error: "Invalid file signature for bad.png.",
+      error: "Image dimensions out of valid range (10-8000px)",
     });
     expect(mocks.send).not.toHaveBeenCalled();
   });
 
-  it("stores validated uploads without transcoding", async () => {
+  it("stores transcoded uploads as image/webp", async () => {
     const formData = new FormData();
     formData.append(
       "files",
@@ -107,8 +129,7 @@ describe("POST /api/upload", () => {
     expect(mocks.send).toHaveBeenCalledTimes(1);
     expect(mocks.send.mock.calls[0][0]).toMatchObject({
       Bucket: "test-bucket",
-      ContentType: "image/png",
-      Body: new Uint8Array(Buffer.from("original-image")),
+      ContentType: "image/webp",
     });
   });
 });

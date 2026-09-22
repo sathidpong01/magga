@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
 import { isAdminRole } from "@/lib/session-utils";
 import { Box, Typography, Button, Paper } from "@mui/material";
@@ -19,6 +20,7 @@ interface DetectionInfo {
 }
 
 export default function DevToolsProtection() {
+  const router = useRouter();
   const { data: session } = useSession();
   const [isBlocked, setIsBlocked] = useState(false);
   const [detectionInfo, setDetectionInfo] = useState<DetectionInfo | null>(
@@ -67,9 +69,9 @@ export default function DevToolsProtection() {
     [isAdmin, isDevelopment, isLighthouseTesting]
   );
 
-  // Handle back to home - force reload
+  // Navigate back to home through the App Router.
   const handleBackToHome = () => {
-    window.location.href = "/";
+    router.push("/");
   };
 
   useEffect(() => {
