@@ -275,5 +275,5 @@ export const getMangasWithPagination = unstable_cache(
     };
   },
   ["manga-list"],
-  { revalidate: 60, tags: ["manga-list"] }
+  { revalidate: 300, tags: ["manga-list"] }
 );

@@ -38,16 +38,16 @@ const getCategories = unstable_cache(
 // Cache tags for 1 hour
 const getTags = unstable_cache(
   async () => {
-    // Tags that are used in at least one manga
-    const usedTagIds = await db.selectDistinct({ id: mangaTags.tagId }).from(mangaTags);
-    const ids = usedTagIds.map(t => t.id);
-    if (ids.length === 0) return [];
-    return db.query.tags.findMany({
-      where: inArray(tagsTable.id, ids),
-      orderBy: [asc(tagsTable.name)],
-    });
+    return db
+      .selectDistinct({
+        id: tagsTable.id,
+        name: tagsTable.name,
+      })
+      .from(tagsTable)
+      .innerJoin(mangaTags, eq(tagsTable.id, mangaTags.tagId))
+      .orderBy(asc(tagsTable.name));
   },
-  ["tags"],
+  ["tags-v2"],
   { revalidate: 3600, tags: ["tags"] }
 );
 
@@ -75,11 +75,20 @@ export default async function Home({ searchParams }: Props) {
   const params = await searchParams;
   const { search, category: categoryName, tags: tagNames, sort } = params;
 
-  // Fetch Categories, Tags and Grid Ads in parallel (cached)
+  // Fetch Categories, Tags and Grid Ads in parallel with resilient fallbacks
   const [categories, tags, gridAds] = await Promise.all([
-    getCategories(),
-    getTags(),
-    getGridAds(),
+    getCategories().catch((err) => {
+      console.error("Failed to load categories:", err);
+      return [];
+    }),
+    getTags().catch((err) => {
+      console.error("Failed to load tags:", err);
+      return [];
+    }),
+    getGridAds().catch((err) => {
+      console.error("Failed to load grid ads:", err);
+      return [];
+    }),
   ]);
 
   // Resolve category name → UUID for DB query

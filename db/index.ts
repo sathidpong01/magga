@@ -35,19 +35,19 @@ if (isLocalMcp) {
 // Disable prepare to support connection pooling like PgBouncer in Supabase
 // Limit pool size to 1 during Next.js builds to prevent exhausting database connections
 // (Next.js spawns up to 5 workers during build, each with their own connection pool)
-// In Vercel serverless, each function instance must use max 1 connection even when
-// using the pooled URL to keep pressure on the pooler low across concurrent invocations.
+// In Vercel serverless, allow up to 3 connections per instance to handle parallel queries (Promise.all)
+// without starving the pooler, while setting sensible timeouts for cold starts and lock contention.
 const client = postgres(connectionString, { 
   prepare: false, 
-  max: isBuild || isServerless || isLocalMcp ? 1 : 10,
-  idle_timeout: isBuild || isServerless ? 3 : 20,
-  connect_timeout: 5,
-  max_lifetime: isServerless ? 30 : null,
+  max: isBuild || isLocalMcp ? 1 : isServerless ? 3 : 10,
+  idle_timeout: isBuild ? 1 : isServerless ? 15 : 20,
+  connect_timeout: isServerless ? 15 : 10,
+  max_lifetime: isServerless ? 120 : null,
   connection: {
     application_name: isServerless ? "magga-vercel" : "magga-local",
-    statement_timeout: isServerless ? 12000 : 15000,
-    lock_timeout: 3000,
-    idle_in_transaction_session_timeout: 5000,
+    statement_timeout: isServerless ? 15000 : 20000,
+    lock_timeout: 10000,
+    idle_in_transaction_session_timeout: 10000,
   },
 });
 

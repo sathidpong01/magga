@@ -1,5 +1,6 @@
 import { getMangasWithPagination } from "@/lib/manga-list";
 import InfiniteMangaGrid from "./InfiniteMangaGrid";
+import ErrorFallback from "@/app/components/ui/ErrorFallback";
 
 interface Ad {
   id: string;
@@ -28,19 +29,48 @@ export default async function StreamingMangaGrid({
   ads,
   pageSize = 12,
 }: StreamingMangaGridProps) {
-  const { mangas, hasMore } = await getMangasWithPagination(
-    1,
-    pageSize,
-    search,
-    categoryId,
-    tagNames,
-    sort
-  );
+  let result: Awaited<ReturnType<typeof getMangasWithPagination>> | null = null;
+
+  try {
+    result = await getMangasWithPagination(
+      1,
+      pageSize,
+      search,
+      categoryId,
+      tagNames,
+      sort
+    );
+  } catch (error) {
+    console.error("StreamingMangaGrid: initial fetch failed, retrying once...", error);
+    try {
+      // Retry once after 500ms on transient connection / timeout error
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      result = await getMangasWithPagination(
+        1,
+        pageSize,
+        search,
+        categoryId,
+        tagNames,
+        sort
+      );
+    } catch (retryError) {
+      console.error("StreamingMangaGrid: retry failed:", retryError);
+    }
+  }
+
+  if (!result) {
+    return (
+      <ErrorFallback
+        title="เกิดข้อผิดพลาดในการโหลดรายการมังงะ"
+        description="ไม่สามารถเชื่อมต่อฐานข้อมูลได้ในขณะนี้ กรุณารีเฟรชหน้าเว็บหรือลองใหม่อีกครั้ง"
+      />
+    );
+  }
 
   return (
     <InfiniteMangaGrid
-      initialMangas={mangas as any}
-      initialHasMore={hasMore}
+      initialMangas={result.mangas as any}
+      initialHasMore={result.hasMore}
       ads={ads}
       pageSize={pageSize}
       search={search}
