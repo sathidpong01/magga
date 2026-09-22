@@ -47,3 +47,13 @@ _Avoid_: draft, upload request
 **Reader**:
 The presentation surface for viewing manga page assets in sequence.
 _Avoid_: viewer, gallery
+
+### Community & Discussion
+
+**Comment**:
+A reader response or review attached to a manga or a specific page of a manga, optionally nested as a reply to another comment.
+_Avoid_: message, post, review
+
+**Comment Moderation**:
+The module responsible for managing comment lifecycle, rate limits, voting tallies, parent-child threading, and deletion privileges.
+_Avoid_: comment service, comment manager

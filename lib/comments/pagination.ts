@@ -1,3 +1,8 @@
+/**
+ * Comment cursor-based pagination utilities.
+ * Client-safe: does not depend on database or server-only modules.
+ */
+
 export function parseCommentCursor(cursor: string | null): Date | null {
   if (!cursor) {
     return null;

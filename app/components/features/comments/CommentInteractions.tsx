@@ -12,7 +12,7 @@ import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CommentBox from "./CommentBox";
 import CommentList from "./CommentList";
-import { getNextCommentCursor } from "@/lib/comment-pagination";
+import { getNextCommentCursor } from "@/lib/comments/pagination";
 
 interface CommentUser {
   id: string;

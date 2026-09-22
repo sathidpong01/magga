@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   getNextCommentCursor,
   parseCommentCursor,
-} from "@/lib/comment-pagination";
+} from "@/lib/comments/pagination";
 
 describe("comment pagination helpers", () => {
   it("parses only valid timestamp cursors", () => {
