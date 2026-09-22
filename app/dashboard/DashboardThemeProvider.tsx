@@ -16,6 +16,7 @@ const dashboardTheme = createTheme({
     },
     primary: {
       main: maggaColors.archiveGold,
+      contrastText: "#0f0f14",
     },
   },
   shape: {
@@ -27,6 +28,7 @@ const dashboardTheme = createTheme({
         root: {
           borderRadius: 12,
           backgroundImage: "none",
+          backgroundColor: maggaColors.surface,
         },
       },
     },
@@ -36,6 +38,84 @@ const dashboardTheme = createTheme({
           borderRadius: 10,
           textTransform: "none",
           fontWeight: 600,
+        },
+      },
+      variants: [
+        {
+          props: { variant: "contained", color: "primary" },
+          style: {
+            background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+            color: "#0f0f14",
+            fontWeight: 800,
+            boxShadow: "0 4px 14px rgba(217, 119, 6, 0.35)",
+            "&:hover": {
+              background: "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
+              boxShadow: "0 6px 20px rgba(217, 119, 6, 0.45)",
+            },
+            "&.Mui-disabled": {
+              background: "rgba(255, 255, 255, 0.06)",
+              color: "rgba(255, 255, 255, 0.25)",
+              boxShadow: "none",
+            },
+          },
+        },
+      ],
+    },
+    MuiTabs: {
+      styleOverrides: {
+        indicator: {
+          backgroundColor: maggaColors.archiveGold,
+          height: 3,
+          borderRadius: "3px 3px 0 0",
+        },
+      },
+    },
+    MuiTab: {
+      styleOverrides: {
+        root: {
+          textTransform: "none",
+          fontWeight: 700,
+          color: maggaColors.textMuted,
+          "&.Mui-selected": {
+            color: maggaColors.archiveGold,
+          },
+        },
+      },
+    },
+    MuiPaginationItem: {
+      styleOverrides: {
+        root: {
+          color: maggaColors.textMuted,
+          fontWeight: 700,
+          borderRadius: 8,
+          "&.Mui-selected": {
+            backgroundColor: `${maggaColors.archiveGold} !important`,
+            color: "#0f0f14 !important",
+            fontWeight: 800,
+          },
+        },
+      },
+    },
+    MuiSwitch: {
+      styleOverrides: {
+        switchBase: {
+          "&.Mui-checked": {
+            color: maggaColors.archiveGold,
+            "& + .MuiSwitch-track": {
+              backgroundColor: maggaColors.archiveGold,
+              opacity: 0.5,
+            },
+          },
+        },
+      },
+    },
+    MuiTablePagination: {
+      styleOverrides: {
+        root: {
+          color: maggaColors.textSecondary,
+        },
+        selectIcon: {
+          color: maggaColors.textSecondary,
         },
       },
     },

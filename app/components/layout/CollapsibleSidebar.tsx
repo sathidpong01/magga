@@ -85,7 +85,7 @@ export default function CollapsibleSidebar({
   };
 
   const isActive = (href: string) => {
-    if (href === "/dashboard") {
+    if (href === "/" || href === "/dashboard" || href === "/dashboard/admin") {
       return pathname === href;
     }
     return pathname.startsWith(href);

@@ -28,7 +28,11 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import Link from "next/link";
 import { authFetch } from "@/lib/auth-fetch";
-import { dashboardTokens, dashboardRadii } from "@/app/components/dashboard/system";
+import {
+  dashboardTokens,
+  dashboardRadii,
+  dashboardPrimaryButtonSx,
+} from "@/app/components/dashboard/system";
 
 export type AdminSubmission = {
   id: string;
@@ -151,14 +155,9 @@ export default function SubmissionsManager({
           onClick={fetchSubmissions}
           variant="contained"
           sx={{
+            ...dashboardPrimaryButtonSx,
             borderRadius: dashboardRadii.button,
-            bgcolor: dashboardTokens.accent,
-            color: "#000",
-            fontWeight: 900,
             px: 3,
-            "&:hover": {
-              bgcolor: dashboardTokens.accentStrong,
-            },
           }}
         >
           รีเฟรช
@@ -244,9 +243,9 @@ export default function SubmissionsManager({
       <TableContainer
         component={Paper}
         sx={{
-          bgcolor: "#141414",
+          bgcolor: dashboardTokens.surface,
           borderRadius: 1.25,
-          border: "1px solid rgba(255,255,255,0.06)",
+          border: `1px solid ${dashboardTokens.border}`,
           boxShadow: "none",
           backgroundImage: "none",
           overflow: "hidden",
@@ -365,7 +364,7 @@ export default function SubmissionsManager({
                           width: 36,
                           height: 36,
                           "&:hover": {
-                            bgcolor: "rgba(251, 191, 36, 0.25)",
+                            bgcolor: "rgba(217, 119, 6, 0.25)",
                             transform: "scale(1.05)",
                           },
                           transition: "all 0.2s",
@@ -399,8 +398,8 @@ export default function SubmissionsManager({
             },
             "& .Mui-selected": {
               bgcolor: `${dashboardTokens.accent} !important`,
-              color: "#000 !important",
-              boxShadow: "0 0 15px rgba(251, 191, 36, 0.3)",
+              color: "#0f0f14 !important",
+              boxShadow: "0 0 15px rgba(217, 119, 6, 0.3)",
             },
           }}
         />

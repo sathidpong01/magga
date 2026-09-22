@@ -7,6 +7,7 @@ import ApprovalSelector from './ApprovalSelector';
 import { approvalSelectionIsValid, fullApprovalSelection, selectedItemCount, type ApprovalSelection, type DraftKind } from '@/lib/mcp/approval-selection';
 import { useRouter } from 'next/navigation';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Alert, Checkbox, FormControlLabel, Typography, Box } from '@mui/material';
+import { dashboardPrimaryButtonSx } from '@/app/components/dashboard/system';
 
 type Review = { draft_id: string; kind: DraftKind; status: string; proposal: Record<string, unknown>; current: Record<string, unknown>; sources: {url: string; confidence: number}[]; review_token: string };
 export default function DecisionPanel({ draftId, targetName, status }: { draftId: string; targetName: string; status: string }) {
@@ -53,7 +54,7 @@ export default function DecisionPanel({ draftId, targetName, status }: { draftId
     {result && <Alert severity={cachePending ? 'warning' : 'success'} sx={{ mb: 2 }}>{result}{cachePending ? ' แต่การรีเฟรช cache ยังไม่สำเร็จ ข้อมูลในฐานข้อมูลถูกบันทึกแล้ว' : ''}</Alert>}
     {status === 'pending' && <>
     <Typography sx={{ mb: 2, color: 'text.secondary' }}>อนุมัติแล้วจะบันทึกข้อมูลจริง</Typography>
-    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}><Button variant="contained" disabled={busy || !!result} onClick={() => open('apply')}>ตรวจและอนุมัติ</Button><Button variant="outlined" color="error" disabled={busy || !!result} onClick={() => open('reject')}>ปฏิเสธข้อเสนอ</Button></Box></>}
+    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}><Button variant="contained" disabled={busy || !!result} onClick={() => open('apply')} sx={dashboardPrimaryButtonSx}>ตรวจและอนุมัติ</Button><Button variant="outlined" color="error" disabled={busy || !!result} onClick={() => open('reject')}>ปฏิเสธข้อเสนอ</Button></Box></>}
     <Dialog open={action !== null} onClose={() => { if (!busy) { setAction(null); setReview(null); } }} fullWidth maxWidth="sm" aria-labelledby="draft-decision-title">
       <DialogTitle id="draft-decision-title">{action === 'apply' ? applyLabel : 'ปฏิเสธข้อเสนอ'} · {targetName}</DialogTitle>
       <DialogContent dividers>
@@ -67,7 +68,7 @@ export default function DecisionPanel({ draftId, targetName, status }: { draftId
           <FormControlLabel control={<Checkbox checked={checked} disabled={busy} onChange={e => setChecked(e.target.checked)} />} label={action === 'apply' ? 'ตรวจข้อมูลที่เลือกแล้ว' : 'ยืนยันปฏิเสธข้อเสนอนี้'} />
         </>}
       </DialogContent>
-      <DialogActions><Button disabled={busy} onClick={() => {setAction(null);setReview(null);}}>ยกเลิก</Button><Button variant="contained" color={action === 'reject' ? 'error' : 'primary'} disabled={!review || !checked || busy || (action === 'apply' && !validSelection)} onClick={confirm}>{busy ? 'กำลังดำเนินการ…' : action === 'apply' ? `ยืนยันที่เลือก (${selectedCount})` : 'ยืนยันปฏิเสธ'}</Button></DialogActions>
+      <DialogActions><Button disabled={busy} onClick={() => {setAction(null);setReview(null);}}>ยกเลิก</Button><Button variant="contained" color={action === 'reject' ? 'error' : 'primary'} disabled={!review || !checked || busy || (action === 'apply' && !validSelection)} onClick={confirm} sx={action === 'apply' ? dashboardPrimaryButtonSx : undefined}>{busy ? 'กำลังดำเนินการ…' : action === 'apply' ? `ยืนยันที่เลือก (${selectedCount})` : 'ยืนยันปฏิเสธ'}</Button></DialogActions>
     </Dialog>
   </Box>;
 }

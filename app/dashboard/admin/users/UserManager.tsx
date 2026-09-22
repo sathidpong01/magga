@@ -42,7 +42,11 @@ import BlockIcon from "@mui/icons-material/Block";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { authFetch } from "@/lib/auth-fetch";
 import { useToast } from "@/app/contexts/ToastContext";
-import { dashboardTokens, dashboardRadii } from "@/app/components/dashboard/system";
+import {
+  dashboardTokens,
+  dashboardRadii,
+  dashboardPrimaryButtonSx,
+} from "@/app/components/dashboard/system";
 
 type UserWithCounts = {
   id: string;
@@ -80,24 +84,22 @@ const surfaceSx = {
   backgroundImage: "none",
 };
 
-const inputSx = {
+const modalFieldSx = {
   "& .MuiOutlinedInput-root": {
     bgcolor: dashboardTokens.surfaceMuted,
-    borderRadius: "10px",
+    borderRadius: dashboardRadii.field,
     "& fieldset": { borderColor: dashboardTokens.border },
-    "&:hover fieldset": { borderColor: "rgba(255,255,255,0.15)" },
     "&.Mui-focused fieldset": { borderColor: dashboardTokens.accent },
   },
   "& .MuiInputLabel-root": { color: dashboardTokens.textMuted },
 };
 
+const inputSx = modalFieldSx;
+
 const primaryButtonSx = {
-  bgcolor: dashboardTokens.accent,
-  color: "#000",
-  fontWeight: 700,
+  ...dashboardPrimaryButtonSx,
   borderRadius: "10px",
   textTransform: "none" as const,
-  "&:hover": { bgcolor: "#f59e0b" },
 };
 
 const neutralButtonSx = {
@@ -355,9 +357,9 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
         <Chip
           label={`แอดมิน ${totalAdmins}`}
           sx={{
-            bgcolor: "rgba(251,191,36,0.08)",
-            color: "#fbbf24",
-            border: "1px solid rgba(251,191,36,0.16)",
+            bgcolor: dashboardTokens.accentSoft,
+            color: dashboardTokens.accent,
+            border: `1px solid ${dashboardTokens.accentSoft}`,
             fontWeight: 700,
           }}
         />
@@ -382,9 +384,9 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
         <Chip
           label={`การฝากลง ${totalSubmissions.toLocaleString()}`}
           sx={{
-            bgcolor: "rgba(217,119,6,0.1)",
-            color: "#fbbf24",
-            border: "1px solid rgba(217,119,6,0.2)",
+            bgcolor: dashboardTokens.accentSoft,
+            color: dashboardTokens.accent,
+            border: `1px solid ${dashboardTokens.accentSoft}`,
             fontWeight: 700,
           }}
         />
@@ -539,7 +541,7 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                           }}
                         >
                           <AdminPanelSettingsIcon
-                            sx={{ fontSize: 16, color: "#fbbf24" }}
+                            sx={{ fontSize: 16, color: dashboardTokens.accent }}
                           />
                           <Typography component="span">แอดมิน</Typography>
                         </Stack>
@@ -550,14 +552,14 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                     <Stack direction="row" spacing={1}>
                       <Tooltip title="ความคิดเห็น">
                         <Chip
-                          icon={<CommentIcon sx={{ fontSize: 14, color: "#fbbf24 !important" }} />}
+                          icon={<CommentIcon sx={{ fontSize: 14, color: `${dashboardTokens.accent} !important` }} />}
                           label={user._count.comments}
                           size="small"
                           sx={{
-                            bgcolor: "rgba(251, 191, 36, 0.05)",
-                            color: "#fbbf24",
+                            bgcolor: dashboardTokens.accentSoft,
+                            color: dashboardTokens.accent,
                             borderRadius: 0.75,
-                            border: "1px solid rgba(251, 191, 36, 0.2)",
+                            border: `1px solid ${dashboardTokens.accentSoft}`,
                             fontWeight: 700,
                             fontFamily: "monospace",
                             "& .MuiChip-label": { px: 1 }

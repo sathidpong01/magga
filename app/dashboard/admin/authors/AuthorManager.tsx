@@ -40,7 +40,11 @@ import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import AddIcon from "@mui/icons-material/Add";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { useToast } from "@/app/contexts/ToastContext";
-import { dashboardTokens, dashboardRadii } from "@/app/components/dashboard/system";
+import {
+  dashboardTokens,
+  dashboardRadii,
+  dashboardPrimaryButtonSx,
+} from "@/app/components/dashboard/system";
 
 type SocialLink = {
   url: string;
@@ -234,9 +238,9 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
         sx={{
           p: 2.5,
           mb: 3,
-          bgcolor: "#141414",
+          bgcolor: dashboardTokens.surface,
           borderRadius: 1.25,
-          border: "1px solid rgba(255,255,255,0.06)",
+          border: `1px solid ${dashboardTokens.border}`,
         }}
       >
         <Stack
@@ -273,7 +277,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
               disabled={isLoading || !name}
               startIcon={
                 isLoading ? (
-                  <CircularProgress size={18} sx={{ color: "#000" }} />
+                  <CircularProgress size={18} sx={{ color: "#0f0f14" }} />
                 ) : editingAuthor ? (
                   <EditIcon />
                 ) : (
@@ -282,12 +286,8 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
               }
               sx={{
                 minWidth: 100,
-                bgcolor: dashboardTokens.accent,
-                color: "#000",
-                fontWeight: 800,
+                ...dashboardPrimaryButtonSx,
                 borderRadius: dashboardRadii.button,
-                "&:hover": { bgcolor: dashboardTokens.accentStrong },
-                "&.Mui-disabled": { bgcolor: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.2)" }
               }}
             >
                 {editingAuthor ? "บันทึกการแก้ไข" : "เพิ่ม"}
@@ -520,13 +520,13 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
       {/* Authors List */}
       <Paper
         sx={{
-          bgcolor: "#141414",
+          bgcolor: dashboardTokens.surface,
           borderRadius: 1.25,
-          border: "1px solid rgba(255,255,255,0.06)",
+          border: `1px solid ${dashboardTokens.border}`,
           overflow: "hidden",
         }}
       >
-        <Box sx={{ px: 3, py: 2.5, borderBottom: "1px solid rgba(255,255,255,0.06)", bgcolor: "rgba(255,255,255,0.02)" }}>
+        <Box sx={{ px: 3, py: 2.5, borderBottom: `1px solid ${dashboardTokens.border}`, bgcolor: "rgba(255,255,255,0.02)" }}>
           <Typography
             variant="subtitle1"
             sx={{ fontWeight: 900, color: "#fafafa", textTransform: "none", fontSize: "0.85rem", letterSpacing: "0" }}
@@ -601,9 +601,9 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                               rel="noopener noreferrer"
                               clickable
                               sx={{
-                                bgcolor: "#333333",
-                                color: "#e5e5e5",
-                                "&:hover": { bgcolor: "#525252" },
+                                bgcolor: dashboardTokens.surfaceAlt,
+                                color: dashboardTokens.textMuted,
+                                "&:hover": { bgcolor: dashboardTokens.surfaceMuted, color: dashboardTokens.text },
                                 borderRadius: 0.75,
                               }}
                             />
@@ -666,10 +666,10 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
         slotProps={{
           paper: {
             sx: {
-              bgcolor: "#141414",
+              bgcolor: dashboardTokens.surface,
               color: "#fafafa",
               borderRadius: 1.25,
-              border: "1px solid rgba(255,255,255,0.08)",
+              border: `1px solid ${dashboardTokens.border}`,
               backgroundImage: "none",
               boxShadow: "none"
             },

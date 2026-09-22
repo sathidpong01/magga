@@ -218,9 +218,9 @@ export default function CommentsManager({
         sx={{
           p: 2.5,
           mb: 3,
-          bgcolor: "#141414",
+          bgcolor: dashboardTokens.surface,
           borderRadius: 1.25,
-          border: "1px solid rgba(255,255,255,0.06)",
+          border: `1px solid ${dashboardTokens.border}`,
           display: "flex",
           gap: 2,
           alignItems: "center",
@@ -272,7 +272,7 @@ export default function CommentsManager({
             borderRadius: dashboardRadii.compact,
             width: 44,
             height: 44,
-            "&:hover": { bgcolor: "rgba(251, 191, 36, 0.25)" },
+            "&:hover": { bgcolor: "rgba(217, 119, 6, 0.25)" },
           }}
         >
           <RefreshIcon />
@@ -301,9 +301,9 @@ export default function CommentsManager({
       <TableContainer
         component={Paper}
         sx={{
-          bgcolor: "#141414",
+          bgcolor: dashboardTokens.surface,
           borderRadius: 1.25,
-          border: "1px solid rgba(255,255,255,0.06)",
+          border: `1px solid ${dashboardTokens.border}`,
           boxShadow: "none",
           backgroundImage: "none",
         }}
@@ -576,11 +576,11 @@ export default function CommentsManager({
         slotProps={{
           paper: {
             sx: {
-              bgcolor: "#141414",
+              bgcolor: dashboardTokens.surface,
               color: "#fafafa",
               borderRadius: 1.25,
               backgroundImage: "none",
-              border: "1px solid rgba(255,255,255,0.06)",
+              border: `1px solid ${dashboardTokens.border}`,
             },
           }
         }}

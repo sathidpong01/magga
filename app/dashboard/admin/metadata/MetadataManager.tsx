@@ -26,7 +26,11 @@ import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { authFetch } from "@/lib/auth-fetch";
 import { useToast } from "@/app/contexts/ToastContext";
 import { getMetadataChipSx } from "@/lib/metadata-chip-tone";
-import { dashboardTokens, dashboardRadii } from "@/app/components/dashboard/system";
+import {
+  dashboardTokens,
+  dashboardRadii,
+  dashboardPrimaryButtonSx,
+} from "@/app/components/dashboard/system";
 
 type Category = {
   id: string;
@@ -157,15 +161,12 @@ export default function MetadataManager({
           startIcon={<AddIcon />}
           onClick={() => setAddDialogOpen(true)}
           sx={{
-            bgcolor: dashboardTokens.accent,
-            color: "#000",
+            ...dashboardPrimaryButtonSx,
             borderRadius: dashboardRadii.button,
             px: 3,
             py: 1,
-            fontWeight: 800,
             textTransform: "none",
             letterSpacing: "0",
-            "&:hover": { bgcolor: dashboardTokens.accentStrong },
           }}
         >
           {activeTab === 0 ? "เพิ่มหมวดหมู่" : "เพิ่มแท็ก"}
@@ -418,15 +419,11 @@ export default function MetadataManager({
             variant="contained"
             disabled={!newItemName.trim()}
             sx={{
-              bgcolor: dashboardTokens.accent,
-              color: "#000",
+              ...dashboardPrimaryButtonSx,
               borderRadius: dashboardRadii.button,
               px: 4,
-              fontWeight: 900,
               textTransform: "none",
               letterSpacing: "0",
-              "&:hover": { bgcolor: dashboardTokens.accentStrong },
-              "&:disabled": { bgcolor: "#404040", color: "#737373" },
             }}
           >
             {activeTab === 0 ? "เพิ่มหมวดหมู่" : "เพิ่มแท็ก"}

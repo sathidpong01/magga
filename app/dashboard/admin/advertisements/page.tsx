@@ -41,6 +41,7 @@ import { authFetch } from "@/lib/auth-fetch";
 import {
   dashboardTokens,
   dashboardRadii,
+  dashboardPrimaryButtonSx,
 } from "@/app/components/dashboard/system";
 
 interface Advertisement {
@@ -133,9 +134,9 @@ const adDialogSelectMenuProps = {
     paper: {
       sx: {
         mt: 0.75,
-        bgcolor: "#191919",
+        bgcolor: dashboardTokens.surfaceAlt,
         color: "#ececec",
-        border: "1px solid rgba(255,255,255,0.08)",
+        border: `1px solid ${dashboardTokens.border}`,
         borderRadius: 1.25,
         backgroundImage: "none",
         boxShadow: "0 18px 50px rgba(0,0,0,0.42)",
@@ -150,12 +151,12 @@ const adDialogSelectMenuProps = {
             color: "#fafafa",
           },
           "&.Mui-selected": {
-            bgcolor: "rgba(251,191,36,0.12)",
-            color: "#f7d27a",
+            bgcolor: dashboardTokens.accentSoft,
+            color: dashboardTokens.accent,
           },
           "&.Mui-selected:hover": {
-            bgcolor: "rgba(251,191,36,0.18)",
-            color: "#fbe4a3",
+            bgcolor: "rgba(217, 119, 6, 0.22)",
+            color: dashboardTokens.accentStrong,
           },
         },
       },
@@ -504,7 +505,7 @@ function PlacementPreview({
             fontWeight: 900,
             textTransform: "none",
             letterSpacing: "0",
-            color: "#fbbf24",
+            color: dashboardTokens.accent,
           }}
         >
           ตัวอย่างสด
@@ -514,9 +515,9 @@ function PlacementPreview({
           label={PLACEMENTS.find((p) => p.value === placement)?.label || "เลือกตำแหน่ง"}
           sx={{
             height: 24,
-            bgcolor: "rgba(251,191,36,0.08)",
-            color: "#f7d27a",
-            border: "1px solid rgba(251,191,36,0.18)",
+            bgcolor: dashboardTokens.accentSoft,
+            color: dashboardTokens.accent,
+            border: `1px solid ${dashboardTokens.accentSoft}`,
             fontWeight: 700,
             borderRadius: 0.75,
           }}
@@ -776,15 +777,12 @@ export default function AdvertisementsPage() {
           onClick={() => handleOpenDialog()}
           size={isMobile ? "small" : "medium"}
           sx={{
-            bgcolor: dashboardTokens.accent,
-            color: "#000",
-            fontWeight: 900,
+            ...dashboardPrimaryButtonSx,
             borderRadius: dashboardRadii.button,
             px: 3,
             height: 44,
             textTransform: "none",
             letterSpacing: "0",
-            "&:hover": { bgcolor: dashboardTokens.accentStrong }
           }}
         >
           {isMobile ? "เพิ่ม" : "สร้างโฆษณา"}
@@ -798,7 +796,7 @@ export default function AdvertisementsPage() {
             <Paper
               key={ad.id}
               sx={{
-                bgcolor: "#141414",
+                bgcolor: dashboardTokens.surface,
                 border: "1px solid rgba(255,255,255,0.06)",
                 borderRadius: 1.25,
                 overflow: "hidden",
@@ -885,7 +883,7 @@ export default function AdvertisementsPage() {
             </Paper>
           ))}
           {ads.length === 0 && (
-            <Box sx={{ py: 8, textAlign: "center", bgcolor: "#141414", borderRadius: 1.25, border: "1px solid rgba(255,255,255,0.06)" }}>
+            <Box sx={{ py: 8, textAlign: "center", bgcolor: dashboardTokens.surface, borderRadius: 1.25, border: "1px solid rgba(255,255,255,0.06)" }}>
               <Typography sx={{ fontWeight: 700, color: "#737373", textTransform: "none", letterSpacing: "0" }}>
                 ยังไม่มีโฆษณา
               </Typography>
@@ -897,7 +895,7 @@ export default function AdvertisementsPage() {
         <TableContainer 
           component={Paper} 
           sx={{ 
-            bgcolor: "#141414",
+            bgcolor: dashboardTokens.surface,
             borderRadius: 1.25,
             border: "1px solid rgba(255,255,255,0.06)",
             boxShadow: "none",
@@ -1014,7 +1012,7 @@ export default function AdvertisementsPage() {
             onChange={handlePageChange}
             sx={{
               "& .MuiPaginationItem-root": { color: dashboardTokens.textMuted, fontWeight: 700 },
-              "& .Mui-selected": { bgcolor: `${dashboardTokens.accent} !important`, color: "#000 !important" }
+              "& .Mui-selected": { bgcolor: `${dashboardTokens.accent} !important`, color: "#0f0f14 !important" }
             }}
           />
         </Box>
@@ -1030,7 +1028,7 @@ export default function AdvertisementsPage() {
         slotProps={{
           paper: {
             sx: {
-              bgcolor: "#141414",
+              bgcolor: dashboardTokens.surface,
               color: "#fafafa",
               borderRadius: isMobile ? 0 : 1.25,
               border: isMobile ? "none" : "1px solid rgba(255,255,255,0.08)",
@@ -1042,7 +1040,7 @@ export default function AdvertisementsPage() {
       >
         <DialogTitle sx={{ fontWeight: 800, textTransform: "none", letterSpacing: "0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 0.35 }}>
-            <Typography sx={{ color: "#fbbf24", fontSize: "0.72rem", fontWeight: 900, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+            <Typography sx={{ color: dashboardTokens.accent, fontSize: "0.72rem", fontWeight: 900, letterSpacing: "0.08em", textTransform: "uppercase" }}>
               Ad Workspace
             </Typography>
             <Typography component="span" sx={{ fontWeight: 900, fontSize: { xs: "1.2rem", md: "1.35rem" }, color: "#fafafa" }}>
@@ -1256,13 +1254,9 @@ export default function AdvertisementsPage() {
             onClick={handleSubmit}
             disabled={uploading}
             sx={{
-              bgcolor: dashboardTokens.accent,
-              color: "#000",
-              fontWeight: 900,
+              ...dashboardPrimaryButtonSx,
               px: 4,
               borderRadius: dashboardRadii.button,
-              boxShadow: "0 10px 30px rgba(251,191,36,0.18)",
-              "&:hover": { bgcolor: dashboardTokens.accentStrong, boxShadow: "0 12px 32px rgba(234,179,8,0.24)" }
             }}
           >
             {editingAd ? "บันทึกการเปลี่ยนแปลง" : "สร้างโฆษณา"}
@@ -1278,9 +1272,9 @@ export default function AdvertisementsPage() {
         slotProps={{
           paper: {
             sx: {
-              bgcolor: "#141414",
+              bgcolor: dashboardTokens.surface,
               borderRadius: 1.25,
-              border: "1px solid rgba(255, 255, 255, 0.08)",
+              border: `1px solid ${dashboardTokens.border}`,
               backgroundImage: "none"
             },
           }

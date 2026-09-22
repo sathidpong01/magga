@@ -43,7 +43,7 @@ import {
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/app/contexts/ToastContext";
-import { dashboardTokens } from "@/app/components/dashboard/system";
+import { dashboardTokens, dashboardPrimaryButtonSx } from "@/app/components/dashboard/system";
 import { authFetch } from "@/lib/auth-fetch";
 import { getMetadataChipSx } from "@/lib/metadata-chip-tone";
 
@@ -730,13 +730,10 @@ export default function MangaDataTable({
             onClick={handleSaveSettings} 
             variant="contained"
             sx={{ 
-              bgcolor: "#fbbf24", 
-              color: "#000", 
-              fontWeight: 800,
+              ...dashboardPrimaryButtonSx,
               borderRadius: 1.1,
               px: 3,
               textTransform: "none",
-              "&:hover": { bgcolor: "#f59e0b" }
             }}
           >
             บันทึกการเปลี่ยนแปลง
