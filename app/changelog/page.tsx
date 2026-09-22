@@ -1,4 +1,3 @@
-﻿import React from "react";
 import {
   Container,
   Typography,
@@ -11,6 +10,7 @@ import {
   Chip,
 } from "@mui/material";
 import UpdateIcon from "@mui/icons-material/Update";
+import { maggaColors } from "@/lib/design-tokens";
 
 // Static data for changelog
 const changelogData = [
@@ -214,24 +214,24 @@ export default function ChangelogPage() {
           }}>
           บันทึกการอัพเดท
         </Typography>
-        <Typography variant="subtitle1" sx={{ color: "#a3a3a3" }}>
+        <Typography variant="subtitle1" sx={{ color: maggaColors.textMuted }}>
           ประวัติการปรับปรุงและพัฒนาเว็บไซต์ล่าสุด
         </Typography>
       </Box>
 
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 3.5 }}>
         {changelogData.map((item, index) => (
           <Paper
             key={index}
             sx={{
-              p: 4,
-              bgcolor: "#171717",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-              borderRadius: 1,
-              transition: "transform 0.2s, border-color 0.2s",
+              p: { xs: 2.5, sm: 3.5 },
+              bgcolor: maggaColors.surfaceAlt,
+              border: `1px solid ${maggaColors.border}`,
+              borderRadius: 2,
+              transition: "border-color 0.15s ease, box-shadow 0.15s ease",
               "&:hover": {
-                transform: "translateY(-2px)",
-                borderColor: "rgba(139, 92, 246, 0.5)",
+                borderColor: "rgba(251, 191, 36, 0.35)",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
               },
             }}
           >
@@ -245,7 +245,7 @@ export default function ChangelogPage() {
                 gap: 1,
               }}
             >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
                 <Typography
                   variant="h5"
                   component="h2"
@@ -259,9 +259,9 @@ export default function ChangelogPage() {
                   label={item.version}
                   size="small"
                   sx={{
-                    bgcolor: "rgba(139, 92, 246, 0.1)",
-                    color: "#a78bfa",
-                    fontWeight: 600,
+                    bgcolor: "rgba(251, 191, 36, 0.1)",
+                    color: maggaColors.archiveGold,
+                    fontWeight: 700,
                   }}
                 />
               </Box>
@@ -270,7 +270,7 @@ export default function ChangelogPage() {
                   display: "flex",
                   alignItems: "center",
                   gap: 1,
-                  color: "#a3a3a3",
+                  color: maggaColors.textMuted,
                 }}
               >
                 <UpdateIcon sx={{ fontSize: 18 }} />
@@ -280,7 +280,7 @@ export default function ChangelogPage() {
               </Box>
             </Box>
 
-            <Divider sx={{ my: 2, borderColor: "rgba(255, 255, 255, 0.05)" }} />
+            <Divider sx={{ my: 2, borderColor: maggaColors.border }} />
 
             <List disablePadding>
               {item.changes.map((change, i) => (
@@ -291,7 +291,7 @@ export default function ChangelogPage() {
                 >
                   <Box
                     component="span"
-                    sx={{ color: "#8b5cf6", mr: 1.5, mt: 0.5 }}
+                    sx={{ color: maggaColors.archiveGold, mr: 1.5, mt: 0.5 }}
                   >
                     •
                   </Box>
@@ -301,7 +301,6 @@ export default function ChangelogPage() {
                       primary: {
                         variant: "body1",
                         color: "#d4d4d4",
-                        component: "h3", // Semantic heading for accessibility if needed, or just keep as body text
                       }
                     }}
                   />

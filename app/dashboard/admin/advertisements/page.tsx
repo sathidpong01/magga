@@ -38,6 +38,10 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import Image from "next/image";
 import { authFetch } from "@/lib/auth-fetch";
+import {
+  dashboardTokens,
+  dashboardRadii,
+} from "@/app/components/dashboard/system";
 
 interface Advertisement {
   id: string;
@@ -772,15 +776,15 @@ export default function AdvertisementsPage() {
           onClick={() => handleOpenDialog()}
           size={isMobile ? "small" : "medium"}
           sx={{
-            bgcolor: "#FABF06",
+            bgcolor: dashboardTokens.accent,
             color: "#000",
             fontWeight: 900,
-            borderRadius: 1.25,
+            borderRadius: dashboardRadii.button,
             px: 3,
             height: 44,
             textTransform: "none",
             letterSpacing: "0",
-            "&:hover": { bgcolor: "#eab308" }
+            "&:hover": { bgcolor: dashboardTokens.accentStrong }
           }}
         >
           {isMobile ? "เพิ่ม" : "สร้างโฆษณา"}
@@ -952,11 +956,11 @@ export default function AdvertisementsPage() {
                       size="small"
                       sx={{ 
                         fontWeight: 900, 
-                        fontSize: "0.65rem",
-                        borderRadius: 0.75,
-                        bgcolor: "rgba(250, 191, 6, 0.1)",
-                        color: "#FABF06",
-                        border: "1px solid rgba(250, 191, 6, 0.2)",
+                        fontSize: "0.7rem",
+                        borderRadius: dashboardRadii.compact,
+                        bgcolor: dashboardTokens.accentSoft,
+                        color: dashboardTokens.accent,
+                        border: `1px solid ${dashboardTokens.accentSoft}`,
                         textTransform: "none"
                       }}
                     />
@@ -966,21 +970,21 @@ export default function AdvertisementsPage() {
                       checked={ad.isActive}
                       onChange={() => handleToggleActive(ad)}
                       sx={{
-                        "& .MuiSwitch-switchBase.Mui-checked": { color: "#FABF06" },
-                        "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { bgcolor: "#FABF06" }
+                        "& .MuiSwitch-switchBase.Mui-checked": { color: dashboardTokens.accent },
+                        "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { bgcolor: dashboardTokens.accent }
                       }}
                     />
                  </TableCell>
                   <TableCell align="right">
                     <IconButton
                       onClick={() => handleOpenDialog(ad)}
-                      sx={{ color: "#a3a3a3", "&:hover": { color: "#FABF06" } }}
+                      sx={{ color: dashboardTokens.textMuted, "&:hover": { color: dashboardTokens.accent } }}
                     >
                       <EditIcon fontSize="small" />
                     </IconButton>
                     <IconButton
                       onClick={() => handleOpenDeleteDialog(ad)}
-                      sx={{ color: "#a3a3a3", "&:hover": { color: "#ef4444" } }}
+                      sx={{ color: dashboardTokens.textMuted, "&:hover": { color: "#ef4444" } }}
                     >
                       <DeleteIcon fontSize="small" />
                     </IconButton>
@@ -1009,8 +1013,8 @@ export default function AdvertisementsPage() {
             page={page}
             onChange={handlePageChange}
             sx={{
-              "& .MuiPaginationItem-root": { color: "#a3a3a3", fontWeight: 700 },
-              "& .Mui-selected": { bgcolor: "#FABF06 !important", color: "#000 !important" }
+              "& .MuiPaginationItem-root": { color: dashboardTokens.textMuted, fontWeight: 700 },
+              "& .Mui-selected": { bgcolor: `${dashboardTokens.accent} !important`, color: "#000 !important" }
             }}
           />
         </Box>
@@ -1111,7 +1115,7 @@ export default function AdvertisementsPage() {
                   fullWidth
                   startIcon={
                     uploading ? (
-                      <CircularProgress size={20} sx={{ color: "#FABF06" }} />
+                      <CircularProgress size={20} sx={{ color: dashboardTokens.accent }} />
                     ) : (
                       <CloudUploadIcon />
                     )
@@ -1252,13 +1256,13 @@ export default function AdvertisementsPage() {
             onClick={handleSubmit}
             disabled={uploading}
             sx={{
-              bgcolor: "#FABF06",
+              bgcolor: dashboardTokens.accent,
               color: "#000",
               fontWeight: 900,
               px: 4,
-              borderRadius: 1.1,
+              borderRadius: dashboardRadii.button,
               boxShadow: "0 10px 30px rgba(251,191,36,0.18)",
-              "&:hover": { bgcolor: "#eab308", boxShadow: "0 12px 32px rgba(234,179,8,0.24)" }
+              "&:hover": { bgcolor: dashboardTokens.accentStrong, boxShadow: "0 12px 32px rgba(234,179,8,0.24)" }
             }}
           >
             {editingAd ? "บันทึกการเปลี่ยนแปลง" : "สร้างโฆษณา"}

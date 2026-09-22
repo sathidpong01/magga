@@ -7,9 +7,14 @@ import {
   tags as tagsTable,
 } from "@/db/schema";
 import { asc, desc, eq, inArray } from "drizzle-orm";
-import { Box, Chip, Stack, Typography } from "@mui/material";
+import { Box, Button, Chip, Stack, Typography } from "@mui/material";
 import Link from "next/link";
 import MangaDataTable from "./MangaDataTable";
+import {
+  DashboardSurface,
+  dashboardTokens,
+  dashboardPrimaryButtonSx,
+} from "@/app/components/dashboard/system";
 
 export const dynamic = "force-dynamic";
 
@@ -84,14 +89,9 @@ export default async function AdminMangaPage() {
         gap: 2.5,
       }}
     >
-      <Box
+      <DashboardSurface
         sx={{
-          borderRadius: 1.5,
-          border: "1px solid rgba(255,255,255,0.06)",
-          backgroundImage:
-            "linear-gradient(180deg, rgba(251,191,36,0.06) 0%, rgba(20,20,20,0.92) 100%)",
           p: { xs: 2.25, md: 3 },
-          boxShadow: "0 24px 60px rgba(0,0,0,0.28)",
         }}
       >
         <Stack
@@ -105,7 +105,7 @@ export default async function AdminMangaPage() {
             <Typography
               variant="overline"
               sx={{
-                color: "#fbbf24",
+                color: dashboardTokens.accent,
                 fontWeight: 800,
                 letterSpacing: "0.14em",
                 display: "block",
@@ -119,78 +119,69 @@ export default async function AdminMangaPage() {
               sx={{
                 fontWeight: 900,
                 letterSpacing: "-0.03em",
-                color: "#fafafa",
+                color: dashboardTokens.text,
                 mb: 0.75,
                 fontSize: { xs: "1.8rem", md: "2.25rem" },
               }}
             >
               จัดการมังงะ
             </Typography>
-            <Typography sx={{ color: "#a3a3a3", lineHeight: 1.7 }}>
+            <Typography sx={{ color: dashboardTokens.textMuted, lineHeight: 1.7 }}>
               ดูรายการมังงะทั้งหมด แก้ quick settings จัดหมวดหมู่ แท็ก และผู้แต่ง
               ด้วย workspace เดียวกัน
             </Typography>
           </Box>
 
           <Stack direction="row" spacing={1} useFlexGap sx={{
-            flexWrap: "wrap"
+            flexWrap: "wrap",
+            alignItems: "center",
           }}>
             <Chip
               label={`ล่าสุด ${mangas.length}`}
               sx={{
-                bgcolor: "#171717",
-                color: "#fafafa",
-                border: "1px solid rgba(255,255,255,0.08)",
+                bgcolor: dashboardTokens.surfaceMuted,
+                color: dashboardTokens.text,
+                border: `1px solid ${dashboardTokens.border}`,
                 fontWeight: 700,
               }}
             />
             <Chip
               label={`หมวดหมู่ ${allCategories.length}`}
               sx={{
-                bgcolor: "rgba(251,191,36,0.08)",
-                color: "#fbbf24",
-                border: "1px solid rgba(251,191,36,0.18)",
+                bgcolor: dashboardTokens.accentSoft,
+                color: dashboardTokens.accent,
+                border: `1px solid ${dashboardTokens.accentSoft}`,
                 fontWeight: 700,
               }}
             />
             <Chip
               label={`แท็ก ${allTags.length}`}
               sx={{
-                bgcolor: "rgba(96,165,250,0.08)",
-                color: "#93c5fd",
-                border: "1px solid rgba(96,165,250,0.18)",
+                bgcolor: dashboardTokens.surfaceMuted,
+                color: dashboardTokens.textMuted,
+                border: `1px solid ${dashboardTokens.border}`,
                 fontWeight: 700,
               }}
             />
             <Chip
               label={`ผู้แต่ง ${allAuthors.length}`}
               sx={{
-                bgcolor: "rgba(139,92,246,0.08)",
-                color: "#c4b5fd",
-                border: "1px solid rgba(139,92,246,0.18)",
+                bgcolor: dashboardTokens.surfaceMuted,
+                color: dashboardTokens.textMuted,
+                border: `1px solid ${dashboardTokens.border}`,
                 fontWeight: 700,
               }}
             />
-            <Link
+            <Button
+              component={Link}
               href="/dashboard/admin/manga/create"
-              style={{
-                textDecoration: "none",
-                backgroundColor: "#fbbf24",
-                color: "#000",
-                padding: "10px 18px",
-                borderRadius: "8px",
-                fontWeight: 800,
-                fontSize: "0.875rem",
-                display: "inline-flex",
-                alignItems: "center",
-                boxShadow: "0 4px 14px rgba(251, 191, 36, 0.2)",
-              }}
+              sx={dashboardPrimaryButtonSx}
             >
               + เพิ่มมังงะใหม่
-            </Link>
+            </Button>
           </Stack>
         </Stack>
-      </Box>
+      </DashboardSurface>
 
       <MangaDataTable
         initialMangas={mangas}

@@ -17,11 +17,9 @@ import CategoryIcon from "@mui/icons-material/Category";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import PeopleIcon from "@mui/icons-material/People";
 import CommentIcon from "@mui/icons-material/Comment";
-import VisibilityIcon from "@mui/icons-material/Visibility";
 import EditNoteIcon from "@mui/icons-material/EditNote";
 import AutoStoriesIcon from "@mui/icons-material/AutoStories";
 import AssignmentIcon from "@mui/icons-material/Assignment";
-import InsightsIcon from "@mui/icons-material/Insights";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -110,6 +108,7 @@ export default async function AdminPage() {
 
       {/* Stats Grid */}
       <Grid container spacing={2.5} sx={{ mb: 4 }}>
+        {/* Row 1: Core Operations */}
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <DashboardStat
             label="มังงะทั้งหมด"
@@ -120,18 +119,10 @@ export default async function AdminPage() {
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <DashboardStat
-            label="ผู้ใช้ทั้งหมด"
-            value={totalUsers}
-            icon={<PeopleIcon />}
-            href="/dashboard/admin/users"
-          />
-        </Grid>
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <DashboardStat
-            label="คอมเมนต์ทั้งหมด"
-            value={totalComments}
-            icon={<CommentIcon />}
-            href="/dashboard/admin/comments"
+            label="ฉบับร่าง"
+            value={draftManga}
+            icon={<EditNoteIcon />}
+            href="/dashboard/admin/manga"
           />
         </Grid>
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -142,29 +133,25 @@ export default async function AdminPage() {
             href="/dashboard/admin/submissions"
           />
         </Grid>
-        <Grid size={{ xs: 6, sm: 4, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <DashboardStat
-            label="ฉบับร่าง"
-            value={draftManga}
-            icon={<EditNoteIcon />}
-            href="/dashboard/admin/manga"
+            label="ผู้ใช้ทั้งหมด"
+            value={totalUsers}
+            icon={<PeopleIcon />}
+            href="/dashboard/admin/users"
           />
         </Grid>
-        <Grid size={{ xs: 6, sm: 4, md: 3 }}>
+
+        {/* Row 2: Community & Metadata */}
+        <Grid size={{ xs: 12, sm: 4, md: 4 }}>
           <DashboardStat
-            label="อ่านสะสม"
-            value="—"
-            icon={<VisibilityIcon />}
+            label="คอมเมนต์ทั้งหมด"
+            value={totalComments}
+            icon={<CommentIcon />}
+            href="/dashboard/admin/comments"
           />
         </Grid>
-        <Grid size={{ xs: 6, sm: 4, md: 3 }}>
-          <DashboardStat
-            label="ผู้ชมแยกเรื่อง"
-            value="—"
-            icon={<InsightsIcon />}
-          />
-        </Grid>
-        <Grid size={{ xs: 6, sm: 4, md: 3 }}>
+        <Grid size={{ xs: 6, sm: 4, md: 4 }}>
           <DashboardStat
             label="หมวดหมู่"
             value={totalCategories}
@@ -172,7 +159,7 @@ export default async function AdminPage() {
             href="/dashboard/admin/metadata"
           />
         </Grid>
-        <Grid size={{ xs: 6, sm: 4, md: 3 }}>
+        <Grid size={{ xs: 6, sm: 4, md: 4 }}>
           <DashboardStat
             label="แท็ก"
             value={totalTags}
@@ -200,11 +187,11 @@ export default async function AdminPage() {
                     ...dashboardInsetSurfaceSx,
                     p: 1.1,
                     height: "100%",
-                    transition: "transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease",
+                    transition: "border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease",
                     "&:hover": {
-                      transform: "translateY(-3px)",
-                      borderColor: "rgba(251,191,36,0.28)",
-                      bgcolor: "#1b1b1b",
+                      borderColor: "rgba(251,191,36,0.32)",
+                      bgcolor: dashboardTokens.surfaceAlt,
+                      boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
                     },
                   }}
                 >
@@ -220,13 +207,14 @@ export default async function AdminPage() {
                         px: 1,
                         borderRadius: 0.9,
                         bgcolor: index === 0 ? dashboardTokens.accent : "rgba(10,10,10,0.88)",
-                        color: index === 0 ? "#120d00" : "#fafafa",
+                        color: index === 0 ? "#120d00" : dashboardTokens.text,
                         border: index === 0 ? "none" : "1px solid rgba(255,255,255,0.1)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         fontWeight: 900,
                         fontSize: "0.95rem",
+                        fontVariantNumeric: "tabular-nums",
                         boxShadow: "0 8px 18px rgba(0,0,0,0.35)",
                       }}
                     >
@@ -239,7 +227,7 @@ export default async function AdminPage() {
                         aspectRatio: "2 / 3",
                         overflow: "hidden",
                         borderRadius: 1,
-                        bgcolor: "#0b0b0b",
+                        bgcolor: dashboardTokens.surfaceMuted,
                       }}
                     >
                       {manga.coverImage ? (
@@ -324,11 +312,11 @@ export default async function AdminPage() {
                   p: 1.2,
                   ...dashboardInsetSurfaceSx,
                   textDecoration: "none",
-                  transition: "all 0.2s",
+                  transition: "all 0.15s ease",
                   "&:hover": {
-                    bgcolor: "#1c1c1c",
+                    bgcolor: dashboardTokens.surfaceAlt,
                     borderColor: "rgba(255,255,255,0.12)",
-                    transform: "translateX(4px)",
+                    transform: "translateX(3px)",
                   },
                 }}
               >
@@ -337,10 +325,10 @@ export default async function AdminPage() {
                     variant="h6"
                     sx={{
                       width: 34,
-                      fontWeight: 900,
-                      color: index === 0 ? dashboardTokens.accent : "#64748b",
+                      fontWeight: 800,
+                      color: index === 0 ? dashboardTokens.accent : dashboardTokens.textMuted,
                       textAlign: "center",
-                      fontStyle: "italic",
+                      fontVariantNumeric: "tabular-nums",
                       flexShrink: 0,
                     }}
                   >
@@ -353,7 +341,7 @@ export default async function AdminPage() {
                       height: 58,
                       borderRadius: 0.75,
                       overflow: "hidden",
-                      bgcolor: "#0b0b0b",
+                      bgcolor: dashboardTokens.surfaceMuted,
                       flexShrink: 0,
                     }}
                   >
@@ -371,7 +359,7 @@ export default async function AdminPage() {
                     variant="body2"
                     sx={{
                       fontWeight: 700,
-                      color: "#fafafa",
+                      color: dashboardTokens.text,
                       minWidth: 0,
                       display: "-webkit-box",
                       WebkitLineClamp: 2,

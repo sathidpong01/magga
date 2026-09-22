@@ -7,6 +7,7 @@ import ErrorIcon from '@mui/icons-material/Error';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import { maggaColors } from '@/lib/design-tokens';
 
 export type UploadFileStatus = {
   id: string;
@@ -59,9 +60,9 @@ export default function UploadProgress({ files, onCancel, onRetry }: UploadProgr
       <Paper
         elevation={6}
         sx={{
-          bgcolor: '#171717',
-          border: '1px solid rgba(255,255,255,0.1)',
-          borderRadius: 1,
+          bgcolor: maggaColors.surface,
+          border: `1px solid ${maggaColors.border}`,
+          borderRadius: 2,
           overflow: 'hidden',
           width: '100%',
           transition: 'all 0.3s ease'
@@ -114,9 +115,9 @@ export default function UploadProgress({ files, onCancel, onRetry }: UploadProgr
                   <Box 
                     sx={{ 
                       p: 1, 
-                      borderRadius: 1, 
+                      borderRadius: 1.5, 
                       bgcolor: 'rgba(255,255,255,0.05)',
-                      color: '#fbbf24'
+                      color: maggaColors.archiveGold
                     }}
                   >
                     <InsertDriveFileIcon fontSize="small" color="inherit" />
@@ -142,7 +143,7 @@ export default function UploadProgress({ files, onCancel, onRetry }: UploadProgr
                                 e.stopPropagation();
                                 onRetry(file.id);
                               }}
-                              sx={{ p: 0, color: '#fbbf24' }}
+                              sx={{ p: 0, color: maggaColors.archiveGold }}
                             >
                               <RefreshIcon sx={{ fontSize: 16 }} />
                             </IconButton>
@@ -165,7 +166,7 @@ export default function UploadProgress({ files, onCancel, onRetry }: UploadProgr
                         bgcolor: 'rgba(255,255,255,0.1)',
                         '& .MuiLinearProgress-bar': {
                           bgcolor: file.status === 'error' ? '#ef4444' : 
-                                   file.status === 'completed' ? '#4ade80' : '#fbbf24',
+                                   file.status === 'completed' ? '#4ade80' : maggaColors.archiveGold,
                         }
                       }}
                     />
@@ -183,7 +184,7 @@ export default function UploadProgress({ files, onCancel, onRetry }: UploadProgr
 function CircularProgressWithLabel(props: { value: number }) {
   return (
     <Box sx={{ position: 'relative', display: 'inline-flex' }}>
-      <CircularProgress variant="determinate" {...props} size={32} thickness={5} sx={{ color: '#fbbf24' }} />
+      <CircularProgress variant="determinate" {...props} size={32} thickness={5} sx={{ color: maggaColors.archiveGold }} />
       <Box
         sx={{
           top: 0,

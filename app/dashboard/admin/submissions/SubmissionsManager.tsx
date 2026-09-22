@@ -28,6 +28,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import Link from "next/link";
 import { authFetch } from "@/lib/auth-fetch";
+import { dashboardTokens, dashboardRadii } from "@/app/components/dashboard/system";
 
 export type AdminSubmission = {
   id: string;
@@ -150,13 +151,13 @@ export default function SubmissionsManager({
           onClick={fetchSubmissions}
           variant="contained"
           sx={{
-            borderRadius: 1.25,
-            bgcolor: "#FABF06",
+            borderRadius: dashboardRadii.button,
+            bgcolor: dashboardTokens.accent,
             color: "#000",
             fontWeight: 900,
             px: 3,
             "&:hover": {
-              bgcolor: "#e5af05",
+              bgcolor: dashboardTokens.accentStrong,
             },
           }}
         >
@@ -167,9 +168,9 @@ export default function SubmissionsManager({
       <Paper
         sx={{
           mb: 4,
-          bgcolor: "#141414",
-          borderRadius: 1.25,
-          border: "1px solid rgba(255,255,255,0.06)",
+          bgcolor: dashboardTokens.surface,
+          borderRadius: dashboardRadii.surface,
+          border: `1px solid ${dashboardTokens.border}`,
           overflow: "hidden",
           backgroundImage: "none",
           boxShadow: "none",
@@ -181,24 +182,24 @@ export default function SubmissionsManager({
           textColor="inherit"
           sx={{
             borderBottom: 1,
-            borderColor: "rgba(255,255,255,0.06)",
+            borderColor: dashboardTokens.border,
             minHeight: 56,
             "& .MuiTab-root": {
               fontWeight: 800,
-              color: "#a3a3a3",
+              color: dashboardTokens.textMuted,
               fontSize: "0.85rem",
               letterSpacing: "0",
               textTransform: "none",
               minHeight: 56,
               opacity: 0.7,
               "&.Mui-selected": {
-                color: "#FABF06 !important",
+                color: `${dashboardTokens.accent} !important`,
                 opacity: 1,
               },
             },
           }}
           slotProps={{
-            indicator: { sx: { bgcolor: "#FABF06", height: 3, borderRadius: "3px 3px 0 0" } }
+            indicator: { sx: { bgcolor: dashboardTokens.accent, height: 3, borderRadius: "3px 3px 0 0" } }
           }}
         >
           <Tab label="ทั้งหมด" value="ALL" />
@@ -217,13 +218,13 @@ export default function SubmissionsManager({
             onChange={(e) => setSearch(e.target.value)}
             sx={{
               "& .MuiOutlinedInput-root": {
-                bgcolor: "#0B0B0B",
-                borderRadius: 1,
+                bgcolor: dashboardTokens.surfaceMuted,
+                borderRadius: dashboardRadii.field,
                 fontWeight: 600,
                 fontSize: "0.9rem",
-                "& fieldset": { borderColor: "rgba(255,255,255,0.06)" },
-                "&:hover fieldset": { borderColor: "rgba(250, 191, 6, 0.3)" },
-                "&.Mui-focused fieldset": { borderColor: "#FABF06" },
+                "& fieldset": { borderColor: dashboardTokens.border },
+                "&:hover fieldset": { borderColor: dashboardTokens.borderStrong },
+                "&.Mui-focused fieldset": { borderColor: dashboardTokens.accent },
               },
             }}
             size="medium"
@@ -231,7 +232,7 @@ export default function SubmissionsManager({
               input: {
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon sx={{ color: "#FABF06", fontSize: 20 }} />
+                    <SearchIcon sx={{ color: dashboardTokens.accent, fontSize: 20 }} />
                   </InputAdornment>
                 ),
               }
@@ -266,7 +267,7 @@ export default function SubmissionsManager({
             {loading ? (
               <TableRow>
                 <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
-                  <CircularProgress sx={{ color: "#FABF06" }} />
+                  <CircularProgress sx={{ color: dashboardTokens.accent }} />
                 </TableCell>
               </TableRow>
             ) : submissions.length === 0 ? (
@@ -337,19 +338,19 @@ export default function SubmissionsManager({
                           : sub.status === "REJECTED"
                             ? "#f87171"
                             : sub.status === "PENDING"
-                              ? "#FABF06"
-                              : "#a3a3a3",
-                        border: "1px solid rgba(255,255,255,0.03)",
+                              ? dashboardTokens.accent
+                              : dashboardTokens.textMuted,
+                        border: `1px solid ${dashboardTokens.border}`,
                       }}
                     />
                   </TableCell>
                   <TableCell>
-                    <Typography sx={{ fontFamily: "monospace", fontSize: "0.85rem", color: "#a3a3a3", fontWeight: 600 }}>
-                      {new Date(sub.submittedAt).toLocaleDateString("en-GB", {
+                    <Typography sx={{ fontFamily: "monospace", fontSize: "0.85rem", color: dashboardTokens.textMuted, fontWeight: 600 }}>
+                      {new Date(sub.submittedAt).toLocaleDateString("th-TH", {
                         day: "2-digit",
                         month: "short",
                         year: "numeric",
-                      }).toUpperCase()}
+                      })}
                     </Typography>
                   </TableCell>
                   <TableCell align="right">
@@ -358,13 +359,13 @@ export default function SubmissionsManager({
                         component={Link}
                         href={`/dashboard/admin/submissions/${sub.id}`}
                         sx={{
-                          color: "#FABF06",
-                          bgcolor: "rgba(250, 191, 6, 0.08)",
-                          borderRadius: 1,
+                          color: dashboardTokens.accent,
+                          bgcolor: dashboardTokens.accentSoft,
+                          borderRadius: dashboardRadii.compact,
                           width: 36,
                           height: 36,
                           "&:hover": {
-                            bgcolor: "rgba(250, 191, 6, 0.15)",
+                            bgcolor: "rgba(251, 191, 36, 0.25)",
                             transform: "scale(1.05)",
                           },
                           transition: "all 0.2s",
@@ -389,17 +390,17 @@ export default function SubmissionsManager({
           onChange={(_, p) => setPage(p)}
           sx={{
             "& .MuiPaginationItem-root": {
-              color: "#a3a3a3",
+              color: dashboardTokens.textMuted,
               fontWeight: 800,
               fontSize: "0.75rem",
               fontFamily: "monospace",
-              borderRadius: 1,
+              borderRadius: dashboardRadii.compact,
               "&:hover": { bgcolor: "rgba(255,255,255,0.05)" },
             },
             "& .Mui-selected": {
-              bgcolor: "#FABF06 !important",
+              bgcolor: `${dashboardTokens.accent} !important`,
               color: "#000 !important",
-              boxShadow: "0 0 15px rgba(250, 191, 6, 0.3)",
+              boxShadow: "0 0 15px rgba(251, 191, 36, 0.3)",
             },
           }}
         />

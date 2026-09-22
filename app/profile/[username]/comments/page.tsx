@@ -14,6 +14,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth-client";
 import { useParams, useRouter } from "next/navigation";
+import { maggaColors } from "@/lib/design-tokens";
 import HomeIcon from "@mui/icons-material/Home";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutlined";
@@ -100,7 +101,7 @@ export default function MyCommentsPage() {
   if (isPending || loading) {
     return (
       <Container maxWidth="md" sx={{ py: 6, display: "flex", justifyContent: "center" }}>
-        <CircularProgress sx={{ color: "#fbbf24" }} />
+        <CircularProgress sx={{ color: maggaColors.archiveGold }} />
       </Container>
     );
   }
@@ -109,14 +110,14 @@ export default function MyCommentsPage() {
     <Container maxWidth="md" sx={{ py: { xs: 3, md: 5 } }}>
       {/* Breadcrumb */}
       <Breadcrumbs
-        separator={<NavigateNextIcon fontSize="small" sx={{ color: "#a3a3a3" }} />}
+        separator={<NavigateNextIcon fontSize="small" sx={{ color: maggaColors.textMuted }} />}
         sx={{ mb: 3 }}
       >
-        <Link href="/" style={{ display: "flex", alignItems: "center", color: "#fbbf24", textDecoration: "none", fontSize: "0.875rem" }}>
+        <Link href="/" style={{ display: "flex", alignItems: "center", color: maggaColors.archiveGold, textDecoration: "none", fontSize: "0.875rem" }}>
           <HomeIcon sx={{ fontSize: 16, mr: 0.5 }} />
           หน้าแรก
         </Link>
-        <Link href={`/profile/${username}`} style={{ color: "#fbbf24", textDecoration: "none", fontSize: "0.875rem" }}>
+        <Link href={`/profile/${username}`} style={{ color: maggaColors.archiveGold, textDecoration: "none", fontSize: "0.875rem" }}>
           ฉัน
         </Link>
         <Typography sx={{ color: "#fafafa", fontSize: "0.875rem" }}>ความคิดเห็น</Typography>
@@ -125,10 +126,9 @@ export default function MyCommentsPage() {
       <Box
         sx={{
           mb: 4,
-          borderRadius: 4,
-          border: "1px solid rgba(255,255,255,0.08)",
-          background:
-            "linear-gradient(180deg, rgba(94,234,212,0.08) 0%, rgba(255,255,255,0.02) 100%)",
+          borderRadius: 2.5,
+          border: `1px solid ${maggaColors.border}`,
+          bgcolor: maggaColors.surfaceAlt,
           px: { xs: 2.5, md: 3 },
           py: { xs: 2.5, md: 3 },
           display: "flex",
@@ -140,21 +140,21 @@ export default function MyCommentsPage() {
           sx={{
             width: 46,
             height: 46,
-            borderRadius: 2.5,
-            bgcolor: "rgba(94,234,212,0.12)",
+            borderRadius: 2,
+            bgcolor: "rgba(251,191,36,0.1)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             flexShrink: 0,
           }}
         >
-          <ChatBubbleOutlineIcon sx={{ color: "#5eead4", fontSize: 24 }} />
+          <ChatBubbleOutlineIcon sx={{ color: maggaColors.archiveGold, fontSize: 24 }} />
         </Box>
         <Box>
           <Typography variant="h5" sx={{
             fontWeight: 800
           }}>ความคิดเห็นของฉัน</Typography>
-          <Typography variant="body2" sx={{ color: "#a3a3a3" }}>
+          <Typography variant="body2" sx={{ color: maggaColors.textMuted }}>
             {comments.length} ความคิดเห็น{hasMore ? "+" : ""}
           </Typography>
         </Box>
@@ -176,13 +176,13 @@ export default function MyCommentsPage() {
                 display: "flex",
                 gap: 2,
                 p: 2,
-                bgcolor: "#171717",
+                bgcolor: maggaColors.surfaceAlt,
                 borderRadius: 2,
-                border: "1px solid rgba(255,255,255,0.08)",
+                border: `1px solid ${maggaColors.border}`,
                 textDecoration: "none",
                 color: "inherit",
-                "&:hover": { borderColor: "rgba(251,191,36,0.3)", bgcolor: "#1e1e1e" },
-                transition: "border-color 0.2s, background-color 0.2s",
+                "&:hover": { borderColor: "rgba(251,191,36,0.32)", bgcolor: "#1b1b1b" },
+                transition: "border-color 0.15s ease, background-color 0.15s ease",
               }}
             >
               {/* Manga cover */}
@@ -200,7 +200,7 @@ export default function MyCommentsPage() {
 
               <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                 {comment.manga && (
-                  <Typography variant="caption" sx={{ color: "#5eead4", display: "block", mb: 0.25 }}>
+                  <Typography variant="caption" sx={{ color: maggaColors.archiveGold, display: "block", mb: 0.25 }}>
                     {comment.manga.title}
                     {comment.imageIndex !== null && ` • หน้า ${comment.imageIndex + 1}`}
                   </Typography>

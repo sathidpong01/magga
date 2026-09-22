@@ -1,5 +1,6 @@
-﻿import { Container, Typography, Box, Paper, Divider } from "@mui/material";
+import { Container, Typography, Box, Paper, Divider } from "@mui/material";
 import { Metadata } from "next";
+import { maggaColors } from "@/lib/design-tokens";
 
 export const metadata: Metadata = {
   title: "นโยบายความเป็นส่วนตัว - MAGGA",
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
   return (
     <Container maxWidth="md" sx={{ py: 6 }}>
-      <Paper sx={{ p: { xs: 3, md: 5 }, bgcolor: '#171717', borderRadius: 1, border: '1px solid rgba(255,255,255,0.08)' }}>
+      <Paper sx={{ p: { xs: 3, md: 5 }, bgcolor: maggaColors.surfaceAlt, borderRadius: 2, border: `1px solid ${maggaColors.border}` }}>
         <Typography
           variant="h4"
           component="h1"
@@ -144,10 +145,10 @@ export default function PrivacyPage() {
             </Typography>
           </Section>
 
-          <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
+          <Divider sx={{ borderColor: maggaColors.border }} />
 
           <Section title="9. การเก็บรักษาข้อมูลส่วนบุคคล">
-            <Typography variant="subtitle2" sx={{ color: '#fbbf24', mb: 1 }}>
+            <Typography variant="subtitle2" sx={{ color: maggaColors.archiveGold, mb: 1, fontWeight: 700 }}>
               9.1 การลบบัญชีตามคำขอของผู้ใช้งาน
             </Typography>
             <Box component="ul">
@@ -155,7 +156,7 @@ export default function PrivacyPage() {
               <Typography component="li">เมื่อบัญชีถูกลบ ข้อมูลส่วนบุคคลที่อยู่ในโปรไฟล์จะถูกลบออกจากระบบหลัก อย่างไรก็ตาม อาจยังคงปรากฏอยู่ในระบบสำรอง (backup) ตามรอบการเก็บรักษาของระบบ</Typography>
               <Typography component="li">เนื้อหาที่ผู้ใช้งานเคยเผยแพร่ เช่น ผลงานแปล อาจยังคงอยู่เพื่อรักษาความสมบูรณ์ของเว็บไซต์</Typography>
             </Box>
-            <Typography variant="subtitle2" sx={{ color: '#fbbf24', mb: 1, mt: 2 }}>
+            <Typography variant="subtitle2" sx={{ color: maggaColors.archiveGold, mb: 1, mt: 2, fontWeight: 700 }}>
               9.2 การปิดบัญชีโดยเว็บไซต์
             </Typography>
             <Box component="ul">
@@ -164,7 +165,7 @@ export default function PrivacyPage() {
             </Box>
           </Section>
 
-          <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
+          <Divider sx={{ borderColor: maggaColors.border }} />
 
           <Section title="10. การเปลี่ยนแปลงนโยบายความเป็นส่วนตัว">
             <Typography sx={{
@@ -181,7 +182,7 @@ export default function PrivacyPage() {
             </Typography>
           </Section>
 
-          <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
+          <Divider sx={{ borderColor: maggaColors.border }} />
 
           <Section title="11. สิทธิของผู้ใช้งานเกี่ยวกับข้อมูลส่วนบุคคล">
             <Typography sx={{
@@ -197,7 +198,7 @@ export default function PrivacyPage() {
             </Box>
           </Section>
 
-          <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
+          <Divider sx={{ borderColor: maggaColors.border }} />
 
           <Section title="12. ข้อจำกัดของการรับประกัน">
             <Typography>
@@ -206,12 +207,11 @@ export default function PrivacyPage() {
           </Section>
         </Box>
 
-        <Box sx={{ mt: 4, pt: 3, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+        <Box sx={{ mt: 4, pt: 3, borderTop: `1px solid ${maggaColors.border}` }}>
           <Typography
             variant="body2"
             sx={{
-              color: "text.secondary",
-              fontStyle: 'italic'
+              color: "text.secondary"
             }}>
             หมายเหตุ: เอกสารฉบับนี้มีไว้เพื่อประกาศนโยบายความเป็นส่วนตัวของเว็บไซต์ และอาจมีการปรับปรุงแก้ไขเป็นระยะ
           </Typography>
@@ -228,13 +228,13 @@ function Section({ title, children }: { title: string; children: React.ReactNode
         variant="h6"
         sx={{
           fontWeight: "bold",
-          color: '#fbbf24',
+          color: maggaColors.archiveGold,
           mb: 2
         }}>
         {title}
       </Typography>
       <Box sx={{ 
-        color: '#a3a3a3', 
+        color: maggaColors.textMuted, 
         '& ul': { pl: 3, mt: 1, mb: 2 }, 
         '& li': { mb: 1 },
         '& p': { mb: 2, lineHeight: 1.8 },

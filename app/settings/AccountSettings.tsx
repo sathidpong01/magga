@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -44,6 +44,7 @@ import ViewSidebarIcon from "@mui/icons-material/ViewSidebar";
 import VerticalAlignBottomIcon from "@mui/icons-material/VerticalAlignBottom";
 import { validatePassword } from "@/lib/password-validation";
 import { useToast } from "@/app/contexts/ToastContext";
+import { maggaColors } from "@/lib/design-tokens";
 
 interface UserData {
   name: string | null;
@@ -62,32 +63,32 @@ interface Props {
 }
 
 const inputSx = {
-  "& .MuiInputLabel-root": { color: "#a3a3a3" },
+  "& .MuiInputLabel-root": { color: maggaColors.textSecondary },
   "& .MuiOutlinedInput-root": {
-    color: "#fafafa",
-    bgcolor: "#202020",
-    borderRadius: 3,
+    color: maggaColors.textPrimary,
+    bgcolor: maggaColors.ironSurface,
+    borderRadius: 1.5,
     "& fieldset": { borderColor: "rgba(255,255,255,0.08)" },
     "&:hover fieldset": { borderColor: "rgba(251,191,36,0.45)" },
-    "&.Mui-focused fieldset": { borderColor: "#fbbf24" },
+    "&.Mui-focused fieldset": { borderColor: maggaColors.archiveGold },
   },
 };
 
 const accordionSx = {
-  bgcolor: "#151515",
+  bgcolor: maggaColors.charcoalSurface,
   border: "1px solid rgba(255,255,255,0.08)",
-  borderRadius: "18px !important",
+  borderRadius: "12px !important",
   mb: 1.25,
   "&:before": { display: "none" },
-  "&.Mui-expanded": { borderColor: "rgba(251,191,36,0.25)" },
+  "&.Mui-expanded": { borderColor: "rgba(251,191,36,0.3)" },
   boxShadow: "none",
 };
 
 const summarySx = {
   px: 2.5,
   py: 0.75,
-  minHeight: 72,
-  "& .MuiAccordionSummary-content": { my: 1.5, alignItems: "center", gap: 2 },
+  minHeight: 68,
+  "& .MuiAccordionSummary-content": { my: 1.25, alignItems: "center", gap: 2 },
 };
 
 function RowIcon({ icon }: { icon: React.ReactNode }) {
@@ -102,11 +103,31 @@ function RowIcon({ icon }: { icon: React.ReactNode }) {
         alignItems: "center",
         justifyContent: "center",
         flexShrink: 0,
-        color: "#fbbf24",
+        color: maggaColors.archiveGold,
       }}
     >
       {icon}
     </Box>
+  );
+}
+
+function SectionHeading({ title }: { title: string }) {
+  return (
+    <Typography
+      variant="caption"
+      sx={{
+        color: maggaColors.textMuted,
+        fontWeight: 700,
+        letterSpacing: 0.8,
+        textTransform: "uppercase",
+        display: "block",
+        mt: 3.5,
+        mb: 1.25,
+        px: 0.5,
+      }}
+    >
+      {title}
+    </Typography>
   );
 }
 
@@ -282,41 +303,45 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
     <Box>
       {/* Breadcrumb */}
       <Breadcrumbs
-        separator={<NavigateNextIcon fontSize="small" sx={{ color: "#a3a3a3" }} />}
+        separator={<NavigateNextIcon fontSize="small" sx={{ color: maggaColors.textMuted }} />}
         sx={{ mb: 3 }}
       >
-        <Link href="/" style={{ display: "flex", alignItems: "center", color: "#fbbf24", textDecoration: "none", fontSize: "0.875rem" }}>
+        <Link href="/" style={{ display: "flex", alignItems: "center", color: maggaColors.archiveGold, textDecoration: "none", fontSize: "0.875rem" }}>
           <HomeIcon sx={{ fontSize: 16, mr: 0.5 }} />
           หน้าแรก
         </Link>
         {formData.username ? (
-          <Link href={`/profile/${formData.username}`} style={{ color: "#fbbf24", textDecoration: "none", fontSize: "0.875rem" }}>
+          <Link href={`/profile/${formData.username}`} style={{ color: maggaColors.archiveGold, textDecoration: "none", fontSize: "0.875rem" }}>
             ฉัน
           </Link>
         ) : (
-          <Typography sx={{ color: "#a3a3a3", fontSize: "0.875rem" }}>ฉัน</Typography>
+          <Typography sx={{ color: maggaColors.textSecondary, fontSize: "0.875rem" }}>ฉัน</Typography>
         )}
-        <Typography sx={{ color: "#fafafa", fontSize: "0.875rem" }}>ตั้งค่าบัญชี</Typography>
+        <Typography sx={{ color: maggaColors.textPrimary, fontSize: "0.875rem" }}>ตั้งค่าบัญชี</Typography>
       </Breadcrumbs>
 
       <Box
         sx={{
           mb: 4,
-          borderRadius: 4,
-          border: "1px solid rgba(255,255,255,0.08)",
-          background:
-            "linear-gradient(180deg, rgba(251,191,36,0.08) 0%, rgba(255,255,255,0.02) 100%)",
-          px: { xs: 2.5, md: 3 },
-          py: { xs: 2.5, md: 3 },
+          pb: 3,
+          borderBottom: "1px solid rgba(255,255,255,0.08)",
           display: "flex",
           alignItems: "center",
-          gap: 2,
+          gap: 2.5,
         }}
       >
         <Avatar
           src={user.image || undefined}
           alt={formData.name || formData.username || "User"}
-          sx={{ width: 56, height: 56, bgcolor: "#262626", border: "1px solid rgba(255,255,255,0.1)" }}
+          sx={{
+            width: 60,
+            height: 60,
+            bgcolor: maggaColors.ironSurface,
+            border: "2px solid rgba(255,255,255,0.12)",
+            fontSize: "1.5rem",
+            fontWeight: 700,
+            color: maggaColors.archiveGold,
+          }}
         >
           {(formData.name || formData.username || "U").charAt(0).toUpperCase()}
         </Avatar>
@@ -326,22 +351,26 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
             sx={{
               fontWeight: 800,
               letterSpacing: -0.4,
-              mb: 0.4
-            }}>
+              mb: 0.5,
+              color: maggaColors.textPrimary,
+            }}
+          >
             ตั้งค่าบัญชี
           </Typography>
-          <Typography variant="body2" sx={{ color: "#a3a3a3" }}>
+          <Typography variant="body2" sx={{ color: maggaColors.textSecondary }}>
             จัดการข้อมูลโปรไฟล์ ความปลอดภัย บัญชีที่เชื่อมต่อ และตัวกรองการใช้งานของคุณ
           </Typography>
         </Box>
       </Box>
 
+      <SectionHeading title="โปรไฟล์และความปลอดภัย" />
+
       {/* ชื่อแสดง */}
       <Accordion expanded={expanded === "name"} onChange={handleAccordion("name")} sx={accordionSx}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: "#a3a3a3" }} />} sx={summarySx}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: maggaColors.textSecondary }} />} sx={summarySx}>
           <RowIcon icon={<PersonIcon fontSize="small" />} />
           <Box>
-            <Typography variant="caption" sx={{ color: "#5eead4", display: "block", lineHeight: 1.3 }}>ชื่อแสดง</Typography>
+            <Typography variant="caption" sx={{ color: maggaColors.archiveGold, fontWeight: 600, display: "block", lineHeight: 1.3 }}>ชื่อแสดง</Typography>
             <Typography variant="body1" sx={{
               fontWeight: 500
             }}>{formData.name || "ยังไม่ได้ตั้งค่า"}</Typography>
@@ -360,7 +389,7 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
             helperText="ชื่อนี้จะแสดงในโปรไฟล์และความคิดเห็น"
             sx={inputSx}
             slotProps={{
-              formHelperText: { sx: { color: "#737373" } }
+              formHelperText: { sx: { color: maggaColors.textMuted } }
             }}
           />
           <Box sx={{ mt: 2, display: "flex", justifyContent: "flex-end" }}>
@@ -368,9 +397,9 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
               variant="contained"
               onClick={handleNameUpdate}
               disabled={loading === "name"}
-              sx={{ bgcolor: "#fbbf24", color: "#000", fontWeight: 700, "&:hover": { bgcolor: "#f59e0b" } }}
+              sx={{ bgcolor: maggaColors.archiveGold, color: maggaColors.midnightCanvas, fontWeight: 700, "&:hover": { bgcolor: maggaColors.archiveGoldHover } }}
             >
-              {loading === "name" ? <CircularProgress size={20} sx={{ color: "#555" }} /> : "บันทึก"}
+              {loading === "name" ? <CircularProgress size={20} sx={{ color: maggaColors.midnightCanvas }} /> : "บันทึก"}
             </Button>
           </Box>
         </AccordionDetails>
@@ -378,10 +407,10 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
 
       {/* ชื่อผู้ใช้ */}
       <Accordion expanded={expanded === "username"} onChange={handleAccordion("username")} sx={accordionSx}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: "#a3a3a3" }} />} sx={summarySx}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: maggaColors.textSecondary }} />} sx={summarySx}>
           <RowIcon icon={<PersonIcon fontSize="small" />} />
           <Box>
-            <Typography variant="caption" sx={{ color: "#5eead4", display: "block", lineHeight: 1.3 }}>ชื่อผู้ใช้</Typography>
+            <Typography variant="caption" sx={{ color: maggaColors.archiveGold, fontWeight: 600, display: "block", lineHeight: 1.3 }}>ชื่อผู้ใช้</Typography>
             <Typography variant="body1" sx={{
               fontWeight: 500
             }}>{formData.username || "ยังไม่ได้ตั้งค่า"}</Typography>
@@ -404,9 +433,9 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
               variant="contained"
               onClick={handleUsernameUpdate}
               disabled={loading === "username"}
-              sx={{ bgcolor: "#fbbf24", color: "#000", fontWeight: 700, "&:hover": { bgcolor: "#f59e0b" } }}
+              sx={{ bgcolor: maggaColors.archiveGold, color: maggaColors.midnightCanvas, fontWeight: 700, "&:hover": { bgcolor: maggaColors.archiveGoldHover } }}
             >
-              {loading === "username" ? <CircularProgress size={20} sx={{ color: "#555" }} /> : "บันทึก"}
+              {loading === "username" ? <CircularProgress size={20} sx={{ color: maggaColors.midnightCanvas }} /> : "บันทึก"}
             </Button>
           </Box>
         </AccordionDetails>
@@ -414,10 +443,10 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
 
       {/* อีเมล */}
       <Accordion expanded={expanded === "email"} onChange={handleAccordion("email")} sx={accordionSx}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: "#a3a3a3" }} />} sx={summarySx}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: maggaColors.textSecondary }} />} sx={summarySx}>
           <RowIcon icon={<EmailIcon fontSize="small" />} />
           <Box>
-            <Typography variant="caption" sx={{ color: "#5eead4", display: "block", lineHeight: 1.3 }}>อีเมล</Typography>
+            <Typography variant="caption" sx={{ color: maggaColors.archiveGold, fontWeight: 600, display: "block", lineHeight: 1.3 }}>อีเมล</Typography>
             <Typography variant="body1" sx={{
               fontWeight: 500
             }}>{formData.email || "ยังไม่ได้ตั้งค่า"}</Typography>
@@ -441,7 +470,7 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
               variant="contained"
               onClick={() => formData.email !== user.email ? setOpenEmailConfirm(true) : setMessage({ panel: "email", type: "error", text: "อีเมลยังไม่มีการเปลี่ยนแปลง" })}
               disabled={loading === "email"}
-              sx={{ bgcolor: "#fbbf24", color: "#000", fontWeight: 700, "&:hover": { bgcolor: "#f59e0b" } }}
+              sx={{ bgcolor: maggaColors.archiveGold, color: maggaColors.midnightCanvas, fontWeight: 700, "&:hover": { bgcolor: maggaColors.archiveGoldHover } }}
             >
               เปลี่ยนอีเมล
             </Button>
@@ -451,10 +480,10 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
 
       {/* รหัสผ่าน */}
       <Accordion expanded={expanded === "password"} onChange={handleAccordion("password")} sx={accordionSx}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: "#a3a3a3" }} />} sx={summarySx}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: maggaColors.textSecondary }} />} sx={summarySx}>
           <RowIcon icon={<LockIcon fontSize="small" />} />
           <Box>
-            <Typography variant="caption" sx={{ color: "#5eead4", display: "block", lineHeight: 1.3 }}>รหัสผ่าน</Typography>
+            <Typography variant="caption" sx={{ color: maggaColors.archiveGold, fontWeight: 600, display: "block", lineHeight: 1.3 }}>รหัสผ่าน</Typography>
             <Typography variant="body1" sx={{
               fontWeight: 500
             }}>{hasPassword ? "เปลี่ยนรหัสผ่าน" : "ตั้งรหัสผ่าน"}</Typography>
@@ -495,7 +524,7 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
                         edge="end"
                         aria-label={showPwd ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
                         aria-pressed={showPwd}
-                        sx={{ color: "#a3a3a3" }}
+                        sx={{ color: maggaColors.textSecondary }}
                       >
                         {showPwd ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
                       </IconButton>
@@ -531,7 +560,7 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
                     height: 22,
                     ...(req.ok
                       ? { bgcolor: "rgba(34, 197, 94, 0.15)", color: "#22c55e", border: "1px solid rgba(34, 197, 94, 0.3)" }
-                      : { borderColor: "rgba(255,255,255,0.2)", color: "#737373" }),
+                      : { borderColor: "rgba(255,255,255,0.2)", color: maggaColors.textMuted }),
                   }}
                 />
               ))}
@@ -541,9 +570,9 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
                 type="submit"
                 variant="contained"
                 disabled={loading === "password"}
-                sx={{ bgcolor: "#fbbf24", color: "#000", fontWeight: 700, "&:hover": { bgcolor: "#f59e0b" } }}
+                sx={{ bgcolor: maggaColors.archiveGold, color: maggaColors.midnightCanvas, fontWeight: 700, "&:hover": { bgcolor: maggaColors.archiveGoldHover } }}
               >
-                {loading === "password" ? <CircularProgress size={20} sx={{ color: "#555" }} /> : hasPassword ? "เปลี่ยนรหัสผ่าน" : "ตั้งรหัสผ่าน"}
+                {loading === "password" ? <CircularProgress size={20} sx={{ color: maggaColors.midnightCanvas }} /> : hasPassword ? "เปลี่ยนรหัสผ่าน" : "ตั้งรหัสผ่าน"}
               </Button>
             </Box>
           </Box>
@@ -552,12 +581,12 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
 
       {/* บัญชีที่เชื่อมต่อ */}
       <Accordion expanded={expanded === "linked"} onChange={handleAccordion("linked")} sx={accordionSx}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: "#a3a3a3" }} />} sx={summarySx}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: maggaColors.textSecondary }} />} sx={summarySx}>
           <RowIcon icon={<LinkIcon sx={{
             fontSize: "small"
           }} />} />
           <Box>
-            <Typography variant="caption" sx={{ color: "#5eead4", display: "block", lineHeight: 1.3 }}>บัญชีที่เชื่อมต่อ</Typography>
+            <Typography variant="caption" sx={{ color: maggaColors.archiveGold, fontWeight: 600, display: "block", lineHeight: 1.3 }}>บัญชีที่เชื่อมต่อ</Typography>
             <Typography variant="body1" sx={{
               fontWeight: 500
             }}>
@@ -566,14 +595,14 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
           </Box>
         </AccordionSummary>
         <AccordionDetails sx={{ px: 2.5, pb: 2.5 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2, bgcolor: "#262626", borderRadius: 1.5 }}>
+          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: 2, bgcolor: maggaColors.ironSurface, borderRadius: 1.5 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <GoogleIcon sx={{ color: linkedProviderState.includes("google") ? "#4285F4" : "#a3a3a3", fontSize: 28 }} />
+              <GoogleIcon sx={{ color: linkedProviderState.includes("google") ? "#4285F4" : maggaColors.textSecondary, fontSize: 28 }} />
               <Box>
                 <Typography variant="body2" sx={{
                   fontWeight: 600
                 }}>Google</Typography>
-                <Typography variant="caption" sx={{ color: "#a3a3a3" }}>
+                <Typography variant="caption" sx={{ color: maggaColors.textSecondary }}>
                   {linkedProviderState.includes("google") ? "เชื่อมต่อแล้ว — สามารถใช้เข้าสู่ระบบได้" : "ยังไม่ได้เชื่อมต่อ"}
                 </Typography>
               </Box>
@@ -594,26 +623,28 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
                     showError("เชื่อมต่อ Google ไม่สำเร็จ");
                   }
                 }}
-                sx={{ color: "#fbbf24", borderColor: "rgba(251,191,36,0.4)", "&:hover": { borderColor: "#fbbf24", bgcolor: "rgba(251,191,36,0.06)" } }}
+                sx={{ color: maggaColors.archiveGold, borderColor: "rgba(251,191,36,0.4)", "&:hover": { borderColor: maggaColors.archiveGold, bgcolor: "rgba(251,191,36,0.06)" } }}
               >
                 เชื่อมต่อ
               </Button>
             )}
           </Box>
           {linkedProviderState.includes("google") && (
-            <Typography variant="caption" sx={{ color: "#a3a3a3", display: "block", mt: 1.5 }}>
+            <Typography variant="caption" sx={{ color: maggaColors.textSecondary, display: "block", mt: 1.5 }}>
               บัญชี Google เชื่อมต่ออยู่แล้ว การเข้าสู่ระบบครั้งต่อไปสามารถใช้ Google ได้โดยไม่ต้องใส่รหัสผ่าน
             </Typography>
           )}
         </AccordionDetails>
       </Accordion>
 
+      <SectionHeading title="การแสดงผล" />
+
       {/* ความคิดเห็น */}
       <Accordion expanded={expanded === "comments"} onChange={handleAccordion("comments")} sx={accordionSx}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: "#a3a3a3" }} />} sx={summarySx}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: maggaColors.textSecondary }} />} sx={summarySx}>
           <RowIcon icon={<ChatBubbleIcon fontSize="small" />} />
           <Box>
-            <Typography variant="caption" sx={{ color: "#5eead4", display: "block", lineHeight: 1.3 }}>ความคิดเห็นการ์ตูน</Typography>
+            <Typography variant="caption" sx={{ color: maggaColors.archiveGold, fontWeight: 600, display: "block", lineHeight: 1.3 }}>ความคิดเห็นการ์ตูน</Typography>
             <Typography variant="body1" sx={{
               fontWeight: 500
             }}>
@@ -625,7 +656,7 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
           </Box>
         </AccordionSummary>
         <AccordionDetails sx={{ px: 2.5, pb: 2.5 }}>
-          <Typography variant="body2" sx={{ color: "#a3a3a3", mb: 2 }}>
+          <Typography variant="body2" sx={{ color: maggaColors.textSecondary, mb: 2 }}>
             เลือกว่าจะให้แสดงกล่องความคิดเห็นแบบใดบ้าง (กดซ้ำเพื่อซ่อน)
           </Typography>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
@@ -640,24 +671,24 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
                   onClick={() => handleCommentPrefToggle(value)}
                   sx={{
                     display: "flex", alignItems: "center", gap: 2, p: 1.5,
-                    bgcolor: active ? "rgba(251,191,36,0.08)" : "#262626",
+                    bgcolor: active ? "rgba(251,191,36,0.08)" : maggaColors.ironSurface,
                     border: `1px solid ${active ? "rgba(251,191,36,0.4)" : "rgba(255,255,255,0.06)"}`,
                     borderRadius: 1.5, cursor: "pointer",
                     "&:hover": { bgcolor: "rgba(251,191,36,0.06)" },
                   }}
                 >
-                  <Icon sx={{ color: active ? "#fbbf24" : "#a3a3a3", fontSize: 22 }} />
+                  <Icon sx={{ color: active ? maggaColors.archiveGold : maggaColors.textSecondary, fontSize: 22 }} />
                   <Box sx={{ flexGrow: 1 }}>
                     <Typography variant="body2" sx={{
                       fontWeight: 600
                     }}>{label}</Typography>
-                    <Typography variant="caption" sx={{ color: "#a3a3a3" }}>{desc}</Typography>
+                    <Typography variant="caption" sx={{ color: maggaColors.textSecondary }}>{desc}</Typography>
                   </Box>
                   {commentPrefSaving
-                    ? <CircularProgress size={16} sx={{ color: "#fbbf24" }} />
+                    ? <CircularProgress size={16} sx={{ color: maggaColors.archiveGold }} />
                     : active
-                      ? <Chip label="ใช้งานอยู่" size="small" sx={{ height: 20, fontSize: "0.7rem", bgcolor: "rgba(251,191,36,0.15)", color: "#fbbf24" }} />
-                      : <Chip label="ซ่อน" size="small" sx={{ height: 20, fontSize: "0.7rem", bgcolor: "rgba(255,255,255,0.05)", color: "#737373" }} />
+                      ? <Chip label="ใช้งานอยู่" size="small" sx={{ height: 20, fontSize: "0.7rem", bgcolor: "rgba(251,191,36,0.15)", color: maggaColors.archiveGold }} />
+                      : <Chip label="ซ่อน" size="small" sx={{ height: 20, fontSize: "0.7rem", bgcolor: "rgba(255,255,255,0.05)", color: maggaColors.textMuted }} />
                   }
                 </Box>
               );
@@ -666,18 +697,20 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
         </AccordionDetails>
       </Accordion>
 
+      <SectionHeading title="ความเป็นส่วนตัวและตัวกรอง" />
+
       {/* ผู้ใช้ที่บล็อก */}
       <Accordion expanded={expanded === "blocked-users"} onChange={handleAccordion("blocked-users")} sx={accordionSx}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: "#a3a3a3" }} />} sx={summarySx}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: maggaColors.textSecondary }} />} sx={summarySx}>
           <RowIcon icon={<BlockIcon fontSize="small" />} />
           <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="caption" sx={{ color: "#5eead4", display: "block", lineHeight: 1.3 }}>ผู้ใช้ที่บล็อก</Typography>
+            <Typography variant="caption" sx={{ color: maggaColors.archiveGold, fontWeight: 600, display: "block", lineHeight: 1.3 }}>ผู้ใช้ที่บล็อก</Typography>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <Typography variant="body1" sx={{
                 fontWeight: 500
               }}>จัดการผู้ใช้ที่บล็อก</Typography>
               {liveBlockedUserCount > 0 && (
-                <Chip label={liveBlockedUserCount} size="small" sx={{ height: 20, fontSize: "0.7rem", bgcolor: "rgba(255,255,255,0.08)", color: "#a3a3a3" }} />
+                <Chip label={liveBlockedUserCount} size="small" sx={{ height: 20, fontSize: "0.7rem", bgcolor: "rgba(255,255,255,0.08)", color: maggaColors.textSecondary }} />
               )}
             </Box>
           </Box>
@@ -689,16 +722,16 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
 
       {/* แท็กที่บล็อก */}
       <Accordion expanded={expanded === "blocked-tags"} onChange={handleAccordion("blocked-tags")} sx={accordionSx}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: "#a3a3a3" }} />} sx={summarySx}>
+        <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: maggaColors.textSecondary }} />} sx={summarySx}>
           <RowIcon icon={<LocalOfferIcon fontSize="small" />} />
           <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="caption" sx={{ color: "#5eead4", display: "block", lineHeight: 1.3 }}>แท็กที่บล็อก</Typography>
+            <Typography variant="caption" sx={{ color: maggaColors.archiveGold, fontWeight: 600, display: "block", lineHeight: 1.3 }}>แท็กที่บล็อก</Typography>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <Typography variant="body1" sx={{
                 fontWeight: 500
               }}>จัดการแท็กที่บล็อก</Typography>
               {liveBlockedTagCount > 0 && (
-                <Chip label={liveBlockedTagCount} size="small" sx={{ height: 20, fontSize: "0.7rem", bgcolor: "rgba(255,255,255,0.08)", color: "#a3a3a3" }} />
+                <Chip label={liveBlockedTagCount} size="small" sx={{ height: 20, fontSize: "0.7rem", bgcolor: "rgba(255,255,255,0.08)", color: maggaColors.textSecondary }} />
               )}
             </Box>
           </Box>
@@ -713,29 +746,29 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
         open={openEmailConfirm}
         onClose={() => setOpenEmailConfirm(false)}
         slotProps={{
-          paper: { sx: { bgcolor: "#171717", border: "1px solid rgba(255,255,255,0.1)", color: "#fafafa" } }
+          paper: { sx: { bgcolor: maggaColors.charcoalSurface, border: "1px solid rgba(255,255,255,0.1)", color: maggaColors.textPrimary } }
         }}
       >
         <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <WarningIcon sx={{ color: "#fbbf24" }} />
+          <WarningIcon sx={{ color: maggaColors.archiveGold }} />
           ยืนยันการเปลี่ยนอีเมล
         </DialogTitle>
         <DialogContent>
-          <DialogContentText sx={{ color: "#a3a3a3" }}>
-            ต้องการเปลี่ยนอีเมลเป็น <strong style={{ color: "#fafafa" }}>{formData.email}</strong> ใช่หรือไม่?
+          <DialogContentText sx={{ color: maggaColors.textSecondary }}>
+            ต้องการเปลี่ยนอีเมลเป็น <strong style={{ color: maggaColors.textPrimary }}>{formData.email}</strong> ใช่หรือไม่?
             <br /><br />
             การเปลี่ยนอีเมลอาจส่งผลต่อการเข้าสู่ระบบด้วย Google หากใช้อีเมลเดิม
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenEmailConfirm(false)} sx={{ color: "#a3a3a3" }}>ยกเลิก</Button>
+          <Button onClick={() => setOpenEmailConfirm(false)} sx={{ color: maggaColors.textSecondary }}>ยกเลิก</Button>
           <Button
             onClick={handleEmailUpdate}
             variant="contained"
             disabled={loading === "email"}
-            sx={{ bgcolor: "#fbbf24", color: "#000", fontWeight: 700, "&:hover": { bgcolor: "#f59e0b" } }}
+            sx={{ bgcolor: maggaColors.archiveGold, color: maggaColors.midnightCanvas, fontWeight: 700, "&:hover": { bgcolor: maggaColors.archiveGoldHover } }}
           >
-            {loading === "email" ? <CircularProgress size={18} sx={{ color: "#555" }} /> : "ยืนยัน"}
+            {loading === "email" ? <CircularProgress size={18} sx={{ color: maggaColors.midnightCanvas }} /> : "ยืนยัน"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -798,11 +831,11 @@ function BlockedUsersPanel({ onCountChange }: { onCountChange?: (n: number) => v
   };
 
   if (loadingData) {
-    return <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}><CircularProgress size={24} sx={{ color: "#fbbf24" }} /></Box>;
+    return <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}><CircularProgress size={24} sx={{ color: maggaColors.archiveGold }} /></Box>;
   }
 
   if (blockedList.length === 0) {
-    return <Typography variant="body2" sx={{ color: "#a3a3a3" }}>ยังไม่มีผู้ใช้ที่บล็อก</Typography>;
+    return <Typography variant="body2" sx={{ color: maggaColors.textSecondary }}>ยังไม่มีผู้ใช้ที่บล็อก</Typography>;
   }
 
   return (
@@ -815,14 +848,14 @@ function BlockedUsersPanel({ onCountChange }: { onCountChange?: (n: number) => v
             alignItems: "center",
             gap: 1.5,
             p: 1.5,
-            bgcolor: "#262626",
+            bgcolor: maggaColors.ironSurface,
             borderRadius: 1.5,
           }}
         >
           <Avatar
             src={item.blockedUser?.image}
             alt={item.blockedUser?.name}
-            sx={{ width: 32, height: 32, bgcolor: "#404040", fontSize: "0.875rem" }}
+            sx={{ width: 32, height: 32, bgcolor: maggaColors.softDivider, fontSize: "0.875rem" }}
           >
             {(item.blockedUser?.name || "?").charAt(0).toUpperCase()}
           </Avatar>
@@ -831,7 +864,7 @@ function BlockedUsersPanel({ onCountChange }: { onCountChange?: (n: number) => v
               fontWeight: 500
             }}>{item.blockedUser?.name || "ผู้ใช้"}</Typography>
             {item.blockedUser?.username && (
-              <Typography variant="caption" sx={{ color: "#a3a3a3" }}>@{item.blockedUser.username}</Typography>
+              <Typography variant="caption" sx={{ color: maggaColors.textSecondary }}>@{item.blockedUser.username}</Typography>
             )}
           </Box>
           <Button
@@ -839,7 +872,7 @@ function BlockedUsersPanel({ onCountChange }: { onCountChange?: (n: number) => v
             variant="outlined"
             onClick={() => handleUnblock(item.blockedUserId)}
             disabled={removing === item.blockedUserId}
-            sx={{ color: "#ef4444", borderColor: "rgba(239,68,68,0.3)", "&:hover": { borderColor: "#ef4444", bgcolor: "rgba(239,68,68,0.08)" }, minWidth: 80 }}
+            sx={{ color: maggaColors.dangerRed, borderColor: "rgba(239,68,68,0.3)", "&:hover": { borderColor: maggaColors.dangerRed, bgcolor: "rgba(239,68,68,0.08)" }, minWidth: 80 }}
           >
             {removing === item.blockedUserId ? <CircularProgress size={14} /> : "ยกเลิกบล็อก"}
           </Button>
@@ -944,7 +977,7 @@ function BlockedTagsPanel({ onCountChange }: { onCountChange?: (n: number) => vo
   };
 
   if (loadingData) {
-    return <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}><CircularProgress size={24} sx={{ color: "#fbbf24" }} /></Box>;
+    return <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}><CircularProgress size={24} sx={{ color: maggaColors.archiveGold }} /></Box>;
   }
 
   return (
@@ -958,7 +991,7 @@ function BlockedTagsPanel({ onCountChange }: { onCountChange?: (n: number) => vo
         sx={{ ...inputSx, mb: 1.5 }}
       />
       {searchResults.length > 0 && (
-        <Box sx={{ bgcolor: "#262626", borderRadius: 1.5, mb: 2, overflow: "hidden" }}>
+        <Box sx={{ bgcolor: maggaColors.ironSurface, borderRadius: 1.5, mb: 2, overflow: "hidden" }}>
           {searchResults.slice(0, 8).map((tag) => (
             <Box
               key={tag.id}
@@ -971,14 +1004,14 @@ function BlockedTagsPanel({ onCountChange }: { onCountChange?: (n: number) => vo
               }}
             >
               <Typography variant="body2">{tag.name}</Typography>
-              <Typography variant="caption" sx={{ color: "#5eead4" }}>+ บล็อก</Typography>
+              <Typography variant="caption" sx={{ color: maggaColors.archiveGold, fontWeight: 600 }}>+ บล็อก</Typography>
             </Box>
           ))}
         </Box>
       )}
 
       {blockedList.length === 0 ? (
-        <Typography variant="body2" sx={{ color: "#a3a3a3" }}>ยังไม่มีแท็กที่บล็อก</Typography>
+        <Typography variant="body2" sx={{ color: maggaColors.textSecondary }}>ยังไม่มีแท็กที่บล็อก</Typography>
       ) : (
         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
           {blockedList.map((item) => (
@@ -989,9 +1022,9 @@ function BlockedTagsPanel({ onCountChange }: { onCountChange?: (n: number) => vo
               deleteIcon={removing === item.tagId ? <CircularProgress size={14} /> : undefined}
               sx={{
                 bgcolor: "rgba(255,255,255,0.06)",
-                color: "#fafafa",
+                color: maggaColors.textPrimary,
                 border: "1px solid rgba(255,255,255,0.1)",
-                "& .MuiChip-deleteIcon": { color: "#a3a3a3", "&:hover": { color: "#ef4444" } },
+                "& .MuiChip-deleteIcon": { color: maggaColors.textSecondary, "&:hover": { color: maggaColors.dangerRed } },
               }}
             />
           ))}

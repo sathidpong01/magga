@@ -24,6 +24,7 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import Image from "next/image";
 import Link from "next/link";
+import { maggaColors } from "@/lib/design-tokens";
 
 interface AuthModalProps {
   open: boolean;
@@ -99,15 +100,15 @@ export default function AuthModal({
   };
 
   const textFieldSx = {
-    "& .MuiInputLabel-root": { color: "#6f6f6f", fontWeight: 400 },
+    "& .MuiInputLabel-root": { color: maggaColors.textMuted, fontWeight: 400 },
     "& .MuiOutlinedInput-root": {
       color: "#fafafa",
-      bgcolor: "#1f1f1f",
+      bgcolor: maggaColors.surfaceAlt,
       borderRadius: 2,
       fontSize: "0.95rem",
-      "& fieldset": { borderColor: "rgba(255,255,255,0.08)" },
+      "& fieldset": { borderColor: maggaColors.border },
       "&:hover fieldset": { borderColor: "rgba(251,191,36,0.35)" },
-      "&.Mui-focused fieldset": { borderColor: "#fbbf24" },
+      "&.Mui-focused fieldset": { borderColor: maggaColors.archiveGold },
     },
   };
 
@@ -123,10 +124,10 @@ export default function AuthModal({
         paper: {
           sx: {
             overflow: "hidden",
-            bgcolor: "#111111",
+            bgcolor: maggaColors.surface,
             color: "#fafafa",
             borderRadius: 2,
-            border: "1px solid rgba(255,255,255,0.08)",
+            border: `1px solid ${maggaColors.border}`,
             boxShadow: "0 22px 60px rgba(0,0,0,0.52)",
           },
         }
@@ -286,7 +287,7 @@ export default function AuthModal({
                 mt: 2,
                 mb: 1.6,
                 py: 1.05,
-                bgcolor: "#fbbf24",
+                bgcolor: maggaColors.archiveGold,
                 color: "#000",
                 fontWeight: 700,
                 fontSize: "0.95rem",
@@ -319,7 +320,7 @@ export default function AuthModal({
               fontWeight: 500,
               fontSize: "0.95rem",
               bgcolor: "rgba(255,255,255,0.02)",
-              "&:hover": { borderColor: "#fbbf24", bgcolor: "rgba(251,191,36,0.06)" },
+              "&:hover": { borderColor: maggaColors.archiveGold, bgcolor: "rgba(251,191,36,0.06)" },
             }}
           >
             {loading ? "กำลังดำเนินการ..." : "ดำเนินการผ่าน Google"}
@@ -344,7 +345,7 @@ export default function AuthModal({
               <Link
                 href="/auth/register"
                 onClick={onClose}
-                style={{ color: "#fbbf24", textDecoration: "none", fontWeight: 600 }}
+                style={{ color: maggaColors.archiveGold, textDecoration: "none", fontWeight: 600 }}
               >
                 สมัครสมาชิก
               </Link>

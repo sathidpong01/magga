@@ -3,6 +3,7 @@ import { categories as categoriesTable, tags as tagsTable } from "@/db/schema";
 import { asc } from "drizzle-orm";
 import { Box, Stack, Typography } from "@mui/material";
 import MetadataManager from "./MetadataManager";
+import { dashboardTokens } from "@/app/components/dashboard/system";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,7 @@ export default async function MetadataPage() {
         <Typography
           variant="overline"
           sx={{
-            color: "#FABF06",
+            color: dashboardTokens.accent,
             fontWeight: 800,
             letterSpacing: "0.18em",
             lineHeight: 1,
@@ -40,14 +41,14 @@ export default async function MetadataPage() {
         <Typography
           variant="h4"
           sx={{
-            color: "#fafafa",
+            color: dashboardTokens.text,
             fontWeight: 900,
             letterSpacing: "-0.03em",
           }}
         >
           จัดการเมตาดาต้า
         </Typography>
-        <Typography sx={{ color: "#a3a3a3", maxWidth: 720 }}>
+        <Typography sx={{ color: dashboardTokens.textMuted, maxWidth: 720 }}>
           จัดระเบียบหมวดหมู่และแท็กจากพื้นที่ทำงานเดียวให้สอดคล้องกับหน้าผู้ดูแลอื่น
         </Typography>
       </Stack>

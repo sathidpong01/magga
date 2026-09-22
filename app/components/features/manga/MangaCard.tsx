@@ -4,6 +4,7 @@ import { memo } from "react";
 import { Card, Typography, Box, Chip } from "@mui/material";
 import Image from "next/image";
 import Link from "next/link";
+import { maggaColors, maggaShadows } from "@/lib/design-tokens";
 
 // Minimal interface for MangaCard - only fields we actually use
 export interface MangaWithDetails {
@@ -35,21 +36,30 @@ const MangaCard = ({ manga, priority = false }: MangaCardProps) => {
           position: "relative",
           borderRadius: 1, // 16px standard
           overflow: "hidden",
-          transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+          border: "1px solid rgba(255, 255, 255, 0.08)",
+          transition: "border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease",
           "&:hover": {
-            transform: "translateY(-4px)",
+            borderColor: "rgba(251, 191, 36, 0.4)",
+            boxShadow: maggaShadows.cardHoverLift,
+            "& .manga-cover-img": {
+              transform: "scale(1.03)",
+            },
           },
-          bgcolor: "#000000",
+          bgcolor: "background.paper",
         }}
       >
         <Box sx={{ height: "100%", position: "relative" }}>
-          <Box sx={{ position: "absolute", inset: 0 }}>
+          <Box sx={{ position: "absolute", inset: 0, overflow: "hidden" }}>
             <Image
+              className="manga-cover-img"
               src={manga.coverImage}
               alt={`Cover of ${manga.title}`}
               fill
               sizes="(max-width: 600px) 45vw, (max-width: 960px) 30vw, 20vw"
-              style={{ objectFit: "cover" }}
+              style={{
+                objectFit: "cover",
+                transition: "transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+              }}
               priority={priority}
               fetchPriority={priority ? "high" : "auto"}
               placeholder="blur"
@@ -78,11 +88,12 @@ const MangaCard = ({ manga, priority = false }: MangaCardProps) => {
                 label={manga.category.name}
                 size="small"
                 sx={{
-                  bgcolor: "#fbbf24",
-                  color: "black",
-                  fontWeight: "bold",
+                  bgcolor: maggaColors.archiveGold,
+                  color: maggaColors.midnightCanvas,
+                  fontWeight: 700,
                   height: 20,
                   fontSize: "0.7rem",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
                 }}
               />
             </Box>

@@ -22,7 +22,7 @@ import {
 import Image from "next/image";
 import MangaViewRating from "@/app/components/features/manga/MangaViewRating";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import StarIcon from "@mui/icons-material/Star";
+import { maggaColors } from "@/lib/design-tokens";
 import { SuspendedMangaReader } from "./manga-content";
 import { CommentSectionSkeleton } from "./loading-skeletons";
 import CommentSection from "@/app/components/features/comments/CommentSection";
@@ -234,7 +234,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
   };
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#0a0a0a", pb: 8 }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: maggaColors.midnightCanvas, pb: 8 }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -264,8 +264,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
             sx={{
               position: "absolute",
               inset: 0,
-              background:
-                "linear-gradient(to bottom, rgba(10,10,10,0.2) 0%, #0a0a0a 100%)",
+              background: `linear-gradient(to bottom, rgba(10,10,10,0.4) 0%, rgba(10,10,10,0.85) 60%, ${maggaColors.midnightCanvas} 100%)`,
             }}
           />
         </Box>
@@ -325,7 +324,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
                 <Box sx={{ mb: 2 }}>
                   <Typography
                     variant="caption"
-                    sx={{ color: "#737373", fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase", mb: 0.75, display: "block" }}
+                    sx={{ color: maggaColors.textMuted, fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase", mb: 0.75, display: "block" }}
                   >
                     หมวดหมู่ / แท็ก
                   </Typography>
@@ -337,13 +336,13 @@ export default async function MangaPage({ params }: MangaPageProps) {
                         href={`/category/${encodeURIComponent(manga.category.name)}`}
                         clickable
                         sx={{
-                          bgcolor: "#fbbf24",
-                          color: "black",
-                          fontWeight: "bold",
+                          bgcolor: maggaColors.archiveGold,
+                          color: maggaColors.midnightCanvas,
+                          fontWeight: 700,
                           fontSize: "0.85rem",
                           height: 28,
                           borderRadius: 0.75,
-                          "&:hover": { bgcolor: "#f59e0b" },
+                          "&:hover": { bgcolor: maggaColors.archiveGoldHover },
                         }}
                       />
                     )}
@@ -356,13 +355,15 @@ export default async function MangaPage({ params }: MangaPageProps) {
                         sx={{
                           height: 28,
                           borderRadius: 0.75,
-                          backgroundColor: "rgba(56, 189, 248, 0.1)",
-                          color: "#38bdf8",
-                          border: "1px solid rgba(56, 189, 248, 0.3)",
+                          backgroundColor: "rgba(255, 255, 255, 0.06)",
+                          color: maggaColors.textSecondary,
+                          border: "1px solid rgba(255, 255, 255, 0.12)",
                           fontSize: "0.82rem",
+                          transition: "all 0.2s ease",
                           "&:hover": {
-                            backgroundColor: "rgba(56, 189, 248, 0.2)",
-                            borderColor: "#38bdf8",
+                            backgroundColor: "rgba(255, 255, 255, 0.12)",
+                            borderColor: "rgba(255, 255, 255, 0.25)",
+                            color: maggaColors.textPrimary,
                           },
                         }}
                       />
@@ -378,8 +379,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
                     mb: 1,
                     fontSize: { xs: "2.5rem", md: "3.5rem" },
                     lineHeight: 1.1,
-                    color: "#fafafa",
-                    filter: "drop-shadow(0 2px 10px rgba(0,0,0,0.3))",
+                    color: maggaColors.textPrimary,
                   }}
                 >
                   {manga.title}
@@ -416,12 +416,12 @@ export default async function MangaPage({ params }: MangaPageProps) {
                                   height: 36,
                                   borderRadius: 0.75,
                                   fontSize: "0.9rem",
-                                  borderColor: "rgba(255,255,255,0.2)",
-                                  color: "rgba(255,255,255,0.85)",
+                                  borderColor: "rgba(255,255,255,0.15)",
+                                  color: maggaColors.textSecondary,
                                   "& .MuiChip-label": { px: 1.5 },
                                   "&:hover": {
-                                    borderColor: "rgba(255,255,255,0.5)",
-                                    color: "white",
+                                    borderColor: "rgba(255,255,255,0.4)",
+                                    color: maggaColors.textPrimary,
                                     bgcolor: "rgba(255,255,255,0.05)",
                                   },
                                 }}
@@ -454,15 +454,6 @@ export default async function MangaPage({ params }: MangaPageProps) {
                       {Number(manga.viewCount).toLocaleString()} Views
                     </Typography>
                   </Box>
-                  <MangaViewRating
-                    mangaId={manga.id}
-                    initialViewCount={Number(manga.viewCount)}
-                    initialAverageRating={manga.averageRating}
-                    initialRatingCount={Number(manga.ratingCount)}
-                    hideViewCount={true}
-                    hideInteractive
-                    trackViewOnMount
-                  />
                   <Box sx={{ ml: "auto !important" }}>
                     <ShareButton title={manga.title} slug={manga.slug} />
                   </Box>
@@ -474,7 +465,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
                     sx={{
                       fontSize: "1.1rem",
                       lineHeight: 1.7,
-                      color: "rgba(255,255,255,0.8)",
+                      color: maggaColors.textSecondary,
                       maxWidth: "800px",
                       mb: 3,
                     }}
@@ -483,13 +474,29 @@ export default async function MangaPage({ params }: MangaPageProps) {
                   </Typography>
                 )}
 
-                {/* Interactive Rating */}
-                <Box sx={{ mb: 1 }}>
+                {/* Rating & Review */}
+                <Box
+                  sx={{
+                    mb: 2,
+                    p: 2,
+                    borderRadius: 1,
+                    bgcolor: "rgba(255, 255, 255, 0.03)",
+                    border: "1px solid rgba(255, 255, 255, 0.06)",
+                    maxWidth: "420px",
+                  }}
+                >
                   <Typography
                     variant="caption"
-                    sx={{ color: "#737373", fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase", mb: 0.5, display: "block" }}
+                    sx={{
+                      color: maggaColors.textMuted,
+                      fontWeight: 600,
+                      letterSpacing: 0.5,
+                      textTransform: "uppercase",
+                      mb: 0.75,
+                      display: "block",
+                    }}
                   >
-                    ให้คะแนนเรื่องนี้
+                    คะแนนและการรีวิว
                   </Typography>
                   <MangaViewRating
                     mangaId={manga.id}
@@ -497,7 +504,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
                     initialAverageRating={manga.averageRating}
                     initialRatingCount={Number(manga.ratingCount)}
                     hideViewCount={true}
-                    hideAverage
+                    trackViewOnMount
                   />
                 </Box>
 
@@ -516,7 +523,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
         <Box sx={{ mt: 4, maxWidth: "800px", mx: "auto" }}>
           <AdContainer placement="manga-end" />
         </Box>
-        <Box sx={{ mt: 6, maxWidth: "800px", mx: "auto", mr: { xs: "auto", md: "340px" } }}>
+        <Box sx={{ mt: 6, maxWidth: "800px", mx: "auto" }}>
           <Suspense fallback={<CommentSectionSkeleton />}>
             <CommentSection mangaId={manga.id} />
           </Suspense>

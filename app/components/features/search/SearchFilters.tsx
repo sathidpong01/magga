@@ -20,13 +20,12 @@ import {
 } from "@mui/material";
 import type { InferSelectModel } from "drizzle-orm";
 import type { categories, tags } from "@/db/schema";
+import { maggaColors } from "@/lib/design-tokens";
 
 type Category = InferSelectModel<typeof categories>;
 type Tag = InferSelectModel<typeof tags>;
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import SearchIcon from "@mui/icons-material/Search";
-import SortIcon from "@mui/icons-material/Sort";
 import FilterIcon from "@mui/icons-material/Tune";
 
 type Props = {
@@ -195,7 +194,7 @@ export default function SearchFilters({ categories, tags }: Props) {
           minWidth: 0,
         }}
       >
-        {/* Header / Collapsed View - Compact single row */}
+        {/* Header / Trigger - Sleek single row */}
         <ButtonBase
           aria-controls={filterPanelId}
           aria-expanded={expanded}
@@ -204,53 +203,42 @@ export default function SearchFilters({ categories, tags }: Props) {
           sx={{
             display: "flex",
             alignItems: "center",
-            justifyContent: expanded ? "space-between" : "center",
+            justifyContent: "space-between",
             borderRadius: 1,
             color: "inherit",
-            minHeight: 44,
+            minHeight: 40,
             py: 0.5,
-            px: 0.5,
+            px: 1,
             textAlign: "left",
             width: "100%",
-            gap: expanded ? 0 : 2,
             "&:focus-visible": {
-              outline: "2px solid #fbbf24",
+              outline: `2px solid ${maggaColors.archiveGold}`,
               outlineOffset: 2,
             },
           }}
         >
-          {!expanded && (
-            <>
-              <FilterIcon fontSize="small" sx={{ color: "text.secondary", flexShrink: 0 }} />
-              <Typography
-                variant="body2"
-                sx={{ 
-                  fontWeight: 500, 
-                  fontSize: "0.8rem",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis"
-                }}
-              >
-                Filter, display, tags
-              </Typography>
-              <ExpandMoreIcon fontSize="small" sx={{ color: "text.secondary", flexShrink: 0 }} />
-            </>
-          )}
-          {expanded && (
-            <>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <FilterIcon fontSize="small" sx={{ color: "text.secondary" }} />
-                <Typography
-                  variant="body2"
-                  sx={{ fontWeight: 500, fontSize: "0.8rem" }}
-                >
-                  Filter, display, tags
-                </Typography>
-              </Box>
-              <ExpandLessIcon fontSize="small" sx={{ color: "text.secondary", flexShrink: 0 }} />
-            </>
-          )}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <FilterIcon fontSize="small" sx={{ color: "text.secondary", fontSize: "1.1rem" }} />
+            <Typography
+              variant="body2"
+              sx={{
+                fontWeight: 600,
+                fontSize: "0.825rem",
+                color: expanded ? "text.primary" : "text.secondary",
+                transition: "color 0.2s ease",
+              }}
+            >
+              Filter, display, tags
+            </Typography>
+          </Box>
+          <ExpandMoreIcon
+            fontSize="small"
+            sx={{
+              color: "text.secondary",
+              transition: "transform 0.2s ease",
+              transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
+            }}
+          />
         </ButtonBase>
 
       {/* Expanded View */}

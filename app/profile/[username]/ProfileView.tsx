@@ -27,6 +27,7 @@ import PersonOutlineRoundedIcon from "@mui/icons-material/PersonOutlineRounded";
 import GoogleIcon from "@mui/icons-material/Google";
 import { syncClientSession } from "@/lib/auth-client";
 import { useToast } from "@/app/contexts/ToastContext";
+import { maggaColors } from "@/lib/design-tokens";
 
 interface ProfileUser {
   id: string;
@@ -71,16 +72,16 @@ const rowSx = {
   display: "flex",
   alignItems: "center",
   p: 2.1,
-  bgcolor: "#151515",
-  border: "1px solid rgba(255,255,255,0.08)",
-  borderRadius: 3,
+  bgcolor: maggaColors.surfaceAlt,
+  border: `1px solid ${maggaColors.border}`,
+  borderRadius: 2,
   textDecoration: "none",
   color: "inherit",
-  transition: "border-color 0.2s, background-color 0.2s, transform 0.2s",
+  transition: "border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease",
   "&:hover": {
-    borderColor: "rgba(251,191,36,0.28)",
+    borderColor: "rgba(251,191,36,0.32)",
     bgcolor: "#1b1b1b",
-    transform: "translateY(-1px)",
+    boxShadow: "0 6px 20px rgba(0,0,0,0.3)",
   },
 };
 
@@ -153,17 +154,17 @@ export default function ProfileView({ profileUser, isOwnProfile }: Props) {
   return (
     <Box>
       <Breadcrumbs
-        separator={<NavigateNextIcon fontSize="small" sx={{ color: "#a3a3a3" }} />}
+        separator={<NavigateNextIcon fontSize="small" sx={{ color: maggaColors.textMuted }} />}
         sx={{ mb: 3, "& .MuiBreadcrumbs-ol": { flexWrap: "nowrap" } }}
       >
         <Link
           href="/"
-          style={{ display: "flex", alignItems: "center", color: "#fbbf24", textDecoration: "none", fontSize: "0.875rem" }}
+          style={{ display: "flex", alignItems: "center", color: maggaColors.archiveGold, textDecoration: "none", fontSize: "0.875rem" }}
         >
           <HomeIcon sx={{ fontSize: 16, mr: 0.5 }} />
           หน้าแรก
         </Link>
-        <Typography sx={{ color: "#a3a3a3", fontSize: "0.875rem" }}>
+        <Typography sx={{ color: maggaColors.textMuted, fontSize: "0.875rem" }}>
           {isOwnProfile ? "ฉัน" : displayName}
         </Typography>
         <Typography sx={{ color: "#fafafa", fontSize: "0.875rem" }}>โปรไฟล์</Typography>
@@ -172,10 +173,9 @@ export default function ProfileView({ profileUser, isOwnProfile }: Props) {
       <Box
         sx={{
           mb: 3,
-          borderRadius: 5,
-          border: "1px solid rgba(255,255,255,0.08)",
-          background:
-            "linear-gradient(180deg, rgba(251,191,36,0.08) 0%, rgba(251,191,36,0.02) 28%, rgba(255,255,255,0.02) 100%)",
+          borderRadius: 2.5,
+          border: `1px solid ${maggaColors.border}`,
+          bgcolor: maggaColors.surfaceAlt,
           overflow: "hidden",
         }}
       >
@@ -207,11 +207,11 @@ export default function ProfileView({ profileUser, isOwnProfile }: Props) {
                     width: 30,
                     height: 30,
                     borderRadius: "50%",
-                    bgcolor: "#fbbf24",
+                    bgcolor: maggaColors.archiveGold,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    border: "2px solid #0a0a0a",
+                    border: `2px solid ${maggaColors.background}`,
                   }}
                 >
                   <CameraAltIcon sx={{ fontSize: 15, color: "#000" }} />
@@ -292,7 +292,7 @@ export default function ProfileView({ profileUser, isOwnProfile }: Props) {
                     border: "1px solid rgba(255,255,255,0.07)",
                   }}
                 >
-                  <CalendarMonthRoundedIcon sx={{ fontSize: 16, color: "#5eead4" }} />
+                  <CalendarMonthRoundedIcon sx={{ fontSize: 16, color: maggaColors.archiveGold }} />
                   <Typography variant="caption" sx={{ color: "#d4d4d4", fontWeight: 600 }}>
                     สมาชิกตั้งแต่ {joinDate}
                   </Typography>
@@ -310,7 +310,7 @@ export default function ProfileView({ profileUser, isOwnProfile }: Props) {
               sx={{
                 width: 42,
                 height: 42,
-                borderRadius: 2.2,
+                borderRadius: 2,
                 bgcolor: "rgba(251,191,36,0.1)",
                 display: "flex",
                 alignItems: "center",
@@ -319,10 +319,10 @@ export default function ProfileView({ profileUser, isOwnProfile }: Props) {
                 flexShrink: 0,
               }}
             >
-              <EditIcon sx={{ color: "#fbbf24", fontSize: 20 }} />
+              <EditIcon sx={{ color: maggaColors.archiveGold, fontSize: 20 }} />
             </Box>
             <Box sx={{ flexGrow: 1 }}>
-              <Typography variant="caption" sx={{ color: "#fbbf24", display: "block", lineHeight: 1.3 }}>
+              <Typography variant="caption" sx={{ color: maggaColors.archiveGold, display: "block", lineHeight: 1.3 }}>
                 โปรไฟล์
               </Typography>
               <Typography variant="body2" sx={{
@@ -339,7 +339,7 @@ export default function ProfileView({ profileUser, isOwnProfile }: Props) {
               sx={{
                 width: 42,
                 height: 42,
-                borderRadius: 2.2,
+                borderRadius: 2,
                 bgcolor: "rgba(251,191,36,0.1)",
                 display: "flex",
                 alignItems: "center",
@@ -348,10 +348,10 @@ export default function ProfileView({ profileUser, isOwnProfile }: Props) {
                 flexShrink: 0,
               }}
             >
-              <GoogleIcon sx={{ color: "#fbbf24", fontSize: 20 }} />
+              <GoogleIcon sx={{ color: maggaColors.archiveGold, fontSize: 20 }} />
             </Box>
             <Box sx={{ flexGrow: 1 }}>
-              <Typography variant="caption" sx={{ color: "#fbbf24", display: "block", lineHeight: 1.3 }}>
+              <Typography variant="caption" sx={{ color: maggaColors.archiveGold, display: "block", lineHeight: 1.3 }}>
                 การเข้าสู่ระบบ
               </Typography>
               <Typography variant="body2" sx={{
@@ -368,8 +368,8 @@ export default function ProfileView({ profileUser, isOwnProfile }: Props) {
               sx={{
                 width: 42,
                 height: 42,
-                borderRadius: 2.2,
-                bgcolor: "rgba(94,234,212,0.1)",
+                borderRadius: 2,
+                bgcolor: "rgba(251,191,36,0.1)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -377,10 +377,10 @@ export default function ProfileView({ profileUser, isOwnProfile }: Props) {
                 flexShrink: 0,
               }}
             >
-              <ChatBubbleOutlineIcon sx={{ color: "#5eead4", fontSize: 20 }} />
+              <ChatBubbleOutlineIcon sx={{ color: maggaColors.archiveGold, fontSize: 20 }} />
             </Box>
             <Box sx={{ flexGrow: 1 }}>
-              <Typography variant="caption" sx={{ color: "#5eead4", display: "block", lineHeight: 1.3 }}>
+              <Typography variant="caption" sx={{ color: maggaColors.archiveGold, display: "block", lineHeight: 1.3 }}>
                 ประวัติ
               </Typography>
               <Typography variant="body2" sx={{
@@ -406,11 +406,11 @@ export default function ProfileView({ profileUser, isOwnProfile }: Props) {
         slotProps={{
           paper: {
             sx: {
-              bgcolor: "#171717",
-              border: "1px solid rgba(255,255,255,0.1)",
+              bgcolor: maggaColors.surfaceAlt,
+              border: `1px solid ${maggaColors.border}`,
               color: "#fafafa",
               maxWidth: 360,
-              borderRadius: 4,
+              borderRadius: 2,
             },
           }
         }}
@@ -454,7 +454,7 @@ export default function ProfileView({ profileUser, isOwnProfile }: Props) {
             variant="contained"
             onClick={handleConfirmUpload}
             disabled={uploading}
-            sx={{ bgcolor: "#fbbf24", color: "#000", fontWeight: 700, "&:hover": { bgcolor: "#f59e0b" } }}
+            sx={{ bgcolor: maggaColors.archiveGold, color: "#000", fontWeight: 700, "&:hover": { bgcolor: "#f59e0b" } }}
           >
             {uploading ? <CircularProgress size={18} sx={{ color: "#555" }} /> : "ยืนยันเปลี่ยนรูป"}
           </Button>

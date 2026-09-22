@@ -1,5 +1,6 @@
-﻿import { Container, Typography, Box, Paper, Divider } from "@mui/material";
+import { Container, Typography, Box, Paper, Divider } from "@mui/material";
 import { Metadata } from "next";
+import { maggaColors } from "@/lib/design-tokens";
 
 export const metadata: Metadata = {
   title: "ข้อตกลงในการใช้งาน - MAGGA",
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
 export default function TermsPage() {
   return (
     <Container maxWidth="md" sx={{ py: 6 }}>
-      <Paper sx={{ p: { xs: 3, md: 5 }, bgcolor: '#171717', borderRadius: 1, border: '1px solid rgba(255,255,255,0.08)' }}>
+      <Paper sx={{ p: { xs: 3, md: 5 }, bgcolor: maggaColors.surfaceAlt, borderRadius: 2, border: `1px solid ${maggaColors.border}` }}>
         <Typography
           variant="h4"
           component="h1"
@@ -214,12 +215,11 @@ export default function TermsPage() {
           </Section>
         </Box>
 
-        <Box sx={{ mt: 4, pt: 3, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+        <Box sx={{ mt: 4, pt: 3, borderTop: `1px solid ${maggaColors.border}` }}>
           <Typography
             variant="body2"
             sx={{
-              color: "text.secondary",
-              fontStyle: 'italic'
+              color: "text.secondary"
             }}>
             หมายเหตุ: เอกสารฉบับนี้มีไว้เพื่อประกาศข้อตกลงในการใช้งานเว็บไซต์ และอาจมีการปรับปรุงแก้ไขเป็นระยะ
           </Typography>
@@ -236,13 +236,13 @@ function Section({ title, children }: { title: string; children: React.ReactNode
         variant="h6"
         sx={{
           fontWeight: "bold",
-          color: '#fbbf24',
+          color: maggaColors.archiveGold,
           mb: 2
         }}>
         {title}
       </Typography>
       <Box sx={{ 
-        color: '#a3a3a3', 
+        color: maggaColors.textMuted, 
         '& ul': { pl: 3, mt: 1, mb: 2 }, 
         '& li': { mb: 1 },
         '& p': { mb: 2, lineHeight: 1.8 },

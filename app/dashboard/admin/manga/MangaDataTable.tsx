@@ -43,6 +43,7 @@ import {
 } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/app/contexts/ToastContext";
+import { dashboardTokens } from "@/app/components/dashboard/system";
 import { authFetch } from "@/lib/auth-fetch";
 import { getMetadataChipSx } from "@/lib/metadata-chip-tone";
 
@@ -386,8 +387,8 @@ export default function MangaDataTable({
                   onChange={handleSelectAll}
                   sx={{ 
                     color: "#525252",
-                    "&.Mui-checked": { color: "#FABF06" },
-                    "&.MuiCheckbox-indeterminate": { color: "#FABF06" }
+                    "&.Mui-checked": { color: dashboardTokens.accent },
+                    "&.MuiCheckbox-indeterminate": { color: dashboardTokens.accent }
                   }}
                   slotProps={{
                     input: { "aria-label": "เลือกมังงะทั้งหมด" }
@@ -448,7 +449,7 @@ export default function MangaDataTable({
                     onChange={() => handleSelect(manga.id)}
                     sx={{ 
                       color: "#525252",
-                      "&.Mui-checked": { color: "#FABF06" }
+                      "&.Mui-checked": { color: dashboardTokens.accent }
                     }}
                   />
                 </TableCell>

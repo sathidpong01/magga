@@ -5,6 +5,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Box, IconButton, Typography } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
+import { maggaColors } from "@/lib/design-tokens";
 
 type SortableItemProps = {
   id: string;
@@ -62,8 +63,8 @@ export function SortableItem({
           aspectRatio: "3 / 4",
           borderRadius: 2,
           overflow: "hidden",
-          border: "1px solid rgba(255,255,255,0.08)",
-          bgcolor: "#101010",
+          border: `1px solid ${maggaColors.border}`,
+          bgcolor: maggaColors.surfaceMuted,
           boxShadow: isDragging
             ? "0 16px 34px rgba(0,0,0,0.34)"
             : "0 8px 18px rgba(0,0,0,0.24)",
@@ -128,7 +129,7 @@ export function SortableItem({
       <Typography
         variant="caption"
         sx={{
-          color: "#bdbdbd",
+          color: maggaColors.textMuted,
           fontWeight: 700,
           textAlign: "center",
           letterSpacing: "0.02em",

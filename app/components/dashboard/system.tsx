@@ -8,23 +8,24 @@ import {
   Typography,
 } from "@mui/material";
 import type { PaperProps, SxProps, Theme } from "@mui/material";
+import { maggaColors } from "@/lib/design-tokens";
 
 export const dashboardTokens = {
-  bg: "#0a0a0a",
-  surface: "#141414",
-  surfaceAlt: "#171717",
-  surfaceMuted: "#111111",
+  bg: maggaColors.midnightCanvas,
+  surface: maggaColors.charcoalSurface,
+  surfaceAlt: maggaColors.ironSurface,
+  surfaceMuted: "#141414",
   border: "rgba(255,255,255,0.08)",
   borderStrong: "rgba(255,255,255,0.14)",
-  text: "#fafafa",
-  textMuted: "#a3a3a3",
-  textSoft: "#737373",
-  accent: "#fbbf24",
-  accentStrong: "#f59e0b",
+  text: maggaColors.textPrimary,
+  textMuted: maggaColors.textSecondary,
+  textSoft: maggaColors.textMuted,
+  accent: maggaColors.archiveGold,
+  accentStrong: maggaColors.archiveGoldHover,
   accentSoft: "rgba(251,191,36,0.14)",
-  success: "#22c55e",
-  warning: "#f59e0b",
-  danger: "#ef4444",
+  success: maggaColors.trustEmerald,
+  warning: maggaColors.archiveGoldHover,
+  danger: maggaColors.dangerRed,
   info: "#38bdf8",
 };
 

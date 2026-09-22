@@ -25,6 +25,7 @@ import {
 import GoogleIcon from "@mui/icons-material/Google";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import { maggaColors } from "@/lib/design-tokens";
 
 function getPasswordStrength(pass: string): number {
   if (!pass) return 0;
@@ -44,13 +45,13 @@ function getStrengthLabel(score: number): { label: string; color: string } {
 }
 
 const textFieldSx = {
-  "& .MuiInputLabel-root": { color: "#a3a3a3" },
+  "& .MuiInputLabel-root": { color: maggaColors.textMuted },
   "& .MuiOutlinedInput-root": {
     color: "#fafafa",
-    bgcolor: "#262626",
-    "& fieldset": { borderColor: "#404040" },
-    "&:hover fieldset": { borderColor: "#fbbf24" },
-    "&.Mui-focused fieldset": { borderColor: "#fbbf24" },
+    bgcolor: maggaColors.surfaceAlt,
+    "& fieldset": { borderColor: maggaColors.border },
+    "&:hover fieldset": { borderColor: "rgba(251,191,36,0.35)" },
+    "&.Mui-focused fieldset": { borderColor: maggaColors.archiveGold },
   },
 };
 
@@ -122,7 +123,7 @@ function RegisterForm() {
     <Box
       sx={{
         minHeight: "100vh",
-        bgcolor: "#0a0a0a",
+        bgcolor: maggaColors.background,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -134,9 +135,9 @@ function RegisterForm() {
         sx={{
           width: "100%",
           maxWidth: 440,
-          bgcolor: "#171717",
-          border: "1px solid rgba(255,255,255,0.08)",
-          borderRadius: 3,
+          bgcolor: maggaColors.surface,
+          border: `1px solid ${maggaColors.border}`,
+          borderRadius: 2.5,
           boxShadow: "0 25px 60px rgba(0,0,0,0.5)",
           overflow: "hidden",
         }}
@@ -161,7 +162,7 @@ function RegisterForm() {
             }}>
             ยินดีต้อนรับสู่ MAGGA
           </Typography>
-          <Typography variant="body2" sx={{ color: "#a3a3a3" }}>
+          <Typography variant="body2" sx={{ color: maggaColors.textMuted }}>
             สร้างบัญชีใหม่เพื่อเริ่มต้นใช้งาน
           </Typography>
         </Box>
@@ -292,7 +293,7 @@ function RegisterForm() {
                 mt: 2.5,
                 mb: 1.5,
                 py: 1.2,
-                bgcolor: "#fbbf24",
+                bgcolor: maggaColors.archiveGold,
                 color: "#000",
                 fontWeight: 700,
                 fontSize: "0.95rem",
@@ -322,16 +323,16 @@ function RegisterForm() {
               borderColor: "rgba(255,255,255,0.15)",
               borderRadius: 1.5,
               fontWeight: 500,
-              "&:hover": { borderColor: "#fbbf24", bgcolor: "rgba(251,191,36,0.06)" },
+              "&:hover": { borderColor: maggaColors.archiveGold, bgcolor: "rgba(251,191,36,0.06)" },
             }}
           >
             ดำเนินการผ่าน Google
           </Button>
 
           <Box sx={{ textAlign: "center", mt: 3 }}>
-            <Typography variant="body2" sx={{ color: "#a3a3a3" }}>
+            <Typography variant="body2" sx={{ color: maggaColors.textMuted }}>
               มีบัญชีอยู่แล้ว?{" "}
-              <Link href="/auth/signin" style={{ color: "#fbbf24", textDecoration: "none", fontWeight: 600 }}>
+              <Link href="/auth/signin" style={{ color: maggaColors.archiveGold, textDecoration: "none", fontWeight: 600 }}>
                 เข้าสู่ระบบ
               </Link>
             </Typography>
@@ -346,8 +347,8 @@ export default function RegisterPage() {
   return (
     <Suspense
       fallback={
-        <Box sx={{ minHeight: "100vh", bgcolor: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <CircularProgress sx={{ color: "#fbbf24" }} />
+        <Box sx={{ minHeight: "100vh", bgcolor: maggaColors.background, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <CircularProgress sx={{ color: maggaColors.archiveGold }} />
         </Box>
       }
     >

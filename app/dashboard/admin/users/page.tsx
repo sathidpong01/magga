@@ -1,8 +1,12 @@
 import { db } from "@/db";
 import { profiles as usersTable, comments as commentsTable, mangaSubmissions as submissionsTable } from "@/db/schema";
 import UserManager from "./UserManager";
-import { Box, Chip, Stack, Typography } from "@mui/material";
+import { alpha, Box, Chip, Stack, Typography } from "@mui/material";
 import { eq, sql, desc } from "drizzle-orm";
+import {
+  DashboardSurface,
+  dashboardTokens,
+} from "@/app/components/dashboard/system";
 
 export const dynamic = "force-dynamic";
 
@@ -45,14 +49,9 @@ export default async function UsersPage() {
         gap: 2.5,
       }}
     >
-      <Box
+      <DashboardSurface
         sx={{
-          borderRadius: 1.5,
-          border: "1px solid rgba(255,255,255,0.06)",
-          backgroundImage:
-            "linear-gradient(180deg, rgba(251,191,36,0.06) 0%, rgba(20,20,20,0.92) 100%)",
           p: { xs: 2.25, md: 3 },
-          boxShadow: "0 24px 60px rgba(0,0,0,0.28)",
         }}
       >
         <Stack
@@ -66,7 +65,7 @@ export default async function UsersPage() {
             <Typography
               variant="overline"
               sx={{
-                color: "#fbbf24",
+                color: dashboardTokens.accent,
                 fontWeight: 800,
                 letterSpacing: "0.14em",
                 display: "block",
@@ -80,28 +79,53 @@ export default async function UsersPage() {
               sx={{
                 fontWeight: 900,
                 letterSpacing: "-0.03em",
-                color: "#fafafa",
+                color: dashboardTokens.text,
                 mb: 0.75,
                 fontSize: { xs: "1.8rem", md: "2.25rem" },
               }}
             >
               จัดการผู้ใช้
             </Typography>
-            <Typography sx={{ color: "#a3a3a3", lineHeight: 1.7 }}>
+            <Typography sx={{ color: dashboardTokens.textMuted, lineHeight: 1.7 }}>
               ดูสถานะผู้ใช้ แยกบทบาท จัดการการระงับบัญชี และไล่ตรวจ activity
               ได้ในมุมเดียวกับส่วนอื่นของ MAGGA
             </Typography>
           </Box>
 
           <Stack direction="row" spacing={1} useFlexGap sx={{
-            flexWrap: "wrap"
+            flexWrap: "wrap",
+            alignItems: "center",
           }}>
-            <Chip label={`ทั้งหมด ${users.length}`} sx={{ bgcolor: "#171717", color: "#fafafa", border: "1px solid rgba(255,255,255,0.08)", fontWeight: 700 }} />
-            <Chip label={`แอดมิน ${admins}`} sx={{ bgcolor: "rgba(251,191,36,0.08)", color: "#fbbf24", border: "1px solid rgba(251,191,36,0.18)", fontWeight: 700 }} />
-            <Chip label={`ระงับ ${suspended}`} sx={{ bgcolor: "rgba(239,68,68,0.08)", color: "#f87171", border: "1px solid rgba(239,68,68,0.18)", fontWeight: 700 }} />
+            <Chip
+              label={`ทั้งหมด ${users.length}`}
+              sx={{
+                bgcolor: dashboardTokens.surfaceMuted,
+                color: dashboardTokens.text,
+                border: `1px solid ${dashboardTokens.border}`,
+                fontWeight: 700,
+              }}
+            />
+            <Chip
+              label={`แอดมิน ${admins}`}
+              sx={{
+                bgcolor: dashboardTokens.accentSoft,
+                color: dashboardTokens.accent,
+                border: `1px solid ${dashboardTokens.accentSoft}`,
+                fontWeight: 700,
+              }}
+            />
+            <Chip
+              label={`ระงับ ${suspended}`}
+              sx={{
+                bgcolor: alpha(dashboardTokens.danger, 0.1),
+                color: dashboardTokens.danger,
+                border: `1px solid ${alpha(dashboardTokens.danger, 0.25)}`,
+                fontWeight: 700,
+              }}
+            />
           </Stack>
         </Stack>
-      </Box>
+      </DashboardSurface>
 
       <UserManager initialUsers={users as any} />
     </Box>

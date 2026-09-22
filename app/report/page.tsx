@@ -1,8 +1,9 @@
-﻿import { Container, Typography, Box, Paper, Divider, Alert } from "@mui/material";
+import { Container, Typography, Box, Paper, Divider, Alert } from "@mui/material";
 import { Metadata } from "next";
 import ReportProblemIcon from "@mui/icons-material/ReportProblem";
 import EmailIcon from "@mui/icons-material/Email";
 import Link from "next/link";
+import { maggaColors } from "@/lib/design-tokens";
 
 export const metadata: Metadata = {
   title: "รายงานการละเมิด - MAGGA",
@@ -12,9 +13,9 @@ export const metadata: Metadata = {
 export default function ReportPage() {
   return (
     <Container maxWidth="md" sx={{ py: 6 }}>
-      <Paper sx={{ p: { xs: 3, md: 5 }, bgcolor: '#171717', borderRadius: 1, border: '1px solid rgba(255,255,255,0.08)' }}>
+      <Paper sx={{ p: { xs: 3, md: 5 }, bgcolor: maggaColors.surfaceAlt, borderRadius: 2, border: `1px solid ${maggaColors.border}` }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-          <ReportProblemIcon sx={{ color: '#fbbf24', fontSize: 32 }} />
+          <ReportProblemIcon sx={{ color: maggaColors.archiveGold, fontSize: 32 }} />
           <Typography
             variant="h4"
             component="h1"
@@ -33,16 +34,17 @@ export default function ReportPage() {
 
         <Alert 
           severity="info" 
-          icon={<EmailIcon />}
+          icon={<EmailIcon sx={{ color: maggaColors.archiveGold }} />}
           sx={{ 
             mb: 4, 
-            bgcolor: 'rgba(59, 130, 246, 0.1)', 
-            border: '1px solid rgba(59, 130, 246, 0.3)',
-            '& .MuiAlert-message': { color: '#93c5fd' }
+            bgcolor: 'rgba(251, 191, 36, 0.08)', 
+            border: '1px solid rgba(251, 191, 36, 0.25)',
+            borderRadius: 2,
+            '& .MuiAlert-message': { color: '#fafafa' }
           }}
         >
           <Typography variant="body2">
-            ติดต่อแจ้งเรื่องที่: <Box component="strong">Facebook @nightsu9</Box>
+            ติดต่อแจ้งเรื่องที่: <Box component="strong" sx={{ color: maggaColors.archiveGold }}>Facebook @nightsu9</Box>
           </Typography>
         </Alert>
 
@@ -56,37 +58,37 @@ export default function ReportPage() {
             
             <Box sx={{ pl: 2 }}>
               <Typography sx={{ mb: 2 }}>
-                <Box component="strong" sx={{ color: '#fbbf24' }}>ก) ระบุตัวตน:</Box> แจ้งว่าคุณเป็นเจ้าของลิขสิทธิ์ผลงานหรือสิทธิ์แต่เพียงผู้เดียวที่ถูกละเมิด 
+                <Box component="strong" sx={{ color: maggaColors.archiveGold }}>ก) ระบุตัวตน:</Box> แจ้งว่าคุณเป็นเจ้าของลิขสิทธิ์ผลงานหรือสิทธิ์แต่เพียงผู้เดียวที่ถูกละเมิด 
                 หรือเป็นผู้ที่ได้รับมอบอำนาจให้กระทำการแทนเจ้าของ พร้อมแนบลายเซ็นจริงหรือลายเซ็นอิเล็กทรอนิกส์
               </Typography>
 
               <Typography sx={{ mb: 2 }}>
-                <Box component="strong" sx={{ color: '#fbbf24' }}>ข) ระบุผลงาน:</Box> ระบุผลงานที่คุณเชื่อว่าถูกละเมิดลิขสิทธิ์ หากมีหลายผลงาน ให้ระบุเป็นรายการ
+                <Box component="strong" sx={{ color: maggaColors.archiveGold }}>ข) ระบุผลงาน:</Box> ระบุผลงานที่คุณเชื่อว่าถูกละเมิดลิขสิทธิ์ หากมีหลายผลงาน ให้ระบุเป็นรายการ
               </Typography>
 
               <Typography sx={{ mb: 2 }}>
-                <Box component="strong" sx={{ color: '#fbbf24' }}>ค) ระบุตำแหน่งของเนื้อหาที่ละเมิดลิขสิทธิ์:</Box> ระบุ URL ของหน้าที่ละเมิดลิขสิทธิ์ในเว็บไซต์ 
+                <Box component="strong" sx={{ color: maggaColors.archiveGold }}>ค) ระบุตำแหน่งของเนื้อหาที่ละเมิดลิขสิทธิ์:</Box> ระบุ URL ของหน้าที่ละเมิดลิขสิทธิ์ในเว็บไซต์ 
                 ห้ามส่งไฟล์แนบใดๆ เช่น รูปภาพ หรือไฟล์ PDF ให้ใส่ URL ทั้งหมดในเนื้อหาจดหมาย เพื่อการดำเนินการที่รวดเร็วยิ่งขึ้น
               </Typography>
 
               <Typography sx={{ mb: 2 }}>
-                <Box component="strong" sx={{ color: '#fbbf24' }}>ง) ข้อมูลติดต่อของคุณ:</Box> ระบุชื่อ ที่อยู่ และอีเมล 
+                <Box component="strong" sx={{ color: maggaColors.archiveGold }}>ง) ข้อมูลติดต่อของคุณ:</Box> ระบุชื่อ ที่อยู่ และอีเมล 
                 หากกระทำการแทนเจ้าของลิขสิทธิ์ ให้ระบุความเกี่ยวข้องของคุณ (เช่น ทนายความ, ตัวแทน)
               </Typography>
 
               <Typography sx={{ mb: 2 }}>
-                <Box component="strong" sx={{ color: '#fbbf24' }}>จ) ยืนยันว่าคุณเชื่อโดยสุจริต:</Box> ระบุว่าคุณเชื่อโดยสุจริตว่าการใช้เนื้อหาดังกล่าวไม่ได้รับอนุญาตจากเจ้าของลิขสิทธิ์ 
+                <Box component="strong" sx={{ color: maggaColors.archiveGold }}>จ) ยืนยันว่าคุณเชื่อโดยสุจริต:</Box> ระบุว่าคุณเชื่อโดยสุจริตว่าการใช้เนื้อหาดังกล่าวไม่ได้รับอนุญาตจากเจ้าของลิขสิทธิ์ 
                 ตัวแทน หรือไม่ชอบด้วยกฎหมาย
               </Typography>
 
               <Typography sx={{
                 marginBottom: "16px"
               }}>
-                <Box component="strong" sx={{ color: '#fbbf24' }}>ฉ) ยืนยันความถูกต้องของข้อมูล:</Box> ระบุข้อความต่อไปนี้เพื่อรับรองความถูกต้องของข้อมูลภายใต้บทลงโทษของการให้การเท็จ:
+                <Box component="strong" sx={{ color: maggaColors.archiveGold }}>ฉ) ยืนยันความถูกต้องของข้อมูล:</Box> ระบุข้อความต่อไปนี้เพื่อรับรองความถูกต้องของข้อมูลภายใต้บทลงโทษของการให้การเท็จ:
               </Typography>
               
-              <Paper sx={{ p: 2, bgcolor: '#0a0a0a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 1, mb: 2 }}>
-                <Typography variant="body2" sx={{ color: '#a3a3a3', fontStyle: 'italic' }}>
+              <Paper sx={{ p: 2, bgcolor: maggaColors.background, border: `1px solid ${maggaColors.border}`, borderRadius: 1.5, mb: 2 }}>
+                <Typography variant="body2" sx={{ color: maggaColors.textMuted }}>
                   "I swear, under penalty of perjury, that the information in the notification is accurate and that I am the (copyright) owner 
                   or am authorized to act on behalf of the owner of an exclusive right that is allegedly infringed."
                 </Typography>
@@ -94,10 +96,10 @@ export default function ReportPage() {
             </Box>
           </Section>
 
-          <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
+          <Divider sx={{ borderColor: maggaColors.border }} />
 
           <Section title="ข้อกำหนดเพิ่มเติม">
-            <Alert severity="warning" sx={{ mb: 3, bgcolor: 'rgba(234, 179, 8, 0.1)', border: '1px solid rgba(234, 179, 8, 0.3)' }}>
+            <Alert severity="warning" sx={{ mb: 3, bgcolor: 'rgba(234, 179, 8, 0.08)', border: '1px solid rgba(234, 179, 8, 0.25)', borderRadius: 2 }}>
               <Typography variant="body2" sx={{ color: '#fcd34d' }}>
                 คำร้องจะต้องมีครบทั้ง 6 ข้อ หากข้อมูลไม่ครบถ้วน จะไม่สามารถดำเนินการได้
               </Typography>
@@ -107,16 +109,16 @@ export default function ReportPage() {
             }}>
               ตามที่ระบุไว้ในกฎหมาย 17 U.S. Code § 512(c)(3):
             </Typography>
-            <Typography variant="body2" sx={{ color: '#737373', fontStyle: 'italic', pl: 2 }}>
+            <Typography variant="body2" sx={{ color: maggaColors.textMuted, pl: 2, borderLeft: `2px solid ${maggaColors.border}` }}>
               (B) คำร้องที่ไม่สมบูรณ์ - หากเนื้อหาหรือกิจกรรมที่ถูกอ้างว่าละเมิดลิขสิทธิ์ 
               ไม่สอดคล้องกับข้อกำหนดในอนุมาตรา (A) อย่างมีนัยสำคัญ จะไม่ได้รับการพิจารณาภายใต้ย่อหน้า (1)(C)...
             </Typography>
-            <Typography sx={{ mt: 2, color: '#fbbf24', fontWeight: 500 }}>
+            <Typography sx={{ mt: 2, color: maggaColors.archiveGold, fontWeight: 600 }}>
               กรุณาเขียนคำร้องเป็นภาษาอังกฤษ
             </Typography>
           </Section>
 
-          <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
+          <Divider sx={{ borderColor: maggaColors.border }} />
 
           <Section title="การดำเนินการหลังจากได้รับคำร้อง">
             <Typography sx={{
@@ -131,7 +133,7 @@ export default function ReportPage() {
             </Typography>
           </Section>
 
-          <Divider sx={{ borderColor: 'rgba(255,255,255,0.08)' }} />
+          <Divider sx={{ borderColor: maggaColors.border }} />
 
           <Section title="นโยบายและข้อมูลเพิ่มเติม">
             <Box component="ul">
@@ -156,11 +158,11 @@ export default function ReportPage() {
           </Section>
         </Box>
 
-        <Box sx={{ mt: 4, pt: 3, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+        <Box sx={{ mt: 4, pt: 3, borderTop: `1px solid ${maggaColors.border}` }}>
           <Typography variant="body2" sx={{
             color: "text.secondary"
           }}>
-            ติดต่อเรา: <Link href="https://www.facebook.com/nightsu9/" target="_blank" style={{ color: '#fbbf24' }}>Facebook @nightsu9</Link>
+            ติดต่อเรา: <Link href="https://www.facebook.com/nightsu9/" target="_blank" style={{ color: maggaColors.archiveGold }}>Facebook @nightsu9</Link>
           </Typography>
         </Box>
       </Paper>
@@ -175,13 +177,13 @@ function Section({ title, children }: { title: string; children: React.ReactNode
         variant="h6"
         sx={{
           fontWeight: "bold",
-          color: '#fbbf24',
+          color: maggaColors.archiveGold,
           mb: 2
         }}>
         {title}
       </Typography>
       <Box sx={{ 
-        color: '#a3a3a3', 
+        color: maggaColors.textMuted, 
         '& ul': { pl: 3, mt: 1, mb: 2 }, 
         '& li': { mb: 1.5, lineHeight: 1.7 },
         '& p': { mb: 2, lineHeight: 1.8 },

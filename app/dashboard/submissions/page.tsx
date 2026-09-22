@@ -191,7 +191,7 @@ export default function MySubmissionsPage() {
                     position: "relative",
                     width: { xs: "100%", sm: 104 },
                     height: { xs: 210, sm: 148 },
-                    bgcolor: "#333",
+                    bgcolor: dashboardTokens.surfaceAlt,
                     borderRadius: 1.2,
                     overflow: "hidden",
                     flexShrink: 0,
@@ -307,7 +307,7 @@ export default function MySubmissionsPage() {
                       >
                         เหตุผลที่ไม่ผ่าน
                       </Typography>
-                      <Typography variant="body2" sx={{ color: "#fca5a5" }}>
+                      <Typography variant="body2" sx={{ color: dashboardTokens.textSoft }}>
                         {submission.rejectionReason}
                       </Typography>
                     </Box>

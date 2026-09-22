@@ -40,6 +40,7 @@ import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import AddIcon from "@mui/icons-material/Add";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { useToast } from "@/app/contexts/ToastContext";
+import { dashboardTokens, dashboardRadii } from "@/app/components/dashboard/system";
 
 type SocialLink = {
   url: string;
@@ -281,11 +282,11 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
               }
               sx={{
                 minWidth: 100,
-                bgcolor: "#FABF06",
+                bgcolor: dashboardTokens.accent,
                 color: "#000",
                 fontWeight: 800,
-                borderRadius: 1,
-                "&:hover": { bgcolor: "#eab308" },
+                borderRadius: dashboardRadii.button,
+                "&:hover": { bgcolor: dashboardTokens.accentStrong },
                 "&.Mui-disabled": { bgcolor: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.2)" }
               }}
             >
@@ -300,7 +301,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
             <Box>
               <Typography
                 variant="caption"
-                sx={{ color: "#a3a3a3", mb: 0.5, display: "block", fontWeight: 700, textTransform: "none", fontSize: "0.75rem" }}
+                sx={{ color: dashboardTokens.textMuted, mb: 0.5, display: "block", fontWeight: 700, textTransform: "none", fontSize: "0.75rem" }}
               >
                 ชื่อผู้แต่ง *
               </Typography>
@@ -313,10 +314,10 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                 placeholder="ชื่อผู้แต่งหรือชื่อปากกา..."
                 sx={{
                   "& .MuiOutlinedInput-root": {
-                    bgcolor: "#0B0B0B",
-                    borderRadius: 1,
-                    "& fieldset": { borderColor: "rgba(255,255,255,0.06)" },
-                    "&.Mui-focused fieldset": { borderColor: "#FABF06" },
+                    bgcolor: dashboardTokens.surfaceMuted,
+                    borderRadius: dashboardRadii.field,
+                    "& fieldset": { borderColor: dashboardTokens.border },
+                    "&.Mui-focused fieldset": { borderColor: dashboardTokens.accent },
                   },
                 }}
               />
@@ -497,14 +498,15 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                 sx={{
                   mt: 2,
                   borderColor: "rgba(255,255,255,0.1)",
-                  color: "#FABF06",
+                  color: dashboardTokens.accent,
                   fontWeight: 800,
                   textTransform: "none",
                   fontSize: "0.7rem",
                   letterSpacing: "0",
+                  borderRadius: dashboardRadii.button,
                   "&:hover": {
-                    borderColor: "#FABF06",
-                    bgcolor: "rgba(250, 191, 6, 0.05)",
+                    borderColor: dashboardTokens.accent,
+                    bgcolor: dashboardTokens.accentSoft,
                   },
                 }}
               >

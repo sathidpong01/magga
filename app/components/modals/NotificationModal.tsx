@@ -10,6 +10,7 @@ import {
 } from "@mui/material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutlined";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutlined";
+import { maggaColors } from "@/lib/design-tokens";
 
 interface NotificationModalProps {
   open: boolean;
@@ -56,10 +57,10 @@ export default function NotificationModal({
       slotProps={{
         paper: {
           sx: {
-            bgcolor: "#171717",
+            bgcolor: maggaColors.surfaceAlt,
             color: "#fafafa",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            borderRadius: 1,
+            border: `1px solid ${maggaColors.border}`,
+            borderRadius: 2,
           },
         }
       }}
@@ -82,8 +83,8 @@ export default function NotificationModal({
             severity="error"
             sx={{
               bgcolor: "rgba(211, 47, 47, 0.1)",
-              color: "#ffcdd2",
-              borderRadius: 1,
+              color: "#fca5a5",
+              borderRadius: 1.5,
             }}
           >
             {message}
@@ -105,7 +106,7 @@ export default function NotificationModal({
             sx={{
               color: "#a3a3a3",
               borderColor: "rgba(255, 255, 255, 0.2)",
-              borderRadius: 1,
+              borderRadius: 1.5,
               "&:hover": {
                 borderColor: "rgba(255, 255, 255, 0.3)",
                 bgcolor: "rgba(255, 255, 255, 0.05)",
@@ -116,7 +117,7 @@ export default function NotificationModal({
           </Button>
         )}
         {!hasPrimaryAction && (
-          <Button onClick={onClose} color="inherit" sx={{ borderRadius: 1 }}>
+          <Button onClick={onClose} color="inherit" sx={{ borderRadius: 1.5 }}>
             Close
           </Button>
         )}
@@ -126,7 +127,7 @@ export default function NotificationModal({
             variant="contained"
             color={type === "success" ? "success" : "error"}
             autoFocus
-            sx={{ borderRadius: 1 }}
+            sx={{ borderRadius: 1.5 }}
           >
             {primaryLabel}
           </Button>

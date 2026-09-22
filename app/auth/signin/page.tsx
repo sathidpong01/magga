@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Box, CircularProgress } from "@mui/material";
 import { isValidCallbackUrl } from "@/lib/auth-client";
+import { maggaColors } from "@/lib/design-tokens";
 import AuthModal from "@/app/components/features/auth/AuthModal";
 
 function SignInModal() {
@@ -27,7 +28,7 @@ function SignInModal() {
 
   return (
     <>
-      <Box sx={{ minHeight: "100vh", bgcolor: "#0a0a0a" }} />
+      <Box sx={{ minHeight: "100vh", bgcolor: maggaColors.background }} />
       <AuthModal
         open={open}
         onClose={handleClose}
@@ -43,8 +44,8 @@ export default function SignInPage() {
   return (
     <Suspense
       fallback={
-        <Box sx={{ minHeight: "100vh", bgcolor: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <CircularProgress sx={{ color: "#fbbf24" }} />
+        <Box sx={{ minHeight: "100vh", bgcolor: maggaColors.background, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <CircularProgress sx={{ color: maggaColors.archiveGold }} />
         </Box>
       }
     >

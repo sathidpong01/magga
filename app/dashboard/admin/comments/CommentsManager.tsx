@@ -34,6 +34,7 @@ import ReplyIcon from "@mui/icons-material/Reply";
 import Link from "next/link";
 import { authFetch } from "@/lib/auth-fetch";
 import { useToast } from "@/app/contexts/ToastContext";
+import { dashboardTokens, dashboardRadii } from "@/app/components/dashboard/system";
 
 export interface AdminComment {
   id: string;
@@ -241,13 +242,13 @@ export default function CommentsManager({
             onChange={(e) => setSearch(e.target.value)}
             sx={{
               "& .MuiOutlinedInput-root": {
-                bgcolor: "#0B0B0B",
-                borderRadius: 1,
+                bgcolor: dashboardTokens.surfaceMuted,
+                borderRadius: dashboardRadii.field,
                 fontWeight: 600,
                 fontSize: "0.9rem",
-                "& fieldset": { borderColor: "rgba(255,255,255,0.06)" },
-                "&:hover fieldset": { borderColor: "rgba(250, 191, 6, 0.3)" },
-                "&.Mui-focused fieldset": { borderColor: "#FABF06" },
+                "& fieldset": { borderColor: dashboardTokens.border },
+                "&:hover fieldset": { borderColor: dashboardTokens.borderStrong },
+                "&.Mui-focused fieldset": { borderColor: dashboardTokens.accent },
               },
             }}
             size="medium"
@@ -255,7 +256,7 @@ export default function CommentsManager({
               input: {
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon sx={{ color: "#FABF06", fontSize: 20 }} />
+                    <SearchIcon sx={{ color: dashboardTokens.accent, fontSize: 20 }} />
                   </InputAdornment>
                 ),
               }
@@ -266,12 +267,12 @@ export default function CommentsManager({
         <IconButton
           onClick={fetchComments}
           sx={{
-            color: "#FABF06",
-            bgcolor: "rgba(250, 191, 6, 0.08)",
-            borderRadius: 1,
+            color: dashboardTokens.accent,
+            bgcolor: dashboardTokens.accentSoft,
+            borderRadius: dashboardRadii.compact,
             width: 44,
             height: 44,
-            "&:hover": { bgcolor: "rgba(250, 191, 6, 0.15)" },
+            "&:hover": { bgcolor: "rgba(251, 191, 36, 0.25)" },
           }}
         >
           <RefreshIcon />
@@ -327,18 +328,18 @@ export default function CommentsManager({
                   onChange={handleSelectAll}
                   sx={{
                     color: "rgba(255,255,255,0.2)",
-                    "&.Mui-checked": { color: "#FABF06" },
-                    "&.MuiCheckbox-indeterminate": { color: "#FABF06" },
+                    "&.Mui-checked": { color: dashboardTokens.accent },
+                    "&.MuiCheckbox-indeterminate": { color: dashboardTokens.accent },
                   }}
                 />
               </TableCell>
-              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "none", borderColor: "rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>ประเภท</TableCell>
-              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "none", borderColor: "rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>ผู้ใช้</TableCell>
-              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "none", borderColor: "rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>ความคิดเห็น</TableCell>
-              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "none", borderColor: "rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>มังงะ</TableCell>
-              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "none", borderColor: "rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>คะแนน</TableCell>
-              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "none", borderColor: "rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>วันที่</TableCell>
-              <TableCell sx={{ py: 2.5, borderColor: "rgba(255,255,255,0.06)", borderBottom: "1px solid rgba(255,255,255,0.04)" }} />
+              <TableCell sx={{ py: 2.5, fontWeight: 900, color: dashboardTokens.textMuted, fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "none", borderColor: dashboardTokens.border, borderBottom: `1px solid ${dashboardTokens.border}` }}>ประเภท</TableCell>
+              <TableCell sx={{ py: 2.5, fontWeight: 900, color: dashboardTokens.textMuted, fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "none", borderColor: dashboardTokens.border, borderBottom: `1px solid ${dashboardTokens.border}` }}>ผู้ใช้</TableCell>
+              <TableCell sx={{ py: 2.5, fontWeight: 900, color: dashboardTokens.textMuted, fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "none", borderColor: dashboardTokens.border, borderBottom: `1px solid ${dashboardTokens.border}` }}>ความคิดเห็น</TableCell>
+              <TableCell sx={{ py: 2.5, fontWeight: 900, color: dashboardTokens.textMuted, fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "none", borderColor: dashboardTokens.border, borderBottom: `1px solid ${dashboardTokens.border}` }}>มังงะ</TableCell>
+              <TableCell sx={{ py: 2.5, fontWeight: 900, color: dashboardTokens.textMuted, fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "none", borderColor: dashboardTokens.border, borderBottom: `1px solid ${dashboardTokens.border}` }}>คะแนน</TableCell>
+              <TableCell sx={{ py: 2.5, fontWeight: 900, color: dashboardTokens.textMuted, fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "none", borderColor: dashboardTokens.border, borderBottom: `1px solid ${dashboardTokens.border}` }}>วันที่</TableCell>
+              <TableCell sx={{ py: 2.5, borderColor: dashboardTokens.border, borderBottom: `1px solid ${dashboardTokens.border}` }} />
             </TableRow>
           </TableHead>
           <TableBody>
@@ -347,9 +348,9 @@ export default function CommentsManager({
                 <TableCell
                   colSpan={8}
                   align="center"
-                  sx={{ py: 8, borderColor: "rgba(255,255,255,0.06)" }}
+                  sx={{ py: 8, borderColor: dashboardTokens.border }}
                 >
-                  <CircularProgress size={36} sx={{ color: "#FABF06" }} />
+                  <CircularProgress size={36} sx={{ color: dashboardTokens.accent }} />
                 </TableCell>
               </TableRow>
             ) : comments.length === 0 ? (
@@ -405,11 +406,11 @@ export default function CommentsManager({
                           sx={{
                             fontWeight: 900,
                             letterSpacing: "0",
-                            borderRadius: 0.75,
-                            bgcolor: "rgba(250, 191, 6, 0.15)",
-                            color: "#FABF06",
+                            borderRadius: dashboardRadii.compact,
+                            bgcolor: dashboardTokens.accentSoft,
+                            color: dashboardTokens.accent,
                             fontSize: "0.65rem",
-                            border: "1px solid rgba(250, 191, 6, 0.1)",
+                            border: `1px solid ${dashboardTokens.accentSoft}`,
                           }}
                         />
                       </Tooltip>
@@ -563,8 +564,8 @@ export default function CommentsManager({
             fontSize: "0.75rem",
             letterSpacing: "0",
             textTransform: "none",
-            borderTop: "1px solid rgba(255,255,255,0.06)",
-            "& .MuiTablePagination-selectIcon": { color: "#FABF06" },
+            borderTop: `1px solid ${dashboardTokens.border}`,
+            "& .MuiTablePagination-selectIcon": { color: dashboardTokens.accent },
           }}
         />
       </TableContainer>

@@ -3,6 +3,7 @@ import { authors as authorsTable } from "@/db/schema";
 import { asc } from "drizzle-orm";
 import AuthorManager from "./AuthorManager";
 import { Box, Typography } from "@mui/material";
+import { dashboardTokens } from "@/app/components/dashboard/system";
 
 export const dynamic = "force-dynamic";
 
@@ -16,11 +17,11 @@ export default async function AuthorsPage() {
       <Box sx={{ mb: 3 }}>
         <Typography
           variant="h4"
-          sx={{ fontWeight: 900, letterSpacing: "-0.03em", color: "#fafafa", mb: 0.75 }}
+          sx={{ fontWeight: 900, letterSpacing: "-0.03em", color: dashboardTokens.text, mb: 0.75 }}
         >
           จัดการผู้แต่ง
         </Typography>
-        <Typography sx={{ color: "#a3a3a3" }}>
+        <Typography sx={{ color: dashboardTokens.textMuted }}>
           ดู เพิ่ม แก้ไข และลบข้อมูลผู้แต่งในรูปแบบ workspace เดียวกัน
         </Typography>
       </Box>

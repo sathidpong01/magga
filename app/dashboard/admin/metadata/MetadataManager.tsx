@@ -26,6 +26,7 @@ import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import { authFetch } from "@/lib/auth-fetch";
 import { useToast } from "@/app/contexts/ToastContext";
 import { getMetadataChipSx } from "@/lib/metadata-chip-tone";
+import { dashboardTokens, dashboardRadii } from "@/app/components/dashboard/system";
 
 type Category = {
   id: string;
@@ -156,15 +157,15 @@ export default function MetadataManager({
           startIcon={<AddIcon />}
           onClick={() => setAddDialogOpen(true)}
           sx={{
-            bgcolor: "#FABF06",
+            bgcolor: dashboardTokens.accent,
             color: "#000",
-            borderRadius: 1,
+            borderRadius: dashboardRadii.button,
             px: 3,
             py: 1,
             fontWeight: 800,
             textTransform: "none",
             letterSpacing: "0",
-            "&:hover": { bgcolor: "#eab308" },
+            "&:hover": { bgcolor: dashboardTokens.accentStrong },
           }}
         >
           {activeTab === 0 ? "เพิ่มหมวดหมู่" : "เพิ่มแท็ก"}
@@ -174,9 +175,9 @@ export default function MetadataManager({
       {/* Container */}
       <Box
         sx={{
-          bgcolor: "#141414",
-          borderRadius: 1.25,
-          border: "1px solid rgba(255,255,255,0.06)",
+          bgcolor: dashboardTokens.surface,
+          borderRadius: dashboardRadii.surface,
+          border: `1px solid ${dashboardTokens.border}`,
           p: 3,
         }}
       >
@@ -189,9 +190,9 @@ export default function MetadataManager({
           }}
           sx={{
             mb: 3,
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            borderBottom: `1px solid ${dashboardTokens.border}`,
             "& .MuiTab-root": {
-              color: "#a3a3a3",
+              color: dashboardTokens.textMuted,
               textTransform: "none",
               fontSize: "0.875rem",
               fontWeight: 800,
@@ -199,11 +200,11 @@ export default function MetadataManager({
               letterSpacing: "0",
             },
             "& .Mui-selected": {
-              color: "#FABF06 !important",
+              color: `${dashboardTokens.accent} !important`,
             },
           }}
           slotProps={{
-            indicator: { sx: { bgcolor: "#FABF06" } }
+            indicator: { sx: { bgcolor: dashboardTokens.accent } }
           }}
         >
           <Tab
@@ -227,10 +228,10 @@ export default function MetadataManager({
           sx={{
             mb: 3,
             "& .MuiOutlinedInput-root": {
-              bgcolor: "#0B0B0B",
-              borderRadius: 1,
-              "& fieldset": { borderColor: "rgba(255,255,255,0.06)" },
-              "&.Mui-focused fieldset": { borderColor: "#FABF06" },
+              bgcolor: dashboardTokens.surfaceMuted,
+              borderRadius: dashboardRadii.field,
+              "& fieldset": { borderColor: dashboardTokens.border },
+              "&.Mui-focused fieldset": { borderColor: dashboardTokens.accent },
             },
           }}
           slotProps={{
@@ -336,7 +337,7 @@ export default function MetadataManager({
           <Button
             size="small"
             onClick={() => setSearch("")}
-            sx={{ color: "#a3a3a3", fontWeight: 800, textTransform: "none", fontSize: "0.8rem", "&:hover": { color: "#FABF06", bgcolor: "transparent", textDecoration: "underline" } }}
+            sx={{ color: dashboardTokens.textMuted, fontWeight: 800, textTransform: "none", fontSize: "0.8rem", "&:hover": { color: dashboardTokens.accent, bgcolor: "transparent", textDecoration: "underline" } }}
           >
             ล้างตัวกรอง
           </Button>
@@ -355,19 +356,19 @@ export default function MetadataManager({
         slotProps={{
           paper: {
             sx: {
-              bgcolor: "#0a0a0a",
-              borderRadius: 1,
-              border: "1px solid #262626",
+              bgcolor: dashboardTokens.surface,
+              borderRadius: dashboardRadii.surface,
+              border: `1px solid ${dashboardTokens.border}`,
             },
           }
         }}
       >
         <DialogTitle
           sx={{
-            color: "#fafafa",
+            color: dashboardTokens.text,
             fontWeight: 900,
             fontSize: "1rem",
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
+            borderBottom: `1px solid ${dashboardTokens.border}`,
             pb: 2,
             textTransform: "none",
             letterSpacing: "0"
@@ -385,12 +386,12 @@ export default function MetadataManager({
             onKeyPress={(e) => e.key === "Enter" && handleAddItem()}
             sx={{
               "& .MuiOutlinedInput-root": {
-                bgcolor: "#0B0B0B",
+                bgcolor: dashboardTokens.surfaceMuted,
                 fontSize: "1rem",
-                borderRadius: 1,
-                "& fieldset": { borderColor: "rgba(255,255,255,0.06)" },
+                borderRadius: dashboardRadii.field,
+                "& fieldset": { borderColor: dashboardTokens.border },
                 "&.Mui-focused fieldset": {
-                  borderColor: "#FABF06",
+                  borderColor: dashboardTokens.accent,
                 },
               },
             }}
@@ -403,7 +404,7 @@ export default function MetadataManager({
               setNewItemName("");
             }}
             sx={{
-              color: "#a3a3a3",
+              color: dashboardTokens.textMuted,
               fontWeight: 800,
               textTransform: "none",
               fontSize: "0.85rem",
@@ -417,14 +418,14 @@ export default function MetadataManager({
             variant="contained"
             disabled={!newItemName.trim()}
             sx={{
-              bgcolor: "#FABF06",
+              bgcolor: dashboardTokens.accent,
               color: "#000",
-              borderRadius: 1,
+              borderRadius: dashboardRadii.button,
               px: 4,
               fontWeight: 900,
               textTransform: "none",
               letterSpacing: "0",
-              "&:hover": { bgcolor: "#eab308" },
+              "&:hover": { bgcolor: dashboardTokens.accentStrong },
               "&:disabled": { bgcolor: "#404040", color: "#737373" },
             }}
           >
