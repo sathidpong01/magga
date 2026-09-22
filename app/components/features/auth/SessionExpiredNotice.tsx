@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   clearReauthInProgress,
   hasPendingSocialAuth,
@@ -19,6 +20,7 @@ import {
 import LogoutIcon from "@mui/icons-material/Logout";
 
 export default function SessionExpiredNotice() {
+  const router = useRouter();
   const { data: session, isPending } = useSession();
   const [showNotice, setShowNotice] = useState(false);
   const [wasAuthenticated, setWasAuthenticated] = useState(false);
@@ -68,7 +70,7 @@ export default function SessionExpiredNotice() {
   const handleLogin = () => {
     markReauthInProgress();
     setShowNotice(false);
-    window.location.href = "/auth/signin";
+    router.push("/auth/signin");
   };
 
   if (!showNotice) return null;

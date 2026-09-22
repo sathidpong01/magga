@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import * as cheerio from "cheerio";
+import { parse } from "node-html-parser";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getClientIp, validateExternalUrl } from "@/lib/network-security";
 
@@ -98,13 +98,13 @@ export async function GET(request: Request) {
     }
 
     const html = await response.text();
-    const $ = cheerio.load(html);
+    const document = parse(html);
 
     // Get Title
     let title =
-      $('meta[property="og:title"]').attr("content") ||
-      $('meta[name="twitter:title"]').attr("content") ||
-      $("title").text();
+      document.querySelector('meta[property="og:title"]')?.getAttribute("content") ||
+      document.querySelector('meta[name="twitter:title"]')?.getAttribute("content") ||
+      document.querySelector("title")?.textContent;
 
     if (!title) {
       title = getTitleFromUrl(finalUrl);
@@ -112,10 +112,10 @@ export async function GET(request: Request) {
 
     // Get Icon
     let icon =
-      $('link[rel="icon"]').attr("href") ||
-      $('link[rel="shortcut icon"]').attr("href") ||
-      $('link[rel="apple-touch-icon"]').attr("href") ||
-      $('meta[property="og:image"]').attr("content") ||
+      document.querySelector('link[rel="icon"]')?.getAttribute("href") ||
+      document.querySelector('link[rel="shortcut icon"]')?.getAttribute("href") ||
+      document.querySelector('link[rel="apple-touch-icon"]')?.getAttribute("href") ||
+      document.querySelector('meta[property="og:image"]')?.getAttribute("content") ||
       "/favicon.ico";
 
     // Handle relative URLs for icon or missing icon
