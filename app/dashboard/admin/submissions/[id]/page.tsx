@@ -604,8 +604,10 @@ export default function SubmissionDetailPage({
                     onClick={handleSaveEdit}
                     disabled={actionLoading}
                     sx={{
-                      bgcolor: "#fbbf24",
+                      bgcolor: "#d97706",
                       color: "#000",
+                      fontWeight: 700,
+                      borderRadius: "10px",
                       "&:hover": { bgcolor: "#f59e0b" },
                     }}
                   >

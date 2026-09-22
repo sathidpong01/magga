@@ -11,10 +11,10 @@ import type { PaperProps, SxProps, Theme } from "@mui/material";
 import { maggaColors } from "@/lib/design-tokens";
 
 export const dashboardTokens = {
-  bg: maggaColors.midnightCanvas,
-  surface: maggaColors.charcoalSurface,
-  surfaceAlt: maggaColors.ironSurface,
-  surfaceMuted: "#141414",
+  bg: maggaColors.background,
+  surface: maggaColors.surface,
+  surfaceAlt: "#24242a",
+  surfaceMuted: "#17181c",
   border: "rgba(255,255,255,0.08)",
   borderStrong: "rgba(255,255,255,0.14)",
   text: maggaColors.textPrimary,
@@ -22,7 +22,7 @@ export const dashboardTokens = {
   textSoft: maggaColors.textMuted,
   accent: maggaColors.archiveGold,
   accentStrong: maggaColors.archiveGoldHover,
-  accentSoft: "rgba(251,191,36,0.14)",
+  accentSoft: "rgba(217, 119, 6, 0.12)",
   success: maggaColors.trustEmerald,
   warning: maggaColors.archiveGoldHover,
   danger: maggaColors.dangerRed,
@@ -30,12 +30,12 @@ export const dashboardTokens = {
 };
 
 export const dashboardRadii = {
-  surface: 1.5,
-  inset: 1.2,
-  field: 1.1,
-  button: 1.5,
-  compact: 0.9,
-  badge: 1.5,
+  surface: "14px",
+  inset: "12px",
+  field: "10px",
+  button: "10px",
+  compact: "8px",
+  badge: "9999px",
 };
 
 export const dashboardSurfaceSx: SxProps<Theme> = {
@@ -43,9 +43,7 @@ export const dashboardSurfaceSx: SxProps<Theme> = {
   color: dashboardTokens.text,
   borderRadius: dashboardRadii.surface,
   border: `1px solid ${dashboardTokens.border}`,
-  backgroundImage:
-    "linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)",
-  boxShadow: "0 20px 40px rgba(0,0,0,0.28)",
+  boxShadow: "0 4px 20px -2px rgba(0, 0, 0, 0.35)",
 };
 
 export const dashboardInsetSurfaceSx: SxProps<Theme> = {
@@ -248,7 +246,7 @@ export function DashboardPageHeader({
       sx={{
         justifyContent: "space-between",
         alignItems: { xs: "flex-start", md: "flex-end" },
-        mb: 3.5
+        mb: 4
       }}>
       <Box>
         {eyebrow ? (
@@ -256,8 +254,9 @@ export function DashboardPageHeader({
             sx={{
               color: dashboardTokens.accent,
               fontSize: "0.8rem",
-              fontWeight: 800,
-              letterSpacing: "0.08em",
+              fontWeight: 700,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
               mb: 0.75,
             }}
           >
@@ -268,9 +267,9 @@ export function DashboardPageHeader({
           variant="h4"
           sx={{
             color: dashboardTokens.text,
-            fontWeight: 900,
-            letterSpacing: "-0.03em",
-            lineHeight: 1.05,
+            fontWeight: 700,
+            letterSpacing: "-0.02em",
+            lineHeight: 1.2,
           }}
         >
           {title}
@@ -281,6 +280,7 @@ export function DashboardPageHeader({
               mt: 1,
               color: dashboardTokens.textMuted,
               maxWidth: 720,
+              fontSize: "0.95rem",
               lineHeight: 1.6,
             }}
           >
@@ -332,12 +332,12 @@ export function DashboardSectionTitle({
     <Box sx={{ mb: 2.5 }}>
       <Typography
         variant="h6"
-        sx={{ color: dashboardTokens.text, fontWeight: 800, mb: 0.75 }}
+        sx={{ color: dashboardTokens.text, fontWeight: 700, mb: 0.5 }}
       >
         {title}
       </Typography>
       {description ? (
-        <Typography sx={{ color: dashboardTokens.textSoft, lineHeight: 1.6 }}>
+        <Typography sx={{ color: dashboardTokens.textSoft, fontSize: "0.9rem", lineHeight: 1.6 }}>
           {description}
         </Typography>
       ) : null}
@@ -359,25 +359,44 @@ export function DashboardStat({
   const content = (
     <DashboardSurface
       sx={{
-        p: 2.25,
+        p: 2.5,
         height: "100%",
-        transition: "transform 0.2s ease, border-color 0.2s ease",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        transition: "transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease",
         "&:hover": href
           ? {
-              transform: "translateY(-2px)",
-              borderColor: alpha(dashboardTokens.accent, 0.5),
+              transform: "translateY(-3px)",
+              borderColor: alpha(dashboardTokens.accent, 0.35),
+              boxShadow: "0 8px 24px -4px rgba(0, 0, 0, 0.4)",
             }
           : undefined,
       }}
     >
-      <Stack direction="row" spacing={1.5} sx={{
-        alignItems: "flex-start"
-      }}>
+      <Stack
+        direction="row"
+        sx={{
+          alignItems: "center",
+          justifyContent: "space-between",
+          mb: 1.5,
+        }}
+      >
+        <Typography
+          sx={{
+            color: dashboardTokens.textMuted,
+            fontSize: "0.85rem",
+            fontWeight: 500,
+            letterSpacing: "0.01em",
+          }}
+        >
+          {label}
+        </Typography>
         <Box
           sx={{
-            width: 44,
-            height: 44,
-            borderRadius: dashboardRadii.compact,
+            width: 36,
+            height: 36,
+            borderRadius: dashboardRadii.field,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -388,28 +407,24 @@ export function DashboardStat({
         >
           {icon}
         </Box>
-        <Box>
-          <Typography
-            sx={{
-              color: dashboardTokens.text,
-              fontSize: "1.6rem",
-              fontWeight: 900,
-              lineHeight: 1.1,
-              letterSpacing: "-0.03em",
-            }}
-          >
-            {typeof value === "number" ? value.toLocaleString() : value}
-          </Typography>
-          <Typography sx={{ color: dashboardTokens.textMuted, mt: 0.5 }}>
-            {label}
-          </Typography>
-        </Box>
       </Stack>
+      <Typography
+        sx={{
+          color: dashboardTokens.text,
+          fontSize: { xs: "1.75rem", md: "2rem" },
+          fontWeight: 700,
+          lineHeight: 1.1,
+          letterSpacing: "-0.02em",
+          fontVariantNumeric: "tabular-nums",
+        }}
+      >
+        {typeof value === "number" ? value.toLocaleString() : value}
+      </Typography>
     </DashboardSurface>
   );
 
   return href ? (
-    <Link href={href} prefetch={false} style={{ textDecoration: "none", display: "block" }}>
+    <Link href={href} prefetch={false} style={{ textDecoration: "none", display: "block", height: "100%" }}>
       {content}
     </Link>
   ) : (

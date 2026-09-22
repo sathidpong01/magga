@@ -127,16 +127,16 @@ export default function CollapsibleSidebar({
         width: isMobile ? EXPANDED_WIDTH : sidebarWidth,
         minWidth: isMobile ? EXPANDED_WIDTH : sidebarWidth,
         height: isMobile ? "100%" : "calc(100vh - 24px)",
-        bgcolor: "rgba(20,20,20,0.92)",
+        bgcolor: "#16171a",
         border: isMobile ? "none" : `1px solid ${dashboardTokens.border}`,
-        borderRadius: isMobile ? 0 : 1.5,
-        boxShadow: isMobile ? "none" : "0 18px 48px rgba(0,0,0,0.28)",
+        borderRadius: isMobile ? 0 : "12px",
+        boxShadow: isMobile ? "none" : "0 8px 32px rgba(0, 0, 0, 0.35)",
         backdropFilter: "blur(18px)",
         display: "flex",
         flexDirection: "column",
-        transition: "width 0.2s ease-in-out, min-width 0.2s ease-in-out",
+        transition: "width 0.2s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
         overflow: "hidden",
-        p: 1.75,
+        p: 1.5,
       }}
     >
       {/* Header */}
@@ -146,7 +146,8 @@ export default function CollapsibleSidebar({
           alignItems: "center",
           justifyContent: (isMobile || !isCollapsed) ? "space-between" : "center",
           mb: 1,
-          minHeight: 56,
+          px: (isMobile || !isCollapsed) ? 0.75 : 0,
+          minHeight: 52,
         }}
       >
         {(isMobile || !isCollapsed) && (
@@ -155,7 +156,8 @@ export default function CollapsibleSidebar({
             sx={{
               fontWeight: 700,
               color: dashboardTokens.text,
-              fontSize: "1.02rem",
+              fontSize: "1.05rem",
+              letterSpacing: "-0.01em",
               whiteSpace: "nowrap",
               overflow: "hidden",
             }}
@@ -168,11 +170,12 @@ export default function CollapsibleSidebar({
             onClick={() => setMobileOpen(false)}
             size="small"
             sx={{
-              color: "#a3a3a3",
+              color: "#a1a1aa",
               bgcolor: "rgba(255,255,255,0.04)",
-              "&:hover": { bgcolor: "rgba(255,255,255,0.08)" },
-              width: 28,
-              height: 28,
+              "&:hover": { bgcolor: "rgba(255,255,255,0.08)", color: "#fff" },
+              width: 32,
+              height: 32,
+              borderRadius: "8px",
             }}
           >
             <CloseIcon fontSize="small" />
@@ -183,12 +186,13 @@ export default function CollapsibleSidebar({
               onClick={toggleSidebar}
               size="small"
               sx={{
-              color: "#a3a3a3",
-              bgcolor: "rgba(255,255,255,0.04)",
-              "&:hover": { bgcolor: "rgba(255,255,255,0.08)" },
-              width: 28,
-              height: 28,
-            }}
+                color: "#a1a1aa",
+                bgcolor: "rgba(255,255,255,0.04)",
+                "&:hover": { bgcolor: "rgba(255,255,255,0.08)", color: "#fff" },
+                width: 32,
+                height: 32,
+                borderRadius: "8px",
+              }}
             >
               {isCollapsed ? (
                 <ChevronRightIcon fontSize="small" />
@@ -200,15 +204,15 @@ export default function CollapsibleSidebar({
         )}
       </Box>
 
-      <Divider sx={{ borderColor: dashboardTokens.border }} />
+      <Divider sx={{ borderColor: dashboardTokens.border, mb: 1 }} />
 
       {/* Main Menu Items - scrollable */}
       <Box
         component="nav"
         sx={{
           flex: 1,
-          py: 1.5,
-          px: (isMobile || !isCollapsed) ? 1.5 : 1,
+          py: 0.5,
+          px: 0.25,
           display: "flex",
           flexDirection: "column",
           gap: 0.5,
@@ -228,22 +232,17 @@ export default function CollapsibleSidebar({
                 display: "flex",
                 alignItems: "center",
                 gap: 1.5,
-                px: showExpanded ? 1.5 : 0,
-                py: 1,
-                borderRadius: 0.75,
+                px: showExpanded ? 1.75 : 0,
+                py: 1.1,
+                borderRadius: "10px",
                 textDecoration: "none",
                 justifyContent: showExpanded ? "flex-start" : "center",
-                bgcolor: active ? "rgba(251, 191, 36, 0.12)" : "transparent",
-                borderLeft: !showExpanded
-                  ? "none"
-                  : active
-                  ? `3px solid ${dashboardTokens.accent}`
-                  : "3px solid transparent",
+                bgcolor: active ? "rgba(217, 119, 6, 0.12)" : "transparent",
                 transition: "all 0.15s ease",
                 "&:hover": {
                   bgcolor: active
-                    ? "rgba(251, 191, 36, 0.16)"
-                    : "rgba(255,255,255,0.05)",
+                    ? "rgba(217, 119, 6, 0.18)"
+                    : "rgba(255,255,255,0.04)",
                 },
               }}
             >
@@ -316,15 +315,15 @@ export default function CollapsibleSidebar({
                   display: "flex",
                   alignItems: "center",
                   gap: 1.5,
-                  px: showExpanded ? 1.5 : 0,
+                  px: showExpanded ? 1.75 : 0,
                   py: 1,
-                  borderRadius: 0.75,
+                  borderRadius: "10px",
                   textDecoration: "none",
                   justifyContent: showExpanded ? "flex-start" : "center",
                   color: dashboardTokens.accent,
                   transition: "all 0.15s ease",
                   "&:hover": {
-                    bgcolor: "rgba(251, 191, 36, 0.08)",
+                    bgcolor: "rgba(217, 119, 6, 0.1)",
                   },
                 }}
               >
@@ -379,7 +378,7 @@ export default function CollapsibleSidebar({
               display: "flex",
               alignItems: "center",
               gap: 1.5,
-              mb: 1,
+              mb: 1.25,
               px: (isMobile || !isCollapsed) ? 0.5 : 0,
               justifyContent: (isMobile || !isCollapsed) ? "flex-start" : "center",
             }}
@@ -387,7 +386,7 @@ export default function CollapsibleSidebar({
             <Avatar
               src={session.user.image || undefined}
               alt={session.user.name || "User"}
-              sx={{ width: 32, height: 32, bgcolor: dashboardTokens.accent, color: "#000" }}
+              sx={{ width: 34, height: 34, bgcolor: dashboardTokens.accent, color: "#000", fontWeight: 700, fontSize: "0.9rem" }}
             >
               {session.user.name?.[0]?.toUpperCase()}
             </Avatar>
@@ -395,9 +394,9 @@ export default function CollapsibleSidebar({
               <Box sx={{ overflow: "hidden", flex: 1 }}>
                 <Typography
                   sx={{
-                    fontSize: "0.8rem",
+                    fontSize: "0.85rem",
                     fontWeight: 600,
-                    color: "#fafafa",
+                    color: dashboardTokens.text,
                     whiteSpace: "nowrap",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
@@ -407,8 +406,8 @@ export default function CollapsibleSidebar({
                 </Typography>
                 <Typography
                   sx={{
-                    fontSize: "0.7rem",
-                    color: "#a3a3a3",
+                    fontSize: "0.72rem",
+                    color: dashboardTokens.textMuted,
                     whiteSpace: "nowrap",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
@@ -424,7 +423,7 @@ export default function CollapsibleSidebar({
                       py: 0.25,
                       bgcolor: "rgba(239, 68, 68, 0.12)",
                       border: "1px solid rgba(239, 68, 68, 0.24)",
-                      borderRadius: 0.75,
+                      borderRadius: "6px",
                       display: "inline-block",
                     }}
                   >
@@ -452,8 +451,8 @@ export default function CollapsibleSidebar({
                 width: "100%",
                 color: dashboardTokens.danger,
                 bgcolor: "rgba(239, 68, 68, 0.08)",
-                borderRadius: 0.75,
-                "&:hover": { bgcolor: "rgba(239, 68, 68, 0.14)" },
+                borderRadius: "10px",
+                "&:hover": { bgcolor: "rgba(239, 68, 68, 0.15)" },
               }}
             >
               <LogoutIcon fontSize="small" />
@@ -469,14 +468,14 @@ export default function CollapsibleSidebar({
               alignItems: "center",
               gap: 1.5,
               px: 1.5,
-              py: 1,
+              py: 1.1,
               border: "none",
-              borderRadius: 0.75,
+              borderRadius: "10px",
               bgcolor: "rgba(239, 68, 68, 0.08)",
               color: dashboardTokens.danger,
               cursor: "pointer",
               transition: "all 0.15s ease",
-              "&:hover": { bgcolor: "rgba(239, 68, 68, 0.14)" },
+              "&:hover": { bgcolor: "rgba(239, 68, 68, 0.15)" },
             }}
           >
             <LogoutIcon sx={{ fontSize: 20 }} />

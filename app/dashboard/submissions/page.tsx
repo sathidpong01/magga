@@ -175,24 +175,26 @@ export default function MySubmissionsPage() {
           }
         />
       ) : (
-        <Grid container spacing={2}>
+        <Grid container spacing={2.5}>
           {submissions.map((submission) => (
             <Grid key={submission.id} size={12}>
               <DashboardSurface
                 sx={{
-                  p: { xs: 2, md: 2.5 },
+                  p: { xs: 2.5, md: 3 },
                   display: "flex",
                   flexDirection: { xs: "column", sm: "row" },
-                  gap: 2.25,
+                  gap: 2.5,
+                  alignItems: { xs: "stretch", sm: "center" },
                 }}
               >
                 <Box
                   sx={{
                     position: "relative",
-                    width: { xs: "100%", sm: 104 },
-                    height: { xs: 210, sm: 148 },
+                    width: { xs: "100%", sm: 105 },
+                    height: { xs: 200, sm: 140 },
+                    aspectRatio: { xs: "16 / 9", sm: "3 / 4" },
                     bgcolor: dashboardTokens.surfaceAlt,
-                    borderRadius: 1.2,
+                    borderRadius: "10px",
                     overflow: "hidden",
                     flexShrink: 0,
                   }}
@@ -201,7 +203,7 @@ export default function MySubmissionsPage() {
                     src={submission.coverImage}
                     alt={submission.title}
                     fill
-                    sizes="(max-width: 600px) 100vw, 104px"
+                    sizes="(max-width: 600px) 100vw, 105px"
                     style={{ objectFit: "cover" }}
                   />
                 </Box>
@@ -221,15 +223,16 @@ export default function MySubmissionsPage() {
                         variant="h6"
                         sx={{
                           color: dashboardTokens.text,
-                          fontWeight: 800,
-                          lineHeight: 1.2,
+                          fontWeight: 700,
+                          fontSize: "1.1rem",
+                          lineHeight: 1.3,
                         }}
                       >
                         {submission.title}
                       </Typography>
                       <Typography
                         variant="body2"
-                        sx={{ color: dashboardTokens.textMuted, mt: 0.5 }}
+                        sx={{ color: dashboardTokens.textMuted, mt: 0.5, fontSize: "0.85rem" }}
                       >
                         ส่งเมื่อ{" "}
                         {new Date(submission.submittedAt).toLocaleDateString(

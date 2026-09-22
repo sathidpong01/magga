@@ -82,8 +82,8 @@ const adDialogFieldSx = {
       borderColor: "rgba(255,255,255,0.16)",
     },
     "&.Mui-focused fieldset": {
-      borderColor: "#fbbf24",
-      boxShadow: "0 0 0 1px rgba(251,191,36,0.08)",
+      borderColor: dashboardTokens.accent,
+      boxShadow: `0 0 0 1px ${dashboardTokens.accentSoft}`,
     },
     "& .MuiSelect-icon": {
       color: "rgba(255,255,255,0.7)",

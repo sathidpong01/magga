@@ -67,29 +67,29 @@ type MangaDataTableProps = {
 };
 
 const shellSx = {
-  bgcolor: "#141414",
-  border: "1px solid rgba(255,255,255,0.06)",
-  borderRadius: 1.5,
+  bgcolor: dashboardTokens.surface,
+  border: `1px solid ${dashboardTokens.border}`,
+  borderRadius: "12px",
   backgroundImage: "none",
-  boxShadow: "0 16px 50px rgba(0,0,0,0.22)",
+  boxShadow: "0 8px 30px -4px rgba(0,0,0,0.4)",
 };
 
 const surfaceSx = {
-  bgcolor: "#171717",
-  border: "1px solid rgba(255,255,255,0.06)",
-  borderRadius: 1.5,
+  bgcolor: dashboardTokens.surfaceMuted,
+  border: `1px solid ${dashboardTokens.border}`,
+  borderRadius: "10px",
   backgroundImage: "none",
 };
 
 const inputSx = {
   "& .MuiOutlinedInput-root": {
-    bgcolor: "#0B0B0B",
-    borderRadius: 1.1,
-    "& fieldset": { borderColor: "rgba(255,255,255,0.06)" },
-    "&:hover fieldset": { borderColor: "rgba(255,255,255,0.14)" },
-    "&.Mui-focused fieldset": { borderColor: "#fbbf24" },
+    bgcolor: dashboardTokens.surfaceMuted,
+    borderRadius: "10px",
+    "& fieldset": { borderColor: dashboardTokens.border },
+    "&:hover fieldset": { borderColor: "rgba(255,255,255,0.15)" },
+    "&.Mui-focused fieldset": { borderColor: dashboardTokens.accent },
   },
-  "& .MuiInputLabel-root": { color: "#a3a3a3" },
+  "& .MuiInputLabel-root": { color: dashboardTokens.textMuted },
 };
 
 export default function MangaDataTable({

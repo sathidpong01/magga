@@ -107,7 +107,7 @@ export default async function AdminPage() {
       />
 
       {/* Stats Grid */}
-      <Grid container spacing={2.5} sx={{ mb: 4 }}>
+      <Grid container spacing={3} sx={{ mb: 4.5 }}>
         {/* Row 1: Core Operations */}
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <DashboardStat
@@ -169,64 +169,67 @@ export default async function AdminPage() {
         </Grid>
       </Grid>
 
-      <Divider sx={{ borderColor: "rgba(255,255,255,0.06)", mb: 3.5 }} />
+      <Divider sx={{ borderColor: "rgba(255,255,255,0.06)", mb: 4 }} />
 
       {/* Top 10 Popular Manga */}
-      <DashboardSurface sx={{ p: { xs: 2.5, md: 3 } }}>
+      <DashboardSurface sx={{ p: { xs: 2.5, md: 3.5 } }}>
         <DashboardSectionTitle
           title="เรื่องที่ถูกอ่านมากที่สุด"
           description="จัดอันดับจากยอดอ่านสะสม เพื่อให้เห็นเรื่องที่ควรตรวจและดูแลก่อน"
         />
 
-        <Grid container spacing={2.25} sx={{ mb: 2.25 }}>
+        <Grid container spacing={2.5} sx={{ mb: 3 }}>
           {rankedManga.slice(0, 3).map((manga, index) => (
             <Grid key={manga.id} size={{ xs: 12, sm: 4 }}>
               <Link href={`/${manga.slug || manga.id}`} prefetch={false} style={{ textDecoration: "none", display: "block" }}>
                 <Box
                   sx={{
                     ...dashboardInsetSurfaceSx,
-                    p: 1.1,
+                    p: 1.75,
                     height: "100%",
-                    transition: "border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease",
+                    borderRadius: "12px",
+                    transition: "border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease",
                     "&:hover": {
-                      borderColor: "rgba(251,191,36,0.32)",
+                      transform: "translateY(-3px)",
+                      borderColor: "rgba(217, 119, 6, 0.35)",
                       bgcolor: dashboardTokens.surfaceAlt,
-                      boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
+                      boxShadow: "0 10px 28px -4px rgba(0, 0, 0, 0.45)",
                     },
                   }}
                 >
-                  <Box sx={{ position: "relative", mb: 1.25 }}>
+                  <Box sx={{ position: "relative", mb: 1.5 }}>
                     <Box
                       sx={{
                         position: "absolute",
                         top: 10,
                         left: 10,
                         zIndex: 2,
-                        minWidth: 34,
-                        height: 34,
+                        minWidth: 28,
+                        height: 28,
                         px: 1,
-                        borderRadius: 0.9,
-                        bgcolor: index === 0 ? dashboardTokens.accent : "rgba(10,10,10,0.88)",
+                        borderRadius: "6px",
+                        bgcolor: index === 0 ? dashboardTokens.accent : "rgba(20, 20, 22, 0.85)",
+                        backdropFilter: index === 0 ? undefined : "blur(8px)",
                         color: index === 0 ? "#120d00" : dashboardTokens.text,
-                        border: index === 0 ? "none" : "1px solid rgba(255,255,255,0.1)",
+                        border: index === 0 ? "none" : "1px solid rgba(255,255,255,0.12)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        fontWeight: 900,
-                        fontSize: "0.95rem",
+                        fontWeight: 800,
+                        fontSize: "0.85rem",
                         fontVariantNumeric: "tabular-nums",
-                        boxShadow: "0 8px 18px rgba(0,0,0,0.35)",
+                        boxShadow: "0 4px 12px rgba(0,0,0,0.35)",
                       }}
                     >
-                      {index + 1}
+                      #{index + 1}
                     </Box>
                     <Box
                       sx={{
                         position: "relative",
                         width: "100%",
-                        aspectRatio: "2 / 3",
+                        aspectRatio: "3 / 4",
                         overflow: "hidden",
-                        borderRadius: 1,
+                        borderRadius: "10px",
                         bgcolor: dashboardTokens.surfaceMuted,
                       }}
                     >
@@ -244,7 +247,7 @@ export default async function AdminPage() {
                           position: "absolute",
                           inset: 0,
                           background:
-                            "linear-gradient(180deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.14) 45%, rgba(0,0,0,0.82) 100%)",
+                            "linear-gradient(180deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.15) 50%, rgba(0,0,0,0.85) 100%)",
                         }}
                       />
                     </Box>
@@ -253,11 +256,13 @@ export default async function AdminPage() {
                   <Typography
                     variant="caption"
                     sx={{
-                      color: dashboardTokens.textSoft,
+                      color: dashboardTokens.accent,
                       fontWeight: 700,
-                      letterSpacing: "0.08em",
+                      letterSpacing: "0.05em",
                       display: "block",
-                      mb: 0.7,
+                      mb: 0.5,
+                      textTransform: "uppercase",
+                      fontSize: "0.75rem",
                     }}
                   >
                     อันดับ {index + 1}
@@ -265,9 +270,10 @@ export default async function AdminPage() {
                   <Typography
                     sx={{
                       color: dashboardTokens.text,
-                      fontWeight: 800,
-                      lineHeight: 1.25,
-                      minHeight: { xs: "auto", sm: 48 },
+                      fontWeight: 700,
+                      fontSize: "1rem",
+                      lineHeight: 1.35,
+                      mb: 1,
                       display: "-webkit-box",
                       WebkitLineClamp: 2,
                       WebkitBoxOrient: "vertical",
@@ -279,14 +285,14 @@ export default async function AdminPage() {
                   <Typography
                     sx={{
                       color: dashboardTokens.accent,
-                      fontWeight: 800,
-                      mt: 0.8,
+                      fontWeight: 700,
                       fontSize: "0.95rem",
+                      fontVariantNumeric: "tabular-nums",
                     }}
                   >
                     {manga.viewCount?.toLocaleString() || 0} ครั้ง
                   </Typography>
-                  <Typography sx={{ color: dashboardTokens.textSoft, fontSize: "0.78rem", mt: 0.3 }}>
+                  <Typography sx={{ color: dashboardTokens.textMuted, fontSize: "0.78rem", mt: 0.3 }}>
                     ผู้ชมไม่ซ้ำ {manga.uniqueVisitors?.toLocaleString() ?? "—"}
                   </Typography>
                 </Box>
@@ -295,7 +301,7 @@ export default async function AdminPage() {
           ))}
         </Grid>
 
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.85 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
           {rankedManga.slice(3).map((manga, index) => (
             <Link
               key={manga.id}
@@ -308,38 +314,40 @@ export default async function AdminPage() {
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  gap: 1.5,
-                  p: 1.2,
+                  gap: 2,
+                  p: 1.5,
+                  borderRadius: "10px",
                   ...dashboardInsetSurfaceSx,
                   textDecoration: "none",
                   transition: "all 0.15s ease",
                   "&:hover": {
                     bgcolor: dashboardTokens.surfaceAlt,
-                    borderColor: "rgba(255,255,255,0.12)",
-                    transform: "translateX(3px)",
+                    borderColor: "rgba(217, 119, 6, 0.25)",
+                    transform: "translateX(4px)",
                   },
                 }}
               >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0, flex: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.75, minWidth: 0, flex: 1 }}>
                   <Typography
                     variant="h6"
                     sx={{
-                      width: 34,
-                      fontWeight: 800,
+                      width: 32,
+                      fontWeight: 700,
+                      fontSize: "0.95rem",
                       color: index === 0 ? dashboardTokens.accent : dashboardTokens.textMuted,
                       textAlign: "center",
                       fontVariantNumeric: "tabular-nums",
                       flexShrink: 0,
                     }}
                   >
-                    {index + 4}
+                    #{index + 4}
                   </Typography>
                   <Box
                     sx={{
                       position: "relative",
-                      width: 42,
-                      height: 58,
-                      borderRadius: 0.75,
+                      width: 45,
+                      height: 60,
+                      borderRadius: "6px",
                       overflow: "hidden",
                       bgcolor: dashboardTokens.surfaceMuted,
                       flexShrink: 0,
@@ -350,7 +358,7 @@ export default async function AdminPage() {
                         src={manga.coverImage}
                         alt={manga.title}
                         fill
-                        sizes="84px"
+                        sizes="90px"
                         style={{ objectFit: "cover" }}
                       />
                     ) : null}
@@ -358,24 +366,25 @@ export default async function AdminPage() {
                   <Typography
                     variant="body2"
                     sx={{
-                      fontWeight: 700,
+                      fontWeight: 600,
+                      fontSize: "0.9rem",
                       color: dashboardTokens.text,
                       minWidth: 0,
                       display: "-webkit-box",
-                      WebkitLineClamp: 2,
+                      WebkitLineClamp: 1,
                       WebkitBoxOrient: "vertical",
                       overflow: "hidden",
-                      lineHeight: 1.35,
+                      lineHeight: 1.4,
                     }}
                   >
                     {manga.title}
                   </Typography>
                 </Box>
                 <Box sx={{ textAlign: "right", flexShrink: 0 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 800, color: dashboardTokens.accent, lineHeight: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 700, color: dashboardTokens.accent, lineHeight: 1.2, fontVariantNumeric: "tabular-nums" }}>
                     {manga.viewCount?.toLocaleString() || 0}
                   </Typography>
-                  <Typography variant="caption" sx={{ color: dashboardTokens.textSoft, fontSize: "0.7rem", display: "block", mt: 0.25 }}>
+                  <Typography variant="caption" sx={{ color: dashboardTokens.textMuted, fontSize: "0.72rem", display: "block", mt: 0.25 }}>
                     ผู้ชม {manga.uniqueVisitors?.toLocaleString() ?? "—"}
                   </Typography>
                 </Box>

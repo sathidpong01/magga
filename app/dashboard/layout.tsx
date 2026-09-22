@@ -17,7 +17,7 @@ export default function DashboardLayout({
           minHeight: "100vh",
           color: dashboardTokens.text,
           backgroundImage:
-            "radial-gradient(circle at top left, rgba(251,191,36,0.08), transparent 28%), radial-gradient(circle at top right, rgba(255,255,255,0.04), transparent 24%)",
+            "radial-gradient(circle at 10% 0%, rgba(217, 119, 6, 0.05), transparent 40%), radial-gradient(circle at 90% 10%, rgba(255, 255, 255, 0.02), transparent 30%)",
         }}
       >
         <UnifiedDashboardSidebar />
@@ -26,16 +26,16 @@ export default function DashboardLayout({
           sx={{
             flexGrow: 1,
             minWidth: 0,
-            px: { xs: 2, md: 3 },
-            py: { xs: 2, md: 3 },
-            pt: { xs: `${56 + 20}px`, md: 3 },
+            px: { xs: 2.5, sm: 3.5, md: 4, lg: 5 },
+            py: { xs: 3, md: 4.5 },
+            pt: { xs: `${56 + 24}px`, md: 4.5 },
             width: "100%",
           }}
         >
           <Box
             sx={{
               width: "100%",
-              maxWidth: { xl: 1480 },
+              maxWidth: { xl: 1520 },
               mx: "auto",
             }}
           >

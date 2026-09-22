@@ -7,8 +7,8 @@ const dashboardTheme = createTheme({
   palette: {
     mode: "dark",
     background: {
-      default: maggaColors.midnightCanvas,
-      paper: maggaColors.charcoalSurface,
+      default: maggaColors.background,
+      paper: maggaColors.surface,
     },
     text: {
       primary: maggaColors.textPrimary,
@@ -19,20 +19,23 @@ const dashboardTheme = createTheme({
     },
   },
   shape: {
-    borderRadius: maggaRadii.md,
+    borderRadius: 10,
   },
   components: {
     MuiPaper: {
       styleOverrides: {
         root: {
-          borderRadius: 8,
+          borderRadius: 12,
+          backgroundImage: "none",
         },
       },
     },
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: 8,
+          borderRadius: 10,
+          textTransform: "none",
+          fontWeight: 600,
         },
       },
     },
@@ -46,59 +49,74 @@ const dashboardTheme = createTheme({
     MuiIconButton: {
       styleOverrides: {
         root: {
-          borderRadius: 8,
+          borderRadius: 10,
         },
       },
     },
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
-          borderRadius: 8,
+          borderRadius: 10,
+          backgroundColor: "rgba(255, 255, 255, 0.02)",
+          "& fieldset": {
+            borderColor: "rgba(255, 255, 255, 0.08)",
+          },
+          "&:hover fieldset": {
+            borderColor: "rgba(255, 255, 255, 0.16)",
+          },
+          "&.Mui-focused fieldset": {
+            borderColor: maggaColors.archiveGold,
+          },
         },
         input: {
-          color: "#fafafa",
-          WebkitTextFillColor: "#fafafa",
+          color: maggaColors.textPrimary,
+          WebkitTextFillColor: maggaColors.textPrimary,
         },
       },
     },
     MuiInputBase: {
       styleOverrides: {
         input: {
-          color: "#fafafa",
-          WebkitTextFillColor: "#fafafa",
+          color: maggaColors.textPrimary,
+          WebkitTextFillColor: maggaColors.textPrimary,
         },
       },
     },
     MuiFilledInput: {
       styleOverrides: {
         root: {
-          borderRadius: 8,
+          borderRadius: 10,
         },
       },
     },
     MuiSelect: {
       styleOverrides: {
         select: {
-          borderRadius: 8,
-          color: "#fafafa",
-          WebkitTextFillColor: "#fafafa",
+          borderRadius: 10,
+          color: maggaColors.textPrimary,
+          WebkitTextFillColor: maggaColors.textPrimary,
         },
         icon: {
-          color: "rgba(255,255,255,0.72)",
+          color: maggaColors.textSecondary,
         },
       },
     },
     MuiInputLabel: {
       styleOverrides: {
         root: {
-          color: "#a3a3a3",
+          color: maggaColors.textSecondary,
+          "&.Mui-focused": {
+            color: maggaColors.archiveGold,
+          },
         },
       },
     },
     MuiDialog: {
       styleOverrides: {
         paper: {
-          borderRadius: 8,
+          borderRadius: 14,
+          backgroundColor: maggaColors.surface,
+          border: `1px solid ${maggaColors.border}`,
         },
       },
     },
