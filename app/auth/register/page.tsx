@@ -45,14 +45,14 @@ function getStrengthLabel(score: number): { label: string; color: string } {
 }
 
 const textFieldSx = {
-  "& .MuiInputLabel-root": { color: maggaColors.textMuted, fontWeight: 500 },
+  "& .MuiInputLabel-root": { color: "#a1a1aa", fontWeight: 500 },
   "& .MuiOutlinedInput-root": {
-    color: maggaColors.textPrimary,
-    bgcolor: "#141416",
+    color: "#f4f4f5",
+    bgcolor: "#101012",
     borderRadius: "10px",
-    "& fieldset": { borderColor: maggaColors.border },
+    "& fieldset": { borderColor: "rgba(255, 255, 255, 0.08)" },
     "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.16)" },
-    "&.Mui-focused fieldset": { borderColor: maggaColors.archiveGold, boxShadow: `0 0 0 1px ${maggaColors.archiveGoldSoft}` },
+    "&.Mui-focused fieldset": { borderColor: "#d97706", boxShadow: "0 0 0 1px rgba(217, 119, 6, 0.25)" },
   },
 };
 
@@ -136,10 +136,11 @@ function RegisterForm() {
         sx={{
           width: "100%",
           maxWidth: 440,
-          bgcolor: maggaColors.surface,
-          border: `1px solid ${maggaColors.border}`,
+          bgcolor: "#16171a",
+          backgroundImage: "none !important",
+          border: "1px solid rgba(255, 255, 255, 0.08)",
           borderRadius: "14px",
-          boxShadow: "0 24px 60px rgba(0,0,0,0.55)",
+          boxShadow: "0 24px 60px rgba(0,0,0,0.75)",
           overflow: "hidden",
         }}
       >
@@ -161,11 +162,11 @@ function RegisterForm() {
               fontWeight: 700,
               mb: 0.5,
               letterSpacing: "-0.02em",
-              color: maggaColors.textPrimary,
+              color: "#f4f4f5",
             }}>
             ยินดีต้อนรับสู่ MAGGA
           </Typography>
-          <Typography variant="body2" sx={{ color: maggaColors.textMuted }}>
+          <Typography variant="body2" sx={{ color: "#a1a1aa" }}>
             สร้างบัญชีใหม่เพื่อเริ่มต้นใช้งาน
           </Typography>
         </Box>
@@ -223,7 +224,7 @@ function RegisterForm() {
                         edge="end"
                         aria-label={showPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
                         aria-pressed={showPassword}
-                        sx={{ color: maggaColors.textMuted }}
+                        sx={{ color: "#71717a" }}
                       >
                         {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
                       </IconButton>
@@ -277,7 +278,7 @@ function RegisterForm() {
                         edge="end"
                         aria-label={showConfirm ? "ซ่อนรหัสผ่านยืนยัน" : "แสดงรหัสผ่านยืนยัน"}
                         aria-pressed={showConfirm}
-                        sx={{ color: maggaColors.textMuted }}
+                        sx={{ color: "#71717a" }}
                       >
                         {showConfirm ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
                       </IconButton>
@@ -295,15 +296,19 @@ function RegisterForm() {
               sx={{
                 mt: 2.5,
                 mb: 1.5,
-                py: 1.2,
-                bgcolor: maggaColors.archiveGold,
-                color: "#000",
+                py: 1.1,
+                background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+                color: "#0f0f14",
                 fontWeight: 700,
                 fontSize: "0.95rem",
                 borderRadius: "10px",
+                letterSpacing: 0,
+                boxShadow: "0 2px 10px rgba(217, 119, 6, 0.2)",
                 textTransform: "none",
-                boxShadow: "none",
-                "&:hover": { bgcolor: maggaColors.archiveGoldHover, boxShadow: "none" },
+                "&:hover": {
+                  background: "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
+                  boxShadow: "0 4px 16px rgba(217, 119, 6, 0.35)",
+                },
                 "&.Mui-disabled": { bgcolor: "rgba(217, 119, 6, 0.4)", color: "rgba(0, 0, 0, 0.5)" },
               }}
             >
@@ -311,7 +316,7 @@ function RegisterForm() {
             </Button>
           </Box>
 
-          <Divider sx={{ my: 2, borderColor: maggaColors.border, "& .MuiDivider-wrapper": { color: maggaColors.textMuted, fontSize: "0.8rem" } }}>
+          <Divider sx={{ my: 2, borderColor: "rgba(255, 255, 255, 0.08)", "& .MuiDivider-wrapper": { color: "#71717a", fontSize: "0.8rem" } }}>
             หรือ
           </Divider>
 
@@ -322,25 +327,26 @@ function RegisterForm() {
             onClick={() => {
               void signIn.social({ provider: "google", callbackURL: callbackUrl });
             }}
+            disabled={loading}
             sx={{
-              py: 1.1,
-              color: maggaColors.textPrimary,
-              borderColor: maggaColors.border,
+              py: 1.05,
+              color: "#f4f4f5",
+              borderColor: "rgba(255, 255, 255, 0.1)",
               borderRadius: "10px",
               fontWeight: 600,
               fontSize: "0.92rem",
-              bgcolor: "rgba(255,255,255,0.02)",
+              bgcolor: "rgba(255,255,255,0.03)",
               textTransform: "none",
-              "&:hover": { borderColor: maggaColors.archiveGold, bgcolor: "rgba(217, 119, 6, 0.08)" },
+              "&:hover": { borderColor: "rgba(255, 255, 255, 0.2)", bgcolor: "rgba(255, 255, 255, 0.06)" },
             }}
           >
-            ดำเนินการผ่าน Google
+            {loading ? "กำลังดำเนินการ..." : "ดำเนินการผ่าน Google"}
           </Button>
 
-          <Box sx={{ textAlign: "center", mt: 3 }}>
-            <Typography variant="body2" sx={{ color: maggaColors.textMuted }}>
+          <Box sx={{ textAlign: "center", mt: 3, pt: 2, borderTop: "1px solid rgba(255, 255, 255, 0.08)" }}>
+            <Typography variant="body2" sx={{ color: "#a1a1aa" }}>
               มีบัญชีอยู่แล้ว?{" "}
-              <Link href="/auth/signin" style={{ color: maggaColors.archiveGoldHover, textDecoration: "none", fontWeight: 600 }}>
+              <Link href="/auth/signin" style={{ color: "#f59e0b", textDecoration: "none", fontWeight: 600 }}>
                 เข้าสู่ระบบ
               </Link>
             </Typography>

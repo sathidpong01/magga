@@ -14,8 +14,8 @@ const darkTheme = createTheme({
   palette: {
     mode: "dark",
     background: {
-      default: maggaColors.midnightCanvas,
-      paper: maggaColors.charcoalSurface,
+      default: maggaColors.background,
+      paper: maggaColors.surface,
     },
     primary: {
       main: maggaColors.archiveGold,
@@ -48,6 +48,22 @@ const darkTheme = createTheme({
           backdropFilter: "none",
           boxShadow: "none",
           borderBottom: "none",
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          backgroundImage: "none",
+        },
+      },
+    },
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          backgroundImage: "none",
+          backgroundColor: "#16171a",
+          border: "1px solid rgba(255, 255, 255, 0.08)",
         },
       },
     },

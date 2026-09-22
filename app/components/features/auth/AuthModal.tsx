@@ -100,15 +100,15 @@ export default function AuthModal({
   };
 
   const textFieldSx = {
-    "& .MuiInputLabel-root": { color: maggaColors.textMuted, fontWeight: 500 },
+    "& .MuiInputLabel-root": { color: "#a1a1aa", fontWeight: 500 },
     "& .MuiOutlinedInput-root": {
-      color: maggaColors.textPrimary,
-      bgcolor: "#141416",
+      color: "#f4f4f5",
+      bgcolor: "#101012",
       borderRadius: "10px",
       fontSize: "0.95rem",
-      "& fieldset": { borderColor: maggaColors.border },
+      "& fieldset": { borderColor: "rgba(255, 255, 255, 0.08)" },
       "&:hover fieldset": { borderColor: "rgba(255, 255, 255, 0.16)" },
-      "&.Mui-focused fieldset": { borderColor: maggaColors.archiveGold, boxShadow: `0 0 0 1px ${maggaColors.archiveGoldSoft}` },
+      "&.Mui-focused fieldset": { borderColor: "#d97706", boxShadow: "0 0 0 1px rgba(217, 119, 6, 0.25)" },
     },
   };
 
@@ -119,15 +119,17 @@ export default function AuthModal({
       maxWidth="xs"
       fullWidth
       slotProps={{
-        backdrop: { sx: { backgroundColor: "rgba(0,0,0,0.85)", backdropFilter: "blur(6px)" } },
+        backdrop: { sx: { backgroundColor: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)" } },
         paper: {
+          elevation: 0,
           sx: {
             overflow: "hidden",
-            bgcolor: maggaColors.surface,
-            color: maggaColors.textPrimary,
+            backgroundImage: "none !important",
+            bgcolor: "#16171a !important",
+            color: "#f4f4f5",
             borderRadius: "14px",
-            border: `1px solid ${maggaColors.border}`,
-            boxShadow: "0 24px 60px rgba(0,0,0,0.55)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            boxShadow: "0 24px 60px rgba(0,0,0,0.75)",
           },
         }
       }}>
@@ -147,8 +149,8 @@ export default function AuthModal({
               position: "absolute",
               top: 16,
               right: 16,
-              color: maggaColors.textMuted,
-              border: `1px solid ${maggaColors.border}`,
+              color: "#a1a1aa",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
               bgcolor: "rgba(255,255,255,0.02)",
               borderRadius: "8px",
               width: 32,
@@ -178,11 +180,11 @@ export default function AuthModal({
                 mb: 0.5,
                 letterSpacing: "-0.02em",
                 lineHeight: 1.2,
-                color: maggaColors.textPrimary,
+                color: "#f4f4f5",
               }}>
               ยินดีต้อนรับกลับ
             </Typography>
-            <Typography variant="body2" sx={{ color: maggaColors.textMuted, maxWidth: 320, lineHeight: 1.55, fontSize: "0.9rem" }}>
+            <Typography variant="body2" sx={{ color: "#a1a1aa", maxWidth: 320, lineHeight: 1.55, fontSize: "0.9rem" }}>
               เข้าสู่ระบบเพื่อใช้งานโปรไฟล์ ความคิดเห็น และการตั้งค่าของคุณต่อเนื่อง
             </Typography>
           </Box>
@@ -211,7 +213,7 @@ export default function AuthModal({
           )}
 
           <Box component="form" onSubmit={handleSignIn}>
-            <Typography id="auth-modal-username-label" variant="caption" sx={{ color: maggaColors.textSecondary, fontWeight: 600, letterSpacing: "0.01em", fontSize: "0.82rem" }}>
+            <Typography id="auth-modal-username-label" variant="caption" sx={{ color: "#a1a1aa", fontWeight: 500, letterSpacing: "0.01em", fontSize: "0.82rem" }}>
               ชื่อผู้ใช้ หรือ อีเมล
             </Typography>
             <TextField
@@ -233,14 +235,14 @@ export default function AuthModal({
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">
-                      <AlternateEmailRoundedIcon sx={{ color: maggaColors.textMuted, fontSize: 18 }} />
+                      <AlternateEmailRoundedIcon sx={{ color: "#71717a", fontSize: 18 }} />
                     </InputAdornment>
                   ),
                 }
               }}
             />
 
-            <Typography id="auth-modal-password-label" variant="caption" sx={{ color: maggaColors.textSecondary, fontWeight: 600, letterSpacing: "0.01em", fontSize: "0.82rem" }}>
+            <Typography id="auth-modal-password-label" variant="caption" sx={{ color: "#a1a1aa", fontWeight: 500, letterSpacing: "0.01em", fontSize: "0.82rem" }}>
               รหัสผ่าน
             </Typography>
             <TextField
@@ -261,7 +263,7 @@ export default function AuthModal({
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">
-                      <LockRoundedIcon sx={{ color: maggaColors.textMuted, fontSize: 18 }} />
+                      <LockRoundedIcon sx={{ color: "#71717a", fontSize: 18 }} />
                     </InputAdornment>
                   ),
                   endAdornment: (
@@ -270,7 +272,7 @@ export default function AuthModal({
                         onClick={() => setShowPassword(!showPassword)}
                         edge="end"
                         aria-label={showPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
-                        sx={{ color: maggaColors.textMuted }}
+                        sx={{ color: "#71717a" }}
                       >
                         {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
                       </IconButton>
@@ -289,15 +291,18 @@ export default function AuthModal({
                 mt: 2.25,
                 mb: 1.5,
                 py: 1.1,
-                bgcolor: maggaColors.archiveGold,
-                color: "#000",
+                background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+                color: "#0f0f14",
                 fontWeight: 700,
                 fontSize: "0.95rem",
                 borderRadius: "10px",
                 letterSpacing: 0,
-                boxShadow: "none",
+                boxShadow: "0 2px 10px rgba(217, 119, 6, 0.2)",
                 textTransform: "none",
-                "&:hover": { bgcolor: maggaColors.archiveGoldHover, boxShadow: "none" },
+                "&:hover": {
+                  background: "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
+                  boxShadow: "0 4px 16px rgba(217, 119, 6, 0.35)",
+                },
                 "&.Mui-disabled": { bgcolor: "rgba(217, 119, 6, 0.4)", color: "rgba(0, 0, 0, 0.5)" },
               }}
             >
@@ -305,7 +310,7 @@ export default function AuthModal({
             </Button>
           </Box>
 
-          <Divider sx={{ my: 2, borderColor: maggaColors.border, "& .MuiDivider-wrapper": { color: maggaColors.textMuted, fontSize: "0.8rem" } }}>
+          <Divider sx={{ my: 2, borderColor: "rgba(255, 255, 255, 0.08)", "& .MuiDivider-wrapper": { color: "#71717a", fontSize: "0.8rem" } }}>
             หรือ
           </Divider>
 
@@ -317,14 +322,14 @@ export default function AuthModal({
             disabled={loading}
             sx={{
               py: 1.05,
-              color: maggaColors.textPrimary,
-              borderColor: maggaColors.border,
+              color: "#f4f4f5",
+              borderColor: "rgba(255, 255, 255, 0.1)",
               borderRadius: "10px",
               fontWeight: 600,
               fontSize: "0.92rem",
-              bgcolor: "rgba(255,255,255,0.02)",
+              bgcolor: "rgba(255,255,255,0.03)",
               textTransform: "none",
-              "&:hover": { borderColor: maggaColors.archiveGold, bgcolor: "rgba(217, 119, 6, 0.08)" },
+              "&:hover": { borderColor: "rgba(255, 255, 255, 0.2)", bgcolor: "rgba(255, 255, 255, 0.06)" },
             }}
           >
             {loading ? "กำลังดำเนินการ..." : "ดำเนินการผ่าน Google"}
@@ -334,7 +339,7 @@ export default function AuthModal({
             sx={{
               mt: 2.75,
               pt: 2,
-              borderTop: `1px solid ${maggaColors.border}`,
+              borderTop: "1px solid rgba(255, 255, 255, 0.08)",
               display: "flex",
               justifyContent: "center",
               alignItems: "center",
@@ -342,14 +347,14 @@ export default function AuthModal({
               flexWrap: "wrap",
             }}
           >
-            <Typography variant="body2" sx={{ color: maggaColors.textMuted, fontSize: "0.9rem" }}>
+            <Typography variant="body2" sx={{ color: "#a1a1aa", fontSize: "0.9rem" }}>
               ยังไม่มีบัญชี?
             </Typography>
             <Typography variant="body2" sx={{ fontSize: "0.9rem" }}>
               <Link
                 href="/auth/register"
                 onClick={onClose}
-                style={{ color: maggaColors.archiveGoldHover, textDecoration: "none", fontWeight: 600 }}
+                style={{ color: "#f59e0b", textDecoration: "none", fontWeight: 600 }}
               >
                 สมัครสมาชิก
               </Link>
