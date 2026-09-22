@@ -101,8 +101,8 @@ const MangaCard = ({ manga, priority = false }: MangaCardProps) => {
             <Box
               sx={{
                 position: "absolute",
-                top: 8,
-                right: 8,
+                top: 10,
+                right: 10,
                 zIndex: 2,
               }}
             >
@@ -110,16 +110,18 @@ const MangaCard = ({ manga, priority = false }: MangaCardProps) => {
                 label={manga.category.name}
                 size="small"
                 sx={{
-                  bgcolor: "rgba(18, 18, 22, 0.8)",
+                  bgcolor: "rgba(18, 18, 22, 0.85)",
                   backdropFilter: "blur(8px)",
                   WebkitBackdropFilter: "blur(8px)",
-                  border: "1px solid rgba(255, 255, 255, 0.12)",
-                  color: "#e4e4e7",
-                  fontWeight: 500,
-                  height: 22,
-                  fontSize: "0.68rem",
-                  letterSpacing: "0.02em",
-                  boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+                  border: "1px solid rgba(255, 255, 255, 0.15)",
+                  color: "#f4f4f5",
+                  fontWeight: 600,
+                  height: 28,
+                  fontSize: "0.8rem",
+                  letterSpacing: "0.03em",
+                  px: 0.5,
+                  borderRadius: "6px",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.4)",
                 }}
               />
             </Box>
@@ -152,6 +154,7 @@ const MangaCard = ({ manga, priority = false }: MangaCardProps) => {
               WebkitBoxOrient: "vertical",
               lineHeight: 1.3,
               fontSize: "0.92rem",
+              minHeight: "2.6em",
               transition: "color 0.15s ease",
             }}
           >

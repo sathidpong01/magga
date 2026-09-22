@@ -258,15 +258,16 @@ export default function Header() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "flex-end",
+                minWidth: 96,
               }}
             >
               {isPending ? (
                 <Box
                   sx={{
-                    width: 36,
+                    width: 88,
                     height: 36,
                     borderRadius: "8px",
-                    bgcolor: "rgba(255,255,255,0.08)",
+                    bgcolor: "rgba(255,255,255,0.06)",
                   }}
                 />
               ) : session ? (

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Box, Typography, Button, Paper, Slide } from "@mui/material";
+import { Box, Typography, Button, Paper, Slide, Portal } from "@mui/material";
 
 export default function CookieConsent() {
   const [isVisible, setIsVisible] = useState(false);
@@ -29,23 +29,26 @@ export default function CookieConsent() {
   if (!isVisible) return null;
 
   return (
-    <Slide direction="up" in={isVisible} mountOnEnter unmountOnExit>
-      <Paper
-        elevation={8}
-        sx={{
-          position: "fixed",
-          bottom: { xs: 12, md: 20 },
-          left: { xs: 12, md: 20 },
-          right: { xs: 12, md: "auto" },
-          maxWidth: { xs: "100%", md: 320 },
-          p: 2,
-          borderRadius: 1.5,
-          bgcolor: "#171717",
-          border: "none",
-          zIndex: 1300,
-          boxShadow: "0 12px 40px -8px rgba(0,0,0,0.5)",
-        }}
-      >
+    <Portal>
+      <Slide direction="up" in={isVisible} mountOnEnter unmountOnExit>
+        <Paper
+          elevation={8}
+          sx={{
+            position: "fixed",
+            bottom: { xs: 12, md: 20 },
+            left: { xs: 12, md: 20 },
+            right: "auto",
+            width: { xs: "calc(100% - 24px)", sm: 320 },
+            maxWidth: 320,
+            boxSizing: "border-box",
+            p: 2,
+            borderRadius: 1.5,
+            bgcolor: "#171717",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            zIndex: 1300,
+            boxShadow: "0 12px 40px -8px rgba(0,0,0,0.5)",
+          }}
+        >
         {/* Main Content Row */}
         <Box
           sx={{
@@ -128,5 +131,6 @@ export default function CookieConsent() {
         </Box>
       </Paper>
     </Slide>
+  </Portal>
   );
 }

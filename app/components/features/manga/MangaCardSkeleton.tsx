@@ -27,13 +27,13 @@ export default function MangaCardSkeleton() {
         {/* Category Chip Skeleton on top right */}
         <Skeleton
           variant="rounded"
-          width={50}
-          height={22}
+          width={56}
+          height={28}
           sx={{
             position: "absolute",
-            top: 8,
-            right: 8,
-            borderRadius: "5px",
+            top: 10,
+            right: 10,
+            borderRadius: "6px",
             bgcolor: "rgba(255, 255, 255, 0.08)",
           }}
         />

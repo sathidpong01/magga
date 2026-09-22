@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
@@ -45,13 +45,13 @@ export default function AgeVerificationModal() {
 
         paper: {
           sx: {
-            borderRadius: 1,
+            borderRadius: 1.5,
             textAlign: "center",
             p: 4,
             maxWidth: "440px",
-            background: "linear-gradient(145deg, #1a1a2e 0%, #0f0f1a 50%, #1a1025 100%)",
-            border: "1px solid rgba(168, 85, 247, 0.15)",
-            boxShadow: "0 20px 40px -12px rgba(0, 0, 0, 0.6)",
+            background: "linear-gradient(145deg, #1e1e22 0%, #141416 100%)",
+            border: "1px solid rgba(217, 119, 6, 0.2)",
+            boxShadow: "0 20px 40px -12px rgba(0, 0, 0, 0.8)",
           },
         }
       }}>
@@ -60,12 +60,12 @@ export default function AgeVerificationModal() {
         <Typography
           variant="subtitle1"
           sx={{
-            color: "rgba(168, 85, 247, 0.9)",
+            color: "#f59e0b",
             fontWeight: 600,
             mb: 2,
             fontSize: "1.1rem",
             textTransform: "uppercase",
-            letterSpacing: "3px",
+            letterSpacing: "2px",
           }}
         >
           ยืนยันอายุ
@@ -181,7 +181,7 @@ export default function AgeVerificationModal() {
             left: 0,
             right: 0,
             height: "2px",
-            background: "linear-gradient(90deg, transparent, rgba(168, 85, 247, 0.5), rgba(251, 191, 36, 0.5), transparent)",
+            background: "linear-gradient(90deg, transparent, rgba(217, 119, 6, 0.5), rgba(251, 191, 36, 0.5), transparent)",
           }}
         />
       </DialogContent>
