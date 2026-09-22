@@ -1097,8 +1097,10 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                         placeholder="เลือกหรือสร้างผู้แต่ง"
                         sx={filledFieldSx}
                         slotProps={{
+                          ...params.slotProps,
+
                           input: {
-                            ...params.InputProps,
+                            ...params.slotProps.input,
                             ...filledInputProps,
                           }
                         }}
@@ -1365,8 +1367,10 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                         variant="filled"
                         sx={filledFieldSx}
                         slotProps={{
+                          ...params.slotProps,
+
                           input: {
-                            ...params.InputProps,
+                            ...params.slotProps.input,
                             ...filledInputProps,
                           }
                         }}
@@ -1465,8 +1469,10 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                         placeholder="เลือกหรือสร้างแท็ก"
                         sx={filledFieldSx}
                         slotProps={{
+                          ...params.slotProps,
+
                           input: {
-                            ...params.InputProps,
+                            ...params.slotProps.input,
                             ...filledInputProps,
                           }
                         }}
