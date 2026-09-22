@@ -133,8 +133,16 @@ export default function SearchFilters({ categories, tags }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
+  const isInitialMount = useRef(true);
+  const currentAuthor = searchParams.get("author");
+
   const applyFilters = useCallback(() => {
     const params = new URLSearchParams();
+
+    // Preserve author filter if present
+    if (currentAuthor) {
+      params.set("author", currentAuthor);
+    }
 
     // Only add params if they differ from defaults
     if (search.trim() !== "") params.set("search", search);
@@ -150,10 +158,15 @@ export default function SearchFilters({ categories, tags }: Props) {
     } else {
       router.push("/");
     }
-  }, [search, category, sort, selectedTags, router]);
+  }, [search, category, sort, selectedTags, currentAuthor, router]);
 
-  // Debounce search
+  // Debounce search (skip initial mount to prevent clearing URL params)
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
     const timer = setTimeout(() => {
       applyFilters();
     }, 500);
@@ -268,7 +281,11 @@ export default function SearchFilters({ categories, tags }: Props) {
                 <TextField
                   {...params}
                   id={searchInputId}
-                  placeholder="ค้นหาชื่อเรื่องหรือนักวาด..."
+                  placeholder={
+                    currentAuthor
+                      ? `ค้นหาในผลงานของ ${currentAuthor}...`
+                      : "ค้นหาชื่อเรื่องหรือนักวาด..."
+                  }
                   variant="standard"
                   sx={{
                     "& input": {
