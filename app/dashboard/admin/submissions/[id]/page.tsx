@@ -587,10 +587,8 @@ export default function SubmissionDetailPage({
                           label="แท็ก"
                           variant="filled"
                           slotProps={{
-                            ...params.slotProps,
-
                             input: {
-                              ...params.slotProps.input,
+                              ...params.InputProps,
                               disableUnderline: true,
                               sx: { borderRadius: 1 },
                             }

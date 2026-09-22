@@ -413,10 +413,8 @@ export default function SearchFilters({ categories, tags }: Props) {
                       },
                     }}
                     slotProps={{
-                      ...params.slotProps,
-
                       input: {
-                        ...params.slotProps.input,
+                        ...params.InputProps,
                         disableUnderline: true,
                         startAdornment: (
                           <SearchIcon color="action" sx={{ mr: 1 }} />
@@ -424,7 +422,7 @@ export default function SearchFilters({ categories, tags }: Props) {
                       },
 
                       htmlInput: {
-                        ...params.slotProps.htmlInput,
+                        ...params.inputProps,
                         id: searchInputId,
                       }
                     }} />
@@ -461,15 +459,13 @@ export default function SearchFilters({ categories, tags }: Props) {
                     variant="standard"
                     placeholder="Search for tag"
                     slotProps={{
-                      ...params.slotProps,
-
                       input: {
-                        ...params.slotProps.input,
+                        ...params.InputProps,
                         disableUnderline: true,
                       },
 
                       htmlInput: {
-                        ...params.slotProps.htmlInput,
+                        ...params.inputProps,
                         id: tagsInputId,
                       }
                     }} />
