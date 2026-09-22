@@ -44,7 +44,7 @@ import UploadProgress, {
 } from "@/app/components/ui/UploadProgress";
 import { authFetch } from "@/lib/auth-fetch";
 import { normalizeMangaPages } from "@/lib/manga-pages";
-import { extractFirstUploadUrl } from "@/lib/upload-response";
+import { extractFirstUploadUrl } from "@/lib/storage/client";
 import {
   DashboardPageHeader,
   DashboardSectionTitle,

@@ -3,11 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
   checkRateLimit: vi.fn(),
-  readValidatedImageFile: vi.fn(),
   isUserBanned: vi.fn(),
   isAdminRole: vi.fn(),
-  send: vi.fn(),
-  getR2PublicUrl: vi.fn((key: string) => `https://cdn.example.com/${key}`),
+  storeAssets: vi.fn(),
 }));
 
 vi.mock("@/lib/auth", () => ({
@@ -22,30 +20,13 @@ vi.mock("@/lib/rate-limit", () => ({
   checkRateLimit: mocks.checkRateLimit,
 }));
 
-vi.mock("@/lib/image-security", () => ({
-  readValidatedImageFile: mocks.readValidatedImageFile,
-  sanitizeObjectKeySegment: vi.fn((value: string) => value),
-}));
-
 vi.mock("@/lib/session-utils", () => ({
   isUserBanned: mocks.isUserBanned,
   isAdminRole: mocks.isAdminRole,
 }));
 
-vi.mock("@/lib/r2", () => ({
-  r2Client: {
-    send: mocks.send,
-  },
-  R2_BUCKET: "test-bucket",
-  getR2PublicUrl: mocks.getR2PublicUrl,
-}));
-
-vi.mock("@aws-sdk/client-s3", () => ({
-  PutObjectCommand: class PutObjectCommand {
-    constructor(input: Record<string, unknown>) {
-      Object.assign(this, input);
-    }
-  },
+vi.mock("@/lib/storage", () => ({
+  storeAssets: mocks.storeAssets,
 }));
 
 import { POST } from "@/app/api/upload/route";
@@ -58,12 +39,18 @@ describe("POST /api/upload", () => {
       user: { id: "user-1", email: "user@example.com" },
     });
     mocks.checkRateLimit.mockResolvedValue({ allowed: true });
-    mocks.readValidatedImageFile.mockResolvedValue({
-      buffer: Buffer.from("original-image"),
-    });
     mocks.isUserBanned.mockReturnValue(false);
     mocks.isAdminRole.mockReturnValue(false);
-    mocks.send.mockResolvedValue({});
+    mocks.storeAssets.mockResolvedValue([
+      {
+        url: "https://cdn.example.com/page.png",
+        key: "uploads/2026/09/demo-manga/page.png",
+        contentType: "image/png",
+        size: 100,
+        width: 0,
+        height: 0,
+      },
+    ]);
   });
 
   it("stores original image bytes without server-side transcoding", async () => {
@@ -82,11 +69,11 @@ describe("POST /api/upload", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(mocks.send).toHaveBeenCalledTimes(1);
-    expect(mocks.send.mock.calls[0][0]).toMatchObject({
-      Bucket: "test-bucket",
-      ContentType: "image/png",
-    });
+    expect(mocks.storeAssets).toHaveBeenCalledTimes(1);
+    expect(mocks.storeAssets).toHaveBeenCalledWith(
+      expect.any(Array),
+      { kind: "manga-page", mangaId: "demo-manga" }
+    );
   });
 
   it("allows a full chapter-sized batch instead of stopping at 50 files", async () => {

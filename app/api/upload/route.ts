@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { r2Client, R2_BUCKET, getR2PublicUrl } from "@/lib/r2";
-import { readValidatedImageFile, sanitizeObjectKeySegment } from "@/lib/image-security";
+import { storeAssets } from "@/lib/storage";
 import { isUserBanned, isAdminRole } from "@/lib/session-utils";
 
 export async function POST(request: Request) {
@@ -39,70 +37,21 @@ export async function POST(request: Request) {
   try {
     const form = await request.formData();
     const files = form.getAll("files") as File[];
-    const mangaId = sanitizeObjectKeySegment(
-      (form.get("mangaId") as string) || "uncategorized",
-      "uncategorized"
-    );
+    const mangaId = (form.get("mangaId") as string) || "uncategorized";
 
     if (!files || files.length === 0) {
       return NextResponse.json({ error: "No files uploaded" }, { status: 400 });
     }
 
-    // Vercel Functions accept request bodies up to 4.5 MB. Reserve room for
-    // multipart framing so the API can return a useful validation error.
-    const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4 MB
-    const ALLOWED_MIME_TYPES = [
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-      "image/gif",
-      "image/avif",
-      "image/bmp",
-    ];
+    const saved = await storeAssets(files, { kind: "manga-page", mangaId });
 
-    const saved = [];
-
-    for (const file of files) {
-      const { buffer } = await readValidatedImageFile(file, {
-        maxBytes: MAX_FILE_SIZE,
-        allowedMimeTypes: ALLOWED_MIME_TYPES,
-      });
-
-      // Page images are optimized before upload. Keep their bytes unchanged so
-      // this request stays lightweight and readers fetch directly from R2.
-      const imageData = new Uint8Array(buffer);
-      const contentType = file.type;
-      const fileName = file.name;
-
-      // 5. Construct Path: uploads/{year}/{month}/{mangaId}/{filename}
-      const date = new Date();
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const safeName = `${Date.now()}-${fileName.replace(
-        /[^a-zA-Z0-9.-]/g,
-        "_"
-      )}`;
-      const key = `uploads/${year}/${month}/${mangaId}/${safeName}`;
-
-      await r2Client.send(
-        new PutObjectCommand({
-          Bucket: R2_BUCKET,
-          Key: key,
-          Body: imageData,
-          ContentType: contentType,
-          CacheControl: "public, max-age=31536000, immutable",
-        })
-      );
-
-      // Return object with url and dimensions for CLS prevention
-      saved.push({
-        url: getR2PublicUrl(key),
-        width: 0,
-        height: 0,
-      });
-    }
-
-    return NextResponse.json({ urls: saved });
+    return NextResponse.json({
+      urls: saved.map((asset) => ({
+        url: asset.url,
+        width: asset.width ?? 0,
+        height: asset.height ?? 0,
+      })),
+    });
   } catch (err: any) {
     console.error("Upload error:", err);
     const status =
@@ -115,3 +64,4 @@ export async function POST(request: Request) {
     );
   }
 }
+

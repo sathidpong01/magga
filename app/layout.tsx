@@ -6,7 +6,7 @@ import ErrorBoundary from "./components/common/ErrorBoundary";
 import LayoutWrapper from "./components/layout/LayoutWrapper";
 import LazyClientComponents from "./components/layout/LazyClientComponents";
 import { getSiteUrl } from "@/lib/site-url";
-import { R2_PUBLIC_URL } from "@/lib/r2-public";
+import { getStoragePublicUrl } from "@/lib/storage";
 
 const kanit = Kanit({
   weight: ["400", "500", "700"],
@@ -57,7 +57,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const r2PublicUrl = R2_PUBLIC_URL;
+  const r2PublicUrl = getStoragePublicUrl("");
 
   return (
     <html lang="th" suppressHydrationWarning data-scroll-behavior="smooth">

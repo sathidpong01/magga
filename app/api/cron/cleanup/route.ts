@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { loginAttempts as loginAttemptsTable, mangaSubmissions as submissionsTable } from "@/db/schema";
 import { lt, eq, and, inArray } from "drizzle-orm";
-import { DeleteObjectsCommand } from "@aws-sdk/client-s3";
-import { r2Client, R2_BUCKET, R2_PUBLIC_URL } from "@/lib/r2";
+import { deleteAssets } from "@/lib/storage";
 import { extractMangaPageUrls } from "@/lib/manga-pages";
 
 export async function GET(req: Request) {
@@ -51,37 +50,23 @@ export async function GET(req: Request) {
       );
 
     if (oldRejectedSubmissions.length > 0) {
-      // Collect ALL R2 keys to delete in a single batch
-      const allKeys: string[] = [];
+      // Collect ALL asset URLs to delete
+      const allUrls: string[] = [];
 
       for (const submission of oldRejectedSubmissions) {
-        if (submission.coverImage?.includes(R2_PUBLIC_URL || "")) {
-          allKeys.push(submission.coverImage.replace(`${R2_PUBLIC_URL}/`, ""));
+        if (submission.coverImage) {
+          allUrls.push(submission.coverImage);
         }
         try {
           const pageUrls = extractMangaPageUrls(JSON.parse(submission.pages as string));
-          allKeys.push(
-            ...pageUrls
-              .filter((url) => url.includes(R2_PUBLIC_URL || ""))
-              .map((url) => url.replace(`${R2_PUBLIC_URL}/`, ""))
-          );
+          allUrls.push(...pageUrls);
         } catch { /* skip unparseable pages */ }
       }
 
-      // Batch delete R2 files in chunks of 1000 (API limit)
-      for (let i = 0; i < allKeys.length; i += 1000) {
-        const chunk = allKeys.slice(i, i + 1000);
-        try {
-          await r2Client.send(
-            new DeleteObjectsCommand({
-              Bucket: R2_BUCKET,
-              Delete: { Objects: chunk.map((Key) => ({ Key })) },
-            })
-          );
-          results.r2FilesDeleted += chunk.length;
-        } catch (err) {
-          console.error(`[Cron Cleanup] R2 batch delete failed for chunk ${i}:`, err);
-        }
+      try {
+        results.r2FilesDeleted = await deleteAssets(allUrls);
+      } catch (err) {
+        console.error("[Cron Cleanup] Storage batch delete failed:", err);
       }
 
       // Batch delete all submission records

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { extractFirstUploadUrl } from "../lib/upload-response";
+import { extractFirstUploadUrl } from "../lib/storage/client";
 
 describe("extractFirstUploadUrl", () => {
   it("returns a string url directly", () => {
