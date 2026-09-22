@@ -28,6 +28,7 @@ interface InfiniteMangaGridProps {
   categoryId?: string;
   tags?: string;
   sort?: string;
+  author?: string;
 }
 
 export default function InfiniteMangaGrid({
@@ -39,6 +40,7 @@ export default function InfiniteMangaGrid({
   categoryId,
   tags,
   sort,
+  author,
 }: InfiniteMangaGridProps) {
   const { data: session, isPending: isSessionPending } = useSession();
   const [blockedTagIds, setBlockedTagIds] = useState<string[]>([]);
@@ -93,6 +95,7 @@ export default function InfiniteMangaGrid({
       params.set("page", String(page + 1));
       params.set("pageSize", String(pageSize));
       if (search) params.set("search", search);
+      if (author) params.set("author", author);
       if (categoryId && categoryId !== "all")
         params.set("categoryId", categoryId);
       if (tags) params.set("tags", tags);
@@ -111,7 +114,7 @@ export default function InfiniteMangaGrid({
     } finally {
       setIsLoading(false);
     }
-  }, [page, hasMore, isLoading, pageSize, search, categoryId, tags, sort, blockedTagIds]);
+  }, [page, hasMore, isLoading, pageSize, search, author, categoryId, tags, sort, blockedTagIds]);
 
   // สร้าง items พร้อม ads แทรก
   const itemsWithAds = (() => {

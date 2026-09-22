@@ -18,6 +18,7 @@ export async function GET(request: Request) {
       : DEFAULT_MANGA_PAGE_SIZE;
     const search = searchParams.get("search") || undefined;
     const categoryId = searchParams.get("categoryId") || undefined;
+    const author = searchParams.get("author") || undefined;
     const tagsParam = searchParams.get("tags");
     const tagNames = tagsParam ? tagsParam.split(",").filter(Boolean) : undefined;
     const sort = searchParams.get("sort") || undefined;
@@ -33,7 +34,8 @@ export async function GET(request: Request) {
       categoryId,
       tagNames,
       sort,
-      excludeTagIds
+      excludeTagIds,
+      author
     );
 
     return NextResponse.json(result, {

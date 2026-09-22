@@ -17,6 +17,7 @@ interface StreamingMangaGridProps {
   categoryId?: string;
   tagNames?: string[];
   sort?: string;
+  author?: string;
   ads: Ad[];
   pageSize?: number;
 }
@@ -26,6 +27,7 @@ export default async function StreamingMangaGrid({
   categoryId,
   tagNames,
   sort,
+  author,
   ads,
   pageSize = 12,
 }: StreamingMangaGridProps) {
@@ -38,7 +40,9 @@ export default async function StreamingMangaGrid({
       search,
       categoryId,
       tagNames,
-      sort
+      sort,
+      undefined,
+      author
     );
   } catch (error) {
     console.error("StreamingMangaGrid: initial fetch failed, retrying once...", error);
@@ -51,7 +55,9 @@ export default async function StreamingMangaGrid({
         search,
         categoryId,
         tagNames,
-        sort
+        sort,
+        undefined,
+        author
       );
     } catch (retryError) {
       console.error("StreamingMangaGrid: retry failed:", retryError);
@@ -77,6 +83,7 @@ export default async function StreamingMangaGrid({
       categoryId={categoryId}
       tags={(tagNames ?? []).join(",")}
       sort={sort}
+      author={author}
     />
   );
 }

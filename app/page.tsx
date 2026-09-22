@@ -7,6 +7,8 @@ import dynamic from "next/dynamic";
 import { unstable_cache } from "next/cache";
 import MangaGridSkeleton from "./components/features/manga/MangaGridSkeleton";
 import StreamingMangaGrid from "./components/features/manga/StreamingMangaGrid";
+import AuthorHeaderCard from "./components/features/author/AuthorHeaderCard";
+import { getAuthorProfile } from "@/lib/manga-list";
 
 const SearchFilters = dynamic(
   () => import("./components/features/search/SearchFilters"),
@@ -19,6 +21,7 @@ type Props = {
     category?: string;
     tags?: string | string[];
     sort?: string;
+    author?: string;
   }>;
 };
 
@@ -73,10 +76,10 @@ const getGridAds = unstable_cache(
 
 export default async function Home({ searchParams }: Props) {
   const params = await searchParams;
-  const { search, category: categoryName, tags: tagNames, sort } = params;
+  const { search, category: categoryName, tags: tagNames, sort, author } = params;
 
-  // Fetch Categories, Tags and Grid Ads in parallel with resilient fallbacks
-  const [categories, tags, gridAds] = await Promise.all([
+  // Fetch Categories, Tags, Grid Ads, and Author Profile in parallel with resilient fallbacks
+  const [categories, tags, gridAds, authorProfile] = await Promise.all([
     getCategories().catch((err) => {
       console.error("Failed to load categories:", err);
       return [];
@@ -89,6 +92,12 @@ export default async function Home({ searchParams }: Props) {
       console.error("Failed to load grid ads:", err);
       return [];
     }),
+    author
+      ? getAuthorProfile(author).catch((err) => {
+          console.error("Failed to load author profile:", err);
+          return null;
+        })
+      : Promise.resolve(null),
   ]);
 
   // Resolve category name → UUID for DB query
@@ -106,6 +115,8 @@ export default async function Home({ searchParams }: Props) {
   return (
     <Container maxWidth="xl">
       <Box sx={{ my: 1 }}>
+        {authorProfile && <AuthorHeaderCard author={authorProfile} />}
+
         {/* Reserve space for SearchFilters to prevent CLS */}
         <Suspense fallback={<Box sx={{ minHeight: 56 }} />}>
           <SearchFilters categories={categories} tags={tags} />
@@ -117,6 +128,7 @@ export default async function Home({ searchParams }: Props) {
             categoryId={categoryId}
             tagNames={tagNameArray}
             sort={sort}
+            author={author}
             ads={gridAds as any}
             pageSize={homePageSize}
           />

@@ -4,6 +4,7 @@ import { unstable_cache } from "next/cache";
 import { and, asc, desc, eq, ilike, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
+  authors as authorsTable,
   categories as categoriesTable,
   manga as mangaTable,
   mangaTags as mangaTagsTable,
@@ -11,6 +12,65 @@ import {
 } from "@/db/schema";
 
 export const DEFAULT_MANGA_PAGE_SIZE = 12;
+
+export type AuthorProfile = {
+  name: string;
+  profileUrl: string | null;
+  socialLinks: Array<{ url: string; label: string; icon?: string }> | null;
+  mangaCount: number;
+  hasAuthorRecord: boolean;
+};
+
+export const getAuthorProfile = unstable_cache(
+  async (authorName: string): Promise<AuthorProfile | null> => {
+    if (!authorName?.trim()) return null;
+
+    // 1. Find author in authors table
+    const [author] = await db
+      .select({
+        id: authorsTable.id,
+        name: authorsTable.name,
+        profileUrl: authorsTable.profileUrl,
+        socialLinks: authorsTable.socialLinks,
+      })
+      .from(authorsTable)
+      .where(ilike(authorsTable.name, authorName.trim()))
+      .limit(1);
+
+    // 2. Count published mangas by author
+    const countResult = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(mangaTable)
+      .where(
+        and(
+          eq(mangaTable.isHidden, false),
+          sql`(${mangaTable.authorName} ILIKE ${authorName.trim()} OR ${author ? eq(mangaTable.authorId, author.id) : sql`false`})`
+        )
+      );
+
+    let parsedSocialLinks: Array<{ url: string; label: string; icon?: string }> | null = null;
+    if (author?.socialLinks) {
+      try {
+        const parsed = JSON.parse(author.socialLinks);
+        if (Array.isArray(parsed)) {
+          parsedSocialLinks = parsed.filter((link) => Boolean(link.url));
+        }
+      } catch {
+        parsedSocialLinks = null;
+      }
+    }
+
+    return {
+      name: author?.name || authorName.trim(),
+      profileUrl: author?.profileUrl || null,
+      socialLinks: parsedSocialLinks,
+      mangaCount: countResult[0]?.count || 0,
+      hasAuthorRecord: Boolean(author),
+    };
+  },
+  ["author-profile"],
+  { revalidate: 300, tags: ["authors", "manga-list"] }
+);
 
 const mangaCardColumns = {
   id: mangaTable.id,
@@ -151,10 +211,21 @@ export const getMangasWithPagination = unstable_cache(
     categoryId?: string,
     tagNames?: string[],
     sort?: string,
-    excludeTagIds?: string[]
+    excludeTagIds?: string[],
+    author?: string
   ) => {
     const offset = (page - 1) * pageSize;
     const conditions = [eq(mangaTable.isHidden, false)];
+
+    if (author) {
+      conditions.push(
+        sql`(${mangaTable.authorName} ILIKE ${author.trim()} OR EXISTS (
+          SELECT 1 FROM ${authorsTable}
+          WHERE ${authorsTable.id} = ${mangaTable.authorId}
+          AND ${authorsTable.name} ILIKE ${author.trim()}
+        ))`
+      );
+    }
 
     if (search) {
       conditions.push(

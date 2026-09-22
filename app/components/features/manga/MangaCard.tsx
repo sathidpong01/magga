@@ -170,7 +170,7 @@ const MangaCard = ({ manga, priority = false }: MangaCardProps) => {
         <Box sx={{ minHeight: "1.2rem", display: "flex", alignItems: "center" }}>
           {manga.authorName ? (
             <Link
-              href={`/?search=${encodeURIComponent(manga.authorName)}`}
+              href={`/?author=${encodeURIComponent(manga.authorName)}`}
               prefetch={false}
               style={{
                 textDecoration: "none",
