@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
   return (
     <Container maxWidth="md" sx={{ py: 6 }}>
-      <Paper sx={{ p: { xs: 3, md: 5 }, bgcolor: maggaColors.surfaceAlt, borderRadius: 2, border: `1px solid ${maggaColors.border}` }}>
+      <Paper sx={{ p: { xs: 3, md: 5 }, bgcolor: maggaColors.surface, borderRadius: "14px", border: `1px solid ${maggaColors.border}`, boxShadow: "0 4px 20px -2px rgba(0, 0, 0, 0.4)" }}>
         <Typography
           variant="h4"
           component="h1"

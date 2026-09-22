@@ -72,15 +72,15 @@ const rowSx = {
   display: "flex",
   alignItems: "center",
   p: 2.1,
-  bgcolor: maggaColors.surfaceAlt,
+  bgcolor: maggaColors.surface,
   border: `1px solid ${maggaColors.border}`,
-  borderRadius: 2,
+  borderRadius: "12px",
   textDecoration: "none",
   color: "inherit",
   transition: "border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease",
   "&:hover": {
-    borderColor: "rgba(251,191,36,0.32)",
-    bgcolor: "#1b1b1b",
+    borderColor: maggaColors.archiveGoldBorder,
+    bgcolor: maggaColors.surfaceElevated,
     boxShadow: "0 6px 20px rgba(0,0,0,0.3)",
   },
 };
@@ -173,9 +173,9 @@ export default function ProfileView({ profileUser, isOwnProfile }: Props) {
       <Box
         sx={{
           mb: 3,
-          borderRadius: 2.5,
+          borderRadius: "14px",
           border: `1px solid ${maggaColors.border}`,
-          bgcolor: maggaColors.surfaceAlt,
+          bgcolor: maggaColors.surface,
           overflow: "hidden",
         }}
       >
@@ -191,7 +191,7 @@ export default function ProfileView({ profileUser, isOwnProfile }: Props) {
                 sx={{
                   width: 104,
                   height: 104,
-                  bgcolor: "#262626",
+                  bgcolor: maggaColors.surfaceElevated,
                   border: "2px solid rgba(255,255,255,0.12)",
                   fontSize: "2.25rem",
                 }}

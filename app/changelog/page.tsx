@@ -225,12 +225,13 @@ export default function ChangelogPage() {
             key={index}
             sx={{
               p: { xs: 2.5, sm: 3.5 },
-              bgcolor: maggaColors.surfaceAlt,
+              bgcolor: maggaColors.surface,
               border: `1px solid ${maggaColors.border}`,
-              borderRadius: 2,
+              borderRadius: "14px",
+              boxShadow: "0 4px 20px -2px rgba(0, 0, 0, 0.4)",
               transition: "border-color 0.15s ease, box-shadow 0.15s ease",
               "&:hover": {
-                borderColor: "rgba(251, 191, 36, 0.35)",
+                borderColor: maggaColors.archiveGoldBorder,
                 boxShadow: "0 8px 24px rgba(0,0,0,0.3)",
               },
             }}
@@ -259,9 +260,10 @@ export default function ChangelogPage() {
                   label={item.version}
                   size="small"
                   sx={{
-                    bgcolor: "rgba(251, 191, 36, 0.1)",
-                    color: maggaColors.archiveGold,
+                    bgcolor: maggaColors.archiveGoldSoft,
+                    color: maggaColors.archiveGoldHover,
                     fontWeight: 700,
+                    borderRadius: "6px",
                   }}
                 />
               </Box>

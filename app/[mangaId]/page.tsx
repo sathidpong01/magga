@@ -22,7 +22,7 @@ import {
 import Image from "next/image";
 import MangaViewRating from "@/app/components/features/manga/MangaViewRating";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import { maggaColors } from "@/lib/design-tokens";
+import { maggaColors, maggaRadii } from "@/lib/design-tokens";
 import { SuspendedMangaReader } from "./manga-content";
 import { CommentSectionSkeleton } from "./loading-skeletons";
 import CommentSection from "@/app/components/features/comments/CommentSection";
@@ -234,7 +234,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
   };
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: maggaColors.midnightCanvas, pb: 8 }}>
+    <Box sx={{ minHeight: "100vh", bgcolor: maggaColors.background, pb: 8 }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -247,7 +247,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
             position: "absolute",
             inset: 0,
             zIndex: 0,
-            opacity: 0.3,
+            opacity: 0.25,
             filter: "blur(40px)",
             transform: "scale(1.1)",
           }}
@@ -264,7 +264,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
             sx={{
               position: "absolute",
               inset: 0,
-              background: `linear-gradient(to bottom, rgba(10,10,10,0.4) 0%, rgba(10,10,10,0.85) 60%, ${maggaColors.midnightCanvas} 100%)`,
+              background: `linear-gradient(to bottom, rgba(20,20,22,0.4) 0%, rgba(20,20,22,0.85) 60%, ${maggaColors.background} 100%)`,
             }}
           />
         </Box>
@@ -291,11 +291,11 @@ export default async function MangaPage({ params }: MangaPageProps) {
                   position: "relative",
                   width: "100%",
                   maxWidth: { xs: "280px", md: "100%" },
-                  aspectRatio: "2/3",
-                  borderRadius: 1,
+                  aspectRatio: "3/4",
+                  borderRadius: `${maggaRadii.card}px`,
                   overflow: "hidden",
                   boxShadow: "0 20px 40px -10px rgba(0,0,0,0.7)",
-                  border: "1px solid rgba(255,255,255,0.1)",
+                  border: `1px solid ${maggaColors.border}`,
                 }}
               >
                 <Image
@@ -479,9 +479,9 @@ export default async function MangaPage({ params }: MangaPageProps) {
                   sx={{
                     mb: 2,
                     p: 2,
-                    borderRadius: 1,
-                    bgcolor: "rgba(255, 255, 255, 0.03)",
-                    border: "1px solid rgba(255, 255, 255, 0.06)",
+                    borderRadius: "10px",
+                    bgcolor: maggaColors.surface,
+                    border: `1px solid ${maggaColors.border}`,
                     maxWidth: "420px",
                   }}
                 >
