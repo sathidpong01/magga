@@ -4,7 +4,7 @@ import { advertisements as adsTable } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { requireAdmin } from "@/lib/auth-helpers";
-import { unstable_cache } from "next/cache";
+import { revalidateTag, unstable_cache } from "next/cache";
 
 // Cache active ads for 5 minutes to reduce DB queries
 const getActiveAds = unstable_cache(
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(ads, {
       headers: {
-        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+        "Cache-Control": "no-store",
       },
     });
   } catch (error) {
@@ -83,6 +83,8 @@ export async function POST(request: NextRequest) {
       content,
       placement,
     }).returning();
+
+    revalidateTag("advertisements", { expire: 0 });
 
     return NextResponse.json(ad, { status: 201 });
   } catch (error) {

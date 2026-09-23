@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { usePathname } from "next/navigation";
 
 interface Ad {
   id: string;
@@ -22,28 +23,35 @@ const AdsContext = createContext<AdsContextType>({
   isLoading: true,
 });
 
-const ADS_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-
 export function AdsProvider({ children }: { children: ReactNode }) {
   const [ads, setAds] = useState<Ad[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const lastFetchedRef = useRef<number>(0);
+  const pathname = usePathname();
 
   useEffect(() => {
-    const now = Date.now();
-    if (now - lastFetchedRef.current < ADS_CACHE_TTL && ads.length > 0) return;
+    const controller = new AbortController();
+    const refresh = () => {
+      fetch("/api/advertisements", { cache: "no-store", signal: controller.signal })
+        .then((res) => {
+          if (!res.ok) throw new Error(`Failed to fetch advertisements: ${res.status}`);
+          return res.json();
+        })
+        .then((data) => {
+          if (Array.isArray(data)) setAds(data);
+        })
+        .catch((error) => {
+          if (!controller.signal.aborted) console.error(error);
+        })
+        .finally(() => setIsLoading(false));
+    };
 
-    fetch("/api/advertisements")
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setAds(data);
-          lastFetchedRef.current = Date.now();
-        }
-      })
-      .catch(console.error)
-      .finally(() => setIsLoading(false));
-  }, [ads.length]);
+    refresh();
+    window.addEventListener("focus", refresh);
+    return () => {
+      controller.abort();
+      window.removeEventListener("focus", refresh);
+    };
+  }, [pathname]);
 
   const getAdsByPlacement = (placement: string): Ad[] => {
     return ads.filter((ad) => ad.placement === placement);

@@ -4,6 +4,7 @@ import { advertisements as adsTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { requireAdmin } from "@/lib/auth-helpers";
+import { revalidateTag } from "next/cache";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -25,6 +26,12 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       .where(eq(adsTable.id, id))
       .returning();
 
+    if (!ad) {
+      return NextResponse.json({ error: "Advertisement not found" }, { status: 404 });
+    }
+
+    revalidateTag("advertisements", { expire: 0 });
+
     return NextResponse.json(ad);
   } catch (error) {
     console.error("Error updating ad:", error);
@@ -45,6 +52,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     const { id } = await context.params;
     
     await db.delete(adsTable).where(eq(adsTable.id, id));
+    revalidateTag("advertisements", { expire: 0 });
 
     return NextResponse.json({ success: true });
   } catch (error) {
