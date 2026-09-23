@@ -20,6 +20,7 @@ import {
   Stack,
 } from "@mui/material";
 import Image from "next/image";
+import Link from "next/link";
 import MangaViewRating from "@/app/components/features/manga/MangaViewRating";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { maggaColors, maggaRadii } from "@/lib/design-tokens";
@@ -384,6 +385,42 @@ export default async function MangaPage({ params }: MangaPageProps) {
                 >
                   {manga.title}
                 </Typography>
+
+                {/* Author Name */}
+                {authorName && (
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5, flexWrap: "wrap" }}>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: maggaColors.textMuted,
+                        fontSize: "0.95rem",
+                        fontWeight: 500,
+                      }}
+                    >
+                      ผู้แต่ง:
+                    </Typography>
+                    <Link
+                      href={`/?author=${encodeURIComponent(authorName)}`}
+                      style={{ textDecoration: "none" }}
+                    >
+                      <Typography
+                        component="span"
+                        sx={{
+                          color: maggaColors.archiveGold,
+                          fontWeight: 700,
+                          fontSize: "1.05rem",
+                          transition: "color 0.15s ease",
+                          "&:hover": {
+                            color: maggaColors.archiveGoldHover,
+                            textDecoration: "underline",
+                          },
+                        }}
+                      >
+                        {authorName}
+                      </Typography>
+                    </Link>
+                  </Box>
+                )}
 
                 {/* Author Social Links */}
                 {(() => {
