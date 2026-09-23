@@ -1,8 +1,10 @@
 "use client";
 
 import { Box, Paper } from "@mui/material";
+import { maggaRadii } from "@/lib/design-tokens";
 
 interface AdBannerProps {
+  fillArea?: boolean;
   ad: {
     id: string;
     type: string;
@@ -13,7 +15,7 @@ interface AdBannerProps {
   };
 }
 
-export default function AdBanner({ ad }: AdBannerProps) {
+export default function AdBanner({ ad, fillArea = false }: AdBannerProps) {
   const imageAlt = ad.title ? `โฆษณา: ${ad.title}` : "โฆษณา";
   const content = (
     <Box
@@ -21,18 +23,28 @@ export default function AdBanner({ ad }: AdBannerProps) {
       src={ad.imageUrl}
       alt={imageAlt}
       sx={{
+        position: fillArea ? "absolute" : undefined,
+        inset: fillArea ? 0 : undefined,
         width: "100%",
-        height: "auto",
+        height: fillArea ? "100%" : "auto",
         display: "block",
-        maxHeight: 150,
-        objectFit: "contain",
+        maxHeight: fillArea ? undefined : 150,
+        objectFit: fillArea ? "cover" : "contain",
       }}
     />
   );
 
   const surfaceSx = {
     bgcolor: "transparent",
-    borderRadius: 1,
+    ...(fillArea
+      ? {
+          borderRadius: maggaRadii.card,
+          position: "relative" as const,
+          display: "block" as const,
+          width: "100%",
+          aspectRatio: "3 / 1",
+        }
+      : { borderRadius: 1 }),
     overflow: "hidden",
     cursor: ad.linkUrl ? "pointer" : "default",
     transition: "opacity 0.2s ease, outline-color 0.2s ease",

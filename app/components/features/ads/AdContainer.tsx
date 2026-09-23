@@ -42,7 +42,7 @@ export default function AdContainer({ placement }: AdContainerProps) {
   return (
     <Box sx={{ my: 2 }}>
       {ads.map((ad) => (
-        <AdBanner key={ad.id} ad={ad} />
+        <AdBanner key={ad.id} ad={ad} fillArea={placement === "manga-end"} />
       ))}
     </Box>
   );

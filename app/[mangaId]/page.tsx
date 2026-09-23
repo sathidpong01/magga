@@ -557,8 +557,10 @@ export default async function MangaPage({ params }: MangaPageProps) {
           mangaTitle={manga.title}
           pages={pages}
         />
-        <Box sx={{ mt: 4, maxWidth: "800px", mx: "auto" }}>
-          <AdContainer placement="manga-end" />
+        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mr: { xs: 0, md: "340px" }, mt: 4 }}>
+          <Box sx={{ width: "100%", maxWidth: "1000px" }}>
+            <AdContainer placement="manga-end" />
+          </Box>
         </Box>
         <Box sx={{ mt: 6, maxWidth: "800px", mx: "auto" }}>
           <Suspense fallback={<CommentSectionSkeleton />}>
