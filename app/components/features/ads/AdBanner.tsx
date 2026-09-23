@@ -1,7 +1,6 @@
 "use client";
 
 import { Box, Paper } from "@mui/material";
-import { maggaRadii } from "@/lib/design-tokens";
 
 interface AdBannerProps {
   fillArea?: boolean;
@@ -38,7 +37,7 @@ export default function AdBanner({ ad, fillArea = false }: AdBannerProps) {
     bgcolor: "transparent",
     ...(fillArea
       ? {
-          borderRadius: maggaRadii.card,
+          borderRadius: 0,
           position: "relative" as const,
           display: "block" as const,
           width: "100%",
