@@ -14,14 +14,16 @@ const kanit = Kanit({
   display: "swap",
 });
 
+const siteDescription =
+  "อ่านการ์ตูน Furry แปลไทยบน MAGGA รวมมังงะและโดจินชิให้อ่านออนไลน์ ค้นหาเรื่องที่สนใจตามชื่อเรื่อง ผู้แต่ง หมวดหมู่ หรือแท็ก แล้วเลือกอ่านได้ทั้งบนมือถือและคอมพิวเตอร์";
+
 export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
   title: "MAGGA - รวมการ์ตูนแนว Furry แปลไทย",
-  description:
-    "MAGGA รวมการ์ตูนและโดจินชิแนว Furry แปลไทย อ่านออนไลน์และเลือกเรื่องตามหมวดหมู่หรือแท็ก",
+  description: siteDescription,
   openGraph: {
     title: "MAGGA - รวมการ์ตูนแนว Furry แปลไทย",
-    description: "เว็บอ่านการ์ตูนออนไลน์ อ่านฟรี อัปเดตใหม่ทุกวัน",
+    description: siteDescription,
     url: "/",
     siteName: "MAGGA",
     images: [
@@ -38,7 +40,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "MAGGA - รวมการ์ตูนแนว Furry แปลไทย",
-    description: "เว็บอ่านการ์ตูนออนไลน์ อ่านฟรี อัปเดตใหม่ทุกวัน",
+    description: siteDescription,
     images: ["/android-chrome-512x512.png"],
   },
   icons: {
