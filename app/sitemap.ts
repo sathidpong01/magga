@@ -1,6 +1,6 @@
 import { MetadataRoute } from "next";
 import { db } from "@/db";
-import { manga as mangaTable, categories as categoriesTable, tags as tagsTable } from "@/db/schema";
+import { manga as mangaTable, categories as categoriesTable, mangaTags as mangaTagsTable, tags as tagsTable } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { getSiteUrl } from "@/lib/site-url";
 
@@ -10,67 +10,48 @@ export const revalidate = 3600;
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = getSiteUrl();
 
-  let mangas: { slug: string; updatedAt: string }[] = [];
-  let categories: { name: string }[] = [];
-  let tags: { name: string }[] = [];
+  const mangas = await db
+    .select({ slug: mangaTable.slug, updatedAt: mangaTable.updatedAt })
+    .from(mangaTable)
+    .where(eq(mangaTable.isHidden, false))
+    .orderBy(desc(mangaTable.updatedAt));
 
-  try {
-    // Get all visible manga slugs
-    mangas = await db
-      .select({ slug: mangaTable.slug, updatedAt: mangaTable.updatedAt })
-      .from(mangaTable)
-      .where(eq(mangaTable.isHidden, false))
-      .orderBy(desc(mangaTable.updatedAt));
+  // Empty collection pages have no manga to discover, so leave them out.
+  const categories = await db
+    .selectDistinct({ name: categoriesTable.name })
+    .from(categoriesTable)
+    .innerJoin(mangaTable, eq(mangaTable.categoryId, categoriesTable.id))
+    .where(eq(mangaTable.isHidden, false));
 
-    // Get all categories
-    categories = await db
-      .select({ name: categoriesTable.name })
-      .from(categoriesTable);
-
-    // Get all tags
-    tags = await db
-      .select({ name: tagsTable.name })
-      .from(tagsTable);
-  } catch (error) {
-    console.error("Sitemap: Failed to fetch data from DB, returning minimal sitemap:", error);
-  }
+  const tags = await db
+    .selectDistinct({ name: tagsTable.name })
+    .from(tagsTable)
+    .innerJoin(mangaTagsTable, eq(mangaTagsTable.tagId, tagsTable.id))
+    .innerJoin(mangaTable, eq(mangaTable.id, mangaTagsTable.mangaId))
+    .where(eq(mangaTable.isHidden, false));
 
   // Manga pages
   const mangaUrls = mangas.map((manga) => ({
     url: `${baseUrl}/${encodeURIComponent(manga.slug)}`,
-    lastModified: manga.updatedAt,
-    changeFrequency: "weekly" as const,
-    priority: 0.8,
+    lastModified: new Date(manga.updatedAt),
   }));
 
   // Category pages
   const categoryUrls = categories.map((cat) => ({
     url: `${baseUrl}/category/${encodeURIComponent(cat.name)}`,
-    lastModified: new Date(),
-    changeFrequency: "weekly" as const,
-    priority: 0.6,
   }));
 
   // Tag pages
   const tagUrls = tags.map((tag) => ({
     url: `${baseUrl}/tag/${encodeURIComponent(tag.name)}`,
-    lastModified: new Date(),
-    changeFrequency: "weekly" as const,
-    priority: 0.5,
   }));
 
   return [
     {
       url: baseUrl,
-      lastModified: new Date(),
-      changeFrequency: "daily",
-      priority: 1,
     },
     {
       url: `${baseUrl}/changelog`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.3,
     },
     ...mangaUrls,
     ...categoryUrls,

@@ -5,6 +5,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import MangaCard from "@/app/components/features/manga/MangaCard";
 import { getMangasByTagName } from "@/lib/manga-list";
 import { maggaColors } from "@/lib/design-tokens";
+import type { Metadata } from "next";
 
 type TagPageProps = {
   params: Promise<{
@@ -15,11 +16,20 @@ type TagPageProps = {
 // ISR: Revalidate every 1 hour
 export const revalidate = 3600;
 
-export async function generateMetadata({ params }: TagPageProps) {
+export async function generateMetadata({ params }: TagPageProps): Promise<Metadata> {
   const { tagName: encodedTagName } = await params;
   const tagName = decodeURIComponent(encodedTagName);
+  const tag = await getMangasByTagName(tagName);
+  const title = `แท็ก: ${tagName} - MAGGA`;
+  const description = `รวมการ์ตูนแท็ก ${tagName} ที่อ่านได้บน MAGGA`;
+  const canonical = `/tag/${encodeURIComponent(tagName)}`;
   return {
-    title: `แท็ก: ${tagName} - MAGGA`,
+    title,
+    description,
+    alternates: { canonical },
+    robots: { index: Boolean(tag?.mangas.length), follow: true },
+    openGraph: { title, description, url: canonical },
+    twitter: { title, description },
   };
 }
 
@@ -166,6 +176,9 @@ export default async function TagPage({ params }: TagPageProps) {
           }}
         >
           พบทั้งหมด {tag.mangas.length} เรื่อง ที่ติดแท็กนี้
+        </Typography>
+        <Typography variant="body2" sx={{ color: maggaColors.textSecondary, mt: 0.5 }}>
+          รวมการ์ตูนแท็ก {tag.name} ที่อ่านได้บน MAGGA
         </Typography>
       </Box>
 

@@ -1,8 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { usePathname } from "next/navigation";
-import { isMoxzkRoute } from "./standalone-routes";
 
 // Lazy load non-critical client components to reduce initial JS bundle
 // ssr: false is allowed here because this is a Client Component
@@ -13,15 +11,12 @@ const ConditionalAnalytics = dynamic(() => import("../features/analytics/Conditi
 const GlobalAds = dynamic(() => import("../features/ads/GlobalAds"), { ssr: false });
 
 export default function LazyClientComponents() {
-  const pathname = usePathname();
-  const isMoxzkLanding = isMoxzkRoute(pathname);
-
   return (
     <>
-      {!isMoxzkLanding && <AgeVerificationModal />}
+      <AgeVerificationModal />
       <CookieConsent />
       <DevToolsProtection />
-      {!isMoxzkLanding && <GlobalAds />}
+      <GlobalAds />
       <ConditionalAnalytics />
     </>
   );

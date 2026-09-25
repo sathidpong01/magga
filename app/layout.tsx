@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(getSiteUrl()),
   title: "MAGGA - รวมการ์ตูนแนว Furry แปลไทย",
   description:
-    "MAGGA - เว็บอ่านโดจินแปลไทย 18+ แนว Furry ที่ครบเครื่องที่สุด รวบรวมมังงะและโดจินชิ Furry สายหมี สายเคโมะ หลากหลายแนว แปลไทยคุณภาพ อ่านฟรีออนไลน์",
+    "MAGGA รวมการ์ตูนและโดจินชิแนว Furry แปลไทย อ่านออนไลน์และเลือกเรื่องตามหมวดหมู่หรือแท็ก",
   openGraph: {
     title: "MAGGA - รวมการ์ตูนแนว Furry แปลไทย",
     description: "เว็บอ่านการ์ตูนออนไลน์ อ่านฟรี อัปเดตใหม่ทุกวัน",
@@ -40,10 +40,6 @@ export const metadata: Metadata = {
     title: "MAGGA - รวมการ์ตูนแนว Furry แปลไทย",
     description: "เว็บอ่านการ์ตูนออนไลน์ อ่านฟรี อัปเดตใหม่ทุกวัน",
     images: ["/android-chrome-512x512.png"],
-  },
-  other: {
-    rating: "mature",
-    adult: "true",
   },
   icons: {
     icon: [{ url: "/favicon.ico" }, { url: "/favicon.png", type: "image/png" }],

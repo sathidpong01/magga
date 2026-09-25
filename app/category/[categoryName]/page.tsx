@@ -5,6 +5,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import MangaCard from "@/app/components/features/manga/MangaCard";
 import { getMangasByCategoryName } from "@/lib/manga-list";
 import { maggaColors } from "@/lib/design-tokens";
+import type { Metadata } from "next";
 
 type CategoryPageProps = {
   params: Promise<{
@@ -15,11 +16,20 @@ type CategoryPageProps = {
 // ISR: Revalidate every 1 hour
 export const revalidate = 3600;
 
-export async function generateMetadata({ params }: CategoryPageProps) {
+export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
   const { categoryName: encodedCategoryName } = await params;
   const categoryName = decodeURIComponent(encodedCategoryName);
+  const category = await getMangasByCategoryName(categoryName);
+  const title = `หมวดหมู่: ${categoryName} - MAGGA`;
+  const description = `รวมการ์ตูนหมวด ${categoryName} ที่อ่านได้บน MAGGA`;
+  const canonical = `/category/${encodeURIComponent(categoryName)}`;
   return {
-    title: `หมวดหมู่: ${categoryName} - MAGGA`,
+    title,
+    description,
+    alternates: { canonical },
+    robots: { index: Boolean(category?.mangas.length), follow: true },
+    openGraph: { title, description, url: canonical },
+    twitter: { title, description },
   };
 }
 
@@ -166,6 +176,9 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           }}
         >
           พบทั้งหมด {category.mangas.length} เรื่อง ในหมวดหมู่นี้
+        </Typography>
+        <Typography variant="body2" sx={{ color: maggaColors.textSecondary, mt: 0.5 }}>
+          รวมการ์ตูนหมวด {category.name} ที่อ่านได้บน MAGGA
         </Typography>
       </Box>
 

@@ -1,7 +1,8 @@
 import { db } from "@/db";
 import { categories as categoriesTable, tags as tagsTable, advertisements as adsTable, mangaTags } from "@/db/schema";
 import { and, asc, eq, inArray } from "drizzle-orm";
-import { Box, Container } from "@mui/material";
+import { Box, Container, Typography } from "@mui/material";
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import { unstable_cache } from "next/cache";
@@ -9,6 +10,7 @@ import MangaGridSkeleton from "./components/features/manga/MangaGridSkeleton";
 import StreamingMangaGrid from "./components/features/manga/StreamingMangaGrid";
 import AuthorHeaderCard from "./components/features/author/AuthorHeaderCard";
 import { getAuthorProfile } from "@/lib/manga-list";
+import { maggaColors } from "@/lib/design-tokens";
 
 const SearchFilters = dynamic(
   () => import("./components/features/search/SearchFilters"),
@@ -27,6 +29,15 @@ type Props = {
 
 // ISR: Revalidate every 1 hour
 export const revalidate = 3600;
+
+export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
+  const { search, category, tags, sort, author } = await searchParams;
+  const hasFilters = Boolean(search || category || (Array.isArray(tags) ? tags.length : tags) || sort || author);
+  return {
+    alternates: { canonical: "/" },
+    ...(hasFilters ? { robots: { index: false, follow: true } } : {}),
+  };
+}
 
 // Metadata changes infrequently; align its cache lifetime with the page ISR
 // to avoid unnecessary Supabase reconnects on the Hobby/Free tiers.
@@ -116,6 +127,16 @@ export default async function Home({ searchParams }: Props) {
     <Container maxWidth="xl">
       <Box sx={{ my: 1 }}>
         {authorProfile && <AuthorHeaderCard author={authorProfile} />}
+        {!authorProfile && (
+          <Box sx={{ mb: 1.5 }}>
+            <Typography component="h1" variant="h6" sx={{ color: maggaColors.textPrimary, fontWeight: 700 }}>
+              การ์ตูน Furry แปลไทย
+            </Typography>
+            <Typography variant="body2" sx={{ color: maggaColors.textSecondary }}>
+              เลือกอ่านเรื่องที่สนใจ ค้นหาตามชื่อ หมวดหมู่ หรือแท็กได้ที่นี่
+            </Typography>
+          </Box>
+        )}
 
         {/* Reserve space for SearchFilters to prevent CLS */}
         <Suspense fallback={<Box sx={{ minHeight: 56 }} />}>

@@ -1,4 +1,4 @@
-const STANDALONE_ROUTE_PREFIXES = ["/dashboard", "/moxzk"] as const;
+const STANDALONE_ROUTE_PREFIXES = ["/dashboard"] as const;
 
 function normalizePathname(pathname: string | null | undefined) {
   return pathname?.toLowerCase() ?? "";
@@ -14,8 +14,4 @@ export function isStandaloneRoute(pathname: string | null | undefined) {
   return STANDALONE_ROUTE_PREFIXES.some((routePrefix) =>
     matchesRoutePrefix(normalizedPathname, routePrefix)
   );
-}
-
-export function isMoxzkRoute(pathname: string | null | undefined) {
-  return matchesRoutePrefix(normalizePathname(pathname), "/moxzk");
 }

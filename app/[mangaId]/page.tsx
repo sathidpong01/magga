@@ -6,7 +6,8 @@ import {
   mangaTags as mangaTagsTable,
   tags as tagsTable,
 } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import LinkChip from "@/app/components/ui/LinkChip";
 import {
@@ -63,7 +64,7 @@ const getMangaBySlug = cache(async (slug: string) => {
         authorId: mangaTable.authorId,
       })
       .from(mangaTable)
-      .where(eq(mangaTable.slug, slug))
+      .where(and(eq(mangaTable.slug, slug), eq(mangaTable.isHidden, false)))
       .limit(1);
 
     if (!manga) {
@@ -110,11 +111,11 @@ const getMangaBySlug = cache(async (slug: string) => {
     };
   } catch (error) {
     console.error(`Error fetching manga ${slug}:`, error);
-    return null;
+    throw error;
   }
 });
 
-export async function generateMetadata({ params }: MangaPageProps) {
+export async function generateMetadata({ params }: MangaPageProps): Promise<Metadata> {
   const { mangaId } = await params;
   let decodedSlug: string;
   try {
@@ -144,17 +145,19 @@ export async function generateMetadata({ params }: MangaPageProps) {
   const authorName = mangaData.author?.name || mangaData.authorName;
   const displayTitle = authorName ? `[${authorName}] - ${mangaData.title}` : mangaData.title;
   const description = isSensitive
-    ? `Read ${mangaData.title} online at Magga Reader. High quality images and fast loading.`
-    : mangaData.description;
+    ? `อ่าน ${mangaData.title} บน MAGGA`
+    : mangaData.description?.trim() || `อ่าน ${mangaData.title} บน MAGGA`;
+  const canonicalPath = `/${encodeURIComponent(mangaData.slug)}`;
   const ogImage = "/android-chrome-512x512.png";
 
   return {
     title: displayTitle,
     description,
+    alternates: { canonical: canonicalPath },
     openGraph: {
       title: `${displayTitle} - MAGGA`,
-      description: description || "Read your favorite manga online for free.",
-      url: `/${mangaData.slug}`,
+      description,
+      url: canonicalPath,
       siteName: "MAGGA",
       images: [{ url: ogImage, width: 512, height: 512, alt: "MAGGA" }],
       type: "website",
@@ -162,7 +165,7 @@ export async function generateMetadata({ params }: MangaPageProps) {
     twitter: {
       card: "summary_large_image",
       title: `${displayTitle} - MAGGA`,
-      description: description || "Read your favorite manga online for free.",
+      description,
       images: [ogImage],
     },
   };
@@ -198,7 +201,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
     "@context": "https://schema.org",
     "@type": "ComicStory",
     name: manga.title,
-    url: `${baseUrl}/${manga.slug}`,
+    url: `${baseUrl}/${encodeURIComponent(manga.slug)}`,
     image: manga.coverImage,
     description: manga.description || undefined,
     author: authorName
@@ -238,7 +241,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
     <Box sx={{ minHeight: "100vh", bgcolor: maggaColors.background, pb: 8 }}>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
       {/* Hero / Header Section with Blurred Background */}
       <Box sx={{ position: "relative", overflow: "hidden", mb: -4 }}>
