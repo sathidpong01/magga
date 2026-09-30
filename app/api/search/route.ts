@@ -57,7 +57,12 @@ export async function GET(request: NextRequest) {
       results = await db.query.manga.findMany({
         where: and(
           eq(mangaTable.isHidden, false),
-          sql`(${mangaTable.title} ILIKE ${'%' + q + '%'} OR ${mangaTable.authorName} ILIKE ${'%' + q + '%'})`
+          sql`(${mangaTable.title} ILIKE ${'%' + q + '%'} OR ${mangaTable.authorName} ILIKE ${'%' + q + '%'} OR EXISTS (
+            SELECT 1 FROM public.manga_contributors mc
+            INNER JOIN public.authors ca ON ca.id = mc.author_id
+            WHERE mc.manga_id = "manga"."id"
+              AND ca.name ILIKE ${'%' + q + '%'}
+          ))`
         ),
         limit: 10,
         columns: {

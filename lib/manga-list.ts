@@ -44,7 +44,11 @@ export const getAuthorProfile = unstable_cache(
       .where(
         and(
           eq(mangaTable.isHidden, false),
-          sql`(${mangaTable.authorName} ILIKE ${authorName.trim()} OR ${author ? eq(mangaTable.authorId, author.id) : sql`false`})`
+          sql`(${mangaTable.authorName} ILIKE ${authorName.trim()} OR ${author ? eq(mangaTable.authorId, author.id) : sql`false`} OR EXISTS (
+            SELECT 1 FROM public.manga_contributors mc
+            WHERE mc.manga_id = "manga"."id"
+              AND mc.author_id = ${author?.id ?? "00000000-0000-0000-0000-000000000000"}
+          ))`
         )
       );
 
@@ -223,13 +227,23 @@ export const getMangasWithPagination = unstable_cache(
           SELECT 1 FROM ${authorsTable}
           WHERE ${authorsTable.id} = ${mangaTable.authorId}
           AND ${authorsTable.name} ILIKE ${author.trim()}
+        ) OR EXISTS (
+          SELECT 1 FROM public.manga_contributors mc
+          INNER JOIN public.authors ca ON ca.id = mc.author_id
+          WHERE mc.manga_id = "manga"."id"
+            AND ca.name ILIKE ${author.trim()}
         ))`
       );
     }
 
     if (search) {
       conditions.push(
-        sql`(${mangaTable.title} ILIKE ${'%' + search + '%'} OR ${mangaTable.authorName} ILIKE ${'%' + search + '%'})`
+        sql`(${mangaTable.title} ILIKE ${'%' + search + '%'} OR ${mangaTable.authorName} ILIKE ${'%' + search + '%'} OR EXISTS (
+          SELECT 1 FROM public.manga_contributors mc
+          INNER JOIN public.authors ca ON ca.id = mc.author_id
+          WHERE mc.manga_id = "manga"."id"
+            AND ca.name ILIKE ${'%' + search + '%'}
+        ))`
       );
     }
     if (categoryId && categoryId !== "all") {
