@@ -22,6 +22,7 @@ import AutoStoriesIcon from "@mui/icons-material/AutoStories";
 import AssignmentIcon from "@mui/icons-material/Assignment";
 import Link from "next/link";
 import Image from "next/image";
+import { maggaRadii } from "@/lib/design-tokens";
 import {
   DashboardPageHeader,
   DashboardSectionTitle,
@@ -236,9 +237,9 @@ export default async function AdminPage() {
                             position: "relative",
                             width: "100%",
                             aspectRatio: "3 / 4",
-                            maxHeight: { xs: 260, md: 220, xl: 250 },
+                            flexShrink: 0,
                             overflow: "hidden",
-                            borderRadius: "8px",
+                            borderRadius: `${maggaRadii.card}px`,
                             bgcolor: dashboardTokens.surfaceMuted,
                           }}
                         >
