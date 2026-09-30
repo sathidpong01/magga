@@ -3,10 +3,11 @@ import {
   authors as authorsTable,
   categories as categoriesTable,
   manga as mangaTable,
+  mangaContributors as mangaContributorsTable,
   mangaTags as mangaTagsTable,
   tags as tagsTable,
 } from "@/db/schema";
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import LinkChip from "@/app/components/ui/LinkChip";
@@ -41,6 +42,16 @@ type MangaPageProps = {
   }>;
 };
 
+function parseSocialLinks(value: string | null): Array<{ url: string; label: string; icon: string }> {
+  if (!value) return [];
+  try {
+    const links = JSON.parse(value);
+    return Array.isArray(links) ? links.filter((link) => typeof link.url === "string" && link.url) : [];
+  } catch {
+    return [];
+  }
+}
+
 // ISR: Revalidate every 1 hour
 export const revalidate = 3600;
 
@@ -71,7 +82,7 @@ const getMangaBySlug = cache(async (slug: string) => {
       return null;
     }
 
-    const [authorRows, categoryRows, tagRows] = await Promise.all([
+    const [authorRows, contributorRows, categoryRows, tagRows] = await Promise.all([
       manga.authorId
         ? db
             .select({
@@ -83,6 +94,17 @@ const getMangaBySlug = cache(async (slug: string) => {
             .where(eq(authorsTable.id, manga.authorId))
             .limit(1)
         : Promise.resolve([]),
+      db
+        .select({
+          id: authorsTable.id,
+          name: authorsTable.name,
+          socialLinks: authorsTable.socialLinks,
+          role: mangaContributorsTable.role,
+        })
+        .from(mangaContributorsTable)
+        .innerJoin(authorsTable, eq(authorsTable.id, mangaContributorsTable.authorId))
+        .where(eq(mangaContributorsTable.mangaId, manga.id))
+        .orderBy(asc(mangaContributorsTable.position)),
       manga.categoryId
         ? db
             .select({
@@ -106,6 +128,7 @@ const getMangaBySlug = cache(async (slug: string) => {
     return {
       ...manga,
       author: authorRows[0] ?? null,
+      contributors: contributorRows,
       category: categoryRows[0] ?? null,
       mangaTags_mangaId: tagRows.map((tag) => ({ tag_tagId: tag })),
     };
@@ -142,7 +165,8 @@ export async function generateMetadata({ params }: MangaPageProps): Promise<Meta
     mangaData.category && SENSITIVE_KEYWORDS.includes(mangaData.category.name.toLowerCase());
   const isSensitive = hasSensitiveTag || hasSensitiveCategory;
 
-  const authorName = mangaData.author?.name || mangaData.authorName;
+  const authorName = [mangaData.author?.name, ...mangaData.contributors.map((person) => person.name)]
+    .filter(Boolean).join(" & ") || mangaData.authorName;
   const displayTitle = authorName ? `[${authorName}] - ${mangaData.title}` : mangaData.title;
   const description = isSensitive
     ? `อ่าน ${mangaData.title} บน MAGGA`
@@ -195,7 +219,12 @@ export default async function MangaPage({ params }: MangaPageProps) {
   const pages = normalizeMangaPages(manga.pages);
 
   const baseUrl = getSiteUrl();
-  const authorName = manga.author?.name || manga.authorName;
+  const authorName = [manga.author?.name, ...manga.contributors.map((person) => person.name)]
+    .filter(Boolean).join(" & ") || manga.authorName;
+  const authorCredits = [
+    ...(manga.author ? [{ ...manga.author, role: "ผู้แต่ง" }] : []),
+    ...manga.contributors,
+  ];
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -204,9 +233,10 @@ export default async function MangaPage({ params }: MangaPageProps) {
     url: `${baseUrl}/${encodeURIComponent(manga.slug)}`,
     image: manga.coverImage,
     description: manga.description || undefined,
-    author: authorName
-      ? { "@type": "Person", name: authorName }
-      : undefined,
+    author: manga.author
+      ? { "@type": "Person", name: manga.author.name }
+      : authorName ? { "@type": "Person", name: authorName } : undefined,
+    contributor: manga.contributors.map((person) => ({ "@type": "Person", name: person.name })),
     genre: [
       manga.category?.name,
       ...manga.tags.map((t: any) => t.name),
@@ -389,93 +419,39 @@ export default async function MangaPage({ params }: MangaPageProps) {
                   {manga.title}
                 </Typography>
 
-                {/* Author Name */}
-                {authorName && (
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5, flexWrap: "wrap" }}>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: maggaColors.textMuted,
-                        fontSize: "0.95rem",
-                        fontWeight: 500,
-                      }}
-                    >
-                      ผู้แต่ง:
-                    </Typography>
-                    <Link
-                      href={`/?author=${encodeURIComponent(authorName)}`}
-                      style={{ textDecoration: "none" }}
-                    >
-                      <Typography
-                        component="span"
-                        sx={{
-                          color: maggaColors.archiveGold,
-                          fontWeight: 700,
-                          fontSize: "1.05rem",
-                          transition: "color 0.15s ease",
-                          "&:hover": {
-                            color: maggaColors.archiveGoldHover,
-                            textDecoration: "underline",
-                          },
-                        }}
-                      >
-                        {authorName}
+                {/* Each credited person keeps their own profile and social links. */}
+                {authorCredits.length > 0 ? authorCredits.map((person) => (
+                  <Box key={person.id} sx={{ mb: 1.5 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.75, flexWrap: "wrap" }}>
+                      <Typography variant="body2" sx={{ color: maggaColors.textMuted, fontSize: "0.95rem" }}>
+                        {person.role}:
                       </Typography>
-                    </Link>
+                      <Link href={`/?author=${encodeURIComponent(person.name)}`} style={{ textDecoration: "none" }}>
+                        <Typography component="span" sx={{ color: maggaColors.archiveGold, fontWeight: 700, fontSize: "1.05rem", "&:hover": { textDecoration: "underline" } }}>
+                          {person.name}
+                        </Typography>
+                      </Link>
+                    </Box>
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                      {parseSocialLinks(person.socialLinks).map((link) => (
+                        <Chip
+                          key={link.url}
+                          avatar={link.icon ? <Avatar src={link.icon} alt="" sx={{ width: 28, height: 28 }} /> : undefined}
+                          label={link.label || person.name}
+                          component="a"
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          clickable
+                          variant="outlined"
+                          sx={{ height: 36, borderRadius: 0.75, fontSize: "0.9rem", borderColor: "rgba(255,255,255,0.15)", color: maggaColors.textSecondary, "& .MuiChip-label": { px: 1.5 }, "&:hover": { borderColor: "rgba(255,255,255,0.4)", color: maggaColors.textPrimary, bgcolor: "rgba(255,255,255,0.05)" } }}
+                        />
+                      ))}
+                    </Box>
                   </Box>
+                )) : authorName && (
+                  <Typography sx={{ mb: 1.5, color: maggaColors.textSecondary }}>ผู้แต่ง: {authorName}</Typography>
                 )}
-
-                {/* Author Social Links */}
-                {(() => {
-                  if (manga.author?.socialLinks) {
-                    try {
-                      const links = JSON.parse(manga.author.socialLinks) as {
-                        url: string;
-                        label: string;
-                        icon: string;
-                      }[];
-                      if (links.length > 0) {
-                        return (
-                          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 2 }}>
-                            {links.map((link, index) => (
-                              <Chip
-                                key={index}
-                                avatar={
-                                  link.icon ? (
-                                    <Avatar src={link.icon} alt="" sx={{ width: 28, height: 28 }} />
-                                  ) : undefined
-                                }
-                                label={link.label || manga.author?.name}
-                                component="a"
-                                href={link.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                clickable
-                                variant="outlined"
-                                sx={{
-                                  height: 36,
-                                  borderRadius: 0.75,
-                                  fontSize: "0.9rem",
-                                  borderColor: "rgba(255,255,255,0.15)",
-                                  color: maggaColors.textSecondary,
-                                  "& .MuiChip-label": { px: 1.5 },
-                                  "&:hover": {
-                                    borderColor: "rgba(255,255,255,0.4)",
-                                    color: maggaColors.textPrimary,
-                                    bgcolor: "rgba(255,255,255,0.05)",
-                                  },
-                                }}
-                              />
-                            ))}
-                          </Box>
-                        );
-                      }
-                    } catch {
-                      return null;
-                    }
-                  }
-                  return null;
-                })()}
 
                 {/* Stats row */}
                 <Stack

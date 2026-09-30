@@ -292,6 +292,22 @@ export const manga = pgTable("manga", {
 	pgPolicy("manga_select", { as: "permissive", for: "select", to: ["public"], using: sql`is_hidden = false OR ${adminOnly}` }),
 ]);
 
+// Additional credited people for works with more than one creator. The
+// existing manga.author_id remains the primary credit for older records.
+export const mangaContributors = pgTable("manga_contributors", {
+	mangaId: uuid("manga_id").notNull().references(() => manga.id, { onDelete: "cascade" }),
+	authorId: uuid("author_id").notNull().references(() => authors.id, { onDelete: "cascade" }),
+	role: text().notNull(),
+	position: integer().default(0).notNull(),
+}, (table) => [
+	primaryKey({ columns: [table.mangaId, table.authorId] }),
+	index("idx_manga_contributors_author").on(table.authorId),
+	pgPolicy("manga_contributors_admin_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: adminOnly }),
+	pgPolicy("manga_contributors_admin_update", { as: "permissive", for: "update", to: ["authenticated"], using: adminOnly }),
+	pgPolicy("manga_contributors_admin_write", { as: "permissive", for: "insert", to: ["authenticated"], withCheck: adminOnly }),
+	pgPolicy("manga_contributors_select", { as: "permissive", for: "select", to: ["public"], using: sql`EXISTS (SELECT 1 FROM public.manga m WHERE m.id = manga_id AND (m.is_hidden = false OR ${adminOnly}))` }),
+]);
+
 export const mangaRatings = pgTable("manga_ratings", {
 	id: uuid().defaultRandom().primaryKey().notNull(),
 	mangaId: uuid("manga_id").notNull(),
