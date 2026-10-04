@@ -7,9 +7,12 @@ import {
   mangaTags as mangaTagsTable,
   tags as tagsTable,
 } from "@/db/schema";
-import { and, asc, eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
+import { getSessionRole } from "@/lib/auth-helpers";
 import LinkChip from "@/app/components/ui/LinkChip";
 import {
   Box,
@@ -52,8 +55,8 @@ function parseSocialLinks(value: string | null): Array<{ url: string; label: str
   }
 }
 
-// ISR: Revalidate every 1 hour
-export const revalidate = 3600;
+// Draft previews depend on the current viewer and must never enter the shared page cache.
+export const dynamic = "force-dynamic";
 
 // Fetch manga data with small indexed queries. Drizzle's relation query generated
 // lateral JSON aggregation here, which can exceed Supabase statement timeouts.
@@ -73,13 +76,28 @@ const getMangaBySlug = cache(async (slug: string) => {
         ratingCount: mangaTable.ratingCount,
         categoryId: mangaTable.categoryId,
         authorId: mangaTable.authorId,
+        isHidden: mangaTable.isHidden,
       })
       .from(mangaTable)
-      .where(and(eq(mangaTable.slug, slug), eq(mangaTable.isHidden, false)))
+      .where(eq(mangaTable.slug, slug))
       .limit(1);
 
     if (!manga) {
       return null;
+    }
+
+    if (manga.isHidden) {
+      const session = await auth.api.getSession({
+        headers: await headers(),
+        query: { disableCookieCache: true },
+      });
+      const role = getSessionRole(session);
+      if (
+        !session?.user?.id || session.user.banned || session.user.isBanned ||
+        (role !== "admin" && role !== "moderator")
+      ) {
+        return null;
+      }
     }
 
     const [authorRows, contributorRows, categoryRows, tagRows] = await Promise.all([
@@ -151,6 +169,13 @@ export async function generateMetadata({ params }: MangaPageProps): Promise<Meta
 
   if (!mangaData) {
     return { title: "Not Found" };
+  }
+
+  if (mangaData.isHidden) {
+    return {
+      title: "ฉบับร่าง - MAGGA",
+      robots: { index: false, follow: false },
+    };
   }
 
   const tags = mangaData.mangaTags_mangaId?.map((mt: any) => mt.tag_tagId) || [];
@@ -269,10 +294,10 @@ export default async function MangaPage({ params }: MangaPageProps) {
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: maggaColors.background, pb: 8 }}>
-      <script
+      {!manga.isHidden && <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
-      />
+      />}
       {/* Hero / Header Section with Blurred Background */}
       <Box sx={{ position: "relative", overflow: "hidden", mb: -4 }}>
         {/* Background Image Layer */}
@@ -354,6 +379,12 @@ export default async function MangaPage({ params }: MangaPageProps) {
               size={{ xs: 12, md: 8, lg: 9 }}
             >
               <Box>
+                {manga.isHidden && (
+                  <Chip
+                    label="ฉบับร่าง"
+                    sx={{ mb: 2, height: 28, bgcolor: maggaColors.archiveGoldSoft, color: maggaColors.archiveGoldHover }}
+                  />
+                )}
                 {/* Category + Tags */}
                 <Box sx={{ mb: 2 }}>
                   <Typography
@@ -520,7 +551,8 @@ export default async function MangaPage({ params }: MangaPageProps) {
                     initialAverageRating={manga.averageRating}
                     initialRatingCount={Number(manga.ratingCount)}
                     hideViewCount={true}
-                    trackViewOnMount
+                    trackViewOnMount={!manga.isHidden}
+                    hideInteractive={manga.isHidden}
                   />
                 </Box>
 
