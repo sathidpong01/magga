@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Box, IconButton, Paper } from "@mui/material";
+import { Box, IconButton, Paper, Portal } from "@mui/material";
+import { useAdTracking } from "./useAdTracking";
+import { adDeviceDisplay } from "@/lib/advertisements";
+import { maggaColors } from "@/lib/design-tokens";
 import CloseIcon from "@mui/icons-material/Close";
 
 interface FloatingAdProps {
@@ -12,10 +15,12 @@ interface FloatingAdProps {
     imageUrl: string;
     linkUrl?: string | null;
     content?: string | null;
+    targetDevice?: string;
   };
 }
 
 export default function FloatingAd({ ad }: FloatingAdProps) {
+  const tracking = useAdTracking(ad.id);
   const [isVisible, setIsVisible] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
 
@@ -45,6 +50,9 @@ export default function FloatingAd({ ad }: FloatingAdProps) {
     <Box
       component="img"
       src={ad.imageUrl}
+      ref={tracking.imageRef}
+      onLoad={tracking.onLoad}
+      decoding="async"
       alt={imageAlt}
       sx={{
         width: "100%",
@@ -55,13 +63,14 @@ export default function FloatingAd({ ad }: FloatingAdProps) {
   );
 
   return (
-    <Paper
+    <Portal><Paper
       sx={{
         position: "fixed",
         bottom: 20,
         right: 20,
         maxWidth: 200,
-        bgcolor: "#171717",
+        bgcolor: maggaColors.surface,
+        display: adDeviceDisplay(ad.targetDevice),
         borderRadius: 1,
         overflow: "hidden",
         boxShadow: "0 10px 40px rgba(0,0,0,0.5)",
@@ -98,6 +107,7 @@ export default function FloatingAd({ ad }: FloatingAdProps) {
           target="_blank"
           rel="noopener noreferrer"
           aria-label={`เปิดโฆษณา: ${ad.title || ad.id}`}
+          onClick={tracking.onClick}
           sx={{
             cursor: "pointer",
             display: "block",
@@ -109,6 +119,6 @@ export default function FloatingAd({ ad }: FloatingAdProps) {
       ) : (
         <Box sx={{ display: "block" }}>{image}</Box>
       )}
-    </Paper>
+    </Paper></Portal>
   );
 }

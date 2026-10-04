@@ -162,15 +162,16 @@ const darkTheme = createTheme({
 
 type Props = {
   children?: React.ReactNode;
+  initialAds?: import("@/app/components/features/ads/AdsProvider").Ad[];
 };
 
-export const Providers = ({ children }: Props) => {
+export const Providers = ({ children, initialAds }: Props) => {
   return (
     <AppRouterCacheProvider options={{ enableCssLayer: true }}>
       <ThemeProvider theme={darkTheme}>
         <CssBaseline />
         <ToastProvider>
-          <AdsProvider>{children}</AdsProvider>
+          <AdsProvider initialAds={initialAds}>{children}</AdsProvider>
         </ToastProvider>
       </ThemeProvider>
     </AppRouterCacheProvider>

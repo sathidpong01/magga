@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Dialog, Box, IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import { useAdTracking } from "./useAdTracking";
 
 interface AdModalProps {
   ad: {
@@ -16,6 +17,7 @@ interface AdModalProps {
 }
 
 export default function AdModal({ ad }: AdModalProps) {
+  const tracking = useAdTracking(ad.id);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -34,6 +36,7 @@ export default function AdModal({ ad }: AdModalProps) {
   };
 
   const handleClick = () => {
+    tracking.onClick();
     handleClose();
   };
   const imageAlt = ad.title ? `โฆษณา: ${ad.title}` : "โฆษณา";
@@ -41,6 +44,9 @@ export default function AdModal({ ad }: AdModalProps) {
     <Box
       component="img"
       src={ad.imageUrl}
+      ref={tracking.imageRef}
+      onLoad={tracking.onLoad}
+      decoding="async"
       alt={imageAlt}
       sx={{
         maxWidth: "100%",

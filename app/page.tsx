@@ -1,6 +1,6 @@
 import { db } from "@/db";
-import { categories as categoriesTable, tags as tagsTable, advertisements as adsTable, mangaTags } from "@/db/schema";
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { categories as categoriesTable, tags as tagsTable, mangaTags } from "@/db/schema";
+import { asc, eq, inArray } from "drizzle-orm";
 import { Box, Container, Typography } from "@mui/material";
 import type { Metadata } from "next";
 import { Suspense } from "react";
@@ -11,6 +11,7 @@ import StreamingMangaGrid from "./components/features/manga/StreamingMangaGrid";
 import AuthorHeaderCard from "./components/features/author/AuthorHeaderCard";
 import { getAuthorProfile } from "@/lib/manga-list";
 import { maggaColors } from "@/lib/design-tokens";
+import { getPublicAds } from "@/lib/advertisements-server";
 
 const SearchFilters = dynamic(
   () => import("./components/features/search/SearchFilters"),
@@ -65,25 +66,7 @@ const getTags = unstable_cache(
   { revalidate: 3600, tags: ["tags"] }
 );
 
-// Cache grid ads for 1 hour
-const getGridAds = unstable_cache(
-  async () => {
-    return db.query.advertisements.findMany({
-      where: and(eq(adsTable.isActive, true), eq(adsTable.placement, "grid")),
-      columns: {
-        id: true,
-        type: true,
-        title: true,
-        imageUrl: true,
-        linkUrl: true,
-        content: true,
-        repeatCount: true,
-      },
-    });
-  },
-  ["grid-ads"],
-  { revalidate: 3600, tags: ["advertisements"] }
-);
+const getGridAds = async () => (await getPublicAds()).filter((ad) => ad.placement === "grid");
 
 export default async function Home({ searchParams }: Props) {
   const params = await searchParams;

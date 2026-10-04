@@ -6,6 +6,7 @@ import MangaCard, {
   MangaWithDetails,
 } from "@/app/components/features/manga/MangaCard";
 import { AdCard } from "@/app/components/features/ads";
+import { adDeviceDisplay } from "@/lib/advertisements";
 
 interface Ad {
   id: string;
@@ -15,6 +16,7 @@ interface Ad {
   linkUrl?: string | null;
   content?: string | null;
   repeatCount?: number; // จำนวนครั้งที่แสดงซ้ำ
+  targetDevice?: string;
 }
 
 interface MangaGridWithAdsProps {
@@ -80,6 +82,7 @@ export default function MangaGridWithAds({
               : `ad-${item.data.id}-${item.index}`
           }
           size={{ xs: 6, sm: 6, md: 4, lg: 3 }}
+          sx={{ display: item.type === "ad" ? adDeviceDisplay(item.data.targetDevice) : undefined }}
         >
           {item.type === "manga" ? (
             <MangaCard manga={item.data} priority={index < 6} />

@@ -7,6 +7,7 @@ import LayoutWrapper from "./components/layout/LayoutWrapper";
 import LazyClientComponents from "./components/layout/LazyClientComponents";
 import { getSiteUrl } from "@/lib/site-url";
 import { getStoragePublicUrl } from "@/lib/storage";
+import { getPublicAds } from "@/lib/advertisements-server";
 
 const kanit = Kanit({
   weight: ["400", "500", "700"],
@@ -50,12 +51,16 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   const r2PublicUrl = getStoragePublicUrl("");
+  const initialAds = await getPublicAds().catch((error) => {
+    console.error("Unable to load advertisements", error);
+    return undefined;
+  });
 
   return (
     <html lang="th" suppressHydrationWarning data-scroll-behavior="smooth">
@@ -75,7 +80,7 @@ export default function RootLayout({
       </head>
       <body className={kanit.className}>
         <ErrorBoundary>
-          <Providers>
+          <Providers initialAds={initialAds}>
             <LazyClientComponents />
             <LayoutWrapper>{children}</LayoutWrapper>
           </Providers>

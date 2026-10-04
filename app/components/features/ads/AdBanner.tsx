@@ -1,9 +1,12 @@
 "use client";
 
 import { Box, Paper } from "@mui/material";
+import { useAdTracking } from "./useAdTracking";
+import { adDeviceDisplay } from "@/lib/advertisements";
 
 interface AdBannerProps {
   fillArea?: boolean;
+  priority?: boolean;
   ad: {
     id: string;
     type: string;
@@ -11,21 +14,27 @@ interface AdBannerProps {
     imageUrl: string;
     linkUrl?: string | null;
     content?: string | null;
+    targetDevice?: string;
   };
 }
 
-export default function AdBanner({ ad, fillArea = false }: AdBannerProps) {
+export default function AdBanner({ ad, fillArea = false, priority = false }: AdBannerProps) {
+  const tracking = useAdTracking(ad.id);
   const imageAlt = ad.title ? `โฆษณา: ${ad.title}` : "โฆษณา";
   const content = (
     <Box
       component="img"
       src={ad.imageUrl}
+      ref={tracking.imageRef}
+      onLoad={tracking.onLoad}
+      loading={priority ? "eager" : "lazy"}
+      decoding="async"
       alt={imageAlt}
       sx={{
-        position: fillArea ? "absolute" : undefined,
-        inset: fillArea ? 0 : undefined,
+        position: "absolute",
+        inset: 0,
         width: "100%",
-        height: fillArea ? "100%" : "auto",
+        height: "100%",
         display: "block",
         maxHeight: fillArea ? undefined : 150,
         objectFit: fillArea ? "cover" : "contain",
@@ -43,7 +52,8 @@ export default function AdBanner({ ad, fillArea = false }: AdBannerProps) {
           width: "100%",
           aspectRatio: "3 / 1",
         }
-      : { borderRadius: 1 }),
+      : { borderRadius: 1, position: "relative" as const, width: "100%", height: { xs: 100, md: 150 } }),
+    display: adDeviceDisplay(ad.targetDevice),
     overflow: "hidden",
     cursor: ad.linkUrl ? "pointer" : "default",
     transition: "opacity 0.2s ease, outline-color 0.2s ease",
@@ -61,6 +71,7 @@ export default function AdBanner({ ad, fillArea = false }: AdBannerProps) {
       target="_blank"
       rel="noopener noreferrer"
       aria-label={`เปิดโฆษณา: ${ad.title || ad.id}`}
+      onClick={tracking.onClick}
       sx={surfaceSx}
     >
       {content}

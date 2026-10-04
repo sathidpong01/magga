@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { revalidateTag } from "next/cache";
+import { advertisementUpdate } from "@/lib/advertisement-input";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -19,8 +20,11 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     
     const { id } = await context.params;
     const body = await request.json();
-
-    const updateData = { ...body, updatedAt: new Date().toISOString() };
+    const parsed = advertisementUpdate.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "ข้อมูลโฆษณาไม่ถูกต้อง", details: parsed.error.flatten() }, { status: 400 });
+    }
+    const updateData = { ...parsed.data, updatedAt: new Date().toISOString() };
     const [ad] = await db.update(adsTable)
       .set(updateData)
       .where(eq(adsTable.id, id))

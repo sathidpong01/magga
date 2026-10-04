@@ -1,6 +1,7 @@
 "use client";
 
 import { Box, Paper } from "@mui/material";
+import { useAdTracking } from "./useAdTracking";
 
 interface AdCardProps {
   ad: {
@@ -14,11 +15,16 @@ interface AdCardProps {
 }
 
 export default function AdCard({ ad }: AdCardProps) {
+  const tracking = useAdTracking(ad.id);
   const imageAlt = ad.title ? `โฆษณา: ${ad.title}` : "โฆษณา";
   const content = (
     <Box
       component="img"
       src={ad.imageUrl}
+      ref={tracking.imageRef}
+      onLoad={tracking.onLoad}
+      loading="lazy"
+      decoding="async"
       alt={imageAlt}
       sx={{
         position: "absolute",
@@ -58,6 +64,7 @@ export default function AdCard({ ad }: AdCardProps) {
       target="_blank"
       rel="noopener noreferrer"
       aria-label={`เปิดโฆษณา: ${ad.title || ad.id}`}
+      onClick={tracking.onClick}
       sx={surfaceSx}
     >
       {content}

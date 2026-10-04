@@ -8,6 +8,7 @@ import { AdCard } from "@/app/components/features/ads";
 import EmptyState from "@/app/components/ui/EmptyState";
 import { useSession } from "@/lib/auth-client";
 import { maggaColors } from "@/lib/design-tokens";
+import { adDeviceDisplay } from "@/lib/advertisements";
 
 interface Ad {
   id: string;
@@ -17,6 +18,7 @@ interface Ad {
   linkUrl?: string | null;
   content?: string | null;
   repeatCount?: number;
+  targetDevice?: string;
 }
 
 interface InfiniteMangaGridProps {
@@ -180,8 +182,9 @@ export default function InfiniteMangaGrid({
                 : `ad-${item.data.id}-${item.index}`
             }
             size={{ xs: 6, sm: 6, md: 4, lg: 3 }}
-            sx={
-              index === totalItems - 1
+            sx={{
+              display: item.type === "ad" ? adDeviceDisplay(item.data.targetDevice) : undefined,
+              ...(index === totalItems - 1
                 ? {
                     mx: {
                       xs: orphanAtTwoColumns ? "auto" : undefined,
@@ -190,8 +193,8 @@ export default function InfiniteMangaGrid({
                       lg: orphanAtFourColumns ? "auto" : undefined,
                     },
                   }
-                : undefined
-            }
+                : {}),
+            }}
           >
             {item.type === "manga" ? (
               <MangaCard manga={item.data} priority={index < 4} />

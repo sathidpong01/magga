@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { loginAttempts as loginAttemptsTable, mangaSubmissions as submissionsTable } from "@/db/schema";
-import { lt, eq, and, inArray } from "drizzle-orm";
+import { loginAttempts as loginAttemptsTable, mangaSubmissions as submissionsTable, advertisementEvents } from "@/db/schema";
+import { lt, eq, and, inArray, sql } from "drizzle-orm";
 import { deleteAssets } from "@/lib/storage";
 import { extractMangaPageUrls } from "@/lib/manga-pages";
 
@@ -12,7 +12,7 @@ export async function GET(req: Request) {
   const authHeader = req.headers.get("authorization");
   const secretHeader = authHeader?.replace("Bearer ", "");
   
-  if (secretParam !== process.env.CRON_SECRET && secretHeader !== process.env.CRON_SECRET) {
+  if (!process.env.CRON_SECRET || (secretParam !== process.env.CRON_SECRET && secretHeader !== process.env.CRON_SECRET)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -21,6 +21,7 @@ export async function GET(req: Request) {
       rateLimitsDeleted: 0,
       submissionsDeleted: 0,
       r2FilesDeleted: 0,
+      adEventsDeleted: 0,
     };
 
     // 1. Clean up expired rate limit records (LoginAttempt)
@@ -38,6 +39,15 @@ export async function GET(req: Request) {
     // 2. Find rejected submissions older than 30 days
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const deletedEvents = await db.execute(sql`
+      WITH deleted AS (
+        DELETE FROM ${advertisementEvents}
+        WHERE ${advertisementEvents.createdAt} < ${thirtyDaysAgo.toISOString()}::timestamptz
+        RETURNING event_id
+      ) SELECT count(*)::int AS count FROM deleted
+    `);
+    results.adEventsDeleted = Number(deletedEvents[0]?.count || 0);
 
     const oldRejectedSubmissions = await db
       .select()

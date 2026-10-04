@@ -10,6 +10,7 @@ interface Ad {
   linkUrl?: string | null;
   content?: string | null;
   repeatCount?: number;
+  targetDevice?: string;
 }
 
 interface StreamingMangaGridProps {

@@ -46,6 +46,9 @@ export const advertisements = pgTable("advertisements", {
 	content: text(),
 	placement: text().notNull(),
 	repeatCount: integer("repeat_count").default(1).notNull(),
+	targetDevice: text("target_device").default('all').notNull(),
+	impressions: bigint("impressions", { mode: "number" }).default(0).notNull(),
+	clicks: bigint("clicks", { mode: "number" }).default(0).notNull(),
 	isActive: boolean("is_active").default(true).notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
@@ -56,7 +59,20 @@ export const advertisements = pgTable("advertisements", {
 	pgPolicy("advertisements_select", { as: "permissive", for: "select", to: ["public"], using: sql`is_active = true OR ${adminOnly}` }),
 	check("advertisements_placement_check", sql`placement = ANY (ARRAY['grid'::text, 'header'::text, 'footer'::text, 'manga-end'::text, 'floating'::text, 'modal'::text])`),
 	check("advertisements_type_check", sql`type = ANY (ARRAY['affiliate'::text, 'promptpay'::text])`),
+	check("advertisements_device_check", sql`target_device IN ('all', 'mobile', 'desktop')`),
 ]);
+
+export const advertisementEvents = pgTable("advertisement_events", {
+  eventId: uuid("event_id").notNull(),
+  adId: uuid("ad_id").notNull().references(() => advertisements.id, { onDelete: "cascade" }),
+  kind: text().notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "string" }).defaultNow().notNull(),
+}, (table) => [
+  primaryKey({ columns: [table.eventId, table.kind] }),
+  index("advertisement_events_ad_idx").on(table.adId),
+  index("advertisement_events_created_idx").on(table.createdAt),
+  check("advertisement_events_kind_check", sql`kind IN ('impression', 'click')`),
+]).enableRLS();
 
 export const accounts = pgTable("accounts", {
 	id: text().primaryKey().notNull(),

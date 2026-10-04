@@ -31,11 +31,17 @@ import {
   Pagination,
   useMediaQuery,
   useTheme,
+  Tooltip,
+  FormControlLabel,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import { adCtr } from "@/lib/advertisements";
+import { maggaColors } from "@/lib/design-tokens";
 import Image from "next/image";
 import { authFetch } from "@/lib/auth-fetch";
 import {
@@ -54,6 +60,9 @@ interface Advertisement {
   placement: string;
   repeatCount: number;
   isActive: boolean;
+  targetDevice: string;
+  impressions: number;
+  clicks: number;
 }
 
 const PLACEMENTS = [
@@ -564,6 +573,13 @@ export default function AdvertisementsPage() {
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [placementFilter, setPlacementFilter] = useState("all");
+  const [deviceFilter, setDeviceFilter] = useState("all");
+  const [saving, setSaving] = useState(false);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Delete confirmation modal
@@ -578,15 +594,22 @@ export default function AdvertisementsPage() {
     content: "",
     placement: "grid",
     repeatCount: 1,
+    isActive: false,
+    targetDevice: "all",
   });
 
   const fetchAds = useCallback(async () => {
+    setLoading(true);
     try {
       const res = await authFetch("/api/advertisements?all=true");
+      if (!res.ok) throw new Error("โหลดโฆษณาไม่สำเร็จ");
       const data = await res.json();
       setAds(data);
     } catch (err) {
       console.error(err);
+      setError("โหลดโฆษณาไม่สำเร็จ กรุณาลองอีกครั้ง");
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -595,11 +618,19 @@ export default function AdvertisementsPage() {
   }, [fetchAds]);
 
   // Pagination
-  const totalPages = Math.ceil(ads.length / ITEMS_PER_PAGE);
+  const filteredAds = useMemo(() => ads.filter((ad) =>
+    ad.title.toLowerCase().includes(search.trim().toLowerCase()) &&
+    (statusFilter === "all" || ad.isActive === (statusFilter === "active")) &&
+    (placementFilter === "all" || ad.placement === placementFilter) &&
+    (deviceFilter === "all" || ad.targetDevice === deviceFilter)
+  ), [ads, search, statusFilter, placementFilter, deviceFilter]);
+  const totalPages = Math.max(1, Math.ceil(filteredAds.length / ITEMS_PER_PAGE));
+  useEffect(() => { setPage(1); }, [search, statusFilter, placementFilter, deviceFilter]);
+  useEffect(() => { setPage((current) => Math.min(current, totalPages)); }, [totalPages]);
   const paginatedAds = useMemo(() => {
     const start = (page - 1) * ITEMS_PER_PAGE;
-    return ads.slice(start, start + ITEMS_PER_PAGE);
-  }, [ads, page]);
+    return filteredAds.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredAds, page]);
 
   const handlePageChange = (_: React.ChangeEvent<unknown>, newPage: number) => {
     setPage(newPage);
@@ -616,6 +647,8 @@ export default function AdvertisementsPage() {
         content: ad.content || "",
         placement: ad.placement,
         repeatCount: ad.repeatCount || 1,
+        isActive: ad.isActive,
+        targetDevice: ad.targetDevice || "all",
       });
       setPreviewUrl(ad.imageUrl);
     } else {
@@ -628,6 +661,8 @@ export default function AdvertisementsPage() {
         content: "",
         placement: "grid",
         repeatCount: 1,
+        isActive: false,
+        targetDevice: "all",
       });
       setPreviewUrl(null);
     }
@@ -635,10 +670,17 @@ export default function AdvertisementsPage() {
   };
 
   const handleCloseDialog = () => {
+    if (saving || uploading) return;
     setDialogOpen(false);
     setEditingAd(null);
     setError(null);
     setPreviewUrl(null);
+  };
+
+  const handleDuplicate = (ad: Advertisement) => {
+    handleOpenDialog(ad);
+    setEditingAd(null);
+    setFormData((current) => ({ ...current, title: `${ad.title} (สำเนา)`, isActive: false }));
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -646,8 +688,7 @@ export default function AdvertisementsPage() {
     if (!file) return;
 
     // Show local preview immediately
-    const localUrl = URL.createObjectURL(file);
-    setPreviewUrl(localUrl);
+    setPreviewUrl(null);
 
     // Upload to R2
     setUploading(true);
@@ -685,11 +726,13 @@ export default function AdvertisementsPage() {
   };
 
   const handleSubmit = async () => {
+    if (saving || uploading) return;
     if (!formData.imageUrl) {
       setError("กรุณาอัพโหลดรูปภาพ");
       return;
     }
 
+    setSaving(true);
     try {
       const url = editingAd
         ? `/api/advertisements/${editingAd.id}`
@@ -702,26 +745,36 @@ export default function AdvertisementsPage() {
         body: JSON.stringify(formData),
       });
 
-      if (!res.ok) throw new Error("Failed to save");
-
-      handleCloseDialog();
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "บันทึกโฆษณาไม่สำเร็จ");
+      }
+      setDialogOpen(false);
+      setError(null);
       fetchAds();
     } catch (err) {
-      setError("เกิดข้อผิดพลาดในการบันทึก");
+      setError(err instanceof Error ? err.message : "เกิดข้อผิดพลาดในการบันทึก");
       console.error(err);
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleToggleActive = async (ad: Advertisement) => {
+    setBusyId(ad.id);
     try {
-      await authFetch(`/api/advertisements/${ad.id}`, {
+      const res = await authFetch(`/api/advertisements/${ad.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive: !ad.isActive }),
       });
+      if (!res.ok) throw new Error("เปลี่ยนสถานะไม่สำเร็จ");
       fetchAds();
     } catch (err) {
       console.error(err);
+      setError("เปลี่ยนสถานะโฆษณาไม่สำเร็จ");
+    } finally {
+      setBusyId(null);
     }
   };
 
@@ -737,14 +790,19 @@ export default function AdvertisementsPage() {
 
   const handleConfirmDelete = async () => {
     if (!deletingAd) return;
+    setBusyId(deletingAd.id);
     try {
-      await authFetch(`/api/advertisements/${deletingAd.id}`, {
+      const res = await authFetch(`/api/advertisements/${deletingAd.id}`, {
         method: "DELETE",
       });
+      if (!res.ok) throw new Error("ลบโฆษณาไม่สำเร็จ");
       fetchAds();
       handleCloseDeleteDialog();
     } catch (err) {
       console.error(err);
+      setError("ลบโฆษณาไม่สำเร็จ");
+    } finally {
+      setBusyId(null);
     }
   };
 
@@ -789,6 +847,29 @@ export default function AdvertisementsPage() {
         </Button>
       </Box>
 
+      {error && !dialogOpen && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mb: 2, minHeight: 56 }}>
+        <Tooltip title="รีเฟรชโฆษณาและสถิติ"><IconButton aria-label="รีเฟรชโฆษณาและสถิติ" onClick={fetchAds} disabled={loading}>{loading ? <CircularProgress size={20} /> : <RefreshIcon />}</IconButton></Tooltip>
+        <TextField label="ค้นหาโฆษณา" value={search} onChange={(e) => setSearch(e.target.value)} size="small" sx={{ flex: "1 1 200px" }} />
+        <FormControl size="small" sx={{ minWidth: 145 }}>
+          <InputLabel>สถานะ</InputLabel>
+          <Select label="สถานะ" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+            <MenuItem value="all">ทุกสถานะ</MenuItem><MenuItem value="active">เปิดใช้งาน</MenuItem><MenuItem value="draft">ฉบับร่าง</MenuItem>
+          </Select>
+        </FormControl>
+        <FormControl size="small" sx={{ minWidth: 145 }}>
+          <InputLabel>ตำแหน่ง</InputLabel>
+          <Select label="ตำแหน่ง" value={placementFilter} onChange={(e) => setPlacementFilter(e.target.value)}>
+            <MenuItem value="all">ทุกตำแหน่ง</MenuItem>{PLACEMENTS.map((item) => <MenuItem key={item.value} value={item.value}>{item.label}</MenuItem>)}
+          </Select>
+        </FormControl>
+        <FormControl size="small" sx={{ minWidth: 145 }}>
+          <InputLabel>อุปกรณ์</InputLabel>
+          <Select label="อุปกรณ์" value={deviceFilter} onChange={(e) => setDeviceFilter(e.target.value)}>
+            <MenuItem value="all">ทุกอุปกรณ์</MenuItem><MenuItem value="mobile">มือถือ</MenuItem><MenuItem value="desktop">Desktop</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
       {/* Mobile: Card layout */}
       {isMobile ? (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
@@ -857,10 +938,12 @@ export default function AdvertisementsPage() {
                   <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <Switch
                       checked={ad.isActive}
+                      disabled={busyId === ad.id}
                       onChange={() => handleToggleActive(ad)}
                       size="small"
                     />
                     <Box>
+                      <Tooltip title="ทำสำเนา"><IconButton aria-label="ทำสำเนา" size="small" onClick={() => handleDuplicate(ad)}><ContentCopyIcon fontSize="small" /></IconButton></Tooltip>
                       <IconButton
                         onClick={() => handleOpenDialog(ad)}
                         size="small"
@@ -878,14 +961,20 @@ export default function AdvertisementsPage() {
                       </IconButton>
                     </Box>
                   </Box>
+                  <Typography variant="caption" sx={{ display: "block", color: maggaColors.textSecondary }}>
+                    {ad.isActive ? "เปิดใช้งาน" : "ฉบับร่าง"} · {ad.targetDevice === "mobile" ? "มือถือ" : ad.targetDevice === "desktop" ? "Desktop" : "ทุกอุปกรณ์"}
+                  </Typography>
+                  <Typography variant="caption" sx={{ display: "block", color: maggaColors.textSecondary }}>
+                    เห็น {(ad.impressions || 0).toLocaleString()} · คลิก {(ad.clicks || 0).toLocaleString()} · CTR {adCtr(ad.impressions || 0, ad.clicks || 0)}%
+                  </Typography>
                 </Box>
               </Box>
             </Paper>
           ))}
-          {ads.length === 0 && (
+          {filteredAds.length === 0 && (
             <Box sx={{ py: 8, textAlign: "center", bgcolor: dashboardTokens.surface, borderRadius: 1.25, border: "1px solid rgba(255,255,255,0.06)" }}>
               <Typography sx={{ fontWeight: 700, color: "#737373", textTransform: "none", letterSpacing: "0" }}>
-                ยังไม่มีโฆษณา
+                ไม่พบโฆษณา
               </Typography>
             </Box>
           )}
@@ -936,7 +1025,15 @@ export default function AdvertisementsPage() {
                       />
                     </Box>
                   </TableCell>
-                  <TableCell>{ad.title}</TableCell>
+                  <TableCell>
+                    {ad.title}
+                    <Typography variant="caption" sx={{ display: "block", color: maggaColors.textSecondary }}>
+                      {ad.isActive ? "เปิดใช้งาน" : "ฉบับร่าง"} · {ad.targetDevice === "mobile" ? "มือถือ" : ad.targetDevice === "desktop" ? "Desktop" : "ทุกอุปกรณ์"}
+                    </Typography>
+                    <Typography variant="caption" sx={{ display: "block", color: maggaColors.textSecondary }}>
+                      เห็น {(ad.impressions || 0).toLocaleString()} · คลิก {(ad.clicks || 0).toLocaleString()} · CTR {adCtr(ad.impressions || 0, ad.clicks || 0)}%
+                    </Typography>
+                  </TableCell>
                   <TableCell>
                     <Chip
                       label={
@@ -966,6 +1063,7 @@ export default function AdvertisementsPage() {
                   <TableCell>
                     <Switch
                       checked={ad.isActive}
+                      disabled={busyId === ad.id}
                       onChange={() => handleToggleActive(ad)}
                       sx={{
                         "& .MuiSwitch-switchBase.Mui-checked": { color: dashboardTokens.accent },
@@ -974,6 +1072,7 @@ export default function AdvertisementsPage() {
                     />
                  </TableCell>
                   <TableCell align="right">
+                    <Tooltip title="ทำสำเนา"><IconButton aria-label="ทำสำเนา" onClick={() => handleDuplicate(ad)}><ContentCopyIcon fontSize="small" /></IconButton></Tooltip>
                     <IconButton
                       onClick={() => handleOpenDialog(ad)}
                       sx={{ color: dashboardTokens.textMuted, "&:hover": { color: dashboardTokens.accent } }}
@@ -989,12 +1088,12 @@ export default function AdvertisementsPage() {
                   </TableCell>
                 </TableRow>
               ))}
-              {ads.length === 0 && (
+              {filteredAds.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
                     <Typography sx={{
                       color: "text.secondary"
-                    }}>ยังไม่มีโฆษณา</Typography>
+                    }}>ไม่พบโฆษณา</Typography>
                   </TableCell>
                 </TableRow>
               )}
@@ -1197,6 +1296,13 @@ export default function AdvertisementsPage() {
                 </Select>
               </FormControl>
 
+              <FormControl fullWidth sx={{ mt: 2 }}>
+                <InputLabel>อุปกรณ์</InputLabel>
+                <Select label="อุปกรณ์" value={formData.targetDevice} sx={adDialogFieldSx} disabled={saving} onChange={(e) => setFormData((current) => ({ ...current, targetDevice: e.target.value }))}>
+                  <MenuItem value="all">ทุกอุปกรณ์</MenuItem><MenuItem value="mobile">มือถือ</MenuItem><MenuItem value="desktop">Desktop</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControlLabel sx={{ mt: 1 }} label="เปิดใช้งาน" control={<Switch checked={formData.isActive} disabled={saving} onChange={(e) => setFormData((current) => ({ ...current, isActive: e.target.checked }))} />} />
               {/* Repeat Count - only for grid placement */}
               {formData.placement === "grid" && (
                 <TextField
@@ -1235,7 +1341,7 @@ export default function AdvertisementsPage() {
             </Box>
           </Box>
         </DialogContent>
-        <DialogActions sx={{ p: 2.5, borderTop: "1px solid rgba(255,255,255,0.06)", bgcolor: "rgba(255,255,255,0.015)" }}>
+        <DialogActions sx={{ p: 2.5, gap: 1, flexWrap: "wrap", borderTop: "1px solid rgba(255,255,255,0.06)", bgcolor: "rgba(255,255,255,0.015)" }}>
           <Button 
             onClick={handleCloseDialog}
             sx={{
@@ -1252,14 +1358,14 @@ export default function AdvertisementsPage() {
           <Button
             variant="contained"
             onClick={handleSubmit}
-            disabled={uploading}
+            disabled={uploading || saving}
             sx={{
               ...dashboardPrimaryButtonSx,
               px: 4,
               borderRadius: dashboardRadii.button,
             }}
           >
-            {editingAd ? "บันทึกการเปลี่ยนแปลง" : "สร้างโฆษณา"}
+            {saving ? "กำลังบันทึก..." : formData.isActive ? "บันทึกและเปิดใช้งาน" : "บันทึกฉบับร่าง"}
           </Button>
         </DialogActions>
       </Dialog>

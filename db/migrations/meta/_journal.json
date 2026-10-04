@@ -85,6 +85,13 @@
       "when": 1790726400000,
       "tag": "0011_manga_contributors",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1791072000000,
+      "tag": "0012_advertisement_management",
+      "breakpoints": true
     }
   ]
 }

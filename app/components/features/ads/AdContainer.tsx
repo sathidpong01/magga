@@ -1,10 +1,11 @@
 "use client";
 
-import { Box } from "@mui/material";
+import { Box, useMediaQuery } from "@mui/material";
 import AdBanner from "./AdBanner";
 import FloatingAd from "./FloatingAd";
 import AdModal from "./AdModal";
 import { useAds } from "./AdsProvider";
+import { adDeviceDisplay } from "@/lib/advertisements";
 
 interface AdContainerProps {
   placement: "header" | "footer" | "manga-end" | "floating" | "modal";
@@ -12,7 +13,11 @@ interface AdContainerProps {
 
 export default function AdContainer({ placement }: AdContainerProps) {
   const { getAdsByPlacement } = useAds();
-  const ads = getAdsByPlacement(placement);
+  const mobile = useMediaQuery("(max-width:899px)");
+  const placementAds = getAdsByPlacement(placement);
+  const ads = placement === "floating" || placement === "modal"
+    ? placementAds.filter((ad) => !ad.targetDevice || ad.targetDevice === "all" || ad.targetDevice === (mobile ? "mobile" : "desktop"))
+    : placementAds;
 
   if (ads.length === 0) return null;
 
@@ -40,10 +45,12 @@ export default function AdContainer({ placement }: AdContainerProps) {
 
   // Banner placements (header, footer, manga-end)
   return (
-    <Box sx={{ my: 2 }}>
+    <>
       {ads.map((ad) => (
-        <AdBanner key={ad.id} ad={ad} fillArea={placement === "manga-end"} />
+        <Box key={ad.id} sx={{ my: 2, display: adDeviceDisplay(ad.targetDevice) }}>
+          <AdBanner ad={ad} priority={placement === "header"} fillArea={placement === "manga-end"} />
+        </Box>
       ))}
-    </Box>
+    </>
   );
 }
