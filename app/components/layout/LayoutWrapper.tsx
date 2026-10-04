@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import { Box, Container } from "@mui/material";
 import Header from "./Header";
 import Footer from "./Footer";
@@ -13,6 +13,8 @@ export default function LayoutWrapper({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const params = useParams();
+  const isMangaPage = typeof params.mangaId === "string";
   const isStandalonePage = isStandaloneRoute(pathname);
 
   if (isStandalonePage) {
@@ -30,9 +32,11 @@ export default function LayoutWrapper({
         {children}
       </Container>
       {/* โฆษณาเหนือ Footer */}
-      <Container maxWidth="lg">
-        <AdContainer placement="footer" />
-      </Container>
+      {!isMangaPage && (
+        <Container maxWidth="lg">
+          <AdContainer placement="footer" />
+        </Container>
+      )}
       <Footer />
     </Box>
   );
