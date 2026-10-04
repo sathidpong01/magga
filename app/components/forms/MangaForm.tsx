@@ -37,6 +37,7 @@ import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
 import ZoomInRoundedIcon from "@mui/icons-material/ZoomInRounded";
 import ZoomOutRoundedIcon from "@mui/icons-material/ZoomOutRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
+import PublishIcon from "@mui/icons-material/Publish";
 import NotificationModal from "@/app/components/modals/NotificationModal";
 import { SortableItem } from "@/app/components/ui/SortableItem";
 import UploadProgress, {
@@ -433,7 +434,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
 
   const handleSubmitWithDraft = async (
     e: React.FormEvent,
-    saveAsDraft: boolean
+    saveAsDraft?: boolean
   ) => {
     e.preventDefault();
     if (!title || !coverItem) {
@@ -660,7 +661,8 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
               pages: finalPages,
               categoryId: categoryId || null,
               authorId: finalAuthorId,
-              isHidden: saveAsDraft,
+              // Ordinary edits preserve the current database visibility.
+              isHidden: saveAsDraft ?? (manga ? undefined : false),
               selectedTags: selectedTagIds,
               authorName: authorName || null,
             }
@@ -734,7 +736,9 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
             : "ส่งรายการฝากลงสำเร็จ"
       );
       setNotificationMessage(
-        manga
+        mode === "admin" && (saveAsDraft === true || (saveAsDraft === undefined && manga?.isHidden))
+          ? `บันทึกฉบับร่าง "${title}" เรียบร้อยแล้ว`
+          : manga
           ? `อัปเดตรายการ "${title}" เรียบร้อยแล้ว`
           : mode === "admin"
             ? `สร้างรายการ "${title}" เรียบร้อยแล้ว`
@@ -873,7 +877,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
 
   return (
     <>
-      <Box component="form" onSubmit={(e) => handleSubmitWithDraft(e, false)}>
+      <Box component="form" onSubmit={(e) => handleSubmitWithDraft(e)}>
         <DashboardPageHeader
           eyebrow={mode === "admin" ? "CONTENT MANAGER" : "SUBMISSION"}
           title={pageTitle}
@@ -900,6 +904,18 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
               บันทึกเป็นฉบับร่าง
             </Button>
           )}
+          {manga?.isHidden && mode === "admin" && (
+            <Button
+              type="button"
+              variant="outlined"
+              startIcon={<PublishIcon />}
+              onClick={(e) => handleSubmitWithDraft(e, false)}
+              disabled={isSubmitting}
+              sx={headerSecondaryButtonSx}
+            >
+              เผยแพร่มังงะ
+            </Button>
+          )}
           <Button
             type="submit"
             variant="contained"
@@ -919,7 +935,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
               ? "กำลังบันทึก..."
               : manga
                 ? mode === "admin"
-                  ? "อัปเดตมังงะ"
+                  ? manga.isHidden ? "บันทึกฉบับร่าง" : "อัปเดตมังงะ"
                   : "อัปเดตรายการฝากลง"
                 : mode === "admin"
                   ? "สร้างมังงะ"
