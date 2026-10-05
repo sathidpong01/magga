@@ -1,8 +1,16 @@
+import type { Metadata } from "next";
 import { db } from "@/db";
 import { manga as mangaTable, mangaTags as mangaTagsTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import MangaForm from "@/app/components/forms/MangaForm";
+
+export const metadata: Metadata = {
+  title: "แก้ไขมังงะ - MAGGA",
+  description: "แก้ไขข้อมูลและภาพมังงะบน MAGGA",
+  openGraph: { title: "แก้ไขมังงะ - MAGGA", description: "แก้ไขข้อมูลและภาพมังงะบน MAGGA" },
+  twitter: { title: "แก้ไขมังงะ - MAGGA", description: "แก้ไขข้อมูลและภาพมังงะบน MAGGA" },
+};
 
 export default async function EditMangaPage({
   params,

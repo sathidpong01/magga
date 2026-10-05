@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { db } from "@/db";
 import { categories as categoriesTable, tags as tagsTable } from "@/db/schema";
 import { asc } from "drizzle-orm";
@@ -6,6 +7,13 @@ import MetadataManager from "./MetadataManager";
 import { dashboardTokens } from "@/app/components/dashboard/system";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "จัดการหมวดหมู่และแท็ก - MAGGA",
+  description: "จัดการหมวดหมู่และแท็กบน MAGGA",
+  openGraph: { title: "จัดการหมวดหมู่และแท็ก - MAGGA", description: "จัดการหมวดหมู่และแท็กบน MAGGA" },
+  twitter: { title: "จัดการหมวดหมู่และแท็ก - MAGGA", description: "จัดการหมวดหมู่และแท็กบน MAGGA" },
+};
 
 export default async function MetadataPage() {
   const categories = await db.query.categories.findMany({

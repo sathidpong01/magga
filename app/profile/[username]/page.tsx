@@ -15,6 +15,15 @@ export async function generateMetadata({ params }: Props) {
   const { username } = await params;
   return {
     title: `โปรไฟล์ของ ${username} - MAGGA`,
+    description: `ดูโปรไฟล์และกิจกรรมสาธารณะของ ${username} บน MAGGA`,
+    openGraph: {
+      title: `โปรไฟล์ของ ${username} - MAGGA`,
+      description: `ดูโปรไฟล์และกิจกรรมสาธารณะของ ${username} บน MAGGA`,
+    },
+    twitter: {
+      title: `โปรไฟล์ของ ${username} - MAGGA`,
+      description: `ดูโปรไฟล์และกิจกรรมสาธารณะของ ${username} บน MAGGA`,
+    },
   };
 }
 

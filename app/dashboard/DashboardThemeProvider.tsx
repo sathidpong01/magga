@@ -4,6 +4,15 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import { maggaColors, maggaRadii } from "@/lib/design-tokens";
 
 const dashboardTheme = createTheme({
+  typography: {
+    fontFamily: "'Kanit', sans-serif",
+    h1: { fontWeight: 700 },
+    h2: { fontWeight: 700 },
+    h3: { fontWeight: 600 },
+    h4: { fontWeight: 600 },
+    h5: { fontWeight: 600 },
+    h6: { fontWeight: 600 },
+  },
   palette: {
     mode: "dark",
     background: {

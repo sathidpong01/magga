@@ -228,6 +228,7 @@ export default function SearchFilters({ categories, tags }: Props) {
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Autocomplete
               freeSolo
+              sx={{ "& .MuiAutocomplete-popupIndicator, & .MuiAutocomplete-clearIndicator": { minWidth: 44, minHeight: 44 } }}
               options={searchResults}
               getOptionLabel={(option) =>
                 typeof option === "string" ? option : option.title
@@ -296,6 +297,11 @@ export default function SearchFilters({ categories, tags }: Props) {
                     "& .MuiInput-root": {
                       pl: 1,
                       "&::before, &::after": { display: "none" },
+                      "&:focus-within": {
+                        outline: `2px solid ${maggaColors.archiveGoldHover}`,
+                        outlineOffset: "2px",
+                        borderRadius: "4px",
+                      },
                     },
                     "& .MuiAutocomplete-inputRoot": {
                       minHeight: "38px",
@@ -340,6 +346,11 @@ export default function SearchFilters({ categories, tags }: Props) {
             aria-label={expanded ? "ซ่อนตัวกรอง" : "เปิดตัวกรอง & แท็ก"}
             onClick={handleExpandClick}
             sx={{
+              minHeight: 44,
+              "&.Mui-focusVisible": {
+                outline: `2px solid ${maggaColors.archiveGoldHover}`,
+                outlineOffset: "3px",
+              },
               display: "inline-flex",
               alignItems: "center",
               gap: 0.75,

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { db } from "@/db";
 import { mangaSubmissions as submissionsTable } from "@/db/schema";
 import { desc, count } from "drizzle-orm";
@@ -6,6 +7,13 @@ import SubmissionsManager, {
 } from "./SubmissionsManager";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "ตรวจรายการฝากลง - MAGGA",
+  description: "ตรวจสอบผลงานที่ฝากลงบน MAGGA",
+  openGraph: { title: "ตรวจรายการฝากลง - MAGGA", description: "ตรวจสอบผลงานที่ฝากลงบน MAGGA" },
+  twitter: { title: "ตรวจรายการฝากลง - MAGGA", description: "ตรวจสอบผลงานที่ฝากลงบน MAGGA" },
+};
 
 export default async function AdminSubmissionsPage() {
   const limit = 10;

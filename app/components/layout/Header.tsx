@@ -196,7 +196,7 @@ export default function Header() {
             {/* Submit Manga Button - Always render but hide for Admin */}
             <Button
               component={Link}
-              href={session ? "/dashboard/submit" : "/auth/signin"}
+              href={session ? "/dashboard/submit" : "/auth/signin?callbackUrl=%2Fdashboard%2Fsubmit"}
               prefetch={false}
               variant="contained"
               startIcon={<CloudUploadIcon sx={{ fontSize: 18 }} />}
@@ -508,6 +508,7 @@ export default function Header() {
     <AuthModal
       open={authModalOpen}
       onClose={() => setAuthModalOpen(false)}
+      onNavigate={() => setAuthModalOpen(false)}
     />
     </>
   );

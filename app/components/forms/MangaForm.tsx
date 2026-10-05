@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import type { InferSelectModel } from "drizzle-orm";
 import type { categories, tags, manga as mangaTable, authors } from "@/db/schema";
@@ -92,6 +92,21 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const formRef = useRef<HTMLFormElement>(null);
+  const focusInvalidField = (field: string) => {
+    const selectors: Record<string, string> = {
+      title: '[name="title"]', slug: '[name="slug"]', description: '[name="description"]',
+      authorName: '[name="authorName"]', authorId: '#author-autocomplete',
+      categoryId: '#category-autocomplete', tagIds: '#tags-autocomplete',
+      coverImage: '#manga-cover-field', pages: '#manga-pages-field',
+    };
+    const selector = selectors[field];
+    if (!selector) return;
+    const element = formRef.current?.querySelector<HTMLElement>(selector);
+    element?.focus();
+    element?.scrollIntoView({ block: "center", behavior: "smooth" });
+  };
   const [uploadFiles, setUploadFiles] = useState<UploadFileStatus[]>([]);
   // Keep track of uploaded URLs to avoid re-uploading
   const [uploadedUrls, setUploadedUrls] = useState<Record<string, string>>({});
@@ -133,37 +148,34 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
   // Pending author name - will be created on form submit
   const [pendingAuthorName, setPendingAuthorName] = useState<string>("");
 
-  // Fetch data from API
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [catRes, tagRes, authorRes] = await Promise.all([
-          fetch("/api/categories"),
-          fetch("/api/tags"),
-          fetch("/api/authors"),
-        ]);
-
-        if (catRes.ok) {
-          const cats = await catRes.json();
-          setCategories(cats);
-          setAvailableCategories(cats);
-        }
-        if (tagRes.ok) {
-          const tagsData = await tagRes.json();
-          setTags(tagsData);
-          setAvailableTags(tagsData);
-        }
-        if (authorRes.ok) {
-          const authorsData = await authorRes.json();
-          setAuthors(authorsData);
-          setAvailableAuthors(authorsData);
-        }
-      } catch (err) {
-        console.error("Failed to fetch data:", err);
-      }
-    };
-    fetchData();
+  const [optionsLoading, setOptionsLoading] = useState(true);
+  const [optionsErrors, setOptionsErrors] = useState<string[]>([]);
+  const loadOptions = useCallback(async (signal?: AbortSignal) => {
+    setOptionsLoading(true);
+    setOptionsErrors([]);
+    const results = await Promise.allSettled([
+      fetch("/api/categories", { signal }).then(async (r) => { if (!r.ok) throw new Error(); return r.json(); }),
+      fetch("/api/tags", { signal }).then(async (r) => { if (!r.ok) throw new Error(); return r.json(); }),
+      fetch("/api/authors", { signal }).then(async (r) => { if (!r.ok) throw new Error(); return r.json(); }),
+    ]);
+    if (signal?.aborted) return;
+    const labels = ["หมวดหมู่", "แท็ก", "ผู้แต่ง"];
+    const failed: string[] = [];
+    results.forEach((result, index) => {
+      if (result.status !== "fulfilled" || !Array.isArray(result.value)) { failed.push(labels[index]); return; }
+      if (index === 0) { setCategories(result.value); setAvailableCategories(result.value); }
+      if (index === 1) { setTags(result.value); setAvailableTags(result.value); }
+      if (index === 2) { setAuthors(result.value); setAvailableAuthors(result.value); }
+    });
+    setOptionsErrors(failed);
+    setOptionsLoading(false);
   }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void loadOptions(controller.signal);
+    return () => controller.abort();
+  }, [loadOptions]);
 
   const filter = createFilterOptions<Tag>();
   const categoryFilter = createFilterOptions<Category>();
@@ -437,16 +449,19 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
     saveAsDraft?: boolean
   ) => {
     e.preventDefault();
-    if (!title || !coverItem) {
-      setError("กรุณากรอกชื่อเรื่องและอัปโหลดรูปปก");
-      return;
-    }
-    if (!slug) {
-      setError("กรุณาระบุ slug ของเรื่อง");
+    const nextErrors: Record<string, string> = {};
+    if (!title.trim()) nextErrors.title = "กรุณากรอกชื่อเรื่อง";
+    if (!slug.trim()) nextErrors.slug = "กรุณาระบุ slug ของเรื่อง";
+    if (!coverItem) nextErrors.coverImage = "กรุณาอัปโหลดรูปปก";
+    if (mode === "submission" && pageItems.length === 0) nextErrors.pages = "กรุณาเพิ่มหน้าภาพอย่างน้อย 1 หน้า";
+    setFieldErrors(nextErrors);
+    setError("");
+    const firstInvalid = Object.keys(nextErrors)[0];
+    if (firstInvalid || !coverItem) {
+      focusInvalidField(firstInvalid || "coverImage");
       return;
     }
     setIsSubmitting(true);
-    setError("");
 
     try {
       const uploadedUrlMap: Record<string, string> = { ...uploadedUrls };
@@ -699,22 +714,19 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
         let errorMessage = res.error || "บันทึกรายการไม่สำเร็จ";
 
         if (typeof errorMessage === "object") {
-          // Handle Zod flattened error
           if (errorMessage.fieldErrors) {
-            const fields = Object.keys(errorMessage.fieldErrors);
-            if (fields.length > 0) {
-              // Get the first error message from the first field
-              errorMessage = `${fields[0]}: ${
-                errorMessage.fieldErrors[fields[0]][0]
-              }`;
-            } else if (
-              errorMessage.formErrors &&
-              errorMessage.formErrors.length > 0
-            ) {
-              errorMessage = errorMessage.formErrors[0];
-            } else {
-              errorMessage = "ข้อมูลไม่ผ่านการตรวจสอบ";
+            const nextErrors: Record<string, string> = {};
+            for (const [field, messages] of Object.entries(errorMessage.fieldErrors)) {
+              if (Array.isArray(messages) && typeof messages[0] === "string") nextErrors[field] = messages[0];
             }
+            setFieldErrors(nextErrors);
+            const firstInvalid = Object.keys(nextErrors)[0];
+            if (firstInvalid) {
+              setError("กรุณาตรวจสอบข้อมูลในช่องที่แจ้งข้อผิดพลาด");
+              focusInvalidField(firstInvalid);
+              return;
+            }
+            errorMessage = errorMessage.formErrors?.[0] || "ข้อมูลไม่ผ่านการตรวจสอบ";
           } else {
             errorMessage = JSON.stringify(errorMessage);
           }
@@ -877,7 +889,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
 
   return (
     <>
-      <Box component="form" onSubmit={(e) => handleSubmitWithDraft(e)}>
+      <Box component="form" ref={formRef} onSubmit={(e) => handleSubmitWithDraft(e)}>
         <DashboardPageHeader
           eyebrow={mode === "admin" ? "CONTENT MANAGER" : "SUBMISSION"}
           title={pageTitle}
@@ -944,6 +956,8 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
         </DashboardPageHeader>
 
         <Grid container spacing={3}>
+          {optionsLoading && <Grid size={12}><Box role="status" sx={{ display: "flex", alignItems: "center", gap: 1 }}><CircularProgress size={18} aria-label="กำลังโหลดตัวเลือก" />กำลังโหลดหมวดหมู่ แท็ก และผู้แต่ง...</Box></Grid>}
+          {optionsErrors.length > 0 && <Grid size={12}><Alert severity="error" action={<Button color="inherit" disabled={optionsLoading} onClick={() => void loadOptions()}>ลองใหม่</Button>}>โหลดข้อมูล{optionsErrors.join(" / ")}ไม่ได้ กรุณาลองใหม่ โดยข้อมูลที่กรอกไว้ยังอยู่</Alert></Grid>}
           {error && (
 <Grid  size={12}>
               <Alert
@@ -971,8 +985,11 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
 <Grid  size={12}>
                   <TextField
                     label="ชื่อเรื่อง"
+                    name="title"
+                    error={Boolean(fieldErrors.title)}
+                    helperText={fieldErrors.title}
                     value={title}
-                    onChange={(e) => setTitle(e.target.value)}
+                    onChange={(e) => { setTitle(e.target.value); setFieldErrors((prev) => ({ ...prev, title: "" })); }}
                     fullWidth
                     required
                     variant="filled"
@@ -985,13 +1002,15 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
 <Grid  size={12}>
                   <TextField
                     label="Slug"
+                    name="slug"
+                    error={Boolean(fieldErrors.slug)}
                     value={slug}
-                    onChange={(e) => setSlug(e.target.value)}
+                    onChange={(e) => { setSlug(e.target.value); setFieldErrors((prev) => ({ ...prev, slug: "" })); }}
                     fullWidth
                     required
                     variant="filled"
                     sx={filledFieldSx}
-                    helperText={`ตัวอย่างลิงก์: /${slug || "your-slug"}`}
+                    helperText={fieldErrors.slug || `ตัวอย่างลิงก์: /${slug || "your-slug"}`}
                     slotProps={{
                       input: {
                         ...filledInputProps,
@@ -1033,8 +1052,11 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
 <Grid  size={12}>
                   <TextField
                     label="คำอธิบาย"
+                    name="description"
+                    error={Boolean(fieldErrors.description)}
+                    helperText={fieldErrors.description}
                     value={description ?? ""}
-                    onChange={(e) => setDescription(e.target.value)}
+                    onChange={(e) => { setDescription(e.target.value); setFieldErrors((prev) => ({ ...prev, description: "" })); }}
                     fullWidth
                     multiline
                     rows={4}
@@ -1088,6 +1110,9 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     clearOnBlur
                     handleHomeEndKeys
                     id="author-autocomplete"
+                    loading={optionsLoading}
+                    loadingText="กำลังโหลดตัวเลือก..."
+                    noOptionsText={optionsErrors.length ? "โหลดตัวเลือกไม่ได้ กรุณากดลองใหม่ด้านบน" : "ไม่มีตัวเลือก"}
                     options={availableAuthors}
                     getOptionLabel={(option) => {
                       if (typeof option === "string") return option;
@@ -1124,6 +1149,8 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                       <TextField
                         {...params}
                         label="ผู้แต่ง"
+                        error={Boolean(fieldErrors.authorId)}
+                        helperText={fieldErrors.authorId}
                         variant="filled"
                         placeholder="เลือกหรือสร้างผู้แต่ง"
                         sx={filledFieldSx}
@@ -1142,12 +1169,14 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
 <Grid   size={{ xs: 12, md: 6 }}>
                   <TextField
                     label="ชื่อผู้แต่ง (Author Name for OG)"
+                    name="authorName"
                     value={authorName}
-                    onChange={(e) => setAuthorName(e.target.value)}
+                    onChange={(e) => { setAuthorName(e.target.value); setFieldErrors((prev) => ({ ...prev, authorName: "" })); }}
                     fullWidth
                     variant="filled"
                     placeholder="เช่น Aokana, Doujin Circle"
-                    helperText="สำหรับแสดงใน og:title เมื่อแชร์ลิงก์ (auto-filled from author)"
+                    error={Boolean(fieldErrors.authorName)}
+                    helperText={fieldErrors.authorName || "สำหรับแสดงใน og:title เมื่อแชร์ลิงก์ (auto-filled from author)"}
                     sx={filledFieldSx}
                     slotProps={{
                       input: filledInputProps
@@ -1369,6 +1398,9 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     clearOnBlur
                     handleHomeEndKeys
                     id="category-autocomplete"
+                    loading={optionsLoading}
+                    loadingText="กำลังโหลดตัวเลือก..."
+                    noOptionsText={optionsErrors.length ? "โหลดตัวเลือกไม่ได้ กรุณากดลองใหม่ด้านบน" : "ไม่มีตัวเลือก"}
                     options={availableCategories}
                     getOptionLabel={(option) => {
                       // Value selected with enter, right from the input
@@ -1395,6 +1427,8 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                       <TextField
                         {...params}
                         label="หมวดหมู่"
+                        error={Boolean(fieldErrors.categoryId)}
+                        helperText={fieldErrors.categoryId}
                         variant="filled"
                         sx={filledFieldSx}
                         slotProps={{
@@ -1413,6 +1447,9 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                   <Autocomplete
                     multiple
                     id="tags-autocomplete"
+                    loading={optionsLoading}
+                    loadingText="กำลังโหลดตัวเลือก..."
+                    noOptionsText={optionsErrors.length ? "โหลดตัวเลือกไม่ได้ กรุณากดลองใหม่ด้านบน" : "ไม่มีตัวเลือก"}
                     options={availableTags}
                     getOptionLabel={(option) => {
                       if (typeof option === "string") return option;
@@ -1497,6 +1534,8 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                         {...params}
                         variant="filled"
                         label="แท็ก"
+                        error={Boolean(fieldErrors.tagIds)}
+                        helperText={fieldErrors.tagIds}
                         placeholder="เลือกหรือสร้างแท็ก"
                         sx={filledFieldSx}
                         slotProps={{
@@ -1524,7 +1563,8 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
               />
 
               {/* Cover Image */}
-              <Box sx={{ mb: 4 }}>
+              <Box id="manga-cover-field" tabIndex={-1} aria-describedby={fieldErrors.coverImage ? "manga-cover-error" : undefined} sx={{ mb: 4 }}>
+                {fieldErrors.coverImage && <Typography id="manga-cover-error" role="alert" color="error" variant="body2">{fieldErrors.coverImage}</Typography>}
                 <Typography variant="subtitle1" component="h4" gutterBottom>
                   รูปปก
                 </Typography>
@@ -1594,7 +1634,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
               </Box>
 
               {/* Pages */}
-              <Box>
+              <Box id="manga-pages-field" tabIndex={-1} aria-describedby={fieldErrors.pages ? "manga-pages-error" : undefined}>
                 <Box
                   sx={{
                     display: "flex",
@@ -1679,6 +1719,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                   </SortableContext>
                 </DndContext>
 
+                {fieldErrors.pages && <Typography id="manga-pages-error" role="alert" color="error" variant="body2">{fieldErrors.pages}</Typography>}
                 {pageItems.length === 0 && (
                   <Box
                     sx={{

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { db } from "@/db";
 import { comments as commentsTable } from "@/db/schema";
 import { count, desc } from "drizzle-orm";
@@ -7,6 +8,13 @@ import CommentsManager, {
 } from "./CommentsManager";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "จัดการความคิดเห็น - MAGGA",
+  description: "ตรวจสอบและจัดการความคิดเห็นบน MAGGA",
+  openGraph: { title: "จัดการความคิดเห็น - MAGGA", description: "ตรวจสอบและจัดการความคิดเห็นบน MAGGA" },
+  twitter: { title: "จัดการความคิดเห็น - MAGGA", description: "ตรวจสอบและจัดการความคิดเห็นบน MAGGA" },
+};
 
 export default async function AdminCommentsPage() {
   const page = 1;

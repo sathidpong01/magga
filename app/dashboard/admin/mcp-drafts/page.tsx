@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from 'next/link';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -29,6 +30,13 @@ function Value({ value, names = {} }: { value: unknown; names?: Record<string, s
   }
   return <span>{JSON.stringify(value)}</span>;
 }
+export const metadata: Metadata = {
+  title: "ตรวจข้อเสนอข้อมูล - MAGGA",
+  description: "ตรวจสอบข้อเสนอปรับข้อมูลบน MAGGA",
+  openGraph: { title: "ตรวจข้อเสนอข้อมูล - MAGGA", description: "ตรวจสอบข้อเสนอปรับข้อมูลบน MAGGA" },
+  twitter: { title: "ตรวจข้อเสนอข้อมูล - MAGGA", description: "ตรวจสอบข้อเสนอปรับข้อมูลบน MAGGA" },
+};
+
 export default async function McpDraftsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const session = await auth.api.getSession({ headers: await headers(), query: { disableCookieCache: true } });
   if (!session?.user.id || !isAdminRole(session) || session.user.banned || ('isBanned' in session.user && session.user.isBanned)) redirect(`/auth/signin?callbackUrl=${base}`);

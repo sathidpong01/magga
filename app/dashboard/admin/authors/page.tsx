@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { db } from "@/db";
 import { authors as authorsTable } from "@/db/schema";
 import { asc } from "drizzle-orm";
@@ -6,6 +7,13 @@ import { Box, Typography } from "@mui/material";
 import { dashboardTokens } from "@/app/components/dashboard/system";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "จัดการผู้แต่ง - MAGGA",
+  description: "จัดการข้อมูลผู้แต่งและเครดิตบน MAGGA",
+  openGraph: { title: "จัดการผู้แต่ง - MAGGA", description: "จัดการข้อมูลผู้แต่งและเครดิตบน MAGGA" },
+  twitter: { title: "จัดการผู้แต่ง - MAGGA", description: "จัดการข้อมูลผู้แต่งและเครดิตบน MAGGA" },
+};
 
 export default async function AuthorsPage() {
   const authors = await db.query.authors.findMany({

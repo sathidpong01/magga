@@ -7,6 +7,7 @@ import {
   Divider,
   CircularProgress,
   Button,
+  Alert,
 } from "@mui/material";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -29,9 +30,12 @@ export default function CommentSection({
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
+  const [loadError, setLoadError] = useState("");
+  const [failedCursor, setFailedCursor] = useState<string | undefined>();
 
   const fetchComments = useCallback(
     async (cursor?: string) => {
+      setLoadError("");
       try {
         const loadingMore = !!cursor;
         if (loadingMore) {
@@ -70,6 +74,8 @@ export default function CommentSection({
         }
       } catch (error) {
         console.error("Error fetching comments:", error);
+        setFailedCursor(cursor);
+        setLoadError("โหลดความคิดเห็นไม่ได้ กรุณาลองใหม่อีกครั้ง");
       } finally {
         setIsLoading(false);
         setIsLoadingMore(false);
@@ -124,19 +130,25 @@ export default function CommentSection({
 
       <Divider sx={{ my: 3, borderColor: "rgba(255,255,255,0.08)" }} />
 
+      {loadError && (
+        <Alert severity="error" sx={{ mb: 2 }} action={
+          <Button color="inherit" disabled={isLoading || isLoadingMore} onClick={() => fetchComments(failedCursor)}>ลองใหม่</Button>
+        }>{loadError}</Alert>
+      )}
+
       {/* Comments List */}
       {isLoading ? (
         <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-          <CircularProgress size={32} />
+          <CircularProgress size={32} aria-label="กำลังโหลดความคิดเห็น" />
         </Box>
       ) : (
         <>
-          <CommentList
+          {(!loadError || comments.length > 0) && <CommentList
             comments={comments}
             mangaId={mangaId}
             imageIndex={imageIndex}
             onRefresh={handleRefresh}
-          />
+          />}
 
           {/* Load More Button */}
           {nextCursor && (

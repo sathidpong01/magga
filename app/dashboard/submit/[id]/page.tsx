@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { and, eq } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
@@ -7,6 +8,13 @@ import { db } from "@/db";
 import { mangaSubmissions as submissionsTable } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { extractMangaPageUrls } from "@/lib/manga-pages";
+
+export const metadata: Metadata = {
+  title: "แก้ไขรายการฝากลง - MAGGA",
+  description: "แก้ไขข้อมูลและภาพของรายการฝากลงบน MAGGA",
+  openGraph: { title: "แก้ไขรายการฝากลง - MAGGA", description: "แก้ไขข้อมูลและภาพของรายการฝากลงบน MAGGA" },
+  twitter: { title: "แก้ไขรายการฝากลง - MAGGA", description: "แก้ไขข้อมูลและภาพของรายการฝากลงบน MAGGA" },
+};
 
 export default async function EditSubmissionPage({
   params,

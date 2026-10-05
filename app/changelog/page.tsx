@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import {
   Container,
   Typography,
@@ -261,6 +262,13 @@ const changelogData = [
     ],
   },
 ];
+
+export const metadata: Metadata = {
+  title: "รายการเปลี่ยนแปลง - MAGGA",
+  description: "ติดตามการปรับปรุงและรายการเปลี่ยนแปลงของ MAGGA",
+  openGraph: { title: "รายการเปลี่ยนแปลง - MAGGA", description: "ติดตามการปรับปรุงและรายการเปลี่ยนแปลงของ MAGGA" },
+  twitter: { title: "รายการเปลี่ยนแปลง - MAGGA", description: "ติดตามการปรับปรุงและรายการเปลี่ยนแปลงของ MAGGA" },
+};
 
 export default function ChangelogPage() {
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useRef, Suspense } from "react";
 import {
   signIn,
   signUp,
@@ -68,6 +68,8 @@ function RegisterForm() {
     confirmPassword: "",
   });
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof typeof formData, string>>>({});
+  const formRef = useRef<HTMLFormElement>(null);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -79,12 +81,13 @@ function RegisterForm() {
     e.preventDefault();
     setError("");
 
-    if (formData.password !== formData.confirmPassword) {
-      setError("รหัสผ่านไม่ตรงกัน");
-      return;
-    }
-    if (formData.password.length < 8) {
-      setError("รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร");
+    const nextErrors: Partial<Record<keyof typeof formData, string>> = {};
+    if (formData.password.length < 8) nextErrors.password = "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร";
+    if (formData.password !== formData.confirmPassword) nextErrors.confirmPassword = "รหัสผ่านไม่ตรงกัน";
+    setFieldErrors(nextErrors);
+    const firstInvalid = Object.keys(nextErrors)[0];
+    if (firstInvalid) {
+      formRef.current?.querySelector<HTMLInputElement>(`input[name="${firstInvalid}"]`)?.focus();
       return;
     }
 
@@ -182,7 +185,7 @@ function RegisterForm() {
             </Alert>
           )}
 
-          <Box component="form" onSubmit={handleSubmit}>
+          <Box component="form" ref={formRef} onSubmit={handleSubmit}>
             <TextField
               margin="normal"
               required
@@ -190,8 +193,11 @@ function RegisterForm() {
               label="ชื่อผู้ใช้"
               autoComplete="username"
               autoFocus
+              name="username"
+              error={Boolean(fieldErrors.username)}
+              helperText={fieldErrors.username}
               value={formData.username}
-              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+              onChange={(e) => { setFormData({ ...formData, username: e.target.value }); setFieldErrors((prev) => ({ ...prev, username: undefined })); }}
               sx={textFieldSx}
             />
             <TextField
@@ -201,8 +207,11 @@ function RegisterForm() {
               label="อีเมล"
               type="email"
               autoComplete="email"
+              name="email"
+              error={Boolean(fieldErrors.email)}
+              helperText={fieldErrors.email}
               value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              onChange={(e) => { setFormData({ ...formData, email: e.target.value }); setFieldErrors((prev) => ({ ...prev, email: undefined })); }}
               sx={textFieldSx}
             />
             <TextField
@@ -212,8 +221,11 @@ function RegisterForm() {
               label="รหัสผ่าน"
               type={showPassword ? "text" : "password"}
               autoComplete="new-password"
+              name="password"
+              error={Boolean(fieldErrors.password)}
+              helperText={fieldErrors.password}
               value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              onChange={(e) => { setFormData({ ...formData, password: e.target.value }); setFieldErrors((prev) => ({ ...prev, password: undefined })); }}
               sx={textFieldSx}
               slotProps={{
                 input: {
@@ -266,8 +278,11 @@ function RegisterForm() {
               label="ยืนยันรหัสผ่าน"
               type={showConfirm ? "text" : "password"}
               autoComplete="new-password"
+              name="confirmPassword"
+              error={Boolean(fieldErrors.confirmPassword)}
+              helperText={fieldErrors.confirmPassword}
               value={formData.confirmPassword}
-              onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+              onChange={(e) => { setFormData({ ...formData, confirmPassword: e.target.value }); setFieldErrors((prev) => ({ ...prev, confirmPassword: undefined })); }}
               sx={textFieldSx}
               slotProps={{
                 input: {
@@ -346,7 +361,7 @@ function RegisterForm() {
           <Box sx={{ textAlign: "center", mt: 3, pt: 2, borderTop: "1px solid rgba(255, 255, 255, 0.08)" }}>
             <Typography variant="body2" sx={{ color: "#a1a1aa" }}>
               มีบัญชีอยู่แล้ว?{" "}
-              <Link href="/auth/signin" style={{ color: "#f59e0b", textDecoration: "none", fontWeight: 600 }}>
+              <Link href={`/auth/signin?callbackUrl=${encodeURIComponent(callbackUrl)}`} style={{ color: "#f59e0b", textDecoration: "none", fontWeight: 600 }}>
                 เข้าสู่ระบบ
               </Link>
             </Typography>

@@ -32,6 +32,7 @@ function SignInModal() {
       <AuthModal
         open={open}
         onClose={handleClose}
+        onNavigate={() => setOpen(false)}
         onSuccess={handleSuccess}
         callbackUrl={callbackUrl}
         notice={notice}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Grid, Box, Button, CircularProgress } from "@mui/material";
+import { Grid, Box, Button, CircularProgress, Alert } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import MangaCard, { MangaWithDetails } from "./MangaCard";
 import { AdCard } from "@/app/components/features/ads";
@@ -50,6 +50,7 @@ export default function InfiniteMangaGrid({
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState("");
 
   // Fetch blocked tags only when the session is known to avoid noisy 401s for guests.
   useEffect(() => {
@@ -92,6 +93,7 @@ export default function InfiniteMangaGrid({
     if (isLoading || !hasMore) return;
 
     setIsLoading(true);
+    setLoadError("");
     try {
       const params = new URLSearchParams();
       params.set("page", String(page + 1));
@@ -113,6 +115,7 @@ export default function InfiniteMangaGrid({
       setHasMore(data.hasMore);
     } catch (error) {
       console.error("Error fetching more mangas:", error);
+      setLoadError("โหลดรายการเพิ่มเติมไม่ได้ กรุณาลองใหม่อีกครั้ง");
     } finally {
       setIsLoading(false);
     }
@@ -205,6 +208,11 @@ export default function InfiniteMangaGrid({
         ))}
       </Grid>
 
+      {loadError && (
+        <Alert severity="error" sx={{ mb: 2 }} action={<Button color="inherit" disabled={isLoading} onClick={fetchMore}>ลองใหม่</Button>}>
+          {loadError}
+        </Alert>
+      )}
       {/* Load More button */}
       {hasMore && (
         <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>

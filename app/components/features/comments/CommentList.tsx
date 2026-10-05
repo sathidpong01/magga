@@ -24,6 +24,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import ReplyIcon from "@mui/icons-material/Reply";
 import BlockIcon from "@mui/icons-material/Block";
 import PersonIcon from "@mui/icons-material/Person";
+import { maggaColors } from "@/lib/design-tokens";
 import Link from "next/link";
 import CommentBox from "./CommentBox";
 import {
@@ -349,8 +350,15 @@ function CommentItem({
               {/* Image */}
               {comment.imageUrl && (
                 <Box
+                  component="button"
+                  type="button"
+                  aria-label="เปิดภาพแนบความคิดเห็นแบบขยาย"
                   onClick={() => setLightboxOpen(true)}
-                  sx={{ display: "block", mt: 1, cursor: "pointer" }}
+                  sx={{
+                    display: "block", mt: 1, cursor: "pointer",
+                    p: 0, border: 0, background: "transparent", maxWidth: "100%",
+                    "&:focus-visible": { outline: `2px solid ${maggaColors.archiveGoldHover}`, outlineOffset: "4px" },
+                  }}
                 >
                   <Box
                     component="img"

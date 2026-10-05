@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { db } from "@/db";
 import { profiles as usersTable, comments as commentsTable, mangaSubmissions as submissionsTable } from "@/db/schema";
 import UserManager from "./UserManager";
@@ -9,6 +10,13 @@ import {
 } from "@/app/components/dashboard/system";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: "จัดการผู้ใช้ - MAGGA",
+  description: "จัดการผู้ใช้และสิทธิ์บน MAGGA",
+  openGraph: { title: "จัดการผู้ใช้ - MAGGA", description: "จัดการผู้ใช้และสิทธิ์บน MAGGA" },
+  twitter: { title: "จัดการผู้ใช้ - MAGGA", description: "จัดการผู้ใช้และสิทธิ์บน MAGGA" },
+};
 
 export default async function UsersPage() {
   const usersQuery = await db.select({

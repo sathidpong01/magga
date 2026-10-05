@@ -7,6 +7,7 @@ vi.mock("react", async (importOriginal) => ({
   useState: (initial: unknown) => [typeof initial === "function" ? initial() : initial, vi.fn()],
   useEffect: vi.fn(),
   useRef: (current: unknown) => ({ current }),
+  useCallback: (callback: unknown) => callback,
 }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ back: vi.fn(), push: vi.fn(), refresh: vi.fn() }) }));
 vi.mock("@dnd-kit/core", async (importOriginal) => ({

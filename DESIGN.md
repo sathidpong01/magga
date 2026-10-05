@@ -1,54 +1,52 @@
 ---
 name: "MAGGA"
-description: "A focused Thai furry manga translation hub with immersive public reading and industrial admin control."
+description: "The approved current design of MAGGA, a Thai furry manga translation archive."
 colors:
-  midnight-canvas: "#0a0a0a"
-  charcoal-surface: "#171717"
-  iron-surface: "#262626"
-  soft-divider: "#404040"
-  text-primary: "#fafafa"
-  text-secondary: "#a3a3a3"
-  text-muted: "#737373"
-  archive-gold: "#fbbf24"
+  background: "#141416"
+  charcoal-surface: "#1e1e22"
+  elevated-surface: "#26262c"
+  text-primary: "#f4f4f5"
+  text-secondary: "#a1a1aa"
+  text-muted: "#71717a"
+  archive-gold: "#d97706"
   archive-gold-hover: "#f59e0b"
-  admin-gold: "#FABF06"
-  fandom-violet: "#8b5cf6"
   trust-emerald: "#10b981"
   danger-red: "#ef4444"
 typography:
-  display:
-    fontFamily: "Kanit, sans-serif"
-    fontSize: "2.5rem"
-    fontWeight: 700
-    lineHeight: 1.1
-    letterSpacing: "normal"
-  headline:
+  author-heading:
     fontFamily: "Kanit, sans-serif"
     fontSize: "2rem"
     fontWeight: 700
-    lineHeight: 1.2
+    lineHeight: 1.167
     letterSpacing: "normal"
-  title:
+  manga-title:
     fontFamily: "Kanit, sans-serif"
-    fontSize: "1.25rem"
-    fontWeight: 600
+    fontSize: "0.92rem"
+    fontWeight: 500
+    lineHeight: 1.3
+    letterSpacing: "normal"
+  manga-author:
+    fontFamily: "Kanit, sans-serif"
+    fontSize: "0.78rem"
+    fontWeight: 400
     lineHeight: 1.25
     letterSpacing: "normal"
   body:
     fontFamily: "Kanit, sans-serif"
     fontSize: "1rem"
     fontWeight: 400
-    lineHeight: 1.7
+    lineHeight: 1.5
     letterSpacing: "normal"
-  label:
+  category-label:
     fontFamily: "Kanit, sans-serif"
     fontSize: "0.8rem"
-    fontWeight: 700
-    lineHeight: 1.2
-    letterSpacing: "0.02em"
+    fontWeight: 600
+    lineHeight: 1.5
+    letterSpacing: "0.03em"
 rounded:
   sm: "4px"
   md: "8px"
+  card: "10px"
   lg: "16px"
   pill: "50px"
 spacing:
@@ -60,200 +58,146 @@ spacing:
 components:
   button-primary:
     backgroundColor: "{colors.archive-gold}"
-    textColor: "{colors.midnight-canvas}"
-    typography: "{typography.label}"
+    textColor: "{colors.background}"
     rounded: "{rounded.md}"
-    padding: "8px 16px"
   button-primary-hover:
     backgroundColor: "{colors.archive-gold-hover}"
-    textColor: "{colors.midnight-canvas}"
     rounded: "{rounded.md}"
-  manga-card:
-    backgroundColor: "{colors.midnight-canvas}"
-    textColor: "{colors.text-primary}"
-    rounded: "{rounded.md}"
+  manga-cover:
+    backgroundColor: "{colors.charcoal-surface}"
+    rounded: "{rounded.card}"
     width: "100%"
   surface-card:
     backgroundColor: "{colors.charcoal-surface}"
     textColor: "{colors.text-primary}"
     rounded: "{rounded.lg}"
-    padding: "24px"
-  admin-surface:
-    backgroundColor: "{colors.charcoal-surface}"
-    textColor: "{colors.text-primary}"
-    rounded: "{rounded.md}"
-    padding: "20px"
-  filter-panel:
-    backgroundColor: "{colors.charcoal-surface}"
-    textColor: "{colors.text-primary}"
-    rounded: "{rounded.md}"
-    padding: "16px"
   category-chip:
-    backgroundColor: "{colors.archive-gold}"
-    textColor: "{colors.midnight-canvas}"
-    typography: "{typography.label}"
-    rounded: "{rounded.md}"
-    height: "20px"
+    backgroundColor: "#121216D9"
+    textColor: "{colors.text-primary}"
+    typography: "{typography.category-label}"
+    rounded: "6px"
+    height: "28px"
 ---
 
 # Design System: MAGGA
 
-## 1. Overview
+## Overview
 
-**Creative North Star: "Trusted Fandom Archive"**
+This document records the current design selected and approved by the project owner. Preserve the existing page composition, cover presentation, dark surfaces, gold accents, and Thai typography when fixing usability issues. It is not a redesign brief.
 
-MAGGA is a dark, focused archive for Thai-translated furry manga and doujin works. The public surface should feel immersive and reader-first: covers, manga pages, authors, categories, tags, and comments do the visual work. Interface chrome stays quiet so the archive feels curated, not noisy.
+MAGGA serves Thai readers and contributors of translated furry manga and doujin works. Covers and reader pages carry the public visual identity. Search, author filters, categories, tags, and comments remain compact supporting tools. The dashboard uses denser work surfaces for submissions and moderation.
 
-The admin surface is allowed to feel more industrial: compact, dark, gold-led, table-friendly, and built for repeated moderation work. Public screens should never inherit a generic dashboard mood. Admin screens can be dense, but they still need the same credibility and restraint as the reader experience.
+Implementation references:
 
-This system rejects the exact anti-references in PRODUCT.md: manga sites overloaded with ads, generic SaaS dashboards, and low-quality 18+ sites that feel suspicious or disposable. Mature content should be presented with control, clarity, and enough polish to feel trustworthy.
+- [Design tokens](lib/design-tokens.ts): the source of shared color, radius, shadow, and motion values.
+- [Design system specification](DESIGN_SYSTEM.md): project component requirements.
+- [Public theme](app/components/layout/Providers.tsx) and [root layout](app/layout.tsx): the public Kanit font and theme.
+- [Manga card](app/components/features/manga/MangaCard.tsx), [author header](app/components/features/author/AuthorHeaderCard.tsx), [search filters](app/components/features/search/SearchFilters.tsx), and [header](app/components/layout/Header.tsx): the current component appearance.
 
-**Key Characteristics:**
+If this document and the implementation drift, reconcile the documentation with the owner's approved design and project instructions before changing the visuals. Do not introduce new styling merely to satisfy an outdated description.
 
-- Dark neutral canvas with gold used as a directional signal.
-- Manga covers and reader pages are the main visual asset.
-- Public UI is immersive; admin UI is industrial and compact.
-- Forms, filters, and tables stay focused and credible.
-- Motion is present only as feedback, not spectacle.
-
-## 2. Colors
-
-The palette is a dark archive system: neutral blacks carry the reading environment, gold marks action and category priority, violet and emerald remain secondary signals.
+## Colors
 
 ### Primary
 
-- **Archive Gold**: Main action color for submit buttons, selected tabs, category chips, loading indicators, and admin emphasis.
-- **Admin Gold**: Stronger admin variant used where the dashboard needs more mechanical contrast and table-state clarity.
+Archive Gold (`maggaColors.archiveGold`, `#d97706`) marks actions and selection. Its brighter hover value is `#f59e0b`; hover does not darken the gold. Shared selected backgrounds and borders use `archiveGoldSoft` (`rgba(217, 119, 6, 0.15)`) and `archiveGoldBorder` (`rgba(217, 119, 6, 0.35)`).
 
-### Secondary
+Existing auth and dashboard primary buttons use gold gradients from `#f59e0b` to `#d97706`, with darker text. Preserve those established variants rather than replacing every button with one flat style.
 
-- **Fandom Violet**: Public brand accent inherited from the MUI theme. Use for supporting emphasis, changelog accents, and places where gold would overstate importance.
-- **Trust Emerald**: Positive state color for connected, approved, or successful status. Use sparingly so it keeps meaning.
+### Secondary and status
 
-### Tertiary
-
-- **Danger Red**: Warning, ban, delete, rejection, and destructive action signal. Never use it as decoration.
+Trust Emerald (`#10b981`) signals positive status. Danger Red (`#ef4444`) signals errors, bans, rejection, and destructive actions. Author social pills may use their existing platform-specific brand colors. The established author status badges include emerald and brighter gold variants.
 
 ### Neutral
 
-- **Midnight Canvas**: Root background for the site, reader pages, auth shells, and full-screen loading states.
-- **Charcoal Surface**: Primary panel, card, paper, dialog, and dashboard surface.
-- **Iron Surface**: Secondary field and hover surface for dark controls.
-- **Soft Divider**: Input borders, muted separators, and low-contrast outlines.
-- **Text Primary**: Main text on dark surfaces.
-- **Text Secondary**: Supporting labels, metadata, helper text, and subdued navigation.
-- **Text Muted**: Timestamps, inactive controls, and low-priority captions.
+- Main background: `maggaColors.background`, `#141416`.
+- Shared surface: `maggaColors.surface`, `#1e1e22`.
+- Elevated surface: `maggaColors.surfaceElevated`, `#26262c`.
+- Text: primary `#f4f4f5`, secondary `#a1a1aa`, muted `#71717a`.
+- Shared borders: `rgba(255,255,255,0.08)`; stronger borders: `rgba(255,255,255,0.14)`.
 
-### Named Rules
+Documented current local variants include author hero `#17181c`, public menu `#18181b`, auth dialog `#16171a`, auth fields `#101012`, and footer `#111113`. These are component-specific surfaces, not replacements for the main background token.
 
-**The Gold Is Navigation Rule.** Gold marks a path, a selected state, or a meaningful action. Do not use it as ambient decoration across a whole screen.
+Purple and violet UI accents are prohibited. Use the canonical Archive Gold names for new work. Legacy token aliases are implementation compatibility details, not an alternative palette.
 
-**The Dark Archive Rule.** Backgrounds stay neutral and deep. Avoid saturated full-screen color fields that compete with manga covers.
+The current muted text value is documented as observed, not certified for all readable text. Essential small text needs sufficient contrast on its actual surface; improving legibility must retain the approved palette and layout.
 
-**The Mature Trust Rule.** Red and neon-like colors are functional only. If a screen starts to resemble a low-trust 18+ site, remove saturation before adding more UI.
+## Typography
 
-## 3. Typography
+The public interface uses Kanit with a sans-serif fallback. `app/layout.tsx` loads weights 400, 500, and 700 for Thai and Latin; components also request intermediate CSS weights. Do not add another font or font download to resolve a usability issue.
 
-**Display Font:** Kanit, with sans-serif fallback
-**Body Font:** Kanit, with sans-serif fallback
-**Label/Mono Font:** Kanit for labels; monospace appears only for technical values such as dates or ids
+The frontmatter captures the current manga title, author, category label, and author heading sizes. Other headings follow their existing MUI variants and component-specific responsive sizes. The homepage deliberately uses a compact `h6` visual variant for its semantic `h1`; do not replace it with an oversized marketing hero.
 
-**Character:** Kanit gives MAGGA a Thai-first, rounded, approachable voice while still supporting dense admin screens. Weight and spacing create hierarchy; decorative type changes are not part of the system.
+Manga titles are `0.92rem`, weight 500, line-height 1.3. Author names are `0.78rem`, line-height 1.25. The Views caption remains `0.72rem` and uses `textSecondary` for improved contrast without changing card geometry.
 
-### Hierarchy
+The dashboard keeps its separate component styling and now explicitly uses the same Kanit font family and heading weights as the public theme.
 
-- **Display** (700, 2.5rem and larger, 1.1 line-height): Page titles, manga title hero areas, and special states such as 404.
-- **Headline** (700, 2rem, 1.2 line-height): Section leads and admin page headings.
-- **Title** (600, 1.25rem, 1.25 line-height): Card names, form section titles, panel headers, and manga reader metadata.
-- **Body** (400, 1rem, 1.7 line-height): Descriptions, policy text, reader-adjacent prose, comments, and settings copy. Keep long body text to roughly 65-75 characters per line when possible.
-- **Label** (700, 0.8rem, 0.02em letter-spacing): Chips, table headers, metadata labels, compact controls, and admin status markers.
+Keep Thai labels readable, allow form helper text to wrap, and preserve the one-line title/author treatment on manga cards. Use size, weight, and placement for hierarchy.
 
-### Named Rules
+## Elevation
 
-**The Thai Readability Rule.** Never compress Thai body text to look sleek. If a label or paragraph becomes cramped, give it more space before reducing legibility.
+Use `maggaShadows` from the shared token file:
 
-**The Weight Before Decoration Rule.** Use weight, size, and placement for hierarchy. Do not introduce decorative fonts or gradient text.
+- `cardHoverLift`: `0 8px 24px -4px rgba(0, 0, 0, 0.5)`.
+- `cardAmberHoverLift`: the same lift plus a gold border glow.
+- `goldGlow`: `0 0 20px rgba(217, 119, 6, 0.3)`.
+- `authPanelDepth`: `0 25px 60px rgba(0,0,0,0.5)`.
+- `thumbnailLift`: `0 4px 12px rgba(0,0,0,0.3)`.
 
-## 4. Elevation
+Preserve local shadows already used by dialogs, menus, and cover thumbnails. Manga covers lift slightly on hover and the image scales subtly. Shared motion tokens specify short feedback transitions; reduced-motion behavior is supported by the global stylesheet.
 
-MAGGA uses a hybrid elevation model: immersive public screens rely on cover overlays, gradients, and tonal layering, while admin screens use flat industrial panels with thin borders and occasional gold focus. Shadows appear mostly on hover, auth panels, cover thumbnails, and strong overlay moments.
+## Components
 
-### Shadow Vocabulary
+### Manga card and grid
 
-- **Card Hover Lift** (`box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.4)`): Optional hover response for cards that need tactile feedback.
-- **Gold Glow** (`box-shadow: 0 0 20px rgba(251, 191, 36, 0.4)`): Use only for primary call-to-action hover or rare emphasis.
-- **Auth Panel Depth** (`box-shadow: 0 25px 60px rgba(0,0,0,0.5)`): Use for centered auth surfaces and major account flows.
-- **Thumbnail Lift** (`box-shadow: 0 4px 12px rgba(0,0,0,0.3)`): Use under small cover images in admin tables and lists.
+- Cover aspect ratio is **3:4**, with **10px** corners.
+- The category badge sits at the top-right, 10px from the edges. It has a dark translucent background, 8px backdrop blur, a thin light border, 28px height, 6px corners, and `0.8rem` text at weight 600.
+- Title appears **below the cover**, on exactly one line with ellipsis. Do not put it back over the artwork or use the former two-line treatment.
+- Author appears below the title, on one line. Its link filters through `/?author=${encodeURIComponent(authorName)}`. The author container reserves `minHeight: 1.2rem`.
+- The stats row below the author currently displays a rating when available and Views. A comment count is not rendered by the current card; do not claim it is implemented.
+- The current cover has a subtle bottom vignette. Preserve it; it is not the former large title overlay.
+- Mobile discovery uses two columns; wider breakpoints add columns through the existing Grid configuration.
 
-### Named Rules
+### Author header
 
-**The Industrial Admin Rule.** Admin panels are flat at rest, bordered, and compact. Shadows are secondary to structure.
+Use the existing breadcrumb `หน้าแรก > ผู้แต่ง > [ชื่อผู้แต่ง]`, dark `#17181c` hero, bold author heading, status badge, work count, and clear-filter action `แสดงผลงานทั้งหมด`. Preserve the existing platform-branded social pills and their responsive wrapping.
 
-**The Immersive Public Rule.** Public cards and reader surfaces should let images create depth. UI shadows must not overpower cover art.
+### Search and filters
 
-## 5. Components
+Preserve the compact search bar and expandable filter panel. The search placeholder adapts to the selected author. Filter changes retain the author query. On mobile the filter button uses icons while its accessible label identifies the action.
 
-### Buttons
+### Header and footer
 
-- **Shape:** Public theme buttons can inherit the rounded app shape (16px), but admin and form buttons should usually use tighter industrial corners (8px).
-- **Primary:** Gold background with dark text, bold label, and compact padding. Use for submit, save, selected tab, and high-confidence actions.
-- **Hover / Focus:** Gold darkens from archive gold to archive gold hover. Focus must be visible through border, outline, or strong contrast, never only color.
-- **Secondary / Ghost / Tertiary:** Use transparent or dark surfaces with thin borders for lower priority actions. Do not make every action gold.
+The public header is sticky, transparent at the top, and uses `rgba(20,20,22,0.9)` with 12px blur and a subtle bottom border after scrolling. Its current toolbar height is 56px on small screens and 60px from the small breakpoint. Desktop shows submit/login controls; mobile exposes the menu.
 
-### Chips
+The footer uses `#111113`, a thin top border, description, policy links, copyright, and existing supporting links. Keep its established composition.
 
-- **Style:** Category chips use gold with dark text. Metadata chips use tinted low-opacity backgrounds, colored text, and thin borders.
-- **State:** Selected chips need a clear tonal change. Filter chips must remain readable at small sizes and must not depend on hover-only affordances.
+### Buttons, fields, and dialogs
 
-### Cards / Containers
+Keep the existing variants: header buttons commonly have 8px corners, auth fields and buttons 10px, auth dialogs 14px, and the dashboard uses its current 10-12px control/panel corners. Shared radii are 4, 8, 10 (cover), 16, and 50px; they do not require every component to have identical corners.
 
-- **Corner Style:** Manga cards use 8px corners to preserve cover shape. Public panels use up to 16px where the theme already does. Admin panels stay at 8px.
-- **Background:** Manga cards sit on midnight canvas with full-cover imagery. Utility panels use charcoal surface. Admin list/table surfaces use charcoal or near-black bands.
-- **Shadow Strategy:** Public cards may lift on hover. Admin containers should rely on borders and tonal contrast.
-- **Border:** Use thin translucent white borders around panels and admin containers. Do not use thick colored side stripes.
-- **Internal Padding:** Compact tools use 8-16px; forms and settings panels use 24px.
+Fields use light text and gold focus borders. Validation, pending states, visible keyboard focus, and usable touch targets are behavior and accessibility requirements; add them without replacing the approved visual treatment.
 
-### Inputs / Fields
+### Stability and responsive behavior
 
-- **Style:** Dark field background, light text, muted border, and 8px radius. Standard filters may use underline-only inputs inside the filter panel.
-- **Focus:** Gold border or indicator. Focus must be strong enough for WCAG A keyboard use.
-- **Error / Disabled:** Red for error, muted gray for disabled. Disabled gold buttons should reduce contrast and not look actionable.
+Use the existing spacing scale and responsive layout rather than a new page grid. Reserve dimensions for dynamic content; skeletons should match rendered content. Fixed widgets such as Cookie Consent use MUI Portal. Verify that text enlargement does not hide essential actions. Keep manga art centered and responsive in the vertical reader.
 
-### Navigation
+## Do's and Don'ts
 
-- **Style:** The public header is sticky and visually transparent until scroll, then becomes a dark gradient veil. It should support reading, not frame the page like a corporate app.
-- **Typography:** Navigation labels are compact and bold enough to scan.
-- **Default / Hover / Active:** Gold marks submit and selected states. Admin uses red or gold only when role and context demand it.
-- **Mobile Treatment:** Controls must collapse without hiding essential login, submit, search, or filter paths.
+### Do
 
-### Manga Card
+- Preserve the current owner-approved design while improving usability.
+- Import canonical shared tokens for new styling.
+- Keep covers and reader pages central, with metadata below the cover.
+- Maintain clear focus, accessible names, field-level errors, and recoverable loading failures.
+- Verify responsive layouts and text enlargement on the pages actually changed.
+- Update this document when an approved design change alters the implementation.
 
-Manga cards are the signature public component. They use a 2:3 cover ratio, full-image background, bottom black gradient overlay, two-line clamped title, compact view/rating metadata, and optional top-right category chip. The card should feel like a book spine or cover on a shelf, not a generic content tile.
+### Don't
 
-### Filter Panel
-
-The filter panel is compact by default and expands when needed. It should feel like a reader tool, not a search landing page. Keep labels short, controls predictable, and transitions restrained.
-
-### Admin Table Surface
-
-Admin tables use dense row spacing, small uppercase-like labels, dark bands, gold active indicators, and muted borders. They are work surfaces, not marketing sections.
-
-## 6. Do's and Don'ts
-
-### Do:
-
-- **Do** keep manga covers, reader pages, authors, tags, and categories visually central.
-- **Do** use archive gold for directional actions and selected states.
-- **Do** keep public pages immersive and admin pages industrial.
-- **Do** preserve WCAG A minimum behavior: readable contrast, visible focus, keyboard-operable controls, and non-hover alternatives.
-- **Do** keep mobile reading and image-heavy performance in mind before adding motion, shadows, or extra client-side UI.
-- **Do** use thin borders, tonal surfaces, and compact spacing for admin workflows.
-
-### Don't:
-
-- **Don't** make MAGGA look like a manga site overloaded with ads, popups, confusing banners, or visual clutter.
-- **Don't** make public reader and discovery surfaces look like a generic SaaS dashboard.
-- **Don't** borrow the untrustworthy visual language common to low-quality 18+ sites: aggressive colors, fake urgency, unreadable layouts, suspicious controls, or throwaway content presentation.
-- **Don't** use gradient text. Use solid color, weight, and scale.
-- **Don't** use thick colored side-stripe borders on cards, list items, callouts, or alerts.
-- **Don't** cover manga art with decorative chrome that does not help reading, discovery, submission, or moderation.
+- Introduce purple/violet accents or change the main canvas to pitch black.
+- Reintroduce 2:3 covers, title overlays, or two-line manga card titles.
+- Redesign the homepage, card grid, auth panels, or dashboard as part of a behavior fix.
+- Treat observed legacy styles or known usability issues as requirements to preserve defects.
+- Add decorative UI that competes with the manga artwork.
+- Claim a documented component or accessibility requirement has passed runtime testing without testing it.

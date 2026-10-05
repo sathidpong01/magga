@@ -202,7 +202,7 @@ const MangaCard = ({ manga, priority = false }: MangaCardProps) => {
             <Typography
               variant="caption"
               sx={{
-                color: maggaColors.textMuted,
+                color: maggaColors.textSecondary,
                 fontSize: "0.78rem",
                 fontStyle: "italic",
                 lineHeight: 1.25,
@@ -249,7 +249,7 @@ const MangaCard = ({ manga, priority = false }: MangaCardProps) => {
           )}
           <Typography
             variant="caption"
-            sx={{ color: maggaColors.textMuted, fontSize: "0.72rem" }}
+            sx={{ color: maggaColors.textSecondary, fontSize: "0.72rem" }}
           >
             {manga.viewCount >= 1000000
               ? `${(manga.viewCount / 1000000).toFixed(1)}M`

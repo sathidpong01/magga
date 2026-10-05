@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
@@ -40,6 +41,13 @@ const COUNT_SAMPLE_LIMIT = 1000;
 function displayBoundedCount(rows: unknown[]) {
   return rows.length >= COUNT_SAMPLE_LIMIT ? `${COUNT_SAMPLE_LIMIT}+` : rows.length;
 }
+
+export const metadata: Metadata = {
+  title: "ภาพรวมผู้ดูแล - MAGGA",
+  description: "ภาพรวมการจัดการเนื้อหาและชุมชน MAGGA",
+  openGraph: { title: "ภาพรวมผู้ดูแล - MAGGA", description: "ภาพรวมการจัดการเนื้อหาและชุมชน MAGGA" },
+  twitter: { title: "ภาพรวมผู้ดูแล - MAGGA", description: "ภาพรวมการจัดการเนื้อหาและชุมชน MAGGA" },
+};
 
 export default async function AdminPage() {
   const session = await auth.api.getSession({ headers: await headers() });

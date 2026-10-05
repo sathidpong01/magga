@@ -30,6 +30,7 @@ interface AuthModalProps {
   open: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  onNavigate?: () => void;
   callbackUrl?: string;
   notice?: string;
 }
@@ -38,6 +39,7 @@ export default function AuthModal({
   open,
   onClose,
   onSuccess,
+  onNavigate,
   callbackUrl = "/",
   notice,
 }: AuthModalProps) {
@@ -352,8 +354,8 @@ export default function AuthModal({
             </Typography>
             <Typography variant="body2" sx={{ fontSize: "0.9rem" }}>
               <Link
-                href="/auth/register"
-                onClick={onClose}
+                href={`/auth/register?callbackUrl=${encodeURIComponent(callbackUrl)}`}
+                onClick={onNavigate}
                 style={{ color: "#f59e0b", textDecoration: "none", fontWeight: 600 }}
               >
                 สมัครสมาชิก

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -6,6 +7,13 @@ import { profiles as usersTable, blockedUsers, blockedTags, accounts } from "@/d
 import { eq, count } from "drizzle-orm";
 import { Container } from "@mui/material";
 import AccountSettings from "./AccountSettings";
+
+export const metadata: Metadata = {
+  title: "ตั้งค่าบัญชี - MAGGA",
+  description: "จัดการโปรไฟล์ ความปลอดภัย และการตั้งค่าบัญชี MAGGA",
+  openGraph: { title: "ตั้งค่าบัญชี - MAGGA", description: "จัดการโปรไฟล์ ความปลอดภัย และการตั้งค่าบัญชี MAGGA" },
+  twitter: { title: "ตั้งค่าบัญชี - MAGGA", description: "จัดการโปรไฟล์ ความปลอดภัย และการตั้งค่าบัญชี MAGGA" },
+};
 
 export default async function SettingsPage() {
   const session = await auth.api.getSession({ headers: await headers() });

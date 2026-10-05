@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { db } from "@/db";
 import {
   authors as authorsTable,
@@ -20,6 +21,13 @@ export const dynamic = "force-dynamic";
 
 const ADMIN_MANGA_LIMIT = 200;
 const ADMIN_METADATA_LIMIT = 500;
+
+export const metadata: Metadata = {
+  title: "จัดการมังงะ - MAGGA",
+  description: "จัดการรายการมังงะบน MAGGA",
+  openGraph: { title: "จัดการมังงะ - MAGGA", description: "จัดการรายการมังงะบน MAGGA" },
+  twitter: { title: "จัดการมังงะ - MAGGA", description: "จัดการรายการมังงะบน MAGGA" },
+};
 
 export default async function AdminMangaPage() {
   const [mangasQuery, allCategories, allTags, allAuthors] = await Promise.all([
