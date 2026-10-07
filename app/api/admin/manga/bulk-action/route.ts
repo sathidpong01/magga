@@ -2,15 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { manga as mangaTable } from "@/db/schema";
 import { eq, inArray } from "drizzle-orm";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { requireAdmin } from "@/lib/auth-helpers";
+import { removeMangaWithComments } from "@/lib/comments/manga-removal";
+import { requireModerationAdmin } from "@/lib/comments/moderation";
+import { handleCommentError } from "@/lib/comments";
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
-    const authError = requireAdmin(session);
-    if (authError) return authError;
+    await requireModerationAdmin(req,true);
 
     const body = await req.json();
     const { ids, action } = body as {
@@ -33,10 +31,7 @@ export async function POST(req: NextRequest) {
 
     switch (action) {
       case "delete":
-        const deleted = await db
-          .delete(mangaTable)
-          .where(inArray(mangaTable.id, ids))
-          .returning({ id: mangaTable.id });
+        const deleted = await removeMangaWithComments(ids);
         count = deleted.length;
         break;
       case "show":
@@ -63,10 +58,6 @@ export async function POST(req: NextRequest) {
       count,
     });
   } catch (error) {
-    console.error("Bulk action error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return handleCommentError(error);
   }
 }

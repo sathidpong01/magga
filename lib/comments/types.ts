@@ -65,6 +65,9 @@ export interface CreateCommentInput {
   content: string;
   imageIndex?: number | null;
   imageUrl?: string | null;
+  assetId?: string | null;
+  idempotencyKey?: string;
+  challengeToken?: string;
   parentId?: string | null;
 }
 
@@ -105,12 +108,15 @@ export interface CommentItem {
   createdAt: Date | string;
   updatedAt?: Date | string | null;
   mangaId: string;
-  userId: string;
+  userId?: string | null;
   imageIndex: number | null;
   parentId: string | null;
-  user: CommentUser;
-  votes: CommentVote[];
+  user: CommentUser | null;
+  author?: { kind: "member" | "guest"; name: string; publicCode?: string; image: string | null; username?: string | null };
+  status?: string;
+  votes?: CommentVote[];
   replies?: CommentItem[];
+  repliesNextCursor?: string | null;
 }
 
 export interface CommentVoteResult {

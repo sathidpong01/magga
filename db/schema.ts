@@ -1,6 +1,8 @@
-import { pgTable, pgPolicy, text, integer, timestamp, unique, check, uuid, boolean, foreignKey, index, bigint, doublePrecision, primaryKey, customType, jsonb } from "drizzle-orm/pg-core"
+import { pgTable, pgPolicy, text, integer, timestamp, unique, check, uuid, boolean, foreignKey, index, bigint, doublePrecision, primaryKey, customType, jsonb, uniqueIndex } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
+import { commentGuests } from "./comment-schema";
+export * from "./comment-schema";
 const tsvector = customType<{ data: string }>({ dataType() { return 'tsvector'; } });
 const currentUserId = sql`(SELECT private.current_user_id())`;
 const adminOnly = sql`(SELECT private.is_admin())`;
@@ -189,14 +191,26 @@ export const comments = pgTable("comments", {
 	content: text().notNull(),
 	imageUrl: text("image_url"),
 	mangaId: uuid("manga_id").notNull(),
-	userId: text("user_id").notNull(),
+	userId: text("user_id"),
+ guestId: uuid("guest_id").references(() => commentGuests.id),
+ authorName: text("author_name"),
+ guestPublicCode: text("guest_public_code"),
+ status: text({ enum: ["published", "pending", "hidden", "deleted"] }).default("published").notNull(),
+ idempotencyKey: text("idempotency_key"),
+ requestHash: text("request_hash"),
 	imageIndex: integer("image_index"),
 	parentId: uuid("parent_id"),
 	voteScore: integer("vote_score").default(0).notNull(),
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 }, (table) => [
-	index("idx_comments_manga").using("btree", table.mangaId.asc().nullsLast().op("uuid_ops")),
+	check("comments_owner_check", sql`num_nonnulls(user_id, guest_id) = 1`),
+ check("comments_status_check", sql`status IN ('published','pending','hidden','deleted')`),
+ uniqueIndex("comments_member_idempotency_key").on(table.userId, table.idempotencyKey).where(sql`${table.userId} IS NOT NULL AND ${table.idempotencyKey} IS NOT NULL`),
+ uniqueIndex("comments_guest_idempotency_key").on(table.guestId, table.idempotencyKey).where(sql`${table.guestId} IS NOT NULL AND ${table.idempotencyKey} IS NOT NULL`),
+ index("idx_comments_guest").on(table.guestId),
+ index("idx_comments_status_created").on(table.status, table.createdAt, table.id),
+ index("idx_comments_manga").using("btree", table.mangaId.asc().nullsLast().op("uuid_ops")),
 	index("idx_comments_manga_image").using("btree", table.mangaId.asc().nullsLast().op("int4_ops"), table.imageIndex.asc().nullsLast().op("int4_ops")),
 	index("idx_comments_parent").using("btree", table.parentId.asc().nullsLast().op("uuid_ops")),
 	index("idx_comments_user").using("btree", table.userId.asc().nullsLast().op("text_ops")),
@@ -209,7 +223,7 @@ export const comments = pgTable("comments", {
 			columns: [table.parentId],
 			foreignColumns: [table.id],
 			name: "comments_parent_id_fkey"
-		}).onDelete("cascade"),
+		}).onDelete("restrict"),
 	foreignKey({
 			columns: [table.userId],
 			foreignColumns: [profiles.id],

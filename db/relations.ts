@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm/relations";
-import { profiles, accounts, sessions, comments, commentVotes, manga, authors, categories, mangaRatings, mangaSubmissions, mangaSubmissionTags, tags, userSubmissionLimits, mangaTags, blockedUsers, blockedTags, mangaViews } from "./schema";
+import { profiles, accounts, sessions, comments, commentVotes, manga, authors, categories, mangaRatings, mangaSubmissions, mangaSubmissionTags, tags, userSubmissionLimits, mangaTags, blockedUsers, blockedTags, mangaViews, commentGuests } from "./schema";
 
 export const accountsRelations = relations(accounts, ({one}) => ({
 	profile: one(profiles, {
@@ -39,6 +39,7 @@ export const commentVotesRelations = relations(commentVotes, ({one}) => ({
 }));
 
 export const commentsRelations = relations(comments, ({one, many}) => ({
+ guest: one(commentGuests, { fields: [comments.guestId], references: [commentGuests.id] }),
 	commentVotes: many(commentVotes),
 	manga: one(manga, {
 		fields: [comments.mangaId],
@@ -182,3 +183,4 @@ export const mangaTagsRelations = relations(mangaTags, ({one}) => ({
 		relationName: "mangaTags_tagId_tags_id"
 	}),
 }));
+export const commentGuestsRelations = relations(commentGuests, ({ many }) => ({ comments: many(comments) }));

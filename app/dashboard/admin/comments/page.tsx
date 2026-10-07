@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { db } from "@/db";
 import { comments as commentsTable } from "@/db/schema";
+import { headers } from "next/headers";
+import { requireModerationAdmin } from "@/lib/comments/moderation";
+import { decorateCommentImagePreviews } from "@/lib/comments/assets";
 import { count, desc } from "drizzle-orm";
 import CommentsManager, {
   type AdminComment,
@@ -17,6 +20,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminCommentsPage() {
+  await requireModerationAdmin(new Request(process.env.BETTER_AUTH_URL || "http://localhost:3000", { headers: await headers() }));
   const page = 1;
   const limit = 20;
 
@@ -25,6 +29,7 @@ export default async function AdminCommentsPage() {
     offset: 0,
     limit,
     with: {
+      guest: { columns: { isBanned: true } },
       profile: {
         columns: { id: true, name: true, username: true, image: true },
       },
@@ -45,8 +50,9 @@ export default async function AdminCommentsPage() {
   const [{ total }] = await db.select({ total: count() }).from(commentsTable);
   const totalNum = Number(total);
 
-  const initialComments: AdminComment[] = comments.map((comment) => ({
+  const initialComments: AdminComment[] = await decorateCommentImagePreviews(comments.map((comment) => ({
     ...comment,
+    guestIsBanned: comment.guest?.isBanned ?? false,
     manga: {
       id: comment.manga?.id ?? "",
       title: comment.manga?.title ?? "",
@@ -54,7 +60,7 @@ export default async function AdminCommentsPage() {
     },
     user: {
       id: comment.profile?.id ?? "",
-      name: comment.profile?.name ?? null,
+      name: comment.profile?.name ?? comment.authorName ?? null,
       username: comment.profile?.username ?? null,
       image: comment.profile?.image ?? null,
     },
@@ -68,7 +74,7 @@ export default async function AdminCommentsPage() {
           },
         }
       : null,
-  }));
+  })));
 
   const initialPagination: AdminCommentsPagination = {
     page,

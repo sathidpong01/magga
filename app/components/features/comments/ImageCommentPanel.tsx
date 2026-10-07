@@ -9,18 +9,20 @@ import {
   Typography,
   Divider,
   CircularProgress,
+  Alert,
+  Button,
 } from "@mui/material";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutlined";
 import CloseIcon from "@mui/icons-material/Close";
 import CommentBox from "./CommentBox";
-import CommentList from "./CommentList";
+import CommentList, { type PublicComment } from "./CommentList";
 
 interface ImageCommentPanelProps {
   mangaId: string;
   imageIndex: number;
   totalPages: number;
-  cachedComments?: any[] | null;
-  onCommentsLoaded?: (comments: any[]) => void;
+  cachedComments?: PublicComment[] | null;
+  onCommentsLoaded?: (comments: PublicComment[]) => void;
   onCommentCreated?: () => void;
 }
 
@@ -32,7 +34,10 @@ export default function ImageCommentPanel({
   onCommentsLoaded,
   onCommentCreated,
 }: ImageCommentPanelProps) {
-  const [comments, setComments] = useState<any[]>(cachedComments || []);
+  const [loadError, setLoadError] = useState("");
+  const [comments, setComments] = useState<PublicComment[]>(
+    cachedComments || [],
+  );
   const [isLoading, setIsLoading] = useState(!cachedComments);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
@@ -42,6 +47,7 @@ export default function ImageCommentPanel({
 
   // Fetch comments for specific imageIndex
   useEffect(() => {
+    setLoadError("");
     // If we have cached comments, use them
     if (cachedComments) {
       setComments(cachedComments);
@@ -52,6 +58,7 @@ export default function ImageCommentPanel({
     // Otherwise fetch from API
     let isMounted = true;
     setIsLoading(true);
+    setLoadError("");
 
     const fetchData = async () => {
       try {
@@ -72,7 +79,7 @@ export default function ImageCommentPanel({
           onCommentsLoadedRef.current?.(fetchedComments);
         }
       } catch (error) {
-        console.error("Error fetching comments:", error);
+        setLoadError("โหลดความคิดเห็นไม่ได้ กรุณาลองใหม่");
         if (isMounted) {
           setIsLoading(false);
         }
@@ -95,6 +102,7 @@ export default function ImageCommentPanel({
       }
 
       setIsLoading(true);
+      setLoadError("");
       try {
         const params = new URLSearchParams({
           mangaId,
@@ -109,12 +117,12 @@ export default function ImageCommentPanel({
         setComments(fetchedComments);
         onCommentsLoadedRef.current?.(fetchedComments);
       } catch (error) {
-        console.error("Error fetching comments:", error);
+        setLoadError("โหลดความคิดเห็นไม่ได้ กรุณาลองใหม่");
       } finally {
         setIsLoading(false);
       }
     },
-    [mangaId, imageIndex, cachedComments]
+    [mangaId, imageIndex, cachedComments],
   );
 
   const handleCommentCreated = useCallback(() => {
@@ -148,13 +156,17 @@ export default function ImageCommentPanel({
             variant="subtitle2"
             sx={{
               fontWeight: 600,
-              color: "white"
-            }}>
+              color: "white",
+            }}
+          >
             {pageLabel}
           </Typography>
-          <Typography variant="caption" sx={{
-            color: "text.secondary"
-          }}>
+          <Typography
+            variant="caption"
+            sx={{
+              color: "text.secondary",
+            }}
+          >
             {commentCount} ความคิดเห็น
           </Typography>
         </Box>
@@ -182,6 +194,21 @@ export default function ImageCommentPanel({
             <Divider sx={{ my: 2, borderColor: "rgba(255,255,255,0.08)" }} />
           )}
 
+          {loadError && (
+            <Alert
+              severity="error"
+              action={
+                <Button
+                  disabled={isLoading}
+                  onClick={() => void fetchComments(true)}
+                >
+                  ลองใหม่
+                </Button>
+              }
+            >
+              {loadError}
+            </Alert>
+          )}
           {isLoading ? (
             <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
               <CircularProgress size={24} />
@@ -237,7 +264,7 @@ export default function ImageCommentPanel({
                 bgcolor: "#0f0f0f",
                 color: "white",
               },
-            }
+            },
           }}
         >
           <Box
@@ -250,14 +277,20 @@ export default function ImageCommentPanel({
             }}
           >
             <Box>
-              <Typography variant="h6" sx={{
-                fontWeight: 600
-              }}>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 600,
+                }}
+              >
                 ความคิดเห็น
               </Typography>
-              <Typography variant="body2" sx={{
-                color: "text.secondary"
-              }}>
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "text.secondary",
+                }}
+              >
                 {pageLabel} • {commentCount} ความคิดเห็น
               </Typography>
             </Box>
@@ -275,6 +308,21 @@ export default function ImageCommentPanel({
               onCommentCreated={handleCommentCreated}
             />
             <Divider sx={{ my: 2, borderColor: "rgba(255,255,255,0.1)" }} />
+            {loadError && (
+              <Alert
+                severity="error"
+                action={
+                  <Button
+                    disabled={isLoading}
+                    onClick={() => void fetchComments(true)}
+                  >
+                    ลองใหม่
+                  </Button>
+                }
+              >
+                {loadError}
+              </Alert>
+            )}
             {isLoading ? (
               <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
                 <CircularProgress size={32} />

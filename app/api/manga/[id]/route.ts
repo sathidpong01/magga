@@ -4,6 +4,9 @@ import { db } from "@/db";
 import { manga as mangaTable, mangaTags as mangaTagsTable } from "@/db/schema";
 import { eq, and, ne } from "drizzle-orm";
 import { auth } from "@/lib/auth";
+import { removeMangaWithComments } from "@/lib/comments/manga-removal";
+import { requireModerationAdmin } from "@/lib/comments/moderation";
+import { handleCommentError } from "@/lib/comments";
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth.api.getSession({ headers: request.headers });
@@ -73,15 +76,13 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 }
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth.api.getSession({ headers: request.headers });
-  if (!session || (session?.user as any)?.role !== "admin") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  try { await requireModerationAdmin(request, true); }
+  catch (error) { return handleCommentError(error); }
 
   const { id } = await params;
 
   try {
-    await db.delete(mangaTable).where(eq(mangaTable.id, id));
+    await removeMangaWithComments([id]);
     revalidatePath("/dashboard/admin");
     revalidatePath("/dashboard/admin/manga");
     revalidatePath("/");

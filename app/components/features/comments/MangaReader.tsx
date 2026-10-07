@@ -9,11 +9,19 @@ import {
   useMemo,
 } from "react";
 import Image from "next/image";
-import { Box, Typography, Divider, CircularProgress } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Divider,
+  CircularProgress,
+  Alert,
+  Button,
+} from "@mui/material";
 import CommentBox from "./CommentBox";
-import CommentList from "./CommentList";
+import CommentList, { type PublicComment } from "./CommentList";
 import ReadingProgress from "@/app/components/ui/ReadingProgress";
 import { fetchWithRetry } from "@/lib/fetch-with-retry";
+import { maggaColors, maggaRadii } from "@/lib/design-tokens";
 
 // Page data can be string (legacy) or object with dimensions (new)
 interface PageData {
@@ -30,7 +38,7 @@ interface MangaReaderProps {
 
 interface CommentsCache {
   [imageIndex: number]: {
-    comments: any[];
+    comments: PublicComment[];
     lastFetched: number;
   };
 }
@@ -41,6 +49,7 @@ export default function MangaReader({
   pages,
 }: MangaReaderProps) {
   const commentsCacheRef = useRef<CommentsCache>({});
+  const [loadErrors, setLoadErrors] = useState<Record<number, string>>({});
   const [loadingPages, setLoadingPages] = useState<Set<number>>(new Set());
   const [refreshKey, setRefreshKey] = useState(0);
   const [currentPage, setCurrentPage] = useState(0);
@@ -67,7 +76,7 @@ export default function MangaReader({
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             const index = pageRefs.current.indexOf(
-              entry.target as HTMLDivElement
+              entry.target as HTMLDivElement,
             );
             if (index !== -1) {
               setCurrentPage(index);
@@ -75,7 +84,7 @@ export default function MangaReader({
           }
         });
       },
-      { rootMargin: "-40% 0px -40% 0px", threshold: 0 }
+      { rootMargin: "-40% 0px -40% 0px", threshold: 0 },
     );
 
     pageRefs.current.forEach((ref) => {
@@ -86,7 +95,10 @@ export default function MangaReader({
   }, [pages.length]);
 
   const fetchComments = useCallback(
-    async (imageIndex: number, forceRefresh = false): Promise<any[]> => {
+    async (
+      imageIndex: number,
+      forceRefresh = false,
+    ): Promise<PublicComment[]> => {
       const cached = commentsCacheRef.current[imageIndex];
       if (
         cached &&
@@ -97,6 +109,7 @@ export default function MangaReader({
       }
 
       setLoadingPages((prev) => new Set(prev).add(imageIndex));
+      setLoadErrors((previous) => ({ ...previous, [imageIndex]: "" }));
 
       try {
         const params = new URLSearchParams({
@@ -104,7 +117,9 @@ export default function MangaReader({
           imageIndex: String(imageIndex),
         });
 
-        const res = await fetchWithRetry(`/api/comments?${params}`, { retries: 2 });
+        const res = await fetchWithRetry(`/api/comments?${params}`, {
+          retries: 2,
+        });
         if (!res.ok) throw new Error("Failed to fetch");
 
         const data = await res.json();
@@ -118,7 +133,10 @@ export default function MangaReader({
 
         return comments;
       } catch (error) {
-        console.error("Error fetching comments:", error);
+        setLoadErrors((previous) => ({
+          ...previous,
+          [imageIndex]: "โหลดความคิดเห็นไม่ได้ กรุณาลองใหม่",
+        }));
         return cached?.comments || [];
       } finally {
         setLoadingPages((prev) => {
@@ -128,7 +146,7 @@ export default function MangaReader({
         });
       }
     },
-    [mangaId, CACHE_DURATION]
+    [mangaId, CACHE_DURATION],
   );
 
   const handleCommentCreated = useCallback(
@@ -136,13 +154,18 @@ export default function MangaReader({
       delete commentsCacheRef.current[imageIndex];
       fetchComments(imageIndex, true);
     },
-    [fetchComments]
+    [fetchComments],
   );
 
   return (
     <Box sx={{ position: "relative" }}>
       {/* Reading Progress Indicator */}
-      <ReadingProgress mangaId={mangaId} currentPage={currentPage} totalPages={pages.length} pageRefs={pageRefs} />
+      <ReadingProgress
+        mangaId={mangaId}
+        currentPage={currentPage}
+        totalPages={pages.length}
+        pageRefs={pageRefs}
+      />
 
       <Box
         sx={{
@@ -166,6 +189,8 @@ export default function MangaReader({
             imageIndex={index}
             totalPages={normalizedPages.length}
             getCachedComments={() => commentsCacheRef.current[index]?.comments}
+            loadError={loadErrors[index]}
+            onRetry={() => void fetchComments(index, true)}
             isLoading={loadingPages.has(index)}
             onFetchComments={() => fetchComments(index)}
             onCommentCreated={() => handleCommentCreated(index)}
@@ -183,9 +208,11 @@ interface LazyPageProps {
   imageIndex: number;
   totalPages: number;
   refreshKey: number;
-  getCachedComments: () => any[] | undefined;
+  getCachedComments: () => PublicComment[] | undefined;
   isLoading: boolean;
-  onFetchComments: () => Promise<any[]>;
+  loadError?: string;
+  onRetry: () => void;
+  onFetchComments: () => Promise<PublicComment[]>;
   onCommentCreated: () => void;
 }
 
@@ -200,14 +227,16 @@ const LazyPageWithComments = forwardRef<HTMLDivElement, LazyPageProps>(
       refreshKey,
       getCachedComments,
       isLoading,
+      loadError,
+      onRetry,
       onFetchComments,
       onCommentCreated,
     },
-    ref
+    ref,
   ) {
     const containerRef = useRef<HTMLDivElement | null>(null);
     const [isVisible, setIsVisible] = useState(false);
-    const [comments, setComments] = useState<any[]>([]);
+    const [comments, setComments] = useState<PublicComment[]>([]);
     const hasFetchedRef = useRef(false);
     const [imageLoading, setImageLoading] = useState(true);
     const imageRef = useRef<HTMLImageElement | null>(null);
@@ -257,12 +286,12 @@ const LazyPageWithComments = forwardRef<HTMLDivElement, LazyPageProps>(
             {
               rootMargin: "200px",
               threshold: 0,
-            }
+            },
           );
           observerRef.current.observe(node);
         }
       },
-      [ref]
+      [ref],
     );
 
     // Fetch comments เมื่อ visible และยังไม่เคย fetch
@@ -371,7 +400,7 @@ const LazyPageWithComments = forwardRef<HTMLDivElement, LazyPageProps>(
             position: "absolute",
             top: 0,
             left: "100%",
-            width: "calc(50vw - 500px + 340px)",
+            width: 340,
             height: "100%",
             pointerEvents: "none", // Outer container doesn't block clicks
           }}
@@ -384,13 +413,12 @@ const LazyPageWithComments = forwardRef<HTMLDivElement, LazyPageProps>(
               maxHeight: "calc(100vh - 100px)",
               display: "flex",
               flexDirection: "column",
-              marginLeft: "auto",
-              marginRight: 10,
+              marginLeft: "20px",
               pointerEvents: "auto", // Inner panel is interactive
-              bgcolor: "rgba(10, 10, 10, 0.85)",
+              bgcolor: maggaColors.surface,
               backdropFilter: "blur(8px)",
-              borderRadius: 1,
-              border: "1px solid rgba(255,255,255,0.08)",
+              borderRadius: maggaRadii.card,
+              border: `1px solid ${maggaColors.border}`,
               zIndex: 100,
             }}
           >
@@ -399,13 +427,17 @@ const LazyPageWithComments = forwardRef<HTMLDivElement, LazyPageProps>(
                 variant="subtitle2"
                 sx={{
                   fontWeight: 600,
-                  color: "white"
-                }}>
+                  color: "white",
+                }}
+              >
                 {pageLabel}
               </Typography>
-              <Typography variant="caption" sx={{
-                color: "text.secondary"
-              }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: "text.secondary",
+                }}
+              >
                 {isVisible ? `${commentCount} ความคิดเห็น` : "กำลังโหลด..."}
               </Typography>
             </Box>
@@ -434,6 +466,18 @@ const LazyPageWithComments = forwardRef<HTMLDivElement, LazyPageProps>(
                   />
                 )}
 
+                {loadError && (
+                  <Alert
+                    severity="error"
+                    action={
+                      <Button disabled={isLoading} onClick={onRetry}>
+                        ลองใหม่
+                      </Button>
+                    }
+                  >
+                    {loadError}
+                  </Alert>
+                )}
                 {isLoading ? (
                   <Box
                     sx={{ display: "flex", justifyContent: "center", py: 3 }}
@@ -465,5 +509,5 @@ const LazyPageWithComments = forwardRef<HTMLDivElement, LazyPageProps>(
         </Box>
       </Box>
     );
-  }
+  },
 );

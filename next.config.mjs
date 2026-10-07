@@ -9,6 +9,13 @@ const nextConfig = {
     // Let Vercel Image CDN optimize cover images (auto AVIF, resize, edge cache)
     // Manga reader pages use per-image unoptimized={true} to stay within Hobby plan limits
     unoptimized: false,
+    // Comment media uses direct R2 URLs and must not enter the long-lived
+    // optimizer cache, including through the legacy media redirect route.
+    localPatterns: [
+      "/logo.svg", "/age18ver.webp", "/favicon*.png", "/favicon.ico",
+      "/android-chrome-*.png", "/apple-touch-icon.png", "/mcp-test-cover.svg",
+      "/_next/static/media/**",
+    ].map((pathname) => ({ pathname, search: "" })),
     remotePatterns: [
       {
         protocol: "https",
@@ -86,14 +93,14 @@ const nextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""} https://vercel.live https://va.vercel-scripts.com https://accounts.google.com`,
+              `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""} https://vercel.live https://va.vercel-scripts.com https://accounts.google.com https://challenges.cloudflare.com`,
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               // img-src: Using https: wildcard to allow author credit icons from any source
               // This is an acceptable risk as images cannot execute code (unlike scripts)
               "img-src 'self' data: blob: https:",
               "font-src 'self' data: https://fonts.gstatic.com",
               `connect-src 'self' ${r2PublicUrl} https://vercel.live https://va.vercel-scripts.com https://accounts.google.com`,
-              "frame-src 'self' https://vercel.live https://accounts.google.com",
+              "frame-src 'self' https://vercel.live https://accounts.google.com https://challenges.cloudflare.com",
               "object-src 'none'",
               "base-uri 'self'",
               "form-action 'self' https://accounts.google.com",

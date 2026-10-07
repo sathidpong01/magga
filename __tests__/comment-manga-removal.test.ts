@@ -1,0 +1,38 @@
+import { beforeAll, afterAll, expect, it, vi } from 'vitest';
+import { PGlite } from '@electric-sql/pglite';
+import { drizzle } from 'drizzle-orm/pglite';
+import { readFileSync } from 'node:fs';
+const state=vi.hoisted(()=>({database:null as unknown,remove:vi.fn().mockResolvedValue(undefined)}));
+vi.mock('@/lib/storage/comment-private',()=>({getCommentPrivateStorage:()=>({delete:state.remove})}));
+vi.mock('@/lib/auth',()=>({auth:{api:{getSession:vi.fn()}}}));
+vi.mock('@/db',()=>({get db(){return state.database;}}));
+import { removeMangaWithComments } from '@/lib/comments/manga-removal';
+import * as schema from '@/db/schema';
+const pg=new PGlite();
+const id=(n:number)=>`11111111-1111-4111-8111-${String(n).padStart(12,'0')}`;
+beforeAll(async()=>{
+ state.database=drizzle(pg,{schema});
+ await pg.exec(`CREATE ROLE anon; CREATE ROLE authenticated;
+ CREATE TABLE profiles(id text PRIMARY KEY); CREATE TABLE manga(id uuid PRIMARY KEY);
+ CREATE TABLE comments(id uuid PRIMARY KEY,content text NOT NULL,user_id text NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,parent_id uuid CONSTRAINT comments_parent_id_fkey REFERENCES comments(id) ON DELETE CASCADE,manga_id uuid REFERENCES manga(id) ON DELETE CASCADE,image_url text,image_index integer,vote_score integer DEFAULT 0,created_at timestamptz DEFAULT now(),updated_at timestamptz DEFAULT now());
+ CREATE TABLE comment_votes(id uuid PRIMARY KEY,comment_id uuid REFERENCES comments(id) ON DELETE CASCADE);`);
+ await pg.exec(readFileSync('db/migrations/0013_guest_comments.sql','utf8'));
+ await pg.exec(`INSERT INTO profiles VALUES('admin'); INSERT INTO manga VALUES('${id(1)}'),('${id(2)}');
+ INSERT INTO private.comment_guests(id,public_code,name)VALUES('${id(3)}','FIXTURE','Guest');
+ INSERT INTO comments(id,content,manga_id,guest_id,parent_id)VALUES('${id(4)}','Root','${id(1)}','${id(3)}',NULL),('${id(5)}','Reply','${id(1)}','${id(3)}','${id(4)}'),('${id(6)}','Preserve','${id(2)}','${id(3)}',NULL);
+ INSERT INTO private.comment_assets(id,guest_id,object_key,content_type,bytes,width,height,state,expires_at,comment_id)VALUES('${id(7)}','${id(3)}','comments/${id(7)}.webp','image/webp',100,10,10,'published',now()+interval '1 day','${id(4)}');
+ INSERT INTO private.comment_reports(id,comment_id,guest_id,reason)VALUES('${id(8)}','${id(4)}','${id(3)}','spam');
+ INSERT INTO private.comment_moderation_events(actor_user_id,comment_id,report_id,action)VALUES('admin','${id(4)}','${id(8)}','resolve-report');
+ INSERT INTO comment_votes VALUES('${id(9)}','${id(4)}');`);
+},30000);
+afterAll(()=>pg.close());
+it('removes only selected manga and its thread/report records; deletes exact tracked objects immediately',async()=>{
+ expect(await removeMangaWithComments([id(1)])).toEqual([{id:id(1)}]);
+ expect((await pg.query('SELECT id FROM manga')).rows).toEqual([{id:id(2)}]);
+ expect((await pg.query('SELECT id,content FROM comments')).rows).toEqual([{id:id(6),content:'Preserve'}]);
+ for(const table of ['private.comment_reports','private.comment_moderation_events','comment_votes']) expect((await pg.query(`SELECT count(*)::int AS n FROM ${table}`)).rows[0]).toEqual({n:0});
+ expect(state.remove).toHaveBeenCalledExactlyOnceWith(`comments/${id(7)}.webp`);
+ expect((await pg.query('SELECT id FROM private.comment_assets')).rows).toHaveLength(0);
+ expect((await pg.query('SELECT id FROM private.comment_guests')).rows).toHaveLength(1);
+});
+it('is safe for nonexistent or empty selections',async()=>{expect(await removeMangaWithComments([])).toEqual([]);expect(await removeMangaWithComments([id(99)])).toEqual([]);expect((await pg.query('SELECT id FROM comments')).rows).toHaveLength(1);});

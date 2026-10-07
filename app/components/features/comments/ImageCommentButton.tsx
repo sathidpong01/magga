@@ -9,11 +9,13 @@ import {
   Typography,
   Divider,
   CircularProgress,
+  Alert,
+  Button,
 } from "@mui/material";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutlined";
 import CloseIcon from "@mui/icons-material/Close";
 import CommentBox from "./CommentBox";
-import CommentList from "./CommentList";
+import CommentList, { type PublicComment } from "./CommentList";
 
 interface ImageCommentButtonProps {
   mangaId: string;
@@ -21,14 +23,20 @@ interface ImageCommentButtonProps {
   pageLabel?: string;
 }
 
-export default function ImageCommentButton({ mangaId, imageIndex, pageLabel }: ImageCommentButtonProps) {
+export default function ImageCommentButton({
+  mangaId,
+  imageIndex,
+  pageLabel,
+}: ImageCommentButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [comments, setComments] = useState<any[]>([]);
+  const [loadError, setLoadError] = useState("");
+  const [comments, setComments] = useState<PublicComment[]>([]);
   const [commentCount, setCommentCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchComments = useCallback(async () => {
     setIsLoading(true);
+    setLoadError("");
     try {
       const params = new URLSearchParams({
         mangaId,
@@ -42,7 +50,7 @@ export default function ImageCommentButton({ mangaId, imageIndex, pageLabel }: I
       setComments(data.comments || []);
       setCommentCount(data.comments?.length || 0);
     } catch (error) {
-      console.error("Error fetching comments:", error);
+      setLoadError("โหลดความคิดเห็นไม่ได้ กรุณาลองใหม่");
     } finally {
       setIsLoading(false);
     }
@@ -122,7 +130,7 @@ export default function ImageCommentButton({ mangaId, imageIndex, pageLabel }: I
               bgcolor: "#0f0f0f",
               color: "white",
             },
-          }
+          },
         }}
       >
         {/* Header */}
@@ -136,15 +144,22 @@ export default function ImageCommentButton({ mangaId, imageIndex, pageLabel }: I
           }}
         >
           <Box>
-            <Typography variant="h6" sx={{
-              fontWeight: 600
-            }}>
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 600,
+              }}
+            >
               ความคิดเห็น
             </Typography>
-            <Typography variant="body2" sx={{
-              color: "text.secondary"
-            }}>
-              {pageLabel || `หน้า ${imageIndex + 1}`} • {commentCount} ความคิดเห็น
+            <Typography
+              variant="body2"
+              sx={{
+                color: "text.secondary",
+              }}
+            >
+              {pageLabel || `หน้า ${imageIndex + 1}`} • {commentCount}{" "}
+              ความคิดเห็น
             </Typography>
           </Box>
           <IconButton onClick={() => setIsOpen(false)} sx={{ color: "white" }}>
@@ -155,11 +170,30 @@ export default function ImageCommentButton({ mangaId, imageIndex, pageLabel }: I
         {/* Content */}
         <Box sx={{ p: 2, overflowY: "auto", flex: 1 }}>
           {/* Comment Input */}
-          <CommentBox mangaId={mangaId} imageIndex={imageIndex} onCommentCreated={fetchComments} />
+          <CommentBox
+            mangaId={mangaId}
+            imageIndex={imageIndex}
+            onCommentCreated={fetchComments}
+          />
 
           <Divider sx={{ my: 3, borderColor: "rgba(255,255,255,0.1)" }} />
 
           {/* Comments List */}
+          {loadError && (
+            <Alert
+              severity="error"
+              action={
+                <Button
+                  disabled={isLoading}
+                  onClick={() => void fetchComments()}
+                >
+                  ลองใหม่
+                </Button>
+              }
+            >
+              {loadError}
+            </Alert>
+          )}
           {isLoading ? (
             <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
               <CircularProgress size={32} />

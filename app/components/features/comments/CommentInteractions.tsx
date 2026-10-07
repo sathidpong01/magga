@@ -7,42 +7,21 @@ import {
   Divider,
   CircularProgress,
   Button,
+  Alert,
 } from "@mui/material";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CommentBox from "./CommentBox";
-import CommentList from "./CommentList";
+import CommentList, { type PublicComment } from "./CommentList";
 import { getNextCommentCursor } from "@/lib/comments/pagination";
-
-interface CommentUser {
-  id: string;
-  name: string | null;
-  username: string | null;
-  image: string | null;
-}
-
-interface CommentVote {
-  userId: string;
-  value: number;
-}
-
-interface Comment {
-  id: string;
-  content: string;
-  imageUrl: string | null;
-  voteScore: number;
-  createdAt: string;
-  user: CommentUser;
-  votes: CommentVote[];
-  replies?: Comment[];
-}
 
 interface CommentInteractionsProps {
   mangaId: string;
   imageIndex?: number | null;
-  initialComments: Comment[];
+  initialComments: PublicComment[];
   initialTotal: number;
   initialHasMore: boolean;
+  initialNextCursor?: string | null;
   title?: string;
   currentUserId?: string;
 }
@@ -58,23 +37,31 @@ export default function CommentInteractions({
   initialComments,
   initialTotal,
   initialHasMore,
+  initialNextCursor,
   title = "ความคิดเห็น",
 }: CommentInteractionsProps) {
   // Start with server-fetched data - no loading spinner needed!
-  const [comments, setComments] = useState<Comment[]>(initialComments);
+  const [loadError, setLoadError] = useState("");
+  const [comments, setComments] = useState<PublicComment[]>(initialComments);
   const [totalCount, setTotalCount] = useState(initialTotal);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(
-    initialComments.length > 0
-      ? getNextCommentCursor(initialComments[initialComments.length - 1].createdAt)
-      : null
+    initialNextCursor !== undefined
+      ? initialNextCursor
+      : initialComments.length > 0
+        ? getNextCommentCursor(
+            initialComments[initialComments.length - 1].createdAt,
+            initialComments[initialComments.length - 1].id,
+          )
+        : null,
   );
 
   const fetchMoreComments = useCallback(async () => {
     if (!nextCursor || isLoadingMore) return;
 
     setIsLoadingMore(true);
+    setLoadError("");
 
     try {
       const params = new URLSearchParams({ mangaId });
@@ -94,7 +81,7 @@ export default function CommentInteractions({
       setHasMore(!!data.nextCursor);
       setTotalCount((prev) => prev + (data.comments?.length || 0));
     } catch (error) {
-      console.error("Error fetching more comments:", error);
+      setLoadError("โหลดความคิดเห็นเพิ่มเติมไม่ได้ กรุณาลองใหม่");
     } finally {
       setIsLoadingMore(false);
     }
@@ -117,7 +104,7 @@ export default function CommentInteractions({
       setHasMore(!!data.nextCursor);
       setTotalCount(data.comments?.length || 0);
     } catch (error) {
-      console.error("Error refreshing comments:", error);
+      setLoadError("รีเฟรชความคิดเห็นไม่ได้ กรุณาลองใหม่");
     }
   }, [mangaId, imageIndex]);
 
@@ -130,13 +117,17 @@ export default function CommentInteractions({
           variant="h5"
           sx={{
             fontWeight: 600,
-            color: "white"
-          }}>
+            color: "white",
+          }}
+        >
           {title}
         </Typography>
-        <Typography variant="body2" sx={{
-          color: "text.secondary"
-        }}>
+        <Typography
+          variant="body2"
+          sx={{
+            color: "text.secondary",
+          }}
+        >
           ({totalCount}
           {hasMore ? "+" : ""})
         </Typography>
@@ -146,11 +137,26 @@ export default function CommentInteractions({
       <CommentBox
         mangaId={mangaId}
         imageIndex={imageIndex}
-        onCommentCreated={handleRefresh}
+        onCommentCreated={(comment) => {
+          if (comment)
+            setComments((previous) => [
+              comment,
+              ...previous.filter((item) => item.id !== comment.id),
+            ]);
+          void handleRefresh();
+        }}
       />
 
       <Divider sx={{ my: 3, borderColor: "rgba(255,255,255,0.08)" }} />
 
+      {loadError && (
+        <Alert
+          severity="error"
+          action={<Button onClick={() => void handleRefresh()}>ลองใหม่</Button>}
+        >
+          {loadError}
+        </Alert>
+      )}
       {/* Comments List - No loading spinner for initial load! */}
       <CommentList
         comments={comments}
