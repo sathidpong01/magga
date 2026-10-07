@@ -417,7 +417,7 @@ const LazyPageWithComments = forwardRef<HTMLDivElement, LazyPageProps>(
               pointerEvents: "auto", // Inner panel is interactive
               bgcolor: maggaColors.surface,
               backdropFilter: "blur(8px)",
-              borderRadius: maggaRadii.card,
+              borderRadius: `${maggaRadii.card}px`,
               border: `1px solid ${maggaColors.border}`,
               zIndex: 100,
             }}

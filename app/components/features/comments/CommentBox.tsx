@@ -394,14 +394,14 @@ export default function CommentBox({
             <GuestVerification siteKey={siteKey} onToken={setToken} />
           )}
         </Paper>
-        <Typography
-          variant="caption"
-          sx={{ display: "block", mt: 1, color: maggaColors.textSecondary }}
-        >
-          JPEG, PNG, WebP, GIF ไม่เกิน 3 MB · Ctrl/Cmd + Enter เพื่อส่ง
-          {(!actor || actor.kind === "guest") &&
-            " · จำสิทธิ์ด้วยคุกกี้ในเบราว์เซอร์นี้ ล้างคุกกี้แล้วจะจัดการข้อความเดิมไม่ได้"}
-        </Typography>
+        {(!actor || actor.kind === "guest") && (
+          <Typography
+            variant="caption"
+            sx={{ display: "block", mt: 1, color: maggaColors.textSecondary }}
+          >
+            จำสิทธิ์ด้วยคุกกี้ในเบราว์เซอร์นี้ ล้างคุกกี้แล้วจะจัดการข้อความเดิมไม่ได้
+          </Typography>
+        )}
         <Box sx={{ minHeight: 28, mt: 1 }} aria-live="polite">
           {(error || identityError) && (
             <Alert
