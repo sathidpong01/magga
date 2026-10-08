@@ -1,12 +1,12 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, jest, mock } from "bun:test";
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
 import { readFileSync } from "node:fs";
 
-const mocks = vi.hoisted(() => ({ execute: vi.fn(), rateLimit: vi.fn() }));
-vi.mock("@/db", () => ({ db: { execute: mocks.execute } }));
-vi.mock("@/lib/rate-limit", () => ({ checkRateLimit: mocks.rateLimit }));
-import { POST } from "@/app/api/advertisements/[id]/events/route";
+const mocks = { execute: jest.fn(), rateLimit: jest.fn() };
+mock.module("@/db", () => ({ db: { execute: mocks.execute } }));
+mock.module("@/lib/rate-limit", () => ({ checkRateLimit: mocks.rateLimit }));
+const { POST } = await import("@/app/api/advertisements/[id]/events/route");
 
 const adId = "11111111-1111-4111-8111-111111111111";
 const eventId = "22222222-2222-4222-8222-222222222222";

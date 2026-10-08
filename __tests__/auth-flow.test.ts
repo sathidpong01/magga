@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, jest } from "bun:test";
 import { isValidCallbackUrl } from "@/lib/auth-helpers";
 import {
   buildPostRegistrationSignInUrl,
@@ -85,10 +85,10 @@ describe("registration flow", () => {
   });
 
   it("falls back to manual sign-in when auto-login fails", async () => {
-    const signInEmail = vi.fn().mockResolvedValue({
+    const signInEmail = jest.fn().mockResolvedValue({
       error: { message: "bad credentials" },
     });
-    const syncSession = vi.fn();
+    const syncSession = jest.fn();
 
     await expect(
       finalizeEmailRegistration({
@@ -108,8 +108,8 @@ describe("registration flow", () => {
   });
 
   it("falls back to manual sign-in when session sync fails", async () => {
-    const signInEmail = vi.fn().mockResolvedValue({});
-    const syncSession = vi.fn().mockRejectedValue(new Error("session failed"));
+    const signInEmail = jest.fn().mockResolvedValue({});
+    const syncSession = jest.fn().mockRejectedValue(new Error("session failed"));
 
     await expect(
       finalizeEmailRegistration({
@@ -127,8 +127,8 @@ describe("registration flow", () => {
   });
 
   it("redirects to the callback after successful auto-login", async () => {
-    const signInEmail = vi.fn().mockResolvedValue({});
-    const syncSession = vi.fn().mockResolvedValue({});
+    const signInEmail = jest.fn().mockResolvedValue({});
+    const syncSession = jest.fn().mockResolvedValue({});
 
     await expect(
       finalizeEmailRegistration({

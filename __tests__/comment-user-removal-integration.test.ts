@@ -1,25 +1,27 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, jest, mock } from 'bun:test';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { readFileSync } from 'node:fs';
 import { NextRequest } from 'next/server';
-const state=vi.hoisted(()=>({database:null as unknown,admin:vi.fn(),remove:vi.fn()}));
-vi.mock('@/lib/storage/comment-private',()=>({getCommentPrivateStorage:()=>({delete:state.remove})}));
-vi.mock('@/db',()=>({get db(){return state.database;}}));
-vi.mock('@/lib/comments/moderation',()=>({requireModerationAdmin:state.admin}));
-vi.mock('@/lib/auth',()=>({auth:{api:{getSession:vi.fn()}}}));
-import { deleteUserPreservingComments } from '@/lib/comments/user-removal';
-import { ForbiddenCommentError } from '@/lib/comments/types';
-import { DELETE } from '@/app/api/admin/users/[id]/route';
-import * as schema from '@/db/schema';
-const pg=new PGlite();const database=drizzle(pg,{schema});
+const state = {database:null as unknown,admin:jest.fn(),remove:jest.fn()};
+const schema = await import('@/db/schema');
+const pg = new PGlite();
+const database = drizzle(pg, { schema });
+state.database = database;
+mock.module('@/lib/storage/comment-private',()=>({getCommentPrivateStorage:()=>({delete:state.remove})}));
+mock.module('@/db',()=>({get db(){return state.database;}}));
+mock.module('@/lib/comments/moderation',()=>({requireModerationAdmin:state.admin}));
+mock.module('@/lib/auth',()=>({auth:{api:{getSession:jest.fn()}}}));
+const { deleteUserPreservingComments } = await import('@/lib/comments/user-removal');
+const { ForbiddenCommentError } = await import('@/lib/comments/types');
+const { DELETE } = await import('@/app/api/admin/users/[id]/route');
+
 const uuid=(n:number)=>`11111111-1111-4111-8111-${n.toString().padStart(12,'0')}`;
 const ownRoot=uuid(1),otherReply=uuid(2),otherRoot=uuid(3),ownReply=uuid(4);
 const ownLinkedAsset=uuid(5),ownStagedAsset=uuid(6),otherAsset=uuid(7);
 const ownReport=uuid(8),otherReport=uuid(9),unrelatedReport=uuid(10);
 const ownEvent=uuid(11),linkedEvent=uuid(12),otherEvent=uuid(13);
 beforeAll(async()=>{
-  state.database=database;
   await pg.exec(`CREATE ROLE anon; CREATE ROLE authenticated;
     CREATE TABLE profiles(id text PRIMARY KEY);
     CREATE TABLE comments(id uuid PRIMARY KEY DEFAULT gen_random_uuid(),content text NOT NULL,user_id text NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,parent_id uuid CONSTRAINT comments_parent_id_fkey REFERENCES comments(id) ON DELETE CASCADE,image_url text,vote_score integer DEFAULT 0,created_at timestamptz DEFAULT now(),updated_at timestamptz DEFAULT now());
@@ -30,7 +32,7 @@ beforeAll(async()=>{
 },30000);
 afterAll(async()=>pg.close());
 beforeEach(async()=>{
-  vi.clearAllMocks();state.remove.mockResolvedValue(undefined);state.admin.mockResolvedValue({kind:'member',userId:'admin',role:'admin',name:'Admin',image:null});
+  jest.clearAllMocks();state.remove.mockResolvedValue(undefined);state.admin.mockResolvedValue({kind:'member',userId:'admin',role:'admin',name:'Admin',image:null});
   await pg.exec(`DROP TRIGGER IF EXISTS reject_profile_delete ON profiles;
     DELETE FROM private.comment_moderation_events; DELETE FROM private.comment_reports; DELETE FROM private.comment_assets; DELETE FROM comment_votes; DELETE FROM comments WHERE parent_id IS NOT NULL; DELETE FROM comments; DELETE FROM profiles; DELETE FROM private.comment_guests;
     INSERT INTO profiles VALUES('target'),('other'),('admin');

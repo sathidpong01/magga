@@ -211,7 +211,7 @@ export const comments = pgTable("comments", {
  index("idx_comments_guest").on(table.guestId),
  index("idx_comments_status_created").on(table.status, table.createdAt, table.id),
  index("idx_comments_manga").using("btree", table.mangaId.asc().nullsLast().op("uuid_ops")),
-	index("idx_comments_manga_image").using("btree", table.mangaId.asc().nullsLast().op("int4_ops"), table.imageIndex.asc().nullsLast().op("int4_ops")),
+	index("idx_comments_manga_image").using("btree", table.mangaId.asc().nullsLast().op("uuid_ops"), table.imageIndex.asc().nullsLast().op("int4_ops")),
 	index("idx_comments_parent").using("btree", table.parentId.asc().nullsLast().op("uuid_ops")),
 	index("idx_comments_user").using("btree", table.userId.asc().nullsLast().op("text_ops")),
 	foreignKey({

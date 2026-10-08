@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "bun:test";
 import { createRequire } from "node:module";
 // Use the installed framework matcher so tests cover its actual glob behavior.
 const require = createRequire(import.meta.url);

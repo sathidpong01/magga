@@ -1,26 +1,27 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-const mocks = vi.hoisted(() => ({ send: vi.fn(), client: vi.fn(), sign: vi.fn() }));
-vi.mock('@aws-sdk/client-s3', () => ({
+import { stubEnv, restoreEnvs } from "./helpers/env";
+import { afterEach, beforeEach, describe, expect, it, jest, mock } from 'bun:test';
+const mocks = { send: jest.fn(), client: jest.fn(), sign: jest.fn() };
+mock.module('@aws-sdk/client-s3', () => ({
   S3Client: class { send = mocks.send; constructor(options: unknown) { mocks.client(options); } },
   PutObjectCommand: class { constructor(public input: unknown) {} },
   GetObjectCommand: class { constructor(public input: unknown) {} },
   DeleteObjectCommand: class { constructor(public input: unknown) {} },
   CopyObjectCommand: class { constructor(public input: unknown) {} },
 }));
-vi.mock('@aws-sdk/s3-request-presigner', () => ({ getSignedUrl: mocks.sign }));
-import { getCommentPrivateStorage } from '@/lib/storage/comment-private';
-import { COMMENT_IMAGE_MAX_BYTES } from '@/lib/comments/image-processing';
+mock.module('@aws-sdk/s3-request-presigner', () => ({ getSignedUrl: mocks.sign }));
+const { getCommentPrivateStorage } = await import('@/lib/storage/comment-private');
+const { COMMENT_IMAGE_MAX_BYTES } = await import('@/lib/comments/image-processing');
 const objectKey = 'comments/11111111-1111-4111-8111-111111111111.webp';
 beforeEach(() => {
-  vi.resetAllMocks();
-  for (const [key, value] of Object.entries({ R2_COMMENT_BUCKET_NAME: 'private-comments', R2_COMMENT_PUBLIC_BUCKET_NAME: 'published-comments', R2_COMMENT_PUBLIC_URL: 'https://comments.example.com', R2_BUCKET_NAME: 'public-manga', R2_ACCOUNT_ID: 'test-account', R2_ACCESS_KEY_ID: 'test-access', R2_SECRET_ACCESS_KEY: 'test-secret', R2_COMMENT_ACCESS_KEY_ID: '', R2_COMMENT_SECRET_ACCESS_KEY: '' })) vi.stubEnv(key, value);
+  jest.resetAllMocks();
+  for (const [key, value] of Object.entries({ R2_COMMENT_BUCKET_NAME: 'private-comments', R2_COMMENT_PUBLIC_BUCKET_NAME: 'published-comments', R2_COMMENT_PUBLIC_URL: 'https://comments.example.com', R2_BUCKET_NAME: 'public-manga', R2_ACCOUNT_ID: 'test-account', R2_ACCESS_KEY_ID: 'test-access', R2_SECRET_ACCESS_KEY: 'test-secret', R2_COMMENT_ACCESS_KEY_ID: '', R2_COMMENT_SECRET_ACCESS_KEY: '' })) stubEnv(key, value);
 });
-afterEach(() => vi.unstubAllEnvs());
+afterEach(() => restoreEnvs());
 describe('private comment object storage', () => {
   it('fails closed for absent private bucket and refuses the public manga bucket', () => {
-    vi.stubEnv('R2_COMMENT_BUCKET_NAME', '');
+    stubEnv('R2_COMMENT_BUCKET_NAME', '');
     expect(() => getCommentPrivateStorage()).toThrow();
-    vi.stubEnv('R2_COMMENT_BUCKET_NAME', 'public-manga');
+    stubEnv('R2_COMMENT_BUCKET_NAME', 'public-manga');
     expect(() => getCommentPrivateStorage()).toThrow();
     expect(mocks.send).not.toHaveBeenCalled();
   });
@@ -31,7 +32,7 @@ describe('private comment object storage', () => {
     expect(mocks.send.mock.calls[0][0].input.ACL).toBeUndefined();
   });
   it('rejects object sizes before reading and verifies actual length after reading', async () => {
-    const read = vi.fn().mockResolvedValue(new Uint8Array(COMMENT_IMAGE_MAX_BYTES + 1));
+    const read = jest.fn().mockResolvedValue(new Uint8Array(COMMENT_IMAGE_MAX_BYTES + 1));
     mocks.send.mockResolvedValueOnce({ ContentLength: COMMENT_IMAGE_MAX_BYTES + 1, Body: { transformToByteArray: read } });
     await expect(getCommentPrivateStorage().get(objectKey)).rejects.toThrow();
     expect(read).not.toHaveBeenCalled();
@@ -46,12 +47,12 @@ describe('private comment object storage', () => {
     await expect(getCommentPrivateStorage().get(objectKey)).rejects.toThrow('network failure');
   });
   it.each(['private-comments', 'public-manga', ''])('refuses public bucket %s', publicBucket => {
-    vi.stubEnv('R2_COMMENT_PUBLIC_BUCKET_NAME', publicBucket);
+    stubEnv('R2_COMMENT_PUBLIC_BUCKET_NAME', publicBucket);
     expect(() => getCommentPrivateStorage()).toThrow();
     expect(mocks.client).not.toHaveBeenCalled();
   });
   it.each(['', 'http://comments.example.com', 'https://user:pass@comments.example.com', 'https://comments.example.com/path', 'https://comments.example.com?token=1', 'https://comments.example.com#hash', 'https://comments.example.com:8443', 'https://test-account.r2.cloudflarestorage.com', 'https://localhost', ' https://comments.example.com', 'https://comments.example.com/%2f'])('refuses invalid public origin %s', url => {
-    vi.stubEnv('R2_COMMENT_PUBLIC_URL', url);
+    stubEnv('R2_COMMENT_PUBLIC_URL', url);
     expect(() => getCommentPrivateStorage()).toThrow();
     expect(mocks.client).not.toHaveBeenCalled();
   });

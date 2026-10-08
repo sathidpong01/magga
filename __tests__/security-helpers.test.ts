@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "bun:test";
 
 import { detectImageFormat, sanitizeObjectKeySegment } from "../lib/image-security";
 import { isPrivateIpAddress } from "../lib/network-security";

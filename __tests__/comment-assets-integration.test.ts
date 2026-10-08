@@ -1,20 +1,23 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, jest, mock } from 'bun:test';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { readFileSync } from 'node:fs';
 import sharp from 'sharp';
-import * as imageProcessing from '@/lib/comments/image-processing';
+const imageProcessing = await import('@/lib/comments/image-processing');
 import type { CommentActor } from '@/lib/comments/identity';
-const state = vi.hoisted(() => ({ database: null as unknown, get: vi.fn(), put: vi.fn(), remove: vi.fn(), actor: vi.fn(), guest: vi.fn(), publish: vi.fn(), preview: vi.fn(),publicUrl:vi.fn(),unpublish:vi.fn(),discard:vi.fn() }));
-vi.mock('@/db', () => ({ get db() { return state.database; } }));
-vi.mock('@/lib/comments/identity', () => ({ resolveCommentActor: state.actor, resolveGuestActor: state.guest }));
-vi.mock('@/lib/storage/comment-private', () => ({ getCommentPrivateStorage: () => ({ get: state.get, put: state.put, delete: state.remove, publish: state.publish, previewUrl: state.preview,publicUrl:state.publicUrl,unpublish:state.unpublish,discardStaging:state.discard }) }));
-import { createCommentAsset, reserveCommentAsset, finalizeCommentAsset, readPublishedCommentAsset, cleanupCommentAssets, retireCommentAssets, decorateCommentImagePreviews, rollbackCommentAssetPublication, discardPublishedCommentStaging } from '@/lib/comments/assets';
-import * as schema from '@/db/schema';
-import { ForbiddenCommentError, NotFoundCommentError } from '@/lib/comments/types';
-
+const state = { database: null as unknown, get: jest.fn(), put: jest.fn(), remove: jest.fn(), actor: jest.fn(), guest: jest.fn(), publish: jest.fn(), preview: jest.fn(),publicUrl:jest.fn(),unpublish:jest.fn(),discard:jest.fn() };
+const schema = await import('@/db/schema');
 const pg = new PGlite();
 const database = drizzle(pg, { schema });
+state.database = database;
+mock.module('@/db', () => ({ get db() { return state.database; } }));
+mock.module('@/lib/comments/identity', () => ({ resolveCommentActor: state.actor, resolveGuestActor: state.guest }));
+mock.module('@/lib/storage/comment-private', () => ({ getCommentPrivateStorage: () => ({ get: state.get, put: state.put, delete: state.remove, publish: state.publish, previewUrl: state.preview,publicUrl:state.publicUrl,unpublish:state.unpublish,discardStaging:state.discard }) }));
+const { createCommentAsset, reserveCommentAsset, finalizeCommentAsset, readPublishedCommentAsset, cleanupCommentAssets, retireCommentAssets, decorateCommentImagePreviews, rollbackCommentAssetPublication, discardPublishedCommentStaging } = await import('@/lib/comments/assets');
+
+const { ForbiddenCommentError, NotFoundCommentError } = await import('@/lib/comments/types');
+
+
 const guest = '11111111-1111-4111-8111-111111111111';
 const assetId = '22222222-2222-4222-8222-222222222222';
 const commentId = '33333333-3333-4333-8333-333333333333';
@@ -23,7 +26,6 @@ const parentId = '55555555-5555-4555-8555-555555555555';
 const actor: CommentActor = { kind: 'guest', guestId: guest, sessionId: guest, name: 'Guest', publicCode: 'AA11', verifiedUntil: null };
 
 beforeAll(async () => {
-  state.database = database;
   await pg.exec(`CREATE ROLE anon; CREATE ROLE authenticated;
     CREATE TABLE profiles(id text PRIMARY KEY);
     CREATE TABLE manga(id uuid PRIMARY KEY,is_hidden boolean DEFAULT false);
@@ -35,7 +37,7 @@ beforeAll(async () => {
 }, 30000);
 afterAll(async () => pg.close());
 beforeEach(async () => {
-  vi.clearAllMocks(); state.actor.mockResolvedValue(null); state.guest.mockResolvedValue(null); state.get.mockResolvedValue(new Uint8Array([1, 2, 3])); state.remove.mockResolvedValue(undefined); state.discard.mockResolvedValue(undefined); state.put.mockResolvedValue(undefined); state.publish.mockResolvedValue("https://comments.test/comments/test.webp"); state.preview.mockResolvedValue("https://private.test/signed"); state.publicUrl.mockReturnValue("https://comments.test/comments/test.webp");
+  jest.clearAllMocks(); state.actor.mockResolvedValue(null); state.guest.mockResolvedValue(null); state.get.mockResolvedValue(new Uint8Array([1, 2, 3])); state.remove.mockResolvedValue(undefined); state.discard.mockResolvedValue(undefined); state.put.mockResolvedValue(undefined); state.publish.mockResolvedValue("https://comments.test/comments/test.webp"); state.preview.mockResolvedValue("https://private.test/signed"); state.publicUrl.mockReturnValue("https://comments.test/comments/test.webp");
   await pg.exec(`DELETE FROM private.comment_assets; INSERT INTO comments(id,content,guest_id,manga_id) VALUES ('${commentId}','image','${guest}','${mangaId}') ON CONFLICT DO NOTHING; UPDATE comments SET status='published',parent_id=NULL; UPDATE manga SET is_hidden=false;
     INSERT INTO private.comment_assets(id,guest_id,object_key,content_type,bytes,width,height,state,expires_at,comment_id) VALUES ('${assetId}','${guest}','comments/test.webp','image/webp',100,10,10,'staged',now()+interval '1 hour',NULL);`);
 });
@@ -54,7 +56,7 @@ describe('comment assets with real Postgres ownership and visibility queries', (
     let beginDecode!:()=>void, finishDecode!:()=>void;
     const decoding=new Promise<void>(resolve=>{beginDecode=resolve;});
     const continueDecode=new Promise<void>(resolve=>{finishDecode=resolve;});
-    const spy=vi.spyOn(imageProcessing,'processCommentImage').mockImplementationOnce(async()=>{
+    const spy=jest.spyOn(imageProcessing,'processCommentImage').mockImplementationOnce(async()=>{
       beginDecode();await continueDecode;
       return {data:Buffer.from([1,2,3]),contentType:'image/webp',bytes:3,width:10,height:10};
     });
@@ -198,7 +200,7 @@ describe('comment assets with real Postgres ownership and visibility queries', (
     });
     expect(state.publish).not.toHaveBeenCalled();
     const result = await decorateCommentImagePreviews([{id:commentId,status:'pending',imageUrl:null}]);
-    expect(result[0].imageUrl).toBe('https://private.test/signed');
+    expect<unknown>(result[0].imageUrl).toBe('https://private.test/signed');
     expect(state.preview).toHaveBeenCalledWith('comments/test.webp');
   });
   it('persists attached state only after public copy succeeds and returns its direct URL', async () => {
@@ -218,7 +220,7 @@ describe('comment assets with real Postgres ownership and visibility queries', (
       throw new Error('commit failed');
     })).rejects.toThrow('commit failed');
     await rollbackCommentAssetPublication(assetId);
-    expect(state.unpublish).toHaveBeenCalledExactlyOnceWith('comments/test.webp');
+    expect(state.unpublish).toHaveBeenCalledTimes(1);expect(state.unpublish).toHaveBeenCalledWith('comments/test.webp');
     expect(state.remove).not.toHaveBeenCalled();
     await database.transaction(async tx => {
       await reserveCommentAsset(tx as never,actor,assetId,commentId);

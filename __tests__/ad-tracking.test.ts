@@ -1,14 +1,17 @@
-import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, afterEach, describe, expect, it, jest, mock } from "bun:test";
+import { stubGlobal, restoreGlobals } from "./helpers/globals";
 
-const mocks = vi.hoisted(() => ({ effects: [] as Array<() => void | (() => void)>, pathname: "/", observe: vi.fn(), disconnect: vi.fn(), callback: undefined as undefined | ((entries: object[]) => void) }));
-vi.mock("react", async (importOriginal) => ({
-  ...await importOriginal<typeof import("react")>(),
-  useState: (value: unknown) => [value, vi.fn()],
+const fetchMock = jest.fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Partial<Response>>>();
+const mocks = { effects: [] as Array<() => void | (() => void)>, pathname: "/", observe: jest.fn(), disconnect: jest.fn(), callback: undefined as undefined | ((entries: object[]) => void) };
+const originalReact = await import("react");
+mock.module("react", () => ({
+  ...originalReact,
+  useState: (value: unknown) => [value, jest.fn()],
   useRef: (current: unknown) => ({ current }),
   useEffect: (effect: () => void | (() => void)) => { mocks.effects.push(effect); },
 }));
-vi.mock("next/navigation", () => ({ usePathname: () => mocks.pathname }));
-import { useAdTracking } from "@/app/components/features/ads/useAdTracking";
+mock.module("next/navigation", () => ({ usePathname: () => mocks.pathname }));
+const { useAdTracking } = await import("@/app/components/features/ads/useAdTracking");
 
 function TrackingHarness() {
   const tracking = useAdTracking("11111111-1111-4111-8111-111111111111");
@@ -23,36 +26,36 @@ describe("viewable advertisement tracking", () => {
     mocks.effects = [];
     mocks.pathname = "/";
     mocks.callback = undefined;
-    vi.useFakeTimers();
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true }));
-    vi.stubGlobal("document", Object.assign(new EventTarget(), { visibilityState: "visible" }));
-    vi.stubGlobal("IntersectionObserver", class {
+    jest.useFakeTimers();
+    stubGlobal("fetch", fetchMock.mockReset().mockResolvedValue({ ok: true }));
+    stubGlobal("document", Object.assign(new EventTarget(), { visibilityState: "visible" }));
+    stubGlobal("IntersectionObserver", class {
       constructor(callback: (entries: object[]) => void) { mocks.callback = callback; }
       observe = mocks.observe;
-      unobserve = vi.fn();
+      unobserve = jest.fn();
       disconnect = mocks.disconnect;
     });
   });
-  afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
+  afterEach(() => { jest.useRealTimers(); restoreGlobals(); });
 
   it("requires half the image to stay visible for one second", () => {
     const { cleanup } = TrackingHarness();
     mocks.callback!([{ isIntersecting: true, intersectionRatio: 0.4 }]);
-    vi.advanceTimersByTime(1200);
+    jest.advanceTimersByTime(1200);
     expect(fetch).not.toHaveBeenCalled();
     mocks.callback!([{ isIntersecting: true, intersectionRatio: 0.6 }]);
-    vi.advanceTimersByTime(999);
+    jest.advanceTimersByTime(999);
     expect(fetch).not.toHaveBeenCalled();
-    vi.advanceTimersByTime(1);
+    jest.advanceTimersByTime(1);
     expect(fetch).toHaveBeenCalledTimes(1);
     if (typeof cleanup === "function") cleanup();
   });
   it("cancels a partial impression when the image leaves the viewport", () => {
     const { cleanup } = TrackingHarness();
     mocks.callback!([{ isIntersecting: true, intersectionRatio: 1 }]);
-    vi.advanceTimersByTime(500);
+    jest.advanceTimersByTime(500);
     mocks.callback!([{ isIntersecting: false, intersectionRatio: 0 }]);
-    vi.advanceTimersByTime(1500);
+    jest.advanceTimersByTime(1500);
     expect(fetch).not.toHaveBeenCalled();
     if (typeof cleanup === "function") cleanup();
   });
@@ -60,7 +63,7 @@ describe("viewable advertisement tracking", () => {
     const { tracking, cleanup } = TrackingHarness();
     tracking.onClick();
     tracking.onClick();
-    expect(vi.mocked(fetch).mock.calls.map((call) => JSON.parse(call[1]!.body as string).kind)).toEqual(["impression", "click"]);
+    expect(fetchMock.mock.calls.map((call) => JSON.parse(call[1]!.body as string).kind)).toEqual(["impression", "click"]);
     if (typeof cleanup === "function") cleanup();
   });
   it("does not count dashboard previews", () => {
@@ -68,7 +71,7 @@ describe("viewable advertisement tracking", () => {
     const { tracking, cleanup } = TrackingHarness();
     tracking.onClick();
     mocks.callback!([{ isIntersecting: true, intersectionRatio: 1 }]);
-    vi.advanceTimersByTime(1500);
+    jest.advanceTimersByTime(1500);
     expect(fetch).not.toHaveBeenCalled();
     if (typeof cleanup === "function") cleanup();
   });

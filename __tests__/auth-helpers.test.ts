@@ -1,10 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, jest, mock } from "bun:test";
 
-const mocks = vi.hoisted(() => ({
-  getSession: vi.fn(),
-}));
+const mocks = {
+  getSession: jest.fn(),
+};
 
-vi.mock("@/lib/auth", () => ({
+mock.module("@/lib/auth", () => ({
   auth: {
     api: {
       getSession: mocks.getSession,
@@ -12,17 +12,17 @@ vi.mock("@/lib/auth", () => ({
   },
 }));
 
-import {
+const {
   authenticateRequest,
   authenticateCaller,
   canModifyResource,
   isValidCallbackUrl,
   BANNED_ERROR,
-} from "../lib/auth-helpers";
+} = await import("../lib/auth-helpers");
 
 describe("Auth Intake Module (lib/auth-helpers.ts)", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
   });
 
   describe("authenticateRequest", () => {

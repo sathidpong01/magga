@@ -1,14 +1,14 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, jest, mock } from "bun:test";
 
-const mocks = vi.hoisted(() => ({
+const mocks = {
   active: false,
   cached: undefined as undefined | object[],
-  revalidateTag: vi.fn(),
-  getSession: vi.fn(),
-  requireAdmin: vi.fn(),
-}));
+  revalidateTag: jest.fn(),
+  getSession: jest.fn(),
+  requireAdmin: jest.fn(),
+};
 
-vi.mock("next/cache", () => ({
+mock.module("next/cache", () => ({
   unstable_cache: (read: () => Promise<object[]>) => async () => {
     if (mocks.cached === undefined) mocks.cached = await read();
     return mocks.cached;
@@ -19,7 +19,7 @@ vi.mock("next/cache", () => ({
   },
 }));
 
-vi.mock("@/db", () => ({
+mock.module("@/db", () => ({
   db: {
     query: { advertisements: { findMany: async () => mocks.active ? [{ id: "ad-1", placement: "manga-end", isActive: true }] : [] } },
     update: () => ({ set: (data: { isActive: boolean }) => ({ where: () => ({ returning: async () => {
@@ -28,20 +28,20 @@ vi.mock("@/db", () => ({
     } }) }) }),
   },
 }));
-vi.mock("@/db/schema", () => ({ advertisements: { isActive: "isActive", createdAt: "createdAt", id: "id" } }));
-vi.mock("drizzle-orm", () => ({ eq: vi.fn(), desc: vi.fn() }));
-vi.mock("@/lib/auth", () => ({ auth: { api: { getSession: mocks.getSession } } }));
-vi.mock("@/lib/auth-helpers", () => ({ requireAdmin: mocks.requireAdmin }));
+mock.module("@/db/schema", () => ({ advertisements: { isActive: "isActive", createdAt: "createdAt", id: "id" } }));
+mock.module("drizzle-orm", () => ({ eq: jest.fn(), desc: jest.fn() }));
+mock.module("@/lib/auth", () => ({ auth: { api: { getSession: mocks.getSession } } }));
+mock.module("@/lib/auth-helpers", () => ({ requireAdmin: mocks.requireAdmin }));
 
-import { GET } from "@/app/api/advertisements/route";
-import { PATCH } from "@/app/api/advertisements/[id]/route";
+const { GET } = await import("@/app/api/advertisements/route");
+const { PATCH } = await import("@/app/api/advertisements/[id]/route");
 import type { NextRequest } from "next/server";
 
 describe("advertisement activation", () => {
   beforeEach(() => {
     mocks.active = false;
     mocks.cached = undefined;
-    vi.clearAllMocks();
+    jest.clearAllMocks();
     mocks.getSession.mockResolvedValue({ user: { role: "admin" } });
     mocks.requireAdmin.mockReturnValue(null);
   });

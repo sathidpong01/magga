@@ -1,8 +1,7 @@
-import { afterEach, expect, test } from 'vitest';
+import { afterEach, expect, test } from 'bun:test';
 import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { spawnSync } from 'node:child_process';
 
 const folders: string[] = [];
 afterEach(() => { for (const folder of folders.splice(0)) rmSync(folder, { recursive: true, force: true }); });
@@ -15,7 +14,8 @@ function run(credentials?: unknown, preview = false) {
   const helper = join(folder, 'scripts/helper.cjs');
   copyFileSync(resolve(preview ? 'scripts/mcp-preview-headers.cjs' : 'scripts/mcp-codex-headers.cjs'), helper);
   if (credentials !== undefined) writeFileSync(join(folder, preview ? '.local/mcp-production-backup/preview-credentials.json' : '.local/mcp/client-credentials.json'), JSON.stringify(credentials));
-  return spawnSync(process.execPath, [helper], { encoding: 'utf8', windowsHide: true });
+  const result = Bun.spawnSync([process.execPath, helper]);
+  return { status: result.exitCode, stdout: result.stdout.toString(), stderr: result.stderr.toString() };
 }
 const token = `mgm_${'a'.repeat(64)}`;
 test('hosted helper requires the expected project and a valid expiry', () => {

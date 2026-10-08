@@ -1,10 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-const mocks = vi.hoisted(() => ({ actor: vi.fn(), origin: vi.fn(), quota: vi.fn(), select: vi.fn(), update: vi.fn(), insert: vi.fn(), transaction: vi.fn(), retire: vi.fn() }));
-vi.mock('@/lib/comments/assets',()=>({retireCommentAssets:mocks.retire}));
-vi.mock('@/db', () => ({ db: { select: mocks.select, transaction: mocks.transaction } }));
-vi.mock('@/lib/comments/identity', () => ({ requireCommentActor: mocks.actor, assertCommentOrigin: mocks.origin }));
-vi.mock('@/lib/comments/abuse', () => ({ consumeCommentLimit: mocks.quota }));
-import { moderateComments, parseModerationBody, parseReportBody, requireModerationAdmin } from '@/lib/comments/moderation';
+import { beforeEach, describe, expect, it, jest, mock } from 'bun:test';
+const mocks = { actor: jest.fn(), origin: jest.fn(), quota: jest.fn(), select: jest.fn(), update: jest.fn(), insert: jest.fn(), transaction: jest.fn(), retire: jest.fn() };
+mock.module('@/lib/comments/assets',()=>({retireCommentAssets:mocks.retire}));
+mock.module('@/db', () => ({ db: { select: mocks.select, transaction: mocks.transaction } }));
+mock.module('@/lib/comments/identity', () => ({ requireCommentActor: mocks.actor, assertCommentOrigin: mocks.origin }));
+mock.module('@/lib/comments/abuse', () => ({ consumeCommentLimit: mocks.quota }));
+const { moderateComments, parseModerationBody, parseReportBody, requireModerationAdmin } = await import('@/lib/comments/moderation');
 const id = '12345678-1234-4234-8234-123456789abc';
 const request = new Request('https://magga.example/api/admin/comments', { method: 'PATCH', headers: { origin: 'https://magga.example' } });
 
@@ -12,7 +12,7 @@ function selection(rows: unknown[]) {
   const query:any = {}; for (const key of ["from","where","orderBy"]) query[key]=()=>query; query.limit=async()=>rows; query.for=async()=>rows; return query;
 }
 beforeEach(() => {
-  vi.clearAllMocks();
+  jest.clearAllMocks();
   mocks.actor.mockResolvedValue({ kind: 'member', userId: 'admin', role: 'admin', name: 'Admin' });
   mocks.select.mockReturnValue(selection([{ id: 'admin', role: 'admin', isBanned: false, banned: false }]));
   mocks.quota.mockResolvedValue(undefined);
@@ -37,9 +37,9 @@ describe('comment moderation safety', () => {
     expect(mocks.transaction).not.toHaveBeenCalled();
   });
   it('permanently erases selected content in a transaction and retains replies and votes', async () => {
-    const set = vi.fn(() => ({ where: vi.fn().mockResolvedValue([]) }));
-    const values = vi.fn().mockResolvedValue([]);
-    const tx = { select: () => selection([{ id, guestId: null }]), update: vi.fn(() => ({ set })), insert: vi.fn(() => ({ values })) };
+    const set = jest.fn(() => ({ where: jest.fn().mockResolvedValue([]) }));
+    const values = jest.fn().mockResolvedValue([]);
+    const tx = { select: () => selection([{ id, guestId: null }]), update: jest.fn(() => ({ set })), insert: jest.fn(() => ({ values })) };
     mocks.transaction.mockImplementation(async run => run(tx));
     await expect(moderateComments(request, { commentIds: [id], action: 'delete', reason: 'Spam' })).resolves.toEqual({ updated: 1, deleted: 1 });
     expect(set).toHaveBeenCalledWith(expect.objectContaining({ status: 'deleted' }));

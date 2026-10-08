@@ -1,20 +1,20 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-const mocks = vi.hoisted(() => ({ origin: vi.fn(), actor: vi.fn(), verify: vi.fn(), quota: vi.fn(), asset: vi.fn() }));
-vi.mock('@/lib/comments/identity', () => ({ assertSameOrigin: mocks.origin, requireCommentActor: mocks.actor, ensureGuestVerification: mocks.verify }));
-vi.mock('@/lib/comments/abuse', () => ({ consumeCommentLimit: mocks.quota }));
-vi.mock('@/lib/comments/assets', () => ({ createCommentAsset: mocks.asset }));
-vi.mock('@/lib/comments', () => ({ handleCommentError: (error: Error & { status?: number }) => Response.json({ error: error.message }, { status: error.status || 503 }) }));
-import { POST } from '@/app/api/comments/upload/route';
-import { COMMENT_IMAGE_MAX_BYTES } from '@/lib/comments/image-processing';
+import { beforeEach, describe, expect, it, jest, mock } from 'bun:test';
+const mocks = { origin: jest.fn(), actor: jest.fn(), verify: jest.fn(), quota: jest.fn(), asset: jest.fn() };
+mock.module('@/lib/comments/identity', () => ({ assertSameOrigin: mocks.origin, requireCommentActor: mocks.actor, ensureGuestVerification: mocks.verify }));
+mock.module('@/lib/comments/abuse', () => ({ consumeCommentLimit: mocks.quota }));
+mock.module('@/lib/comments/assets', () => ({ createCommentAsset: mocks.asset }));
+mock.module('@/lib/comments', () => ({ handleCommentError: (error: Error & { status?: number }) => Response.json({ error: error.message }, { status: error.status || 503 }) }));
+const { POST } = await import('@/app/api/comments/upload/route');
+const { COMMENT_IMAGE_MAX_BYTES } = await import('@/lib/comments/image-processing');
 const actor = { kind: 'guest', guestId: 'guest', sessionId: 'session', name: 'Guest', publicCode: 'AA11' };
 beforeEach(() => {
-  vi.clearAllMocks(); mocks.actor.mockResolvedValue(actor); mocks.verify.mockResolvedValue(undefined); mocks.quota.mockResolvedValue(undefined); mocks.asset.mockResolvedValue({ assetId: 'asset' });
+  jest.clearAllMocks(); mocks.actor.mockResolvedValue(actor); mocks.verify.mockResolvedValue(undefined); mocks.quota.mockResolvedValue(undefined); mocks.asset.mockResolvedValue({ assetId: 'asset' });
 });
 const request = (length = '100') => new Request('https://magga.example/api/comments/upload', { method: 'POST', headers: { origin: 'https://magga.example', 'content-length': length } });
 
 describe('guest image upload route guard ordering', () => {
   it('rejects cross-site or absent actors before parsing body or touching storage', async () => {
-    const req = request(); const form = vi.spyOn(req, 'formData');
+    const req = request(); const form = jest.spyOn(req, 'formData');
     mocks.origin.mockImplementationOnce(() => { throw new Error('origin rejected'); });
     expect((await POST(req)).status).toBe(503);
     mocks.actor.mockRejectedValueOnce(new Error('unauthorized'));
@@ -23,22 +23,21 @@ describe('guest image upload route guard ordering', () => {
   });
   it('rejects oversized or invalid request lengths before multipart decode', async () => {
     for (const length of ['0', '-1', 'NaN', String(COMMENT_IMAGE_MAX_BYTES + 65537)]) {
-      const req = request(length); const form = vi.spyOn(req, 'formData');
+      const req = request(length); const form = jest.spyOn(req, 'formData');
       expect((await POST(req)).status).toBe(400); expect(form).not.toHaveBeenCalled();
     }
     expect(mocks.asset).not.toHaveBeenCalled();
   });
   it('fails closed on quota failure before multipart parsing or image processing', async () => {
-    const req = request(); const form = vi.spyOn(req, 'formData');
+    const req = request(); const form = jest.spyOn(req, 'formData');
     mocks.quota.mockRejectedValueOnce(new Error('quota unavailable'));
     expect((await POST(req)).status).toBe(503); expect(form).not.toHaveBeenCalled(); expect(mocks.asset).not.toHaveBeenCalled();
   });
   it('requires successful guest verification before image processing and returns private response', async () => {
-    const form = new FormData(); const file = new File(['test'], 'test.png', { type: 'image/png' });
-    form.set('file', file); form.set('challengeToken', 'challenge');
-    const encoded = new Request('https://magga.example/api/comments/upload', { method:'POST',body:form });
-    const bytes=await encoded.arrayBuffer();
-    const make=()=>new Request(encoded.url,{method:'POST',headers:{origin:'https://magga.example','content-type':encoded.headers.get('content-type')!,'content-length':String(bytes.byteLength)},body:bytes});
+    const file = new File(['test'], 'test.png', { type: 'image/png' });
+    const boundary = 'magga-upload-fixture';
+    const bytes = new TextEncoder().encode(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="test.png"\r\nContent-Type: image/png\r\n\r\ntest\r\n--${boundary}\r\nContent-Disposition: form-data; name="challengeToken"\r\n\r\nchallenge\r\n--${boundary}--\r\n`);
+    const make=()=>new Request('https://magga.example/api/comments/upload',{method:'POST',headers:{origin:'https://magga.example','content-type':`multipart/form-data; boundary=${boundary}`,'content-length':String(bytes.byteLength)},body:bytes});
     const req=make();
     mocks.verify.mockRejectedValueOnce(new Error('bot check failed'));
     expect((await POST(req)).status).toBe(503); expect(mocks.asset).not.toHaveBeenCalled();

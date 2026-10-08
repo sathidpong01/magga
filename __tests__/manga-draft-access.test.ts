@@ -1,11 +1,12 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, jest, mock } from "bun:test";
 import { PgDialect } from "drizzle-orm/pg-core";
 
-const mocks = vi.hoisted(() => ({ session: vi.fn(), hidden: true }));
-vi.mock("@/lib/auth", () => ({ auth: { api: { getSession: mocks.session } } }));
-vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
-vi.mock("next/navigation", () => ({ notFound: () => { throw new Error("NEXT_NOT_FOUND"); } }));
-vi.mock("@/db", () => ({
+const mocks = { session: jest.fn(), hidden: true };
+mock.module("@/lib/auth", () => ({ auth: { api: { getSession: mocks.session } } }));
+mock.module("next/headers", () => ({ headers: async () => new Headers() }));
+const originalNavigation = await import("next/navigation");
+mock.module("next/navigation", () => ({ ...originalNavigation, notFound: () => { throw new Error("NEXT_NOT_FOUND"); } }));
+mock.module("@/db", () => ({
   db: {
     select: () => ({
       from: () => ({
@@ -31,7 +32,7 @@ vi.mock("@/db", () => ({
   },
 }));
 
-import MangaPage, { generateMetadata } from "@/app/[mangaId]/page";
+const { default: MangaPage, generateMetadata  } = await import("@/app/[mangaId]/page");
 
 const props = () => ({ params: Promise.resolve({ mangaId: "passing-love-1" }) });
 

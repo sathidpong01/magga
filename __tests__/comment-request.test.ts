@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "bun:test";
 import { readCommentJson } from "@/lib/comments/request";
 
 describe("bounded comment request bodies", () => {

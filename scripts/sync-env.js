@@ -1,10 +1,10 @@
-const { execSync } = require('child_process');
+const { execFileSync } = require('node:child_process');
+const { parse } = require('dotenv');
 const fs = require('fs');
 const path = require('path');
 
 // Read .env.local file
 const envPath = path.join(__dirname, '../.env.local');
-const envExamplePath = path.join(__dirname, '../.env.example');
 
 if (!fs.existsSync(envPath)) {
   console.error('.env.local file not found!');
@@ -13,29 +13,20 @@ if (!fs.existsSync(envPath)) {
 
 // Read and parse environment variables
 const envContent = fs.readFileSync(envPath, 'utf8');
-const envVars = {};
-
-envContent.split('\n').forEach(line => {
-  line = line.trim();
-  if (line && !line.startsWith('#')) {
-    const [key, ...valueParts] = line.split('=');
-    if (key && valueParts.length > 0) {
-      envVars[key.trim()] = valueParts.join('=').trim();
-    }
-  }
-});
+const envVars = parse(envContent);
+const vercelCli = require.resolve('vercel/dist/index.js');
 
 // Sync each environment variable to Vercel
 Object.entries(envVars).forEach(([key, value]) => {
   if (value) {
     try {
       console.log(`Syncing ${key}...`);
-      execSync(`vercel env add ${key} --value="${value}" --environment=production,preview,development`, { 
+      execFileSync(process.execPath, [vercelCli, 'env', 'add', key, 'production,preview,development', `--value=${value}`], {
         stdio: 'inherit',
         cwd: path.join(__dirname, '..')
       });
-    } catch (error) {
-      console.error(`Failed to sync ${key}:`, error.message);
+    } catch {
+      console.error(`Failed to sync ${key}. Check the Vercel CLI output above.`);
     }
   }
 });

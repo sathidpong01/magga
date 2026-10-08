@@ -1,17 +1,20 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, jest } from 'bun:test';
 import { generateKey } from '@/lib/mcp/auth';
 import { handleMcp, type Dependencies } from '@/lib/mcp/http';
 
 function fixture(scopes = ['catalog:read']) {
   const secret = generateKey();
+  const audit = jest.fn(async () => {});
+  const consume = jest.fn(async () => true);
+  const findManga = jest.fn(async () => [{ id: 'public' }]);
   const deps: Dependencies = {
-    lookup: vi.fn(async () => ({ id: 'key', ownerUserId: 'owner', name: 'client', scopes, secretHash: secret.secretHash, expiresAt: new Date('2099-01-01'), revokedAt: null, role: 'admin', banned: false })),
-    consume: vi.fn(async () => true), audit: vi.fn(async () => {}),
-    catalog: { findManga: vi.fn(async () => [{ id: 'public' }]), mangaDetails: vi.fn(async () => null), findAuthor: vi.fn(async () => []), authorDetails: vi.fn(async () => null), taxonomy: vi.fn(async () => ({})), taggingContext: vi.fn(async () => null) },
+    lookup: jest.fn(async () => ({ id: 'key', ownerUserId: 'owner', name: 'client', scopes, secretHash: secret.secretHash, expiresAt: new Date('2099-01-01'), revokedAt: null, role: 'admin', banned: false })),
+    consume, audit,
+    catalog: { findManga, mangaDetails: jest.fn(async () => null), findAuthor: jest.fn(async () => []), authorDetails: jest.fn(async () => null), taxonomy: jest.fn(async () => ({})), taggingContext: jest.fn(async () => null) },
   };
   const request = (body: unknown, headers = {}, method = 'POST') => new Request('http://localhost/api/mcp', { method, headers: { authorization: `Bearer ${secret.token}`, accept: 'application/json, text/event-stream', 'content-type': 'application/json', ...headers }, ...(method === 'POST' ? { body: JSON.stringify(body) } : {}) });
   const call = (method: string, params = {}) => request({ jsonrpc: '2.0', id: 1, method, params });
-  return { deps, request, call, secret };
+  return { deps, request, call, secret, mocks: { audit, consume, findManga } };
 }
 describe('MCP stateless HTTP', () => {
   it('prevents caching of early rejection responses', async () => {
@@ -43,7 +46,7 @@ describe('MCP stateless HTTP', () => {
   it('exposes draft tools only with the required independent scopes', async () => {
     for (const scopes of [['catalog:read'], ['draft:write'], ['catalog:read','metadata:write'], ['catalog:read','draft:write']]) {
       const f = fixture(scopes);
-      f.deps.drafts = { validateTags: vi.fn(async () => ({})), validateCategory: vi.fn(async () => ({})), create: vi.fn(async () => ({})) };
+      f.deps.drafts = { validateTags: jest.fn(async () => ({})), validateCategory: jest.fn(async () => ({})), create: jest.fn(async () => ({})) };
       const body = await (await handleMcp(f.call('tools/list'), f.deps)).json();
       const names = (body.result?.tools ?? []).map((t: { name: string }) => t.name);
       expect(names.includes('validate_tag_proposal')).toBe(scopes.includes('catalog:read'));
@@ -53,7 +56,7 @@ describe('MCP stateless HTTP', () => {
   });
   it('dispatches a validated draft with authenticated identity and audit request id', async () => {
     const f = fixture(['catalog:read','draft:write']);
-    f.deps.drafts = { validateTags: vi.fn(async () => ({})), validateCategory: vi.fn(async () => ({})), create: vi.fn(async () => ({ status: 'pending' })) };
+    f.deps.drafts = { validateTags: jest.fn(async () => ({})), validateCategory: jest.fn(async () => ({})), create: jest.fn(async () => ({ status: 'pending' })) };
     const args = { request_id: '00000000-0000-4000-8000-000000000001', kind: 'manga_tags', target: { type: 'manga', id: '00000000-0000-4000-8000-000000000002' }, proposal: { tag_names: ['Adventure'] }, sources: [] };
     const result = await (await handleMcp(f.call('tools/call', { name: 'create_metadata_draft', arguments: args }), f.deps)).json();
     expect(result.result.structuredContent.data.status).toBe('pending');
@@ -63,8 +66,8 @@ describe('MCP stateless HTTP', () => {
   });
   it('forwards a validated partial approval through the MCP apply tool', async () => {
     const f = fixture(['catalog:read','metadata:write']);
-    const decide = vi.fn(async () => ({status:'applied'}));
-    f.deps.review = {list:vi.fn(async()=>[]),get:vi.fn(async()=>({})),decide};
+    const decide = jest.fn(async () => ({status:'applied'}));
+    f.deps.review = {list:jest.fn(async()=>[]),get:jest.fn(async()=>({})),decide};
     const arguments_ = {draft_id:'00000000-0000-4000-8000-000000000001',review_token:'a'.repeat(64),confirm:true,selection:{tag_names:['First Time']}};
     const response = await handleMcp(f.call('tools/call',{name:'apply_metadata_draft',arguments:arguments_}),f.deps);
     expect((await response.json()).result.structuredContent.data.status).toBe('applied');
@@ -89,17 +92,17 @@ describe('MCP stateless HTTP', () => {
     const f = fixture(); const response = await handleMcp(f.call('tools/call', { name: 'find_manga', arguments: { query: 'sensitive query' } }), f.deps);
     expect((await response.json()).result.structuredContent).toEqual({ data: [{ id: 'public' }] });
     expect(f.deps.audit).toHaveBeenCalledTimes(2);
-    const log = JSON.stringify(vi.mocked(f.deps.audit).mock.calls);
+    const log = JSON.stringify(f.mocks.audit.mock.calls);
     expect(log).not.toContain('sensitive query'); expect(log).not.toContain(f.secret.token); expect(log).not.toContain('public');
   });
   it('redacts service exceptions and audits failure', async () => {
-    const f = fixture(); vi.mocked(f.deps.catalog.findManga).mockRejectedValue(new Error(f.secret.token));
+    const f = fixture(); f.mocks.findManga.mockRejectedValue(new Error(f.secret.token));
     const body = await (await handleMcp(f.call('tools/call', { name: 'find_manga', arguments: { query: 'a' } }), f.deps)).json();
     expect(body.result.isError).toBe(true); expect(JSON.stringify(body)).not.toContain(f.secret.token);
     expect(f.deps.audit).toHaveBeenLastCalledWith(expect.objectContaining({ outcome: 'failed' }));
   });
   it('fails closed when the audit store fails', async () => {
-    const f = fixture(); vi.mocked(f.deps.audit).mockRejectedValue(new Error('offline'));
+    const f = fixture(); f.mocks.audit.mockRejectedValue(new Error('offline'));
     const response = await handleMcp(f.call('tools/call', { name: 'find_manga', arguments: { query: 'a' } }), f.deps);
     expect(response.status).toBe(503); expect(f.deps.catalog.findManga).not.toHaveBeenCalled();
   });
@@ -114,11 +117,11 @@ describe('MCP stateless HTTP', () => {
   it('redacts unknown tool names from protocol errors and audit', async () => {
     const f = fixture(); const body = await (await handleMcp(f.call('tools/call', { name: f.secret.token, arguments: {} }), f.deps)).json();
     expect(JSON.stringify(body)).not.toContain(f.secret.token);
-    expect(JSON.stringify(vi.mocked(f.deps.audit).mock.calls)).not.toContain(f.secret.token);
+    expect(JSON.stringify(f.mocks.audit.mock.calls)).not.toContain(f.secret.token);
     expect(f.deps.audit).toHaveBeenLastCalledWith(expect.objectContaining({ toolName: 'unknown', outcome: 'failed' }));
   });
   it('returns 429 with retry guidance', async () => {
-    const f = fixture(); vi.mocked(f.deps.consume).mockResolvedValue(false);
+    const f = fixture(); f.mocks.consume.mockResolvedValue(false);
     const response = await handleMcp(f.call('tools/list'), f.deps); expect(response.status).toBe(429); expect(response.headers.get('retry-after')).toBe('60');
   });
   it('bounds body size and disallows GET', async () => {

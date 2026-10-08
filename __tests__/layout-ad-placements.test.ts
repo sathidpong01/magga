@@ -1,25 +1,25 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, jest, mock } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createElement } from "react";
 
-const route = vi.hoisted(() => ({
+const route = {
   pathname: "/",
   params: {} as Record<string, string>,
-}));
+};
 
-vi.mock("next/navigation", () => ({
+mock.module("next/navigation", () => ({
   usePathname: () => route.pathname,
   useParams: () => route.params,
 }));
-vi.mock("@/app/components/layout/Header", () => ({ default: () => null }));
-vi.mock("@/app/components/layout/Footer", () => ({
+mock.module("@/app/components/layout/Header", () => ({ default: () => null }));
+mock.module("@/app/components/layout/Footer", () => ({
   default: () => createElement("footer", { "data-testid": "site-footer" }),
 }));
-vi.mock("@/app/components/features/ads", () => ({
+mock.module("@/app/components/features/ads", () => ({
   AdContainer: ({ placement }: { placement: string }) => createElement("aside", { "data-placement": placement }),
 }));
 
-import LayoutWrapper from "@/app/components/layout/LayoutWrapper";
+const { default: LayoutWrapper } = await import("@/app/components/layout/LayoutWrapper");
 
 describe("layout advertisement placements", () => {
   it("omits the footer ad on manga pages without removing the manga-end ad or site footer", () => {

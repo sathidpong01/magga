@@ -1,25 +1,23 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, jest, mock } from "bun:test";
 
-vi.mock("@/lib/auth-fetch", () => ({ authFetch: vi.fn() }));
-vi.mock("@/lib/auth-client", () => ({
+mock.module("@/lib/auth-fetch", () => ({ authFetch: jest.fn() }));
+mock.module("@/lib/auth-client", () => ({
   useSession: () => ({ data: null }),
 }));
-vi.mock("@/app/components/features/comments/guest-client", () => ({
-  commentRequest: vi.fn(),
+mock.module("@/app/components/features/comments/guest-client", () => ({
+  commentRequest: jest.fn(),
   GuestVerification: () => null,
 }));
-vi.mock("@/app/components/features/comments/CommentBox", () => ({
+mock.module("@/app/components/features/comments/CommentBox", () => ({
   default: () => null,
 }));
 
-import CommentsManager, {
-  type AdminComment,
-} from "@/app/dashboard/admin/comments/CommentsManager";
-import CommentList, {
-  type PublicComment,
-} from "@/app/components/features/comments/CommentList";
+import type { AdminComment } from "@/app/dashboard/admin/comments/CommentsManager";
+const { default: CommentsManager } = await import("@/app/dashboard/admin/comments/CommentsManager");
+import type { PublicComment } from "@/app/components/features/comments/CommentList";
+const { default: CommentList } = await import("@/app/components/features/comments/CommentList");
 
 const imageUrl = "https://media.example.test/comments/published.webp";
 const adminComment: AdminComment = {
@@ -71,7 +69,7 @@ describe("comment publication and permanent deletion UI", () => {
         createElement(CommentList, {
           comments,
           mangaId: "manga",
-          onRefresh: vi.fn(),
+          onRefresh: jest.fn(),
         }),
       );
     const html = renderPublic([publicComment]);

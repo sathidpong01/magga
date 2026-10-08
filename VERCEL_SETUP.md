@@ -36,7 +36,7 @@ postgresql_AUTH_TOKEN
 ALTER TABLE "Manga" ADD COLUMN "authorName" TEXT;
 ```
 
-จากนั้นรัน `npx prisma generate` เพื่ออัพเดท Drizzle client
+สำหรับการเปลี่ยน schema ใหม่ ใช้ `bun run db:generate` เพื่อสร้าง Drizzle migration
 
 #### Better Auth
 

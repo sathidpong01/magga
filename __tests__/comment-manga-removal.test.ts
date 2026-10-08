@@ -1,17 +1,19 @@
-import { beforeAll, afterAll, expect, it, vi } from 'vitest';
+import { beforeAll, afterAll, expect, it, jest, mock } from 'bun:test';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { readFileSync } from 'node:fs';
-const state=vi.hoisted(()=>({database:null as unknown,remove:vi.fn().mockResolvedValue(undefined)}));
-vi.mock('@/lib/storage/comment-private',()=>({getCommentPrivateStorage:()=>({delete:state.remove})}));
-vi.mock('@/lib/auth',()=>({auth:{api:{getSession:vi.fn()}}}));
-vi.mock('@/db',()=>({get db(){return state.database;}}));
-import { removeMangaWithComments } from '@/lib/comments/manga-removal';
-import * as schema from '@/db/schema';
-const pg=new PGlite();
+const state = {database:null as unknown,remove:jest.fn().mockResolvedValue(undefined)};
+const schema = await import('@/db/schema');
+const pg = new PGlite();
+const database = drizzle(pg, { schema });
+state.database = database;
+mock.module('@/lib/storage/comment-private',()=>({getCommentPrivateStorage:()=>({delete:state.remove})}));
+mock.module('@/lib/auth',()=>({auth:{api:{getSession:jest.fn()}}}));
+mock.module('@/db',()=>({get db(){return state.database;}}));
+const { removeMangaWithComments } = await import('@/lib/comments/manga-removal');
+
 const id=(n:number)=>`11111111-1111-4111-8111-${String(n).padStart(12,'0')}`;
 beforeAll(async()=>{
- state.database=drizzle(pg,{schema});
  await pg.exec(`CREATE ROLE anon; CREATE ROLE authenticated;
  CREATE TABLE profiles(id text PRIMARY KEY); CREATE TABLE manga(id uuid PRIMARY KEY);
  CREATE TABLE comments(id uuid PRIMARY KEY,content text NOT NULL,user_id text NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,parent_id uuid CONSTRAINT comments_parent_id_fkey REFERENCES comments(id) ON DELETE CASCADE,manga_id uuid REFERENCES manga(id) ON DELETE CASCADE,image_url text,image_index integer,vote_score integer DEFAULT 0,created_at timestamptz DEFAULT now(),updated_at timestamptz DEFAULT now());
@@ -31,7 +33,7 @@ it('removes only selected manga and its thread/report records; deletes exact tra
  expect((await pg.query('SELECT id FROM manga')).rows).toEqual([{id:id(2)}]);
  expect((await pg.query('SELECT id,content FROM comments')).rows).toEqual([{id:id(6),content:'Preserve'}]);
  for(const table of ['private.comment_reports','private.comment_moderation_events','comment_votes']) expect((await pg.query(`SELECT count(*)::int AS n FROM ${table}`)).rows[0]).toEqual({n:0});
- expect(state.remove).toHaveBeenCalledExactlyOnceWith(`comments/${id(7)}.webp`);
+ expect(state.remove).toHaveBeenCalledTimes(1);expect(state.remove).toHaveBeenCalledWith(`comments/${id(7)}.webp`);
  expect((await pg.query('SELECT id FROM private.comment_assets')).rows).toHaveLength(0);
  expect((await pg.query('SELECT id FROM private.comment_guests')).rows).toHaveLength(1);
 });

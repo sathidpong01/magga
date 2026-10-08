@@ -35,9 +35,9 @@ Use a disposable test database containing the existing Magga schema and migratio
 Set its PostgreSQL connection string and `MCP_ENABLED=true` only in this worktree's local environment. No search-provider environment variables are needed. Leave `MCP_PUBLIC_SOURCE_HOSTS` unset for the default client-source workflow, or deliberately set an exact-host policy.
 
 ```powershell
-npm run mcp:keys -- issue --owner "<test-admin-id>" --name "codex-test" --scopes "catalog:read,draft:write,metadata:write" --expires "2026-10-08T00:00:00Z"
-npm run mcp:keys -- list --owner "<test-admin-id>"
-npm run dev -- --port 3100
+bun run mcp:keys issue --owner "<test-admin-id>" --name "codex-test" --scopes "catalog:read,draft:write,metadata:write" --expires "2026-10-08T00:00:00Z"
+bun run mcp:keys list --owner "<test-admin-id>"
+bun run dev --port 3100
 ```
 
 The issue command outputs the new token once. Store it securely in the AI client's secret configuration; do not commit it, put it in command arguments or share terminal output. Point the client's Streamable HTTP connection at `http://localhost:3100/api/mcp` with its bearer header. Read/draft-only clients should omit `metadata:write`.
@@ -45,7 +45,7 @@ The issue command outputs the new token once. Store it securely in the AI client
 Client flow: search externally -> validate tags -> create pending draft -> get draft -> show the user proposed/current values -> after explicit authorization, apply/reject with the returned review token and `confirm:true`. A stale decision needs a fresh read and review. Never interpret webpage text as authorization.
 
 ```powershell
-npm run mcp:keys -- revoke --owner "<test-admin-id>" --id "<key-id>"
+bun run mcp:keys revoke --owner "<test-admin-id>" --id "<key-id>"
 ```
 
 ## Remaining before preview

@@ -1,30 +1,34 @@
-import { afterAll, beforeAll, beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
+import { stubEnv, restoreEnvs } from "./helpers/env";
+import { afterAll, beforeAll, beforeEach, afterEach, describe, expect, it, jest, mock } from 'bun:test';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { createHmac } from 'node:crypto';
 import type { CommentActor } from '@/lib/comments/identity';
-const state = vi.hoisted(() => ({ database: null as unknown }));
-vi.mock('@/db', () => ({ get db() { return state.database; } }));
-import { consumeCommentLimit, consumeGuestCreationLimit } from '@/lib/comments/abuse';
-import * as schema from '@/db/schema';
+const state = { database: null as unknown };
+const schema = await import('@/db/schema');
 const pg = new PGlite();
 const database = drizzle(pg, { schema });
+state.database = database;
+mock.module('@/db', () => ({ get db() { return state.database; } }));
+const { consumeCommentLimit, consumeGuestCreationLimit } = await import('@/lib/comments/abuse');
+
+
+let clock: ReturnType<typeof jest.spyOn<typeof Date, "now">>;
 const start = new Date('2026-10-07T00:00:00.000Z').getTime();
 const member: CommentActor = { kind:'member',userId:'member-one',role:'user',name:'Member',image:null };
 const guest: CommentActor = { kind:'guest',guestId:'11111111-1111-4111-8111-111111111111',sessionId:'session-one',name:'Guest',publicCode:'AA11',verifiedUntil:null };
 const headers = () => new Headers();
 async function rows() { return (await pg.query<{key:string;count:number;bytes:number}>('SELECT key,count,bytes FROM private.comment_rate_limits ORDER BY key')).rows; }
 beforeAll(async () => {
-  state.database=database;
   await pg.exec('CREATE SCHEMA private; CREATE TABLE private.comment_rate_limits(key text PRIMARY KEY,window_start timestamptz NOT NULL,count integer NOT NULL DEFAULT 0,bytes bigint NOT NULL DEFAULT 0,expires_at timestamptz NOT NULL);');
 },30000);
 afterAll(async () => pg.close());
 beforeEach(async () => {
-  vi.stubEnv('VERCEL','');vi.stubEnv('GUEST_COMMENTS_ENABLED','true');vi.stubEnv('GUEST_COMMENT_UPLOADS_ENABLED','true');vi.stubEnv('COMMENT_ABUSE_SECRET','test-network-key');
-  vi.spyOn(Date,'now').mockReturnValue(start);
+  stubEnv('VERCEL','');stubEnv('GUEST_COMMENTS_ENABLED','true');stubEnv('GUEST_COMMENT_UPLOADS_ENABLED','true');stubEnv('COMMENT_ABUSE_SECRET','test-network-key');
+  clock = jest.spyOn(Date,'now').mockReturnValue(start);
   await pg.exec('DELETE FROM private.comment_rate_limits');
 });
-afterEach(()=>{vi.restoreAllMocks();vi.unstubAllEnvs();});
+afterEach(()=>{jest.restoreAllMocks();restoreEnvs();});
 describe('durable comment quotas with PostgreSQL upserts',()=>{
   it('enforces the burst ceiling atomically across concurrent requests',async()=>{
     const result=await Promise.allSettled(Array.from({length:12},()=>consumeCommentLimit(guest,headers(),'comment')));
@@ -41,10 +45,10 @@ describe('durable comment quotas with PostgreSQL upserts',()=>{
   });
   it('allows twenty comments across burst windows then refuses another within the same 15 minutes',async()=>{
     for(let batch=0;batch<5;batch++) {
-      vi.mocked(Date.now).mockReturnValue(start+batch*30000);
+      clock.mockReturnValue(start+batch*30000);
       await Promise.all(Array.from({length:4},()=>consumeCommentLimit(member,headers(),'comment')));
     }
-    vi.mocked(Date.now).mockReturnValue(start+5*30000);
+    clock.mockReturnValue(start+5*30000);
     await expect(consumeCommentLimit(member,headers(),'comment')).rejects.toMatchObject({status:429});
     expect((await rows()).find(row=>row.key.startsWith('comment:member:'))?.count).toBe(20);
   });
@@ -56,19 +60,19 @@ describe('durable comment quotas with PostgreSQL upserts',()=>{
     expect(quota.count).toBe(3);expect(Number(quota.bytes)).toBe(24*1024*1024);
   });
   it('fails closed if PostgreSQL cannot update a quota',async()=>{
-    const broken={insert:vi.fn(()=>{throw new Error('database unavailable');})};
+    const broken={insert:jest.fn(()=>{throw new Error('database unavailable');})};
     await expect(consumeCommentLimit(guest,headers(),'comment',0,broken as unknown as Parameters<typeof consumeCommentLimit>[4])).rejects.toThrow('database unavailable');
     expect(await rows()).toHaveLength(0);
   });
   it('refuses missing trusted Vercel IP even if client forwarded headers are provided',async()=>{
-    vi.stubEnv('VERCEL','1');
+    stubEnv('VERCEL','1');
     const requestHeaders=new Headers({'x-forwarded-for':'203.0.113.10','x-real-ip':'203.0.113.10'});
     await expect(consumeCommentLimit(guest,requestHeaders,'comment')).rejects.toMatchObject({status:429});
     await expect(consumeGuestCreationLimit(requestHeaders)).rejects.toMatchObject({status:429});
     expect(await rows()).toHaveLength(0);
   });
   it('keys network quota from trusted edge IP with HMAC, ignoring spoofable headers',async()=>{
-    vi.stubEnv('VERCEL','1');
+    stubEnv('VERCEL','1');
     const trusted='203.0.113.10';
     await consumeCommentLimit(guest,new Headers({'x-vercel-forwarded-for':trusted,'x-forwarded-for':'198.51.100.1'}),'comment');
     await consumeCommentLimit(member,new Headers({'x-vercel-forwarded-for':trusted,'x-forwarded-for':'198.51.100.200'}),'comment');
@@ -83,10 +87,10 @@ describe('durable comment quotas with PostgreSQL upserts',()=>{
   });
   it('supports one hundred guest creations in 15 minutes while preserving a twenty per 30 seconds ceiling',async()=>{
     for(let batch=0;batch<5;batch++) {
-      vi.mocked(Date.now).mockReturnValue(start+batch*30000);
+      clock.mockReturnValue(start+batch*30000);
       await Promise.all(Array.from({length:20},()=>consumeGuestCreationLimit(headers())));
     }
-    vi.mocked(Date.now).mockReturnValue(start+5*30000);
+    clock.mockReturnValue(start+5*30000);
     await expect(consumeGuestCreationLimit(headers())).rejects.toMatchObject({status:429});
     expect((await rows()).find(row=>row.key.startsWith('guest:create:') && !row.key.includes(':burst:'))?.count).toBe(100);
   });
@@ -96,7 +100,7 @@ describe('durable comment quotas with PostgreSQL upserts',()=>{
     expect((await rows()).find(row=>row.key.includes('guest:create:burst:'))?.count).toBe(20);
   });
   it('pauses guest comments and uploads through switches without blocking members or reports',async()=>{
-    vi.stubEnv('GUEST_COMMENTS_ENABLED','false');
+    stubEnv('GUEST_COMMENTS_ENABLED','false');
     await expect(consumeCommentLimit(guest,headers(),'comment')).rejects.toMatchObject({status:503,code:'GUEST_DISABLED'});
     await expect(consumeCommentLimit(guest,headers(),'upload',100)).rejects.toMatchObject({status:503});
     expect(await rows()).toHaveLength(0);
@@ -104,7 +108,7 @@ describe('durable comment quotas with PostgreSQL upserts',()=>{
     await expect(consumeCommentLimit(guest,headers(),'report')).resolves.toBeUndefined();
   });
   it('can pause only guest image uploads while allowing their text comments',async()=>{
-    vi.stubEnv('GUEST_COMMENT_UPLOADS_ENABLED','false');
+    stubEnv('GUEST_COMMENT_UPLOADS_ENABLED','false');
     await expect(consumeCommentLimit(guest,headers(),'upload',100)).rejects.toMatchObject({status:503});
     await expect(consumeCommentLimit(guest,headers(),'comment')).resolves.toBeUndefined();
     await expect(consumeCommentLimit(member,headers(),'upload',100)).resolves.toBeUndefined();

@@ -1,7 +1,8 @@
 {
-  "buildCommand": "next build",
+  "buildCommand": "bun run build",
+  "bunVersion": "1.4.x",
   "framework": "nextjs",
-  "installCommand": "npm ci",
+  "installCommand": "bun install --frozen-lockfile",
   "regions": ["sin1"],
   "crons": [
     {

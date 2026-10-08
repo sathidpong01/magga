@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "bun:test";
 import { isStandaloneRoute } from "@/app/components/layout/standalone-routes";
 
 describe("standalone route matching", () => {

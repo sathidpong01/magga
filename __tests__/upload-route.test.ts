@@ -1,28 +1,28 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, jest, mock } from "bun:test";
 
-const mocks = vi.hoisted(() => ({
-  authenticateRequest: vi.fn(),
-  checkRateLimit: vi.fn(),
-  storeAssets: vi.fn(),
-}));
+const mocks = {
+  authenticateRequest: jest.fn(),
+  checkRateLimit: jest.fn(),
+  storeAssets: jest.fn(),
+};
 
-vi.mock("@/lib/auth-helpers", () => ({
+mock.module("@/lib/auth-helpers", () => ({
   authenticateRequest: mocks.authenticateRequest,
 }));
 
-vi.mock("@/lib/rate-limit", () => ({
+mock.module("@/lib/rate-limit", () => ({
   checkRateLimit: mocks.checkRateLimit,
 }));
 
-vi.mock("@/lib/storage", () => ({
+mock.module("@/lib/storage", () => ({
   storeAssets: mocks.storeAssets,
 }));
 
-import { POST } from "@/app/api/upload/route";
+const { POST } = await import("@/app/api/upload/route");
 
 describe("POST /api/upload", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
 
     mocks.authenticateRequest.mockResolvedValue({
       ok: true,

@@ -2,7 +2,7 @@ import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
 import { readFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, jest } from 'bun:test';
 import type { db } from '@/db';
 import { createDraftService } from '@/lib/mcp/drafts';
 import { createReviewService, createBrowserReviewService } from '@/lib/mcp/review';
@@ -14,7 +14,7 @@ import { handleMcp } from '@/lib/mcp/http';
 describe('client research, review and application', () => {
   const pg = new PGlite(); const database = drizzle(pg) as unknown as typeof db;
   const target = randomUUID(); const author = randomUUID(); const existingTag = randomUUID(); const addedTag = randomUUID(); const existingCategory = randomUUID();
-  const admin = createKeyAdmin(database); const drafts = createDraftService(database); const invalidate = vi.fn(async () => {});
+  const admin = createKeyAdmin(database); const drafts = createDraftService(database); const invalidate = jest.fn(async () => {});
   const review = createReviewService(database, invalidate); const deps = createDependencies(database);
   let key: Principal; let token: string;
   const get = async (id: string) => await review.get(id, key) as { review_token: string; status: string };

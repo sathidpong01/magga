@@ -195,7 +195,7 @@ experimental: {
 
 ```bash
 # Run build locally
-npm run build
+bun run build
 ```
 
 **ดูใน output:**
@@ -291,7 +291,7 @@ export const revalidate = 60; // Currently 60 seconds
 
 1. ตรวจสอบว่ามี `export const dynamic = 'force-static'`
 2. ตรวจสอบว่าไม่มี dynamic functions (cookies, headers, searchParams) ที่ render time
-3. Build ใหม่: `npm run build`
+3. Build ใหม่: `bun run build`
 
 ### Issue: Cache ไม่ทำงาน
 
@@ -325,9 +325,9 @@ export const revalidate = 60; // Currently 60 seconds
 
 - [x] ตั้งค่า environment variables ใน Vercel
 - [x] ตรวจสอบ revalidation times
-- [x] Build locally: `npm run build`
+- [x] Build locally: `bun run build`
 - [x] ตรวจสอบ build output (Static/SSG/SSR)
-- [ ] Test locally: `npm run start`
+- [ ] Test locally: `bun run start`
 
 ### Post-Deployment
 

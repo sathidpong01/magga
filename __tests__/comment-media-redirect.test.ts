@@ -1,11 +1,11 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, jest, mock } from 'bun:test';
 
-const mocks = vi.hoisted(() => ({ resolveUrl: vi.fn() }));
-vi.mock('@/lib/comments/assets', () => ({ readPublishedCommentAsset: mocks.resolveUrl }));
-vi.mock('@/lib/comments', () => ({ handleCommentError: () => Response.json({ error: 'Unavailable' }, { status: 404 }) }));
-import { GET } from '@/app/api/comments/media/[id]/route';
+const mocks = { resolveUrl: jest.fn() };
+mock.module('@/lib/comments/assets', () => ({ readPublishedCommentAsset: mocks.resolveUrl }));
+mock.module('@/lib/comments', () => ({ handleCommentError: () => Response.json({ error: 'Unavailable' }, { status: 404 }) }));
+const { GET } = await import('@/app/api/comments/media/[id]/route');
 
-beforeEach(() => vi.clearAllMocks());
+beforeEach(() => jest.clearAllMocks());
 describe('legacy comment media never proxies file bytes', () => {
   it('redirects to direct R2 without returning a body or allowing redirect caching', async () => {
     const id = '11111111-1111-4111-8111-111111111111';

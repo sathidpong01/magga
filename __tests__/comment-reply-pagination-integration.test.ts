@@ -1,15 +1,18 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, jest, mock } from 'bun:test';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle } from 'drizzle-orm/pglite';
-const state=vi.hoisted(()=>({database:null as unknown}));
-vi.mock('@/db',()=>({get db(){return state.database;}}));
-vi.mock('@/lib/auth',()=>({auth:{api:{getSession:vi.fn()}}}));
-vi.mock('@/lib/comments/assets',()=>({reserveCommentAsset:vi.fn(),finalizeCommentAsset:vi.fn(),retireCommentAssets:vi.fn()}));
-vi.mock('next/cache',()=>({revalidatePath:vi.fn()}));
-import { listComments,listCommentReplies } from '@/lib/comments';
-import { GET } from '@/app/api/comments/[commentId]/replies/route';
-import * as schema from '@/db/schema';
-const pg=new PGlite();const database=drizzle(pg,{schema});
+const state = {database:null as unknown};
+const schema = await import('@/db/schema');
+const pg = new PGlite();
+const database = drizzle(pg, { schema });
+state.database = database;
+mock.module('@/db',()=>({get db(){return state.database;}}));
+mock.module('@/lib/auth',()=>({auth:{api:{getSession:jest.fn()}}}));
+mock.module('@/lib/comments/assets',()=>({reserveCommentAsset:jest.fn(),finalizeCommentAsset:jest.fn(),retireCommentAssets:jest.fn(),rollbackCommentAssetPublication:jest.fn(),discardPublishedCommentStaging:jest.fn(),decorateCommentImagePreviews:async(rows:unknown[])=>rows}));
+mock.module('next/cache',()=>({revalidatePath:jest.fn()}));
+const { listComments,listCommentReplies } = await import('@/lib/comments');
+const { GET } = await import('@/app/api/comments/[commentId]/replies/route');
+
 const mangaId='11111111-1111-4111-8111-111111111111';
 const otherManga='22222222-2222-4222-8222-222222222222';
 const rootId='33333333-3333-4333-8333-333333333333';
@@ -17,7 +20,6 @@ const otherRoot='44444444-4444-4444-8444-444444444444';
 const guestId='55555555-5555-4555-8555-555555555555';
 const replyId=(index:number)=>`66666666-6666-4666-8666-${index.toString().padStart(12,'0')}`;
 beforeAll(async()=>{
-  state.database=database;
   await pg.exec(`CREATE SCHEMA private;
     CREATE TABLE private.comment_guests(id uuid PRIMARY KEY,name text,public_code text);
     CREATE TABLE profiles(id text PRIMARY KEY,name text,username text,image text);
