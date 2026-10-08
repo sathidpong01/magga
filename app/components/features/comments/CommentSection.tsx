@@ -12,7 +12,7 @@ import {
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CommentBox from "./CommentBox";
-import CommentList from "./CommentList";
+import CommentList, { type PublicComment } from "./CommentList";
 
 interface CommentSectionProps {
   mangaId: string;
@@ -25,7 +25,7 @@ export default function CommentSection({
   imageIndex = null,
   title = "ความคิดเห็น",
 }: CommentSectionProps) {
-  const [comments, setComments] = useState<any[]>([]);
+  const [comments, setComments] = useState<PublicComment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -81,7 +81,7 @@ export default function CommentSection({
         setIsLoadingMore(false);
       }
     },
-    [mangaId, imageIndex]
+    [mangaId, imageIndex],
   );
 
   useEffect(() => {
@@ -109,13 +109,17 @@ export default function CommentSection({
           variant="h5"
           sx={{
             fontWeight: 600,
-            color: "white"
-          }}>
+            color: "white",
+          }}
+        >
           {title}
         </Typography>
-        <Typography variant="body2" sx={{
-          color: "text.secondary"
-        }}>
+        <Typography
+          variant="body2"
+          sx={{
+            color: "text.secondary",
+          }}
+        >
           ({totalCount}
           {nextCursor ? "+" : ""})
         </Typography>
@@ -125,15 +129,34 @@ export default function CommentSection({
       <CommentBox
         mangaId={mangaId}
         imageIndex={imageIndex}
-        onCommentCreated={handleRefresh}
+        onCommentCreated={(comment) => {
+          if (comment)
+            setComments((previous) => [
+              comment,
+              ...previous.filter((item) => item.id !== comment.id),
+            ]);
+          handleRefresh();
+        }}
       />
 
       <Divider sx={{ my: 3, borderColor: "rgba(255,255,255,0.08)" }} />
 
       {loadError && (
-        <Alert severity="error" sx={{ mb: 2 }} action={
-          <Button color="inherit" disabled={isLoading || isLoadingMore} onClick={() => fetchComments(failedCursor)}>ลองใหม่</Button>
-        }>{loadError}</Alert>
+        <Alert
+          severity="error"
+          sx={{ mb: 2 }}
+          action={
+            <Button
+              color="inherit"
+              disabled={isLoading || isLoadingMore}
+              onClick={() => fetchComments(failedCursor)}
+            >
+              ลองใหม่
+            </Button>
+          }
+        >
+          {loadError}
+        </Alert>
       )}
 
       {/* Comments List */}
@@ -143,12 +166,14 @@ export default function CommentSection({
         </Box>
       ) : (
         <>
-          {(!loadError || comments.length > 0) && <CommentList
-            comments={comments}
-            mangaId={mangaId}
-            imageIndex={imageIndex}
-            onRefresh={handleRefresh}
-          />}
+          {(!loadError || comments.length > 0) && (
+            <CommentList
+              comments={comments}
+              mangaId={mangaId}
+              imageIndex={imageIndex}
+              onRefresh={handleRefresh}
+            />
+          )}
 
           {/* Load More Button */}
           {nextCursor && (

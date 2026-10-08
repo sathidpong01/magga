@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+import { readCommentJson } from "@/lib/comments/request";
 import {
   updateComment,
   deleteComment,
   handleCommentError,
+  ValidationCommentError,
 } from "@/lib/comments";
 
 type RouteParams = {
@@ -15,7 +17,8 @@ type RouteParams = {
 export async function PATCH(request: Request, { params }: RouteParams) {
   try {
     const { commentId } = await params;
-    const body = await request.json();
+    const body = await readCommentJson(request) as { content?: string } | null;
+    if (typeof body?.content !== "string") throw new ValidationCommentError("ข้อความไม่ถูกต้อง");
     const comment = await updateComment(request, {
       commentId,
       content: body?.content,

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { voteComment, handleCommentError } from "@/lib/comments";
+import { readCommentJson } from "@/lib/comments/request";
+import { voteComment, handleCommentError, ValidationCommentError } from "@/lib/comments";
 
 type RouteParams = {
   params: Promise<{
@@ -11,7 +12,8 @@ type RouteParams = {
 export async function POST(request: Request, { params }: RouteParams) {
   try {
     const { commentId } = await params;
-    const body = await request.json();
+    const body = await readCommentJson(request) as { value?: 1 | -1 } | null;
+    if (body?.value !== 1 && body?.value !== -1) throw new ValidationCommentError("คะแนนไม่ถูกต้อง");
     const result = await voteComment(request, {
       commentId,
       value: body?.value,

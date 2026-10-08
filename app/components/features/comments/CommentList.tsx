@@ -1,568 +1,728 @@
-﻿"use client";
-
-import { useState, useCallback } from "react";
-import { useSession } from "@/lib/auth-client";
+"use client";
+import { useCallback, useEffect, useState } from "react";
 import {
-  Box,
+  Alert,
   Avatar,
-  Typography,
-  IconButton,
-  Tooltip,
-  Menu,
-  MenuItem,
-  TextField,
+  Box,
   Button,
   Collapse,
-  Modal,
-  Fade,
+  Dialog,
+  DialogContent,
+  IconButton,
+  MenuItem,
+  TextField,
+  Typography,
 } from "@mui/material";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import ThumbDownIcon from "@mui/icons-material/ThumbDown";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-import ReplyIcon from "@mui/icons-material/Reply";
-import BlockIcon from "@mui/icons-material/Block";
-import PersonIcon from "@mui/icons-material/Person";
-import { maggaColors } from "@/lib/design-tokens";
+import CloseIcon from "@mui/icons-material/Close";
 import Link from "next/link";
-import CommentBox from "./CommentBox";
+import { useSession } from "@/lib/auth-client";
+import { maggaColors } from "@/lib/design-tokens";
 import {
-  voteComment,
-  updateComment,
-  deleteComment,
-} from "@/app/actions/comments";
-import BanNoticeModal from "@/app/components/modals/BanNoticeModal";
-
-interface CommentUser {
-  id: string;
-  name: string | null;
-  username: string | null;
-  image: string | null;
-}
-
-interface CommentVote {
-  userId: string;
-  value: number;
-}
-
-interface Comment {
+  commentRequest,
+  GuestVerification,
+  type CommentActor,
+} from "./guest-client";
+import CommentBox from "./CommentBox";
+export interface PublicComment {
   id: string;
   content: string;
   imageUrl: string | null;
   voteScore: number;
   createdAt: string;
-  user: CommentUser;
-  votes: CommentVote[];
-  replies?: Comment[];
+  status?: string;
+  parentId?: string | null;
+  author: {
+    kind: "guest" | "member";
+    name: string | null;
+    username?: string | null;
+    image?: string | null;
+    publicCode?: string;
+  };
+  user?: {
+    id: string;
+    name: string | null;
+    username: string | null;
+    image: string | null;
+  } | null;
+  replies?: PublicComment[];
+  repliesNextCursor?: string | null;
 }
-
-interface CommentItemProps {
-  comment: Comment;
-  mangaId: string;
-  imageIndex?: number | null;
-  onRefresh: () => void;
-  isReply?: boolean;
-}
-
+type Capability = {
+  canEdit: boolean;
+  canDelete: boolean;
+  userVote: number | null;
+};
 function CommentItem({
   comment,
   mangaId,
   imageIndex,
   onRefresh,
+  capability,
+  capabilities,
   isReply = false,
-}: CommentItemProps) {
-  const { data: session } = useSession();
-  const [isEditing, setIsEditing] = useState(false);
-  const [editContent, setEditContent] = useState(comment.content);
-  const [showReply, setShowReply] = useState(false);
-  const [voteScore, setVoteScore] = useState(comment.voteScore);
-  const [userVote, setUserVote] = useState<number | null>(() => {
-    if (!session?.user?.id) return null;
-    return (
-      comment.votes.find((v) => v.userId === session.user.id)?.value ?? null
-    );
-  });
-  const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
-  const [otherMenuAnchor, setOtherMenuAnchor] = useState<null | HTMLElement>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [banModalOpen, setBanModalOpen] = useState(false);
-  const [blockSuccess, setBlockSuccess] = useState(false);
-
-  const isOwner = session?.user?.id === comment.user.id;
-  const isAdmin = (session?.user as { role?: string })?.role === "admin";
-
-  const handleBlockUser = useCallback(async () => {
-    setOtherMenuAnchor(null);
-    const res = await fetch("/api/user/blocked-users", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ blockedUserId: comment.user.id }),
-    });
-    if (res.ok) setBlockSuccess(true);
-  }, [comment.user.id]);
-
-  const handleVote = useCallback(
-    async (value: 1 | -1) => {
-      if (!session) {
-        alert("กรุณาเข้าสู่ระบบก่อนโหวต");
-        return;
-      }
-
-      try {
-        const result = await voteComment(comment.id, value);
-
-        if (result.error) {
-          if (result.error === "บัญชีของคุณถูกระงับการใช้งาน") {
-            setBanModalOpen(true);
-            return;
-          }
-          throw new Error(result.error);
-        }
-
-        if ("voteScore" in result && result.voteScore !== undefined) {
-          setVoteScore(result.voteScore);
-          setUserVote(result.userVote ?? null);
-        }
-      } catch {
-        console.error("Vote error");
-      }
-    },
-    [comment.id, session]
-  );
-
-  const handleEdit = useCallback(async () => {
-    if (!editContent.trim()) return;
-    setIsSubmitting(true);
-
-    try {
-      const formData = new FormData();
-      formData.append("commentId", comment.id);
-      formData.append("content", editContent);
-
-      const result = await updateComment(formData);
-
-      if (result.error) {
-        throw new Error(result.error);
-      }
-
-      setIsEditing(false);
-      onRefresh();
-    } catch (error) {
-      const errMsg = error instanceof Error ? error.message : "แก้ไขไม่สำเร็จ";
-      if (errMsg === "บัญชีของคุณถูกระงับการใช้งาน") {
-        setBanModalOpen(true);
-      } else {
-        console.error("Error updating comment:", error);
-        alert(errMsg);
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [comment.id, editContent, onRefresh]);
-
-  const handleDelete = useCallback(async () => {
-    if (!confirm("ยืนยันการลบความคิดเห็นนี้?")) return;
-
-    try {
-      const result = await deleteComment(comment.id);
-      if (result.error) {
-        throw new Error(result.error);
-      }
-      onRefresh();
-    } catch (error) {
-      const errMsg = error instanceof Error ? error.message : "ลบไม่สำเร็จ";
-      if (errMsg === "บัญชีของคุณถูกระงับการใช้งาน") {
-        setBanModalOpen(true);
-      } else {
-        console.error("Error deleting comment:", error);
-        alert(errMsg);
-      }
-    }
-
-    setMenuAnchor(null);
-  }, [comment.id, onRefresh]);
-
-  const formatTime = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMins / 60);
-    const diffDays = Math.floor(diffHours / 24);
-
-    if (diffMins < 1) return "เมื่อสักครู่";
-    if (diffMins < 60) return `${diffMins} นาทีที่แล้ว`;
-    if (diffHours < 24) return `${diffHours} ชั่วโมงที่แล้ว`;
-    if (diffDays < 7) return `${diffDays} วันที่แล้ว`;
-
-    return date.toLocaleDateString("th-TH", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
-  };
-
-  return (
-    <>
-      <Box sx={{ display: "flex", gap: 1, mb: 0.5, pl: isReply ? 5 : 0 }}>
-        {/* Avatar */}
-        <Avatar
-          src={comment.user.image || undefined}
-          alt={comment.user.name || "User"}
-          sx={{ width: isReply ? 32 : 40, height: isReply ? 32 : 40 }}
-        >
-          {(comment.user.name || comment.user.username)?.[0]?.toUpperCase() ||
-            "U"}
-        </Avatar>
-
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          {/* Header */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-            <Typography
-              variant="subtitle2"
-              sx={{
-                fontWeight: 600,
-                color: "white"
-              }}>
-              {comment.user.name || comment.user.username || "ผู้ใช้"}
-            </Typography>
-            <Typography variant="caption" sx={{ color: "text.secondary" }}>
-              {formatTime(comment.createdAt)}
-            </Typography>
-            {blockSuccess && (
-              <Typography variant="caption" sx={{ color: "#5eead4" }}>บล็อกแล้ว</Typography>
-            )}
-
-            {/* Owner/admin menu (edit/delete) */}
-            {(isOwner || isAdmin) && (
-              <>
-                <IconButton
-                  size="small"
-                  onClick={(e) => setMenuAnchor(e.currentTarget)}
-                  sx={{ ml: "auto", color: "text.secondary" }}
-                  aria-label="เพิ่มเติม"
-                >
-                  <MoreVertIcon fontSize="small" />
-                </IconButton>
-                <Menu
-                  anchorEl={menuAnchor}
-                  open={Boolean(menuAnchor)}
-                  onClose={() => setMenuAnchor(null)}
-                  slotProps={{ paper: { sx: { bgcolor: "#171717", color: "#fafafa", border: "1px solid rgba(255,255,255,0.1)" } } }}
-                >
-                  {isOwner && (
-                    <MenuItem
-                      onClick={() => {
-                        setIsEditing(true);
-                        setMenuAnchor(null);
-                      }}
-                    >
-                      <EditIcon fontSize="small" sx={{ mr: 1 }} /> แก้ไข
-                    </MenuItem>
-                  )}
-                  <MenuItem onClick={handleDelete}>
-                    <DeleteIcon fontSize="small" sx={{ mr: 1 }} /> ลบ
-                  </MenuItem>
-                </Menu>
-              </>
-            )}
-
-            {/* Other user menu (view profile / block) */}
-            {session && !isOwner && !blockSuccess && (
-              <>
-                <IconButton
-                  size="small"
-                  onClick={(e) => setOtherMenuAnchor(e.currentTarget)}
-                  sx={{ ml: isOwner || isAdmin ? 0 : "auto", color: "text.secondary", opacity: 0.5, "&:hover": { opacity: 1 } }}
-                  aria-label="ตัวเลือก"
-                >
-                  <MoreVertIcon fontSize="small" />
-                </IconButton>
-                <Menu
-                  anchorEl={otherMenuAnchor}
-                  open={Boolean(otherMenuAnchor)}
-                  onClose={() => setOtherMenuAnchor(null)}
-                  slotProps={{ paper: { sx: { bgcolor: "#171717", color: "#fafafa", border: "1px solid rgba(255,255,255,0.1)" } } }}
-                >
-                  {comment.user.username && (
-                    <MenuItem
-                      component={Link}
-                      href={`/profile/${comment.user.username}`}
-                      onClick={() => setOtherMenuAnchor(null)}
-                    >
-                      <PersonIcon fontSize="small" sx={{ mr: 1, color: "#5eead4" }} /> ดูโปรไฟล์
-                    </MenuItem>
-                  )}
-                  <MenuItem onClick={handleBlockUser} sx={{ color: "#ef4444" }}>
-                    <BlockIcon fontSize="small" sx={{ mr: 1 }} /> บล็อกผู้ใช้นี้
-                  </MenuItem>
-                </Menu>
-              </>
-            )}
-          </Box>
-
-          {/* Content */}
-          {isEditing ? (
-            <Box sx={{ mb: 1 }}>
-              <TextField
-                fullWidth
-                multiline
-                size="small"
-                value={editContent}
-                onChange={(e) => setEditContent(e.target.value)}
-                disabled={isSubmitting}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    bgcolor: "rgba(255,255,255,0.05)",
-                    color: "white",
-                  },
-                }}
-              />
-              <Box sx={{ mt: 1, display: "flex", gap: 1 }}>
-                <Button
-                  size="small"
-                  variant="contained"
-                  onClick={handleEdit}
-                  disabled={isSubmitting}
-                >
-                  บันทึก
-                </Button>
-                <Button size="small" onClick={() => setIsEditing(false)}>
-                  ยกเลิก
-                </Button>
-              </Box>
-            </Box>
-          ) : (
-            <>
-              <Typography
-                variant="body2"
-                sx={{
-                  color: "rgba(255,255,255,0.9)",
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-word",
-                }}
-              >
-                {comment.content}
-              </Typography>
-
-              {/* Image */}
-              {comment.imageUrl && (
-                <Box
-                  component="button"
-                  type="button"
-                  aria-label="เปิดภาพแนบความคิดเห็นแบบขยาย"
-                  onClick={() => setLightboxOpen(true)}
-                  sx={{
-                    display: "block", mt: 1, cursor: "pointer",
-                    p: 0, border: 0, background: "transparent", maxWidth: "100%",
-                    "&:focus-visible": { outline: `2px solid ${maggaColors.archiveGoldHover}`, outlineOffset: "4px" },
-                  }}
-                >
-                  <Box
-                    component="img"
-                    src={comment.imageUrl}
-                    alt="Attached"
-                    sx={{
-                      maxWidth: "100%",
-                      maxHeight: 300,
-                      borderRadius: 0.5,
-                      objectFit: "contain",
-                      cursor: "pointer",
-                      transition: "transform 0.2s ease",
-                      "&:hover": {
-                        transform: "scale(1.02)",
-                      },
-                    }}
-                  />
-                </Box>
-              )}
-            </>
-          )}
-
-          {/* Actions */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, mt: 1 }}>
-            {/* Voting */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              <Tooltip title="ถูกใจ">
-                <IconButton
-                  size="small"
-                  onClick={() => handleVote(1)}
-                  sx={{ color: userVote === 1 ? "#38bdf8" : "text.secondary" }}
-                  aria-label="ถูกใจ"
-                >
-                  <ThumbUpIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <Typography
-                variant="caption"
-                sx={{
-                  minWidth: 20,
-                  textAlign: "center",
-                  color:
-                    voteScore > 0
-                      ? "#4ade80"
-                      : voteScore < 0
-                      ? "#f87171"
-                      : "text.secondary",
-                  fontWeight: 600,
-                }}
-              >
-                {voteScore}
-              </Typography>
-              <Tooltip title="ไม่ถูกใจ">
-                <IconButton
-                  size="small"
-                  onClick={() => handleVote(-1)}
-                  sx={{ color: userVote === -1 ? "#f87171" : "text.secondary" }}
-                  aria-label="ไม่ถูกใจ"
-                >
-                  <ThumbDownIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </Box>
-
-            {/* Reply button (only for top-level comments) */}
-            {!isReply && session && (
-              <Button
-                size="small"
-                startIcon={<ReplyIcon />}
-                onClick={() => setShowReply(!showReply)}
-                sx={{ color: "text.secondary", textTransform: "none" }}
-              >
-                ตอบกลับ
-              </Button>
-            )}
-          </Box>
-
-          {/* Reply Box */}
-          <Collapse in={showReply}>
-            <Box sx={{ mt: 2 }}>
-              <CommentBox
-                mangaId={mangaId}
-                imageIndex={imageIndex}
-                parentId={comment.id}
-                placeholder="ตอบกลับ..."
-                onCommentCreated={() => {
-                  setShowReply(false);
-                  onRefresh();
-                }}
-              />
-            </Box>
-          </Collapse>
-
-          {/* Nested Replies */}
-          {comment.replies && comment.replies.length > 0 && (
-            <Box sx={{ mt: 2 }}>
-              {comment.replies.map((reply) => (
-                <CommentItem
-                  key={reply.id}
-                  comment={reply}
-                  mangaId={mangaId}
-                  imageIndex={imageIndex}
-                  onRefresh={onRefresh}
-                  isReply
-                />
-              ))}
-            </Box>
-          )}
-        </Box>
-      </Box>
-
-      {/* Image Lightbox Modal */}
-      {comment.imageUrl && (
-        <Modal
-          open={lightboxOpen}
-          onClose={() => setLightboxOpen(false)}
-          closeAfterTransition
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Fade in={lightboxOpen}>
-            <Box
-              sx={{
-                outline: "none",
-                maxWidth: "90vw",
-                maxHeight: "90vh",
-                position: "relative",
-              }}
-            >
-              <Box
-                component="img"
-                src={comment.imageUrl!}
-                alt="Attached"
-                onClick={() => setLightboxOpen(false)}
-                sx={{
-                  maxWidth: "90vw",
-                  maxHeight: "90vh",
-                  objectFit: "contain",
-                  borderRadius: 1,
-                  cursor: "zoom-out",
-                  boxShadow: "0 20px 60px rgba(0,0,0,0.8)",
-                }}
-              />
-              <IconButton
-                onClick={() => setLightboxOpen(false)}
-                sx={{
-                  position: "absolute",
-                  top: -40,
-                  right: 0,
-                  color: "white",
-                  bgcolor: "rgba(0,0,0,0.5)",
-                  "&:hover": { bgcolor: "rgba(0,0,0,0.7)" },
-                }}
-                aria-label="Close"
-              >
-                ✕
-              </IconButton>
-            </Box>
-          </Fade>
-        </Modal>
-      )}
-      <BanNoticeModal
-        open={banModalOpen}
-        onClose={() => setBanModalOpen(false)}
-      />
-    </>
-  );
-}
-
-interface CommentListProps {
-  comments: Comment[];
+}: {
+  comment: PublicComment;
   mangaId: string;
   imageIndex?: number | null;
   onRefresh: () => void;
+  capability?: Capability;
+  capabilities: Record<string, Capability>;
+  isReply?: boolean;
+}) {
+  const { data: session } = useSession();
+  const [extraReplies, setExtraReplies] = useState<PublicComment[]>([]);
+  const [replyCursor, setReplyCursor] = useState<string | null>(
+    comment.repliesNextCursor || null,
+  );
+  const [replyLoading, setReplyLoading] = useState(false);
+  const [replyError, setReplyError] = useState("");
+  const [extraCapabilities, setExtraCapabilities] = useState<
+    Record<string, Capability>
+  >({});
+  useEffect(() => {
+    setExtraReplies([]);
+    setReplyCursor(comment.repliesNextCursor || null);
+  }, [comment.repliesNextCursor, comment.replies]);
+  const loadReplies = async () => {
+    if (!replyCursor || replyLoading) return;
+    setReplyLoading(true);
+    setReplyError("");
+    try {
+      const data = await commentRequest<{
+        comments: PublicComment[];
+        nextCursor: string | null;
+      }>(
+        `/api/comments/${comment.id}/replies?cursor=${encodeURIComponent(replyCursor)}`,
+      );
+      const ids = data.comments.map((reply) => reply.id).join(",");
+      const personal = await commentRequest<{
+        capabilities: Record<string, Capability>;
+      }>(`/api/comments/me?ids=${encodeURIComponent(ids)}`);
+      setExtraReplies((previous) => [
+        ...previous,
+        ...data.comments.filter(
+          (reply) => !previous.some((existing) => existing.id === reply.id),
+        ),
+      ]);
+      setExtraCapabilities((previous) => ({
+        ...previous,
+        ...personal.capabilities,
+      }));
+      setReplyCursor(data.nextCursor);
+    } catch (cause) {
+      setReplyError(cause instanceof Error ? cause.message : "โหลดคำตอบไม่ได้");
+    } finally {
+      setReplyLoading(false);
+    }
+  };
+  const childCapabilities = { ...capabilities, ...extraCapabilities };
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(comment.content);
+  const [reply, setReply] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [report, setReport] = useState(false);
+  const [reason, setReason] = useState("spam");
+  const [details, setDetails] = useState("");
+  const [reportActor, setReportActor] = useState<CommentActor | null>(null);
+  const [reportSiteKey, setReportSiteKey] = useState<string | null>(null);
+  const [reportToken, setReportToken] = useState<string | null>(null);
+  useEffect(() => {
+    if (!report && !editing) return;
+    commentRequest<{
+      actor: CommentActor | null;
+      turnstileSiteKey: string | null;
+    }>("/api/comments/identity")
+      .then((data) => {
+        setReportActor(data.actor);
+        setReportSiteKey(data.turnstileSiteKey);
+      })
+      .catch(() => setError("ตรวจตัวตนรายงานไม่ได้ กรุณาลองใหม่"));
+  }, [report, editing]);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [lightbox, setLightbox] = useState(false);
+  const author = comment.author || {
+    kind: "member",
+    name: comment.user?.name,
+    username: comment.user?.username,
+    image: comment.user?.image,
+  };
+  const isDeleted = comment.status === "deleted";
+  const mutate = async (url: string, method: string, body?: unknown) => {
+    setBusy(true);
+    setError("");
+    try {
+      if (method === "PATCH" && reportActor?.requiresVerification) {
+        if (!reportToken)
+          throw new Error("กรุณายืนยันก่อนบันทึก ข้อความที่แก้ยังอยู่");
+        const identity = await commentRequest<{ actor: CommentActor }>(
+          "/api/comments/identity",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ challengeToken: reportToken }),
+          },
+        );
+        setReportActor(identity.actor);
+        setReportToken(null);
+      }
+      await commentRequest(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: body === undefined ? undefined : JSON.stringify(body),
+      });
+      setEditing(false);
+      setConfirmDelete(false);
+      onRefresh();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "ทำรายการไม่ได้");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        gap: 1,
+        mb: 2,
+        ml: isReply ? { xs: 1, sm: 4 } : 0,
+      }}
+    >
+      <Avatar
+        src={author.image || undefined}
+        alt=""
+        sx={{ width: isReply ? 32 : 40, height: isReply ? 32 : 40 }}
+      >
+        {author.name?.[0] || "G"}
+      </Avatar>
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            flexWrap: "wrap",
+            minHeight: 28,
+          }}
+        >
+          {author.kind === "member" && author.username ? (
+            <Typography
+              component={Link}
+              href={`/profile/${encodeURIComponent(author.username)}`}
+              variant="subtitle2"
+              sx={{ color: maggaColors.textPrimary }}
+            >
+              {author.name}
+            </Typography>
+          ) : (
+            <Typography
+              variant="subtitle2"
+              sx={{ color: maggaColors.textPrimary }}
+            >
+              {author.name || "ผู้เยี่ยมชม"}
+            </Typography>
+          )}
+          {author.kind === "guest" && (
+            <Typography
+              variant="caption"
+              sx={{ color: maggaColors.textSecondary }}
+            >
+              ผู้เยี่ยมชม #{author.publicCode}
+            </Typography>
+          )}
+          <Typography
+            component="time"
+            dateTime={comment.createdAt}
+            variant="caption"
+            sx={{ color: maggaColors.textSecondary }}
+          >
+            {new Date(comment.createdAt).toLocaleString("th-TH", {
+              dateStyle: "medium",
+              timeStyle: "short",
+            })}
+          </Typography>
+        </Box>
+        {editing ? (
+          <Box sx={{ mt: 1 }}>
+            <TextField
+              label="แก้ไขความคิดเห็น"
+              fullWidth
+              multiline
+              value={draft}
+              disabled={busy}
+              onChange={(event) => setDraft(event.target.value)}
+              helperText={`${draft.length}/500`}
+            />
+            {reportActor?.requiresVerification && (
+              <GuestVerification
+                siteKey={reportSiteKey}
+                onToken={setReportToken}
+              />
+            )}
+            <Button
+              disabled={
+                busy ||
+                draft.length > 500 ||
+                (!draft.trim() && !comment.imageUrl)
+              }
+              onClick={() =>
+                void mutate(`/api/comments/${comment.id}`, "PATCH", {
+                  content: draft,
+                })
+              }
+              sx={{ minHeight: 44 }}
+            >
+              บันทึก
+            </Button>
+            <Button
+              disabled={busy}
+              onClick={() => setEditing(false)}
+              sx={{ minHeight: 44 }}
+            >
+              ยกเลิก
+            </Button>
+          </Box>
+        ) : (
+          <Typography
+            sx={{
+              whiteSpace: "pre-wrap",
+              overflowWrap: "anywhere",
+              color: maggaColors.textPrimary,
+              lineHeight: 1.6,
+            }}
+          >
+            {isDeleted ? "ความคิดเห็นนี้ถูกลบแล้ว" : comment.content}
+          </Typography>
+        )}
+        {!isDeleted && comment.imageUrl && (
+          <Box
+            component="button"
+            type="button"
+            onClick={() => setLightbox(true)}
+            aria-label="ขยายรูปแนบ"
+            sx={{
+              border: 0,
+              p: 0,
+              background: "transparent",
+              display: "block",
+              maxWidth: "100%",
+              mt: 1,
+            }}
+          >
+            <Box
+              component="img"
+              loading="lazy"
+              src={comment.imageUrl}
+              alt="รูปแนบความคิดเห็น"
+              sx={{ maxWidth: "100%", maxHeight: 300, objectFit: "contain" }}
+            />
+          </Box>
+        )}
+        {!isDeleted && (
+          <Box
+            sx={{
+              display: "flex",
+              gap: 0.5,
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            <IconButton
+              aria-label={session ? "ถูกใจ" : "เข้าสู่ระบบเพื่อโหวต"}
+              disabled={!session || busy}
+              onClick={() =>
+                void mutate(`/api/comments/${comment.id}/vote`, "POST", {
+                  value: 1,
+                })
+              }
+              sx={{
+                width: 44,
+                height: 44,
+                color:
+                  capability?.userVote === 1
+                    ? maggaColors.archiveGold
+                    : maggaColors.textSecondary,
+              }}
+            >
+              <ThumbUpIcon fontSize="small" />
+            </IconButton>
+            <Typography
+              variant="caption"
+              sx={{ minWidth: 20, textAlign: "center" }}
+            >
+              {comment.voteScore}
+            </Typography>
+            <IconButton
+              aria-label={session ? "ไม่ถูกใจ" : "เข้าสู่ระบบเพื่อโหวต"}
+              disabled={!session || busy}
+              onClick={() =>
+                void mutate(`/api/comments/${comment.id}/vote`, "POST", {
+                  value: -1,
+                })
+              }
+              sx={{
+                width: 44,
+                height: 44,
+                color:
+                  capability?.userVote === -1
+                    ? maggaColors.archiveGold
+                    : maggaColors.textSecondary,
+              }}
+            >
+              <ThumbDownIcon fontSize="small" />
+            </IconButton>
+            {!isReply && (
+              <Button onClick={() => setReply(!reply)} sx={{ minHeight: 44 }}>
+                ตอบกลับ
+              </Button>
+            )}
+            {capability?.canEdit && (
+              <Button
+                disabled={busy}
+                onClick={() => {
+                  setDraft(comment.content);
+                  setEditing(true);
+                }}
+                sx={{ minHeight: 44 }}
+              >
+                แก้ไข
+              </Button>
+            )}
+            {capability?.canDelete && (
+              <Button
+                disabled={busy}
+                onClick={() => setConfirmDelete(true)}
+                sx={{ minHeight: 44 }}
+              >
+                ลบ
+              </Button>
+            )}
+            <Button
+              disabled={busy}
+              onClick={() => setReport(!report)}
+              sx={{ minHeight: 44, color: maggaColors.textSecondary }}
+            >
+              รายงาน
+            </Button>
+          </Box>
+        )}
+        {confirmDelete && (
+          <Alert severity="warning" sx={{ my: 1 }}>
+            ลบความคิดเห็นนี้ถาวรหรือไม่? ข้อความและรูปแนบจะถูกลบทันที
+            และกู้คืนไม่ได้ การตอบกลับจะยังอยู่
+            <Button
+              color="error"
+              disabled={busy}
+              onClick={() =>
+                void mutate(`/api/comments/${comment.id}`, "DELETE")
+              }
+            >
+              ยืนยันลบ
+            </Button>
+            <Button disabled={busy} onClick={() => setConfirmDelete(false)}>
+              ยกเลิก
+            </Button>
+          </Alert>
+        )}
+        {report && (
+          <Box sx={{ my: 1 }}>
+            <TextField
+              select
+              label="เหตุผลที่รายงาน"
+              value={reason}
+              onChange={(event) => setReason(event.target.value)}
+              fullWidth
+              size="small"
+            >
+              {[
+                ["spam", "สแปม"],
+                ["abuse", "คุกคามหรือไม่เหมาะสม"],
+                ["image", "รูปภาพมีปัญหา"],
+                ["other", "อื่น ๆ"],
+              ].map(([value, label]) => (
+                <MenuItem key={value} value={value}>
+                  {label}
+                </MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              label="รายละเอียด (ไม่จำเป็น)"
+              fullWidth
+              multiline
+              value={details}
+              onChange={(event) => setDetails(event.target.value)}
+              slotProps={{ htmlInput: { maxLength: 500 } }}
+              sx={{ mt: 1 }}
+            />
+            {(!reportActor || reportActor.requiresVerification) && (
+              <GuestVerification
+                siteKey={reportSiteKey}
+                onToken={setReportToken}
+              />
+            )}
+            <Button
+              disabled={busy}
+              onClick={async () => {
+                setBusy(true);
+                setError("");
+                try {
+                  if (!reportActor || reportActor.requiresVerification) {
+                    if (!reportToken)
+                      throw new Error("กรุณายืนยันก่อนส่งรายงานครั้งแรก");
+                    const identity = await commentRequest<{
+                      actor: CommentActor;
+                    }>("/api/comments/identity", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ challengeToken: reportToken }),
+                    });
+                    setReportActor(identity.actor);
+                    setReportToken(null);
+                  }
+                  await commentRequest(`/api/comments/${comment.id}/report`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ reason, details }),
+                  });
+                  setReport(false);
+                  setNotice("ส่งรายงานแล้ว");
+                } catch (cause) {
+                  setError(
+                    cause instanceof Error ? cause.message : "รายงานไม่ได้",
+                  );
+                  try {
+                    const identity = await commentRequest<{
+                      actor: CommentActor | null;
+                      turnstileSiteKey: string | null;
+                    }>("/api/comments/identity");
+                    setReportActor(identity.actor);
+                    setReportSiteKey(identity.turnstileSiteKey);
+                  } catch {
+                    /* Preserve the report draft and original error. */
+                  }
+                } finally {
+                  setBusy(false);
+                }
+              }}
+              sx={{ minHeight: 44 }}
+            >
+              ส่งรายงาน
+            </Button>
+            <Button onClick={() => setReport(false)}>ยกเลิก</Button>
+          </Box>
+        )}
+        {session && comment.user?.id && comment.user.id !== session.user.id && (
+          <Button
+            disabled={busy}
+            sx={{ minHeight: 44, color: maggaColors.textSecondary }}
+            onClick={async () => {
+              setBusy(true);
+              setError("");
+              try {
+                await commentRequest("/api/user/blocked-users", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ blockedUserId: comment.user?.id }),
+                });
+                setNotice("บล็อกผู้ใช้นี้แล้ว");
+              } catch (cause) {
+                setError(
+                  cause instanceof Error ? cause.message : "บล็อกไม่ได้",
+                );
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            บล็อกผู้ใช้
+          </Button>
+        )}
+        <Box aria-live="polite">
+          {error && <Alert severity="error">{error}</Alert>}
+          {notice && <Typography color="success.main">{notice}</Typography>}
+        </Box>
+        <Collapse in={reply}>
+          <Box sx={{ mt: 2 }}>
+            <CommentBox
+              mangaId={mangaId}
+              imageIndex={imageIndex}
+              parentId={comment.id}
+              placeholder="ตอบกลับ..."
+              onCommentCreated={() => {
+                setReply(false);
+                onRefresh();
+              }}
+            />
+          </Box>
+        </Collapse>
+        {[
+          ...(comment.replies || []),
+          ...extraReplies.filter(
+            (item) =>
+              !(comment.replies || []).some((reply) => reply.id === item.id),
+          ),
+        ].map((child) => (
+          <CommentItem
+            key={child.id}
+            comment={child}
+            mangaId={mangaId}
+            imageIndex={imageIndex}
+            onRefresh={onRefresh}
+            capabilities={childCapabilities}
+            capability={childCapabilities[child.id]}
+            isReply
+          />
+        ))}
+        {replyError && <Alert severity="error">{replyError}</Alert>}
+        {replyCursor && (
+          <Button
+            disabled={replyLoading}
+            onClick={() => void loadReplies()}
+            sx={{ minHeight: 44 }}
+          >
+            {replyLoading
+              ? "กำลังโหลดคำตอบ..."
+              : replyError
+                ? "ลองโหลดคำตอบอีกครั้ง"
+                : "โหลดคำตอบเพิ่มเติม"}
+          </Button>
+        )}
+        <Dialog
+          open={lightbox}
+          onClose={() => setLightbox(false)}
+          maxWidth="lg"
+        >
+          <DialogContent sx={{ bgcolor: maggaColors.background }}>
+            <IconButton
+              aria-label="ปิดรูป"
+              onClick={() => setLightbox(false)}
+              sx={{ width: 44, height: 44 }}
+            >
+              <CloseIcon />
+            </IconButton>
+            {comment.imageUrl && (
+              <Box
+                component="img"
+                src={comment.imageUrl}
+                alt="รูปแนบความคิดเห็นขนาดใหญ่"
+                sx={{
+                  maxWidth: "100%",
+                  maxHeight: "80vh",
+                  objectFit: "contain",
+                }}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+      </Box>
+    </Box>
+  );
 }
-
 export default function CommentList({
   comments,
   mangaId,
   imageIndex,
   onRefresh,
-}: CommentListProps) {
-  if (comments.length === 0) {
-    return (
-      <Box sx={{ py: 4, textAlign: "center" }}>
-        <Typography sx={{
-          color: "text.secondary"
-        }}>ยังไม่มีความคิดเห็น</Typography>
-      </Box>
-    );
-  }
-
+}: {
+  comments: PublicComment[];
+  mangaId: string;
+  imageIndex?: number | null;
+  onRefresh: () => void;
+}) {
+  const { data: session } = useSession();
+  const [capabilities, setCapabilities] = useState<Record<string, Capability>>(
+    {},
+  );
+  const [personalComments, setPersonalComments] = useState<PublicComment[]>([]);
+  const [error, setError] = useState("");
+  const ids = comments
+    .flatMap((comment) => [
+      comment.id,
+      ...(comment.replies || []).map((reply) => reply.id),
+    ])
+    .join(",");
+  const load = useCallback(async () => {
+    try {
+      type PersonalComments = {
+        capabilities: Record<string, Capability>;
+        comments: PublicComment[];
+      };
+      const publicIds = ids ? ids.split(",") : [];
+      const firstIds = publicIds.slice(0, 100);
+      const data = await commentRequest<PersonalComments>(
+        `/api/comments/me?ids=${encodeURIComponent(firstIds.join(","))}&mangaId=${encodeURIComponent(mangaId)}${imageIndex != null ? `&imageIndex=${imageIndex}` : ""}`,
+      );
+      const nextCapabilities = { ...data.capabilities };
+      const remainingIds = [
+        ...publicIds.slice(100),
+        ...(data.comments || [])
+          .map((comment) => comment.id)
+          .filter((id) => !firstIds.includes(id)),
+      ];
+      for (let index = 0; index < remainingIds.length; index += 100) {
+        const extra = await commentRequest<PersonalComments>(
+          `/api/comments/me?ids=${encodeURIComponent(remainingIds.slice(index, index + 100).join(","))}`,
+        );
+        Object.assign(nextCapabilities, extra.capabilities);
+      }
+      setCapabilities(nextCapabilities);
+      setPersonalComments(data.comments || []);
+      setError("");
+    } catch {
+      setCapabilities({});
+      setError("ตรวจสิทธิ์จัดการความคิดเห็นไม่ได้");
+    }
+  }, [ids, mangaId, imageIndex]);
+  useEffect(() => {
+    void load();
+    window.addEventListener("magga-comment-identity", load);
+    return () => window.removeEventListener("magga-comment-identity", load);
+  }, [load, session?.user?.id]);
+  const ownRoots = personalComments.filter(
+    (item) =>
+      !item.parentId && !comments.some((comment) => comment.id === item.id),
+  );
+  const all = [...ownRoots, ...comments].map((comment) => ({
+    ...comment,
+    replies: [
+      ...(comment.replies || []),
+      ...personalComments.filter(
+        (item) =>
+          item.parentId === comment.id &&
+          !(comment.replies || []).some((reply) => reply.id === item.id),
+      ),
+    ],
+  }));
   return (
     <Box>
-      {comments.map((comment) => (
+      {error && (
+        <Alert
+          severity="warning"
+          action={<Button onClick={() => void load()}>ลองใหม่</Button>}
+        >
+          {error}
+        </Alert>
+      )}
+      {all.length === 0 && (
+        <Typography
+          sx={{ py: 4, textAlign: "center", color: maggaColors.textSecondary }}
+        >
+          ยังไม่มีความคิดเห็น ร่วมเริ่มบทสนทนาได้เลย
+        </Typography>
+      )}
+      {all.map((comment) => (
         <CommentItem
           key={comment.id}
           comment={comment}
           mangaId={mangaId}
           imageIndex={imageIndex}
           onRefresh={onRefresh}
+          capabilities={capabilities}
+          capability={capabilities[comment.id]}
         />
       ))}
     </Box>

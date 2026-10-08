@@ -1,40 +1,39 @@
 "use client";
-
-import { useRef, useState, useCallback, useEffect } from "react";
-import { useSession } from "@/lib/auth-client";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Box,
   Avatar,
-  TextField,
-  IconButton,
+  Box,
+  Button,
   CircularProgress,
-  Typography,
+  IconButton,
   Paper,
+  TextField,
+  Typography,
+  Alert,
   Popover,
-  Tooltip,
 } from "@mui/material";
-import SendIcon from "@mui/icons-material/Send";
 import ImageIcon from "@mui/icons-material/Image";
 import EmojiEmotionsIcon from "@mui/icons-material/EmojiEmotions";
-import CloseIcon from "@mui/icons-material/Close";
-import { Theme, EmojiClickData } from "emoji-picker-react";
 import dynamic from "next/dynamic";
-
-import BanNoticeModal from "@/app/components/modals/BanNoticeModal";
-
+import { Theme } from "emoji-picker-react";
 const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
-import AuthModal from "@/app/components/features/auth/AuthModal";
-import { createComment } from "@/app/actions/comments";
-
-interface CommentBoxProps {
+import CloseIcon from "@mui/icons-material/Close";
+import { maggaColors, maggaRadii } from "@/lib/design-tokens";
+import {
+  CommentActor,
+  commentRequest,
+  GuestVerification,
+} from "./guest-client";
+import { useSession } from "@/lib/auth-client";
+import type { PublicComment } from "./CommentList";
+interface Props {
   mangaId: string;
   imageIndex?: number | null;
   parentId?: string;
-  onCommentCreated?: () => void;
+  onCommentCreated?: (comment?: PublicComment) => void;
   placeholder?: string;
   autoFocus?: boolean;
 }
-
 export default function CommentBox({
   mangaId,
   imageIndex = null,
@@ -42,358 +41,383 @@ export default function CommentBox({
   onCommentCreated,
   placeholder = "แสดงความคิดเห็น...",
   autoFocus = false,
-}: CommentBoxProps) {
-  const { data: session, isPending } = useSession();
-  const [content, setContent] = useState("");
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+}: Props) {
+  const { data: session } = useSession();
+  const [actor, setActor] = useState<CommentActor | null>(null);
+  const [siteKey, setSiteKey] = useState<string | null>(null);
+  const [identityLoaded, setIdentityLoaded] = useState(false);
   const [emojiAnchor, setEmojiAnchor] = useState<HTMLButtonElement | null>(
-    null
+    null,
   );
-  const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [banModalOpen, setBanModalOpen] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const textFieldRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    return () => {
-      if (imagePreview) {
-        URL.revokeObjectURL(imagePreview);
-      }
-    };
-  }, [imagePreview]);
-
-  const handleImageSelect = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file) return;
-
-      if (file.size > 3 * 1024 * 1024) {
-        alert("ไฟล์ต้องมีขนาดไม่เกิน 3MB");
-        return;
-      }
-
-      if (
-        !["image/jpeg", "image/png", "image/webp", "image/gif"].includes(
-          file.type
-        )
-      ) {
-        alert("รองรับเฉพาะไฟล์ JPEG, PNG, WebP, GIF");
-        return;
-      }
-
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
-    },
-    []
-  );
-
-  const handleRemoveImage = useCallback(() => {
-    if (imagePreview) {
-      URL.revokeObjectURL(imagePreview);
-    }
-    setImageFile(null);
-    setImagePreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  }, [imagePreview]);
-
-  const handleEmojiSelect = useCallback((emojiData: EmojiClickData) => {
-    setContent((prev) => prev + emojiData.emoji);
-    setEmojiAnchor(null);
-    textFieldRef.current?.focus();
-  }, []);
-
-  const handleSubmit = useCallback(async () => {
-    if (!content.trim() && !imageFile) return;
-    if (isSubmitting) return;
-
-    setIsSubmitting(true);
-
+  const [content, setContent] = useState("");
+  const [name, setName] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [assetId, setAssetId] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [phase, setPhase] = useState("");
+  const [error, setError] = useState("");
+  const [identityError, setIdentityError] = useState("");
+  const [notice, setNotice] = useState("");
+  const input = useRef<HTMLInputElement>(null);
+  const submission = useRef<{ fingerprint: string; key: string } | null>(null);
+  const submitting = useRef(false);
+  const loadIdentity = useCallback(async () => {
     try {
-      // Upload image if provided (still uses API for file upload)
-      let imageUrl: string | undefined;
-
-      if (imageFile) {
-        const formData = new FormData();
-        formData.append("file", imageFile);
-
-        const uploadRes = await fetch("/api/comments/upload", {
+      const result = await commentRequest<{
+        actor: CommentActor | null;
+        turnstileSiteKey: string | null;
+      }>("/api/comments/identity");
+      setActor(result.actor);
+      setSiteKey(result.turnstileSiteKey);
+      setIdentityLoaded(true);
+      setIdentityError("");
+    } catch (cause) {
+      setIdentityError(
+        cause instanceof Error ? cause.message : "ตรวจตัวตนไม่ได้",
+      );
+    }
+  }, []);
+  useEffect(() => {
+    void loadIdentity();
+    const refreshIdentity = () => {
+      void loadIdentity();
+    };
+    window.addEventListener("magga-comment-identity", refreshIdentity);
+    return () =>
+      window.removeEventListener("magga-comment-identity", refreshIdentity);
+  }, [loadIdentity, session?.user?.id]);
+  useEffect(() => {
+    if (!file) {
+      setPreview(null);
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    setPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+  const submit = async () => {
+    if (
+      submitting.current ||
+      (!content.trim() && !file) ||
+      content.length > 500
+    )
+      return;
+    if (!identityLoaded) {
+      await loadIdentity();
+      return;
+    }
+    if ((!actor || actor.requiresVerification) && !token) {
+      setError("กรุณายืนยันก่อนส่งครั้งแรก ข้อความและรูปของคุณยังอยู่");
+      return;
+    }
+    submitting.current = true;
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      if (!actor || actor.requiresVerification) {
+        setPhase("กำลังยืนยัน...");
+        const identity = await commentRequest<{ actor: CommentActor }>(
+          "/api/comments/identity",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              challengeToken: token,
+              displayName: name.trim() || undefined,
+            }),
+          },
+        );
+        setActor(identity.actor);
+        setToken(null);
+      }
+      let currentAsset = assetId;
+      if (file && !currentAsset) {
+        setPhase("กำลังอัปโหลดรูป...");
+        const form = new FormData();
+        form.append("file", file);
+        const uploaded = await commentRequest<{ assetId: string }>(
+          "/api/comments/upload",
+          { method: "POST", body: form },
+        );
+        currentAsset = uploaded.assetId;
+        setAssetId(currentAsset);
+      }
+      setPhase("กำลังส่ง...");
+      const fingerprint = JSON.stringify([
+        mangaId,
+        imageIndex,
+        parentId,
+        content.trim(),
+        currentAsset,
+      ]);
+      if (submission.current?.fingerprint !== fingerprint)
+        submission.current = { fingerprint, key: crypto.randomUUID() };
+      const result = await commentRequest<{ comment: PublicComment }>(
+        "/api/comments",
+        {
           method: "POST",
-          body: formData,
-        });
-
-        if (!uploadRes.ok) {
-          const err = await uploadRes.json();
-          throw new Error(err.error || "Upload failed");
-        }
-
-        const { url } = await uploadRes.json();
-        imageUrl = url;
-      }
-
-      // Use Server Action instead of fetch
-      const formData = new FormData();
-      formData.append("mangaId", mangaId);
-      formData.append("content", content.trim());
-      if (imageIndex !== null && imageIndex !== undefined) {
-        formData.append("imageIndex", String(imageIndex));
-      }
-      if (imageUrl) {
-        formData.append("imageUrl", imageUrl);
-      }
-      if (parentId) {
-        formData.append("parentId", parentId);
-      }
-
-      const result = await createComment(formData);
-
-      if (result.error) {
-        throw new Error(result.error);
-      }
-
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mangaId,
+            imageIndex,
+            parentId,
+            content: content.trim(),
+            assetId: currentAsset || undefined,
+            idempotencyKey: submission.current.key,
+          }),
+        },
+      );
       setContent("");
-      handleRemoveImage();
-      onCommentCreated?.();
-    } catch (error) {
-      const errMsg = error instanceof Error ? error.message : "เกิดข้อผิดพลาด";
-      if (errMsg === "บัญชีของคุณถูกระงับการใช้งาน") {
-        setBanModalOpen(true);
-      } else {
-        console.error("Error posting comment:", error);
-        alert(errMsg);
+      setFile(null);
+      setAssetId(null);
+      submission.current = null;
+      if (input.current) input.current.value = "";
+      setNotice("เผยแพร่ความคิดเห็นแล้ว");
+      onCommentCreated?.(result.comment);
+      window.dispatchEvent(new Event("magga-comment-identity"));
+    } catch (cause) {
+      setError(
+        cause instanceof Error ? cause.message : "ส่งไม่ได้ กรุณาลองใหม่",
+      );
+      try {
+        const identity = await commentRequest<{
+          actor: CommentActor | null;
+          turnstileSiteKey: string | null;
+        }>("/api/comments/identity");
+        setActor(identity.actor);
+        setSiteKey(identity.turnstileSiteKey);
+      } catch {
+        /* Keep the original actionable error and draft. */
       }
     } finally {
-      setIsSubmitting(false);
+      submitting.current = false;
+      setBusy(false);
+      setPhase("");
     }
-  }, [
-    content,
-    imageFile,
-    mangaId,
-    imageIndex,
-    parentId,
-    handleRemoveImage,
-    onCommentCreated,
-    isSubmitting,
-  ]);
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        handleSubmit();
-      }
-    },
-    [handleSubmit]
-  );
-
-  // ลดความโค้งมน: 20% ของเดิม (จาก 2-3 เหลือ ~0.5)
-  const borderRadius = 0.5;
-
-  if (isPending) {
-    return (
-      <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
-        <CircularProgress size={24} aria-label="กำลังโหลด" />
-      </Box>
-    );
-  }
-
-  if (!session) {
-    return (
-      <>
-        <Paper
-          onClick={() => setAuthModalOpen(true)}
-          sx={{
-            p: 2,
-            bgcolor: "rgba(255,255,255,0.05)",
-            borderRadius: borderRadius,
-            textAlign: "center",
-            cursor: "pointer",
-            transition: "background-color 0.2s",
-            "&:hover": { bgcolor: "rgba(255,255,255,0.08)" },
-          }}
-        >
-          <Typography sx={{
-            color: "text.secondary"
-          }}>
-            กรุณา{" "}
-            <Typography
-              component="span"
-              sx={{ color: "#38bdf8", fontWeight: 500 }}
-            >
-              เข้าสู่ระบบ
-            </Typography>{" "}
-            เพื่อแสดงความคิดเห็น
-          </Typography>
-        </Paper>
-        <AuthModal
-          open={authModalOpen}
-          onClose={() => setAuthModalOpen(false)}
-        />
-      </>
-    );
-  }
-
+  };
   return (
     <Box sx={{ display: "flex", gap: 1.5, alignItems: "flex-start" }}>
       <Avatar
-        src={session.user?.image || undefined}
-        alt={session.user?.name || "User"}
-        sx={{ width: 40, height: 40 }}
+        src={actor?.image || undefined}
+        sx={{
+          display: { xs: "none", sm: "flex" },
+          width: 40,
+          height: 40,
+          bgcolor: maggaColors.surfaceElevated,
+        }}
       >
-        {session.user?.name?.[0]?.toUpperCase() || "U"}
+        {actor?.name?.[0] || "G"}
       </Avatar>
-
-      <Box sx={{ flex: 1 }}>
+      <Popover
+        open={Boolean(emojiAnchor)}
+        anchorEl={emojiAnchor}
+        onClose={() => setEmojiAnchor(null)}
+        anchorOrigin={{ vertical: "top", horizontal: "left" }}
+      >
+        <EmojiPicker
+          theme={Theme.DARK}
+          width={280}
+          height={340}
+          onEmojiClick={(data) => {
+            setContent((previous) => previous + data.emoji);
+            setEmojiAnchor(null);
+          }}
+        />
+      </Popover>
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography
+          variant="body2"
+          sx={{ color: maggaColors.textSecondary, mb: 1 }}
+        >
+          {actor
+            ? `${actor.name}${actor.kind === "guest" ? ` · ผู้เยี่ยมชม #${actor.publicCode || ""}` : ""}`
+            : "คอมเมนต์และแนบรูปได้โดยไม่ต้องสมัครสมาชิก"}
+        </Typography>
+        {!actor && (
+          <TextField
+            label="ชื่อเล่น (ไม่จำเป็น)"
+            size="small"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            disabled={busy}
+            slotProps={{ htmlInput: { maxLength: 40 } }}
+            sx={{ mb: 1, width: "100%" }}
+          />
+        )}
         <Paper
           sx={{
-            bgcolor: "rgba(255,255,255,0.08)",
-            borderRadius: borderRadius,
-            overflow: "hidden",
+            bgcolor: maggaColors.surface,
+            borderRadius: `${maggaRadii.md}px`,
+            p: 1.5,
+            backgroundImage: "none",
           }}
         >
           <TextField
-            inputRef={textFieldRef}
             fullWidth
             multiline
+            minRows={2}
             maxRows={6}
-            placeholder={placeholder}
+            label={placeholder}
             value={content}
-            onChange={(e) => setContent(e.target.value)}
-            onKeyDown={handleKeyDown}
+            onChange={(event) => setContent(event.target.value)}
+            disabled={busy}
             autoFocus={autoFocus}
-            disabled={isSubmitting}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                border: "none",
-                "& fieldset": { border: "none" },
-              },
-              "& .MuiInputBase-input": {
-                p: 1.5,
-                color: "white",
-                "&::placeholder": { color: "rgba(255,255,255,0.5)" },
-              },
+            onKeyDown={(event) => {
+              if (
+                event.key === "Enter" &&
+                (event.ctrlKey || event.metaKey) &&
+                !event.nativeEvent.isComposing
+              ) {
+                event.preventDefault();
+                void submit();
+              }
             }}
           />
-
-          {imagePreview && (
-            <Box sx={{ position: "relative", mx: 1.5, mb: 1 }}>
+          {preview && (
+            <Box sx={{ position: "relative", mt: 1, minHeight: 120 }}>
               <Box
                 component="img"
-                src={imagePreview}
-                alt="Preview"
-                sx={{
-                  maxWidth: "100%",
-                  maxHeight: 200,
-                  borderRadius: borderRadius,
-                  objectFit: "contain",
-                }}
+                src={preview}
+                alt="ตัวอย่างรูปแนบ"
+                sx={{ maxHeight: 200, maxWidth: "100%", objectFit: "contain" }}
               />
               <IconButton
-                size="small"
-                onClick={handleRemoveImage}
+                aria-label="นำรูปออก"
+                disabled={busy}
+                onClick={() => {
+                  setFile(null);
+                  setAssetId(null);
+                  if (input.current) input.current.value = "";
+                }}
                 sx={{
                   position: "absolute",
-                  top: 4,
-                  right: 4,
-                  bgcolor: "rgba(0,0,0,0.6)",
-                  color: "white",
-                  borderRadius: borderRadius,
-                  "&:hover": { bgcolor: "rgba(0,0,0,0.8)" },
+                  top: 0,
+                  right: 0,
+                  width: 44,
+                  height: 44,
+                  bgcolor: maggaColors.surfaceElevated,
                 }}
               >
-                <CloseIcon fontSize="small" />
+                <CloseIcon />
               </IconButton>
             </Box>
           )}
-
           <Box
             sx={{
               display: "flex",
               alignItems: "center",
-              justifyContent: "space-between",
-              px: 1,
-              py: 0.5,
-              borderTop: "1px solid rgba(255,255,255,0.08)",
+              gap: 1,
+              mt: 1,
+              flexWrap: "wrap",
             }}
           >
-            <Box sx={{ display: "flex", gap: 0.5 }}>
-              <Tooltip title="แนบรูปภาพ">
-                <IconButton
-                  size="small"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isSubmitting}
-                  sx={{ color: "#4ade80" }}
-                  aria-label="แนบรูปภาพ"
-                >
-                  <ImageIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                hidden
-                onChange={handleImageSelect}
-              />
-
-              <Tooltip title="เพิ่ม Emoji">
-                <IconButton
-                  size="small"
-                  onClick={(e) => setEmojiAnchor(e.currentTarget)}
-                  disabled={isSubmitting}
-                  sx={{ color: "rgba(255,255,255,0.6)" }}
-                  aria-label="เพิ่ม Emoji"
-                >
-                  <EmojiEmotionsIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <Popover
-                open={Boolean(emojiAnchor)}
-                anchorEl={emojiAnchor}
-                onClose={() => setEmojiAnchor(null)}
-                anchorOrigin={{ vertical: "top", horizontal: "left" }}
-                transformOrigin={{ vertical: "bottom", horizontal: "left" }}
-              >
-                <EmojiPicker
-                  onEmojiClick={handleEmojiSelect}
-                  theme={Theme.DARK}
-                  lazyLoadEmojis={true}
-                  searchPlaceHolder="ค้นหา emoji..."
-                  width={300}
-                  height={400}
-                />
-              </Popover>
-            </Box>
-
+            <input
+              ref={input}
+              type="file"
+              hidden
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              onChange={(event) => {
+                const next = event.target.files?.[0];
+                if (!next) return;
+                if (
+                  next.size > 3 * 1024 * 1024 ||
+                  ![
+                    "image/jpeg",
+                    "image/png",
+                    "image/webp",
+                    "image/gif",
+                  ].includes(next.type)
+                ) {
+                  setError("รองรับ JPEG, PNG, WebP, GIF ไม่เกิน 3 MB");
+                  event.target.value = "";
+                  return;
+                }
+                setError("");
+                setFile(next);
+                setAssetId(null);
+              }}
+            />
             <IconButton
-              size="small"
-              onClick={handleSubmit}
-              disabled={isSubmitting || (!content.trim() && !imageFile)}
+              aria-label="แนบรูป"
+              disabled={busy}
+              onClick={() => input.current?.click()}
+              sx={{ width: 44, height: 44, color: maggaColors.archiveGold }}
+            >
+              <ImageIcon />
+            </IconButton>
+            <IconButton
+              aria-label="เลือกอีโมจิ"
+              disabled={busy}
+              onClick={(event) => setEmojiAnchor(event.currentTarget)}
+              sx={{ width: 44, height: 44 }}
+            >
+              <EmojiEmotionsIcon />
+            </IconButton>
+            <Typography
+              variant="caption"
               sx={{
                 color:
-                  content.trim() || imageFile
-                    ? "#38bdf8"
-                    : "rgba(255,255,255,0.3)",
-                "&:disabled": { color: "rgba(255,255,255,0.2)" },
+                  content.length > 500
+                    ? "error.main"
+                    : maggaColors.textSecondary,
               }}
-              aria-label="ส่งความคิดเห็น"
             >
-              {isSubmitting ? (
-                <CircularProgress size={20} aria-label="กำลังส่ง" />
+              {content.length}/500
+            </Typography>
+            <Button
+              variant="contained"
+              disabled={
+                busy || (!content.trim() && !file) || content.length > 500
+              }
+              onClick={() => void submit()}
+              sx={{
+                ml: "auto",
+                minHeight: 44,
+                bgcolor: maggaColors.archiveGold,
+                "&:hover": { bgcolor: maggaColors.archiveGoldHover },
+              }}
+            >
+              {busy ? (
+                <>
+                  <CircularProgress size={16} sx={{ mr: 1 }} />
+                  {phase}
+                </>
               ) : (
-                <SendIcon fontSize="small" />
+                "ส่งความคิดเห็น"
               )}
-            </IconButton>
+            </Button>
           </Box>
+          {(!actor || actor.requiresVerification) && (
+            <GuestVerification siteKey={siteKey} onToken={setToken} />
+          )}
         </Paper>
+        {(!actor || actor.kind === "guest") && (
+          <Typography
+            variant="caption"
+            sx={{ display: "block", mt: 1, color: maggaColors.textSecondary }}
+          >
+            จำสิทธิ์ด้วยคุกกี้ในเบราว์เซอร์นี้ ล้างคุกกี้แล้วจะจัดการข้อความเดิมไม่ได้
+          </Typography>
+        )}
+        <Box sx={{ minHeight: 28, mt: 1 }} aria-live="polite">
+          {(error || identityError) && (
+            <Alert
+              severity="error"
+              action={
+                !identityLoaded ? (
+                  <Button onClick={() => void loadIdentity()}>ลองใหม่</Button>
+                ) : undefined
+              }
+            >
+              {error || identityError}
+            </Alert>
+          )}
+          {notice && <Typography color="success.main">{notice}</Typography>}
+        </Box>
       </Box>
-      <BanNoticeModal
-        open={banModalOpen}
-        onClose={() => setBanModalOpen(false)}
-      />
     </Box>
   );
 }

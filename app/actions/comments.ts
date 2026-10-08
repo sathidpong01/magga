@@ -24,7 +24,9 @@ export async function createComment(
       imageIndex: formData.get("imageIndex")
         ? Number(formData.get("imageIndex"))
         : undefined,
-      imageUrl: (formData.get("imageUrl") as string) || null,
+      assetId: (formData.get("assetId") as string) || null,
+      idempotencyKey: (formData.get("idempotencyKey") as string) || undefined,
+      challengeToken: (formData.get("challengeToken") as string) || undefined,
       parentId: (formData.get("parentId") as string) || null,
     };
 

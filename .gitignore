@@ -89,3 +89,8 @@ config.local.ts
 .windsurf/
 
 
+!db/migrations/0013_guest_comments.sql
+
+# Browser verification artifacts (may contain fixture identifiers)
+.playwright-cli/
+output/playwright/
