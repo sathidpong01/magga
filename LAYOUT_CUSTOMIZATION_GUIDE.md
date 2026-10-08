@@ -673,7 +673,7 @@ border: "1px solid rgba(255, 255, 255, 0.1)";
 
 ```bash
 # รัน dev server
-npm run dev
+bun run dev
 
 # เปิดเบราว์เซอร์ที่ http://localhost:3000
 ```

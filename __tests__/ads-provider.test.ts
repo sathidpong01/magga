@@ -1,26 +1,29 @@
-import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, afterEach, describe, expect, it, jest, mock } from "bun:test";
+import { stubGlobal, restoreGlobals } from "./helpers/globals";
 
-const mocks = vi.hoisted(() => ({ effects: [] as Array<() => void | (() => void)>, setState: vi.fn(), pathname: "/" }));
-vi.mock("react", async (importOriginal) => ({
-  ...await importOriginal<typeof import("react")>(),
+const fetchMock = jest.fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Partial<Response>>>();
+const mocks = { effects: [] as Array<() => void | (() => void)>, setState: jest.fn(), pathname: "/" };
+const originalReact = await import("react");
+mock.module("react", () => ({
+  ...originalReact,
   useState: (value: unknown) => [value, mocks.setState],
   useRef: (current: unknown) => ({ current }),
   useEffect: (effect: () => void | (() => void)) => { mocks.effects.push(effect); },
 }));
-vi.mock("next/navigation", () => ({ usePathname: () => mocks.pathname }));
-import { AdsProvider } from "@/app/components/features/ads/AdsProvider";
+mock.module("next/navigation", () => ({ usePathname: () => mocks.pathname }));
+const { AdsProvider } = await import("@/app/components/features/ads/AdsProvider");
 
 describe("advertisement request freshness", () => {
   beforeEach(() => {
     mocks.effects = [];
     mocks.setState.mockClear();
-    vi.useFakeTimers();
-    vi.setSystemTime(100000);
-    vi.stubGlobal("window", new EventTarget());
-    vi.stubGlobal("document", { visibilityState: "visible" });
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: async () => [] }));
+    jest.useFakeTimers();
+    jest.setSystemTime(100000);
+    stubGlobal("window", new EventTarget());
+    stubGlobal("document", { visibilityState: "visible" });
+    stubGlobal("fetch", fetchMock.mockReset().mockResolvedValue({ ok: true, json: async () => [] }));
   });
-  afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
+  afterEach(() => { jest.useRealTimers(); restoreGlobals(); });
 
   it("uses server data without an extra initial request", () => {
     AdsProvider({ children: null, initialAds: [] });
@@ -31,26 +34,26 @@ describe("advertisement request freshness", () => {
     if (typeof cleanup === "function") cleanup();
   });
   it("deduplicates mount, navigation and focus requests while pending", () => {
-    vi.mocked(fetch).mockReturnValue(new Promise(() => {}));
+    fetchMock.mockReturnValue(new Promise(() => {}));
     AdsProvider({ children: null });
     const cleanup = mocks.effects[0]();
     mocks.effects[1]();
     window.dispatchEvent(new Event("focus"));
     expect(fetch).toHaveBeenCalledTimes(1);
     if (typeof cleanup === "function") cleanup();
-    expect(vi.mocked(fetch).mock.calls[0][1]?.signal?.aborted).toBe(true);
+    expect(fetchMock.mock.calls[0][1]?.signal?.aborted).toBe(true);
   });
   it("refreshes on focus when the snapshot is stale", () => {
     AdsProvider({ children: null, initialAds: [] });
     const cleanup = mocks.effects[0]();
-    vi.advanceTimersByTime(31000);
+    jest.advanceTimersByTime(31000);
     expect(fetch).not.toHaveBeenCalled();
     window.dispatchEvent(new Event("focus"));
     expect(fetch).toHaveBeenCalledTimes(1);
     if (typeof cleanup === "function") cleanup();
   });
   it("skips requests in hidden tabs", () => {
-    vi.stubGlobal("document", { visibilityState: "hidden" });
+    stubGlobal("document", { visibilityState: "hidden" });
     AdsProvider({ children: null });
     const cleanup = mocks.effects[0]();
     expect(fetch).not.toHaveBeenCalled();

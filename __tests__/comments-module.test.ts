@@ -1,17 +1,17 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, jest, mock } from "bun:test";
 
-const mocks = vi.hoisted(() => ({
-  getSession: vi.fn(),
-  checkRateLimit: vi.fn(),
-  dbSelect: vi.fn(),
-  dbInsert: vi.fn(),
-  dbUpdate: vi.fn(),
-  dbDelete: vi.fn(),
-  dbFindMany: vi.fn(),
-  revalidatePath: vi.fn(),
-}));
+const mocks = {
+  getSession: jest.fn(),
+  checkRateLimit: jest.fn(),
+  dbSelect: jest.fn(),
+  dbInsert: jest.fn(),
+  dbUpdate: jest.fn(),
+  dbDelete: jest.fn(),
+  dbFindMany: jest.fn(),
+  revalidatePath: jest.fn(),
+};
 
-vi.mock("@/lib/auth", () => ({
+mock.module("@/lib/auth", () => ({
   auth: {
     api: {
       getSession: mocks.getSession,
@@ -19,15 +19,15 @@ vi.mock("@/lib/auth", () => ({
   },
 }));
 
-vi.mock("@/lib/rate-limit", () => ({
+mock.module("@/lib/rate-limit", () => ({
   checkRateLimit: mocks.checkRateLimit,
 }));
 
-vi.mock("next/cache", () => ({
+mock.module("next/cache", () => ({
   revalidatePath: mocks.revalidatePath,
 }));
 
-vi.mock("@/db", () => ({
+mock.module("@/db", () => ({
   db: {
     select: mocks.dbSelect,
     insert: mocks.dbInsert,
@@ -41,7 +41,7 @@ vi.mock("@/db", () => ({
   },
 }));
 
-import {
+const {
   CommentError,
   UnauthorizedCommentError,
   ForbiddenCommentError,
@@ -56,12 +56,12 @@ import {
   deleteComment,
   voteComment,
   listComments,
-} from "@/lib/comments";
+} = await import("@/lib/comments");
 import type { CallerContext } from "@/lib/auth-helpers";
 
 describe("Comments Module (lib/comments)", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
     mocks.checkRateLimit.mockResolvedValue({ allowed: true });
   });
 

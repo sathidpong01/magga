@@ -56,19 +56,21 @@ The app and database are currently running. Local preview: `http://127.0.0.1:310
 
 For a later restart, run in separate terminals from this worktree:
 
+Use Bun 1.4.2 for these commands. When configuring a local MCP client after the runtime migration, set its credential-helper command to the absolute Bun executable followed by the absolute `scripts/mcp-codex-headers.cjs` path. Keep credentials in the existing ignored file; helper stdout contains the authentication header and must not be logged.
+
 ```powershell
-npm run mcp:db
-npm run start -- --hostname 127.0.0.1 --port 3100
+bun run mcp:db
+bun run start --hostname 127.0.0.1 --port 3100
 ```
 
 Use Ctrl+C in those terminals to stop services. The current hidden service process IDs are recorded in `.local/mcp/database.pid` (tsx launcher) and `.local/mcp/web.pid` (Next.js); the database TCP listener runs as the launcher's child process. Do not stop unrelated Node.js processes.
 
 ```powershell
-npm run mcp:smoke
+bun run mcp:smoke
 ```
 
 The smoke test adds a currently unused tag to a sample manga on every run. It is designed for this disposable local sample, not production, and hardcodes both local endpoints. It fails once there are no unused sample tags. Tokens are loaded from the ignored credential file and never passed as CLI arguments or printed.
 
-`npm run mcp:bootstrap` refuses to overwrite an existing database or `.env.local`. It is not a reset command. Reconstruction requires the reviewed local reference/sample files; obtain fresh snapshots with the same read-only projections if those files are absent. Preserve/move existing local state before deliberately creating a new test environment.
+`bun run mcp:bootstrap` refuses to overwrite an existing database or `.env.local`. It is not a reset command. Reconstruction requires the reviewed local reference/sample files; obtain fresh snapshots with the same read-only projections if those files are absent. Preserve/move existing local state before deliberately creating a new test environment.
 
 Follow-up: Codex is now configured and its app-server discovered all 12 tools using the local credential helper; see `MCP_CODEX_CHECKPOINT.md`. Restart the desktop client to refresh an existing task's tool inventory. Claude/Antigravity configuration has not been changed. An external/cloud client cannot reach this machine's loopback URL. Hosted preview/native PostgreSQL parity remains a separate verification step.

@@ -83,18 +83,18 @@ To update or extend this skill:
 
 ```bash
 # Development
-npm run dev
+bun run dev
 
 # Database
-npm run db:generate
-npm run db:migrate
-npm run db:studio
+bun run db:generate
+bun run db:migrate
+bun run db:studio
 
 # Versioning
-npm version patch --no-git-tag-version
+bun run version patch
 
 # Build
-npm run build
+bun run build
 ```
 
 ## Related Documentation

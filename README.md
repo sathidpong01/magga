@@ -130,8 +130,10 @@ cd magga
 
 ### 2. ติดตั้ง Dependencies
 
+Install [Bun 1.4.2](https://bun.com/docs/installation) before running project commands. The committed `bun.lock` is the dependency source of truth; a clean checkout uses a frozen install.
+
 ```bash
-npm install
+bun install --frozen-lockfile
 ```
 
 ### 3. ตั้งค่า Environment Variables
@@ -164,7 +166,7 @@ R2_PUBLIC_URL="https://pub-xxxxxxxx.r2.dev"
 
 ```bash
 # รัน baseline migration
-npm run db:migrate
+bun run db:migrate
 ```
 
 > **Note:** baseline SQL migrations และ Drizzle schema อยู่ในโฟลเดอร์ `db/` และไฟล์ `drizzle.config.ts`
@@ -172,7 +174,7 @@ npm run db:migrate
 ### 5. รันโปรเจกต์
 
 ```bash
-npm run dev
+bun run dev
 ```
 
 เปิดเบราว์เซอร์ไปที่ [http://localhost:3000](http://localhost:3000)
@@ -182,6 +184,10 @@ npm run dev
 ## ⚡ Vercel Deployment & Optimization
 
 โปรเจกต์นี้ได้รับการ optimize พิเศษสำหรับ Vercel deployment เพื่อประสิทธิภาพสูงสุด:
+
+Deployment uses `framework: "nextjs"`, `bunVersion: "1.4.x"`, `bun install --frozen-lockfile`, and `bun run build` in `vercel.json`. Vercel manages Bun patch versions; local development and CI pin 1.4.2. The [Vercel Bun runtime](https://vercel.com/docs/functions/runtimes/bun) is currently in beta.
+
+Before submitting changes, run `bun run runtime:check`, `bun run lint`, `bun run typecheck`, `bun run test`, and `bun run build`. Tests use Bun's native test runner through `bun run test`; per-file isolation prevents mocked modules from leaking between suites.
 
 ### 🚀 Performance Optimizations (2026-02-14 Major Update)
 

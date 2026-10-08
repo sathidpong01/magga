@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "bun:test";
 
 import {
   sanitizeFilename,
@@ -33,7 +33,7 @@ describe("sanitize helpers", () => {
   });
 
   it("removes sensitive fields recursively in sanitizeResponse", () => {
-    expect(
+    expect<unknown>(
       sanitizeResponse({
         id: "1",
         password: "secret",

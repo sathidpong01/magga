@@ -1,22 +1,24 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, jest, mock } from "bun:test";
 import type { ReactElement } from "react";
 
-const mocks = vi.hoisted(() => ({ fetch: vi.fn() }));
-vi.mock("react", async (importOriginal) => ({
-  ...await importOriginal<typeof import("react")>(),
-  useState: (initial: unknown) => [typeof initial === "function" ? initial() : initial, vi.fn()],
-  useEffect: vi.fn(),
+const mocks = { fetch: jest.fn() };
+const originalReact = await import("react");
+mock.module("react", () => ({
+  ...originalReact,
+  useState: (initial: unknown) => [typeof initial === "function" ? initial() : initial, jest.fn()],
+  useEffect: jest.fn(),
   useRef: (current: unknown) => ({ current }),
   useCallback: (callback: unknown) => callback,
 }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ back: vi.fn(), push: vi.fn(), refresh: vi.fn() }) }));
-vi.mock("@dnd-kit/core", async (importOriginal) => ({
-  ...await importOriginal<typeof import("@dnd-kit/core")>(),
-  useSensor: vi.fn(), useSensors: vi.fn(),
+mock.module("next/navigation", () => ({ useRouter: () => ({ back: jest.fn(), push: jest.fn(), refresh: jest.fn() }) }));
+const originalDnd = await import("@dnd-kit/core");
+mock.module("@dnd-kit/core", () => ({
+  ...originalDnd,
+  useSensor: jest.fn(), useSensors: jest.fn(),
 }));
-vi.mock("@/lib/auth-fetch", () => ({ authFetch: mocks.fetch }));
+mock.module("@/lib/auth-fetch", () => ({ authFetch: mocks.fetch }));
 
-import MangaForm from "@/app/components/forms/MangaForm";
+const { default: MangaForm } = await import("@/app/components/forms/MangaForm");
 
 type FormElement = ReactElement<{
   component?: string;
@@ -61,7 +63,7 @@ describe("manga editor publishing", () => {
   it.each([true, false])("preserves stored visibility on a normal update (hidden=%s)", async (isHidden) => {
     const tree = renderForm(isHidden);
     const form = findElement(tree, (element) => element.props.component === "form")!;
-    await form.props.onSubmit!({ preventDefault: vi.fn() });
+    await form.props.onSubmit!({ preventDefault: jest.fn() });
     const [endpoint, options] = mocks.fetch.mock.calls[0];
     expect(endpoint).toBe("/api/manga/manga-id");
     expect(options.method).toBe("PUT");
@@ -73,7 +75,7 @@ describe("manga editor publishing", () => {
   it("provides an explicit publish action for a draft", async () => {
     const button = findElement(renderForm(true), (element) => element.props.children === "เผยแพร่มังงะ");
     expect(button).toBeDefined();
-    await button!.props.onClick!({ preventDefault: vi.fn() });
+    await button!.props.onClick!({ preventDefault: jest.fn() });
     expect(JSON.parse(mocks.fetch.mock.calls[0][1].body).isHidden).toBe(false);
   });
 });

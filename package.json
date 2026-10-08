@@ -1,30 +1,35 @@
 {
   "name": "magga",
-  "version": "2.21.2",
+  "version": "2.21.3",
   "private": true,
   "author": "Magga",
   "license": "UNLICENSED",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint .",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio",
-    "analyze": "next experimental-analyze --output",
-    "preview": "next start",
-    "env:sync": "node scripts/sync-env.js",
-    "mcp:keys": "tsx scripts/mcp-keys.ts",
-    "mcp:db": "tsx scripts/mcp-local-db.ts",
-    "mcp:bootstrap": "tsx scripts/mcp-local-bootstrap.ts",
-    "mcp:smoke": "tsx scripts/mcp-local-smoke.ts"
+    "dev": "bun run --bun next dev",
+    "build": "bun run --bun next build",
+    "start": "bun run --bun next start",
+    "lint": "bun run --bun eslint .",
+    "typecheck": "bun run --bun tsc --noEmit",
+    "test": "bun test --isolate",
+    "test:watch": "bun test --isolate --watch",
+    "db:generate": "bun run --bun drizzle-kit generate",
+    "db:migrate": "bun run --bun drizzle-kit migrate",
+    "db:push": "bun run --bun drizzle-kit push",
+    "db:studio": "bun run --bun drizzle-kit studio",
+    "analyze": "bun run --bun next experimental-analyze --output",
+    "preview": "bun run --bun next start",
+    "env:sync": "bun scripts/sync-env.js",
+    "mcp:keys": "bun scripts/mcp-keys.ts",
+    "mcp:db": "bun scripts/mcp-local-db.ts",
+    "mcp:bootstrap": "bun scripts/mcp-local-bootstrap.ts",
+    "mcp:smoke": "bun scripts/mcp-local-smoke.ts",
+    "mcp:snapshot": "bun scripts/mcp-sync-snapshot.ts",
+    "version": "bun scripts/version.ts",
+    "runtime:check": "bun scripts/runtime-check.ts"
   },
+  "packageManager": "bun@1.4.2",
   "engines": {
-    "node": "24.x"
+    "bun": "1.4.x"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1127.0",
@@ -62,6 +67,7 @@
     "@electric-sql/pglite-socket": "0.2.11",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^25.9.5",
+    "@types/bun": "1.4.2",
     "@types/pg": "^8.23.1",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
@@ -71,9 +77,8 @@
     "picomatch": "^4.0.7",
     "postcss": "^8.5.28",
     "tailwindcss": "^4.3.3",
-    "tsx": "^4.23.13",
     "typescript": "^6.0.3",
-    "vitest": "^4.1.11",
+    "vercel": "63.1.0",
     "yaml": "^2.9.0"
   },
   "overrides": {
@@ -82,8 +87,5 @@
     "inflight": "^1.0.6",
     "node-fetch": "^3.3.2"
   },
-  "allowScripts": {
-    "esbuild": true,
-    "unrs-resolver": true
-  }
+  "trustedDependencies": ["esbuild", "unrs-resolver", "sharp"]
 }

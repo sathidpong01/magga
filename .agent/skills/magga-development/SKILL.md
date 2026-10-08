@@ -40,11 +40,11 @@ Use this skill when:
 
 ## Version Updates
 
-Before finishing any codebase change, update the project version in `package.json` and `package-lock.json`.
+Before finishing any codebase change, update the project version in `package.json` and `bun.lock`.
 
-- Use `npm version patch --no-git-tag-version` for bug fixes, dependency updates, small UI/copy/docs/workflow changes, and low-risk maintenance.
-- Use `npm version minor --no-git-tag-version` for compatible user-facing features, new routes, new settings, or new API capabilities.
-- Use `npm version major --no-git-tag-version` for breaking changes or required manual migrations.
+- Use `bun run version patch` for bug fixes, dependency updates, small UI/copy/docs/workflow changes, and low-risk maintenance.
+- Use `bun run version minor` for compatible user-facing features, new routes, new settings, or new API capabilities.
+- Use `bun run version major` for breaking changes or required manual migrations.
 - If a task edits files but should not bump the version, document the reason in the final response.
 
 ## Architecture Decision Trees
@@ -75,7 +75,7 @@ Is it a new page?
 ```
 Need to modify database?
 ├─ Update `db/schema.ts` (PostgreSQL dialect)
-├─ Run `npm run db:generate` then `npm run db:migrate`
+├─ Run `bun run db:generate` then `bun run db:migrate`
 ├─ Update TypeScript types if needed
 └─ Update affected API endpoints and components
 ```
@@ -269,20 +269,20 @@ magga/
 
 ```bash
 # Development
-npm run dev                # Start dev server
+bun run dev                # Start dev server
 
 # Database (PostgreSQL + Drizzle)
-npm run db:generate        # Generate migration files
-npm run db:migrate         # Apply migrations to DB
-npm run db:push            # Push schema (dev/prototyping only)
-npm run db:studio          # Open Drizzle Studio UI
+bun run db:generate        # Generate migration files
+bun run db:migrate         # Apply migrations to DB
+bun run db:push            # Push schema (dev/prototyping only)
+bun run db:studio          # Open Drizzle Studio UI
 
 # Build & Production
-npm run build              # Build for production
-npm start                  # Start production server
+bun run build              # Build for production
+bun run start                  # Start production server
 
 # Code Quality
-npm run lint               # Run ESLint
+bun run lint               # Run ESLint
 ```
 
 ## Common Issues & Solutions
@@ -302,7 +302,7 @@ const headersList = await headers();
 **Solution**: Verify Better Auth config in `lib/auth.ts`, check `BETTER_AUTH_SECRET` and `BETTER_AUTH_URL` env vars, ensure cookies are set correctly.
 
 ### Issue: Build Errors on Vercel
-**Solution**: Run `npm run build` locally first. Check TypeScript errors, verify all env vars are set in Vercel dashboard.
+**Solution**: Run `bun run build` locally first. Check TypeScript errors, verify all env vars are set in Vercel dashboard.
 
 ### Issue: API Route Timeout on Vercel Hobby
 **Solution**: Hobby plan has 60s max execution. Avoid long-running operations. Move heavy tasks to async patterns or reduce data processing.

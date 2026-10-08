@@ -1,10 +1,10 @@
-import { beforeEach, expect, it, vi } from 'vitest';
-const mocks = vi.hoisted(() => ({ session: vi.fn(), decide: vi.fn(), get: vi.fn(), factory: vi.fn() }));
-vi.mock('@/db', () => ({ db: {} }));
-vi.mock('@/lib/auth', () => ({ auth: { api: { getSession: mocks.session } } }));
-vi.mock('@/lib/mcp/review', () => ({ createBrowserReviewService: mocks.factory }));
-vi.mock('next/cache', () => ({ revalidatePath: vi.fn(), revalidateTag: vi.fn() }));
-import { POST, GET } from '@/app/api/admin/mcp-drafts/[id]/route';
+import { beforeEach, expect, it, jest, mock } from 'bun:test';
+const mocks = { session: jest.fn(), decide: jest.fn(), get: jest.fn(), factory: jest.fn() };
+mock.module('@/db', () => ({ db: {} }));
+mock.module('@/lib/auth', () => ({ auth: { api: { getSession: mocks.session } } }));
+mock.module('@/lib/mcp/review', () => ({ createBrowserReviewService: mocks.factory }));
+mock.module('next/cache', () => ({ revalidatePath: jest.fn(), revalidateTag: jest.fn() }));
+const { POST, GET } = await import('@/app/api/admin/mcp-drafts/[id]/route');
 const id = 'ad3c9620-185c-4f29-a452-38b062bd672b';
 const ctx = { params: Promise.resolve({ id }) };
 const input = { action: 'apply', review_token: 'a'.repeat(64), confirm: true };
@@ -12,7 +12,7 @@ function request(body: unknown = input, origin: string | null = 'https://preview
   return new Request(`https://preview.example/api/admin/mcp-drafts/${id}`, { method: 'POST', headers: { 'content-type': 'application/json', ...(origin ? { origin } : {}) }, body: JSON.stringify(body) });
 }
 beforeEach(() => {
-  vi.clearAllMocks();
+  jest.clearAllMocks();
   mocks.session.mockResolvedValue({ user: { id: 'signed-in-admin', role: 'admin' } });
   mocks.factory.mockReturnValue({ get: mocks.get, decide: mocks.decide });
   mocks.decide.mockResolvedValue({ status: 'applied', cache_refresh_pending: false });

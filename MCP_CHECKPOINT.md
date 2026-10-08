@@ -37,7 +37,7 @@
 1. Provision a disposable database with the existing Magga schema and a test administrator. Do not point this worktree at production.
 2. Review/apply only the pending migration using the project's established migration procedure. The repository journal references older baseline files absent from this checkout; do not assume a fresh `db:migrate` can bootstrap the entire database.
 3. Select an initial key owner and implement the authorized issuance/revocation workflow. `generateKey()` currently provides the cryptographic primitive only; no operator UI/CLI persists keys or prints secrets.
-4. Configure the isolated PostgreSQL URL and `MCP_ENABLED=true`, then start on a separate port (for example `npm run dev -- --port 3100`). Configure the client with the isolated `/api/mcp` URL and its bearer header. Do not commit tokens or connection strings.
+4. Configure the isolated PostgreSQL URL and `MCP_ENABLED=true`, then start on a separate port (for example `bun run dev --port 3100`). Configure the client with the isolated `/api/mcp` URL and its bearer header. Do not commit tokens or connection strings.
 5. Verify actual Codex, Claude Code and Antigravity connections, production-host Origin behavior, revocation timing and deployment duration before considering a merge/deploy.
 
 ## Remaining plan

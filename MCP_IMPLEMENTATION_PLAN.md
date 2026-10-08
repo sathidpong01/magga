@@ -63,7 +63,7 @@ Storage validation performs no DNS lookup or HTTP request and MUST NOT be reused
 
 ## Keys and data
 
-Trusted local database operator: npm run mcp:keys -- --help.
+Trusted local database operator: bun run mcp:keys --help.
 - issue: choose existing administrator, client label, explicit scopes and expiry within one year; token appears once in the successful response. Store it securely.
 - list: IDs, prefixes, scopes and dates only; never token/hash.
 - revoke: owner-scoped and idempotent; referenced keys are retained.

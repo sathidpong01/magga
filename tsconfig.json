@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "target": "es2017",
+    "types": ["node", "bun"],
     "lib": [
       "dom",
       "dom.iterable",
@@ -40,7 +41,6 @@
     "node_modules",
     "check_credits.ts",
     "dump_schema.ts",
-    "scripts",
-    "vitest.config.ts"
+    "scripts"
   ]
 }

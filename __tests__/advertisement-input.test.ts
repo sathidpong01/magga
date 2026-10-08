@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "bun:test";
 import { advertisementInput, advertisementUpdate, adEventInput } from "@/lib/advertisement-input";
 import { adDeviceDisplay, adCtr } from "@/lib/advertisements";
 

@@ -1,9 +1,9 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, jest } from 'bun:test';
 import { draftFilters, readAdminDrafts } from '@/lib/mcp/admin-read';
 import type { db as database } from '@/db';
 
 function fake(results: unknown[][]) {
-  const select = vi.fn((columns: Record<string, unknown>) => {
+  const select = jest.fn((columns: Record<string, unknown>) => {
     void columns;
     const result = results.shift() ?? [];
     const chain: Record<string, unknown> = {};
@@ -11,7 +11,7 @@ function fake(results: unknown[][]) {
     chain.then = (resolve: (v: unknown) => unknown) => Promise.resolve(result).then(resolve);
     return chain;
   });
-  const transaction = vi.fn(async (run: (tx: unknown) => unknown) => run({ select }));
+  const transaction = jest.fn(async (run: (tx: unknown) => unknown) => run({ select }));
   return { db: { transaction } as unknown as typeof database, select, transaction };
 }
 describe('browser draft inspection', () => {

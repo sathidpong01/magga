@@ -66,7 +66,7 @@
 ## การตรวจและการออกสู่ production
 
 - ทำเป็นชุดเปลี่ยนเล็ก ๆ ตามระยะ โดยอ่านสถานะ working tree ก่อนแก้และไม่ทับงานที่มีอยู่
-- หลังแก้แต่ละชุด: ทดสอบ metadata/sitemap/hidden-page policy ที่เกี่ยวข้อง, `npm run lint`, `npm test`; ใช้ `npm run build` ก่อน release ที่เปลี่ยน route หรือ metadata ของ Next.js
+- หลังแก้แต่ละชุด: ทดสอบ metadata/sitemap/hidden-page policy ที่เกี่ยวข้อง, `bun run lint`, `bun run test`; ใช้ `bun run build` ก่อน release ที่เปลี่ยน route หรือ metadata ของ Next.js
 - ตรวจ HTML ที่ deploy จริง, response status, robots, sitemap, canonical และ JSON-LD ทั้งบน desktop/mobile; ทดสอบ URL ที่มีและไม่มี query string
 - หลัง deploy การลบหน้า ตรวจ `/moxzk` ตอบ 404, ไม่อยู่ใน sitemap และตรวจ URL Inspection เพื่อให้ Google ประมวลผลการนำหน้าออกตามรอบ crawl
 - ใช้ Search Console URL Inspection และติดตาม indexing, impressions, clicks และ query mix หลัง deploy อย่างน้อย 28 วัน; เปรียบเทียบกับ baseline โดยคำนึงถึงฤดูกาลและการเปลี่ยนแปลงคอนเทนต์

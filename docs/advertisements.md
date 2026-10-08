@@ -1,6 +1,6 @@
 # Advertisement Management
 
-Apply `npm run db:migrate` before deploying version 2.21.0. Migration
+Apply `bun run db:migrate` before deploying version 2.21.0. Migration
 `0012_advertisement_management` adds device targeting, cumulative counters, and
 the event deduplication table. Existing advertisements keep their active state
 and display on all devices. No existing campaign data is removed.

@@ -6,7 +6,7 @@ async function main() {
   const { values, positionals } = parseArgs({ allowPositionals: true, options: { owner: { type: 'string' }, name: { type: 'string' }, scopes: { type: 'string' }, expires: { type: 'string' }, id: { type: 'string' }, help: { type: 'boolean' } } });
   const command = positionals[0];
   if (values.help || !command) {
-    console.log('Trusted database operator: npm run mcp:keys -- issue|list|revoke --owner <admin-id>\nissue: --name <label> --scopes catalog:read,draft:write --expires <ISO-date>\nrevoke: --id <key-id>\nThe issue command displays the token once. Store it securely; do not record/share terminal output.');
+    console.log('Trusted database operator: bun run mcp:keys issue|list|revoke --owner <admin-id>\nissue: --name <label> --scopes catalog:read,draft:write --expires <ISO-date>\nrevoke: --id <key-id>\nThe issue command displays the token once. Store it securely; do not record/share terminal output.');
     return;
   }
   if (!values.owner || !['issue', 'list', 'revoke'].includes(command)) throw new Error('Invalid arguments');
