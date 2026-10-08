@@ -1,6 +1,6 @@
 {
   "name": "magga",
-  "version": "2.23.2",
+  "version": "2.23.3",
   "private": true,
   "author": "Magga",
   "license": "UNLICENSED",
@@ -88,5 +88,9 @@
     "inflight": "^1.0.6",
     "node-fetch": "^3.3.2"
   },
-  "trustedDependencies": ["esbuild", "unrs-resolver", "sharp"]
+  "trustedDependencies": [
+    "esbuild",
+    "unrs-resolver",
+    "sharp"
+  ]
 }

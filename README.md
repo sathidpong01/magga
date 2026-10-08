@@ -189,6 +189,8 @@ Deployment uses `framework: "nextjs"`, `bunVersion: "1.4.x"`, `bun install --fro
 
 Before submitting changes, run `bun run runtime:check`, `bun run lint`, `bun run typecheck`, `bun run test`, and `bun run build`. Tests use Bun's native test runner through `bun run test`; per-file isolation prevents mocked modules from leaking between suites.
 
+GitHub CI runs only through `workflow_dispatch`; pushes and pull requests do not trigger it automatically. Vercel Preview builds continue automatically for the experimental branch.
+
 ### 🚀 Performance Optimizations (2026-02-14 Major Update)
 
 **🔥 Critical Performance Fixes (FCP/LCP):**
