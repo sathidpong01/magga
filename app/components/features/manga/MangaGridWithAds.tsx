@@ -6,6 +6,7 @@ import MangaCard, {
   MangaWithDetails,
 } from "@/app/components/features/manga/MangaCard";
 import { AdCard } from "@/app/components/features/ads";
+import { useAds } from "@/app/components/features/ads/AdsProvider";
 import { adDeviceDisplay } from "@/lib/advertisements";
 
 interface Ad {
@@ -29,6 +30,8 @@ export default function MangaGridWithAds({
   mangas,
   ads = [],
 }: MangaGridWithAdsProps) {
+  const { getAdsByPlacement } = useAds();
+  const visitAds = getAdsByPlacement("grid");
   // ใช้ตำแหน่งแบบ deterministic (ไม่สุ่ม) เพื่อหลีกเลี่ยง hydration mismatch
   const itemsWithAds = useMemo(() => {
     if (ads.length === 0) {
@@ -88,7 +91,7 @@ export default function MangaGridWithAds({
           {item.type === "manga" ? (
             <MangaCard manga={item.data} priority={index < 6} />
           ) : (
-            <AdCard ad={item.data} />
+            <AdCard ad={visitAds.find((ad) => ad.id === item.data.id) ?? item.data} />
           )}
         </Grid>
       ))}

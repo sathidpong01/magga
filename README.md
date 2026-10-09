@@ -68,7 +68,7 @@ _พัฒนาด้วย Next.js 16 (App Router) และระบบจั
   - แสดงความคิดเห็นท้ายเรื่อง พร้อมระบบ Reply, Vote, และแนบรูปภาพ
   - **New!** **Image Lightbox:** กดรูปในคอมเมนต์เพื่อขยายดูแบบ Fullscreen (ไม่ redirect ไปยัง URL)
   - **New!** **Server-First Comments:** Comments ถูก render จาก Server โดยตรง ลด JavaScript ฝั่ง Client
-  - **New!** **Comment Placement:** เลือกแสดงความคิดเห็นข้างรูป (ทีละหน้า) หรือท้ายเรื่อง แบบอิสระ
+  - **Comment Placement:** ใช้คอมเมนต์ท้ายเรื่อง; ปิดคอมเมนต์รายรูปชั่วคราวเพื่อลดการใช้ทรัพยากร Vercel ([แผนลดทรัพยากร](docs/vercel-resource-plan.md))
 - **User Profiles:**
   - **New!** **Profile Pages:** `/profile/[username]` แสดงข้อมูลผู้ใช้, สถิติ, และประวัติความคิดเห็น
   - **New!** **Avatar Upload:** อัปโหลดรูปโปรไฟล์พร้อม preview และบันทึกลง Cloudflare R2

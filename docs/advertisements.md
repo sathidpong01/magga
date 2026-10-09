@@ -35,9 +35,9 @@ assuming this record applies to every environment.
   Vercel Preview. GitHub CI is optional; it is not required for this release.
 - Use the disposable local test database to verify adding, editing, clearing,
   and duplicating destination lists, without changing live campaigns. Check
-  banner, grid, modal, and floating placements with fixture campaigns: each
-  click must select one destination and open one tab, including keyboard,
-  Ctrl/Cmd-click, and middle-click activation. Use Preview for read-only checks
+  banner, grid, modal, and floating placements with fixture campaigns: each page
+  load selects a destination that stays fixed on activation. Verify one tab per
+  click, including keyboard, Ctrl/Cmd-click, and middle-click. Use Preview for read-only checks
   when its database is shared with production.
 - Merge into `main` after Preview validation, verify the resulting Vercel
   deployment, and smoke-test the admin form and public placements. Confirm that
@@ -54,9 +54,13 @@ array with one destination or clear it with `null`/an empty string. Updates that
 omit both fields preserve the destinations. Public and management responses
 include `linkUrls`.
 
-Each activation chooses one destination with equal probability, then records
-the click and opens that destination. Destinations are selected per click, not
-per render or page visit. Ads with no safe destination remain non-clickable.
+After hydration, each advertisement chooses one destination with equal probability
+for the current document. Clicks record tracking events and use that fixed href,
+including keyboard, modifier keys, middle-click and context-menu navigation.
+Only a full page load/reload selects again; re-renders, client-side navigation,
+tab focus and time spent on the page do not change destinations. Repeated grid
+placements use the same selected destination for that advertisement.
+Ads with no safe destination remain non-clickable.
 
 Before deploying version 2.21.0 to a project without advertisement management,
 apply only the pending advertisement-management SQL through the project's
@@ -84,7 +88,8 @@ event UUIDs older than 30 days while preserving cumulative campaign counters.
 
 The server shares a five-minute cache between the API, page layout, and homepage
 grid. Management writes invalidate it immediately. Initial ads are included in
-server-rendered pages. Client refreshes occur on navigation or window focus
-after a 30-second freshness interval; concurrent refresh requests are merged and
-hidden tabs do not fetch. Header images load eagerly; lower banners and grid
+server-rendered pages. The client keeps this snapshot until a full page reload;
+without server data it fetches once on mount. There are no refresh requests on
+navigation, focus or a timer. Campaign edits and deactivation therefore reach
+already-open pages after reload. Header images load eagerly; lower banners and grid
 images load lazily into reserved dimensions.

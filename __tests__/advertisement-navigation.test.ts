@@ -33,8 +33,9 @@ describe("native advertisement activation", () => {
         const navigation = advertisementNavigation({ linkUrls: ["https://first.example", "https://second.example"] }, track);
         const { event, preventDefault } = activation(0, modifiers);
         navigation.onClick(event);
-        expect(event.currentTarget.href).toBe("https://second.example/");
-        expect(random).toHaveBeenCalledTimes(1);
+        expect(navigation.href).toBe("https://first.example/");
+        expect(event.currentTarget.href).toBe("https://first.example/");
+        expect(random).not.toHaveBeenCalled();
         expect(track).toHaveBeenCalledTimes(1);
         expect(preventDefault).not.toHaveBeenCalled();
       } finally { Math.random = originalRandom; }
@@ -49,7 +50,8 @@ describe("native advertisement activation", () => {
     navigation.onAuxClick(middle.event);
     navigation.onAuxClick(activation(2).event);
     expect(track).toHaveBeenCalledTimes(1);
-    expect(middle.event.currentTarget.href).toBe("https://legacy.example/");
+    expect(navigation.href).toBe("https://legacy.example/");
+    expect(middle.event.currentTarget.href).toBe("https://first.example/");
     expect(middle.preventDefault).not.toHaveBeenCalled();
   });
 

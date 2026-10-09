@@ -1,7 +1,7 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useRef, ReactNode } from "react";
-import { usePathname } from "next/navigation";
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { chooseAdvertisementLink } from "@/lib/advertisements";
 
 interface Ad {
   id: string;
@@ -29,45 +29,38 @@ const AdsContext = createContext<AdsContextType>({
 export function AdsProvider({ children, initialAds }: { children: ReactNode; initialAds?: Ad[] }) {
   const [ads, setAds] = useState<Ad[]>(initialAds || []);
   const [isLoading, setIsLoading] = useState(!initialAds);
-  const lastRefresh = useRef(0);
-  const pending = useRef(false);
-  const refreshRef = useRef(() => {});
-  const pathname = usePathname();
 
   useEffect(() => {
+    const selectLinks = (data: Ad[]) => setAds(data.map((ad) => {
+      const linkUrl = chooseAdvertisementLink(ad);
+      return { ...ad, linkUrl, linkUrls: linkUrl ? [linkUrl] : [] };
+    }));
+    // Select after hydration and keep the same destinations until a full page reload.
+    if (initialAds) {
+      selectLinks(initialAds);
+      return;
+    }
     const controller = new AbortController();
     let active = true;
-    const refresh = () => {
-      if (document.visibilityState === "hidden" || pending.current || Date.now() - lastRefresh.current < 30000) return;
-      pending.current = true;
-      fetch("/api/advertisements", { cache: "no-store", signal: controller.signal })
-        .then((res) => {
-          if (!res.ok) throw new Error(`Failed to fetch advertisements: ${res.status}`);
-          return res.json();
-        })
-        .then((data) => {
-          if (active && Array.isArray(data)) { setAds(data); lastRefresh.current = Date.now(); }
-        })
-        .catch((error) => {
-          if (!controller.signal.aborted) console.error(error);
-        })
-        .finally(() => { if (active) { pending.current = false; setIsLoading(false); } });
-    };
-    refreshRef.current = refresh;
-    if (initialAds) lastRefresh.current = Date.now();
-    refresh();
-    window.addEventListener("focus", refresh);
+    fetch("/api/advertisements", { cache: "no-store", signal: controller.signal })
+      .then((res) => {
+        if (!res.ok) throw new Error(`Failed to fetch advertisements: ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        if (active && Array.isArray(data)) selectLinks(data);
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted) console.error(error);
+      })
+      .finally(() => { if (active) setIsLoading(false); });
     return () => {
       active = false;
-      pending.current = false;
       controller.abort();
-      window.removeEventListener("focus", refresh);
     };
-    // Initial data is a server snapshot; subsequent refreshes own client state.
+    // Keep the initial document's snapshot across client-side navigation.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => { refreshRef.current(); }, [pathname]);
 
   const getAdsByPlacement = (placement: string): Ad[] => {
     return ads.filter((ad) => ad.placement === placement);

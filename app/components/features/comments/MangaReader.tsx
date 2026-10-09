@@ -1,26 +1,9 @@
-﻿"use client";
+"use client";
 
-import {
-  useRef,
-  useEffect,
-  useState,
-  useCallback,
-  forwardRef,
-  useMemo,
-} from "react";
+import { useRef, useEffect, useState, forwardRef, useMemo } from "react";
 import Image from "next/image";
-import {
-  Box,
-  Typography,
-  Divider,
-  CircularProgress,
-  Alert,
-  Button,
-} from "@mui/material";
-import CommentBox from "./CommentBox";
-import CommentList, { type PublicComment } from "./CommentList";
+import { Box } from "@mui/material";
 import ReadingProgress from "@/app/components/ui/ReadingProgress";
-import { fetchWithRetry } from "@/lib/fetch-with-retry";
 import { maggaColors, maggaRadii } from "@/lib/design-tokens";
 
 // Page data can be string (legacy) or object with dimensions (new)
@@ -36,22 +19,11 @@ interface MangaReaderProps {
   pages: string[] | PageData[]; // Support both legacy and new format
 }
 
-interface CommentsCache {
-  [imageIndex: number]: {
-    comments: PublicComment[];
-    lastFetched: number;
-  };
-}
-
 export default function MangaReader({
   mangaId,
   mangaTitle,
   pages,
 }: MangaReaderProps) {
-  const commentsCacheRef = useRef<CommentsCache>({});
-  const [loadErrors, setLoadErrors] = useState<Record<number, string>>({});
-  const [loadingPages, setLoadingPages] = useState<Set<number>>(new Set());
-  const [refreshKey, setRefreshKey] = useState(0);
   const [currentPage, setCurrentPage] = useState(0);
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -66,8 +38,6 @@ export default function MangaReader({
       return page;
     });
   }, [pages]);
-
-  const CACHE_DURATION = 5 * 60 * 1000;
 
   // Track current page with IntersectionObserver
   useEffect(() => {
@@ -94,69 +64,6 @@ export default function MangaReader({
     return () => observer.disconnect();
   }, [pages.length]);
 
-  const fetchComments = useCallback(
-    async (
-      imageIndex: number,
-      forceRefresh = false,
-    ): Promise<PublicComment[]> => {
-      const cached = commentsCacheRef.current[imageIndex];
-      if (
-        cached &&
-        !forceRefresh &&
-        Date.now() - cached.lastFetched < CACHE_DURATION
-      ) {
-        return cached.comments;
-      }
-
-      setLoadingPages((prev) => new Set(prev).add(imageIndex));
-      setLoadErrors((previous) => ({ ...previous, [imageIndex]: "" }));
-
-      try {
-        const params = new URLSearchParams({
-          mangaId,
-          imageIndex: String(imageIndex),
-        });
-
-        const res = await fetchWithRetry(`/api/comments?${params}`, {
-          retries: 2,
-        });
-        if (!res.ok) throw new Error("Failed to fetch");
-
-        const data = await res.json();
-        const comments = data.comments || [];
-
-        commentsCacheRef.current[imageIndex] = {
-          comments,
-          lastFetched: Date.now(),
-        };
-        setRefreshKey((k) => k + 1);
-
-        return comments;
-      } catch (error) {
-        setLoadErrors((previous) => ({
-          ...previous,
-          [imageIndex]: "โหลดความคิดเห็นไม่ได้ กรุณาลองใหม่",
-        }));
-        return cached?.comments || [];
-      } finally {
-        setLoadingPages((prev) => {
-          const next = new Set(prev);
-          next.delete(imageIndex);
-          return next;
-        });
-      }
-    },
-    [mangaId, CACHE_DURATION],
-  );
-
-  const handleCommentCreated = useCallback(
-    (imageIndex: number) => {
-      delete commentsCacheRef.current[imageIndex];
-      fetchComments(imageIndex, true);
-    },
-    [fetchComments],
-  );
-
   return (
     <Box sx={{ position: "relative" }}>
       {/* Reading Progress Indicator */}
@@ -173,27 +80,17 @@ export default function MangaReader({
           flexDirection: "column",
           alignItems: "center",
           gap: 0,
-          mr: { xs: 0, md: "340px" },
         }}
       >
         {normalizedPages.map((pageData, index) => (
-          <LazyPageWithComments
+          <ReaderPage
             key={index}
             ref={(el: HTMLDivElement | null) => {
               pageRefs.current[index] = el;
             }}
-            refreshKey={refreshKey}
-            mangaId={mangaId}
             mangaTitle={mangaTitle}
             pageData={pageData}
             imageIndex={index}
-            totalPages={normalizedPages.length}
-            getCachedComments={() => commentsCacheRef.current[index]?.comments}
-            loadError={loadErrors[index]}
-            onRetry={() => void fetchComments(index, true)}
-            isLoading={loadingPages.has(index)}
-            onFetchComments={() => fetchComments(index)}
-            onCommentCreated={() => handleCommentCreated(index)}
           />
         ))}
       </Box>
@@ -201,119 +98,16 @@ export default function MangaReader({
   );
 }
 
-interface LazyPageProps {
-  mangaId: string;
+interface ReaderPageProps {
   mangaTitle: string;
   pageData: PageData;
   imageIndex: number;
-  totalPages: number;
-  refreshKey: number;
-  getCachedComments: () => PublicComment[] | undefined;
-  isLoading: boolean;
-  loadError?: string;
-  onRetry: () => void;
-  onFetchComments: () => Promise<PublicComment[]>;
-  onCommentCreated: () => void;
 }
 
-const LazyPageWithComments = forwardRef<HTMLDivElement, LazyPageProps>(
-  function LazyPageWithComments(
-    {
-      mangaId,
-      mangaTitle,
-      pageData,
-      imageIndex,
-      totalPages,
-      refreshKey,
-      getCachedComments,
-      isLoading,
-      loadError,
-      onRetry,
-      onFetchComments,
-      onCommentCreated,
-    },
-    ref,
-  ) {
-    const containerRef = useRef<HTMLDivElement | null>(null);
-    const [isVisible, setIsVisible] = useState(false);
-    const [comments, setComments] = useState<PublicComment[]>([]);
-    const hasFetchedRef = useRef(false);
+const ReaderPage = forwardRef<HTMLDivElement, ReaderPageProps>(
+  function ReaderPage({ mangaTitle, pageData, imageIndex }, ref) {
     const [imageLoading, setImageLoading] = useState(true);
     const imageRef = useRef<HTMLImageElement | null>(null);
-
-    // Use refs for callback props to avoid dependency issues
-    const getCachedCommentsRef = useRef(getCachedComments);
-    const onFetchCommentsRef = useRef(onFetchComments);
-    const onCommentCreatedRef = useRef(onCommentCreated);
-
-    // Keep refs in sync
-    getCachedCommentsRef.current = getCachedComments;
-    onFetchCommentsRef.current = onFetchComments;
-    onCommentCreatedRef.current = onCommentCreated;
-
-    // Observer ref to manage cleanup
-    const observerRef = useRef<IntersectionObserver | null>(null);
-
-    // Combine forwarded ref with internal ref and setup intersection observer
-    const setRefs = useCallback(
-      (node: HTMLDivElement | null) => {
-        // Cleanup old observer
-        if (observerRef.current) {
-          observerRef.current.disconnect();
-          observerRef.current = null;
-        }
-
-        // Update internal ref
-        containerRef.current = node;
-
-        // Forward to parent ref
-        if (typeof ref === "function") {
-          ref(node);
-        } else if (ref) {
-          (ref as React.MutableRefObject<HTMLDivElement | null>).current = node;
-        }
-
-        // Setup new observer if node exists
-        if (node) {
-          observerRef.current = new IntersectionObserver(
-            ([entry]) => {
-              if (entry.isIntersecting) {
-                setIsVisible(true);
-                // Disconnect after becoming visible (only need to detect once)
-                observerRef.current?.disconnect();
-              }
-            },
-            {
-              rootMargin: "200px",
-              threshold: 0,
-            },
-          );
-          observerRef.current.observe(node);
-        }
-      },
-      [ref],
-    );
-
-    // Fetch comments เมื่อ visible และยังไม่เคย fetch
-    useEffect(() => {
-      if (isVisible && !hasFetchedRef.current) {
-        hasFetchedRef.current = true;
-        const cached = getCachedCommentsRef.current();
-        if (cached) {
-          setComments(cached);
-        } else {
-          onFetchCommentsRef.current().then(setComments);
-        }
-      }
-    }, [isVisible]);
-
-    // Update from cache when refreshKey changes
-    useEffect(() => {
-      const cached = getCachedCommentsRef.current();
-      if (cached) {
-        setComments(cached);
-      }
-    }, [refreshKey]);
 
     useEffect(() => {
       const image = imageRef.current;
@@ -322,17 +116,9 @@ const LazyPageWithComments = forwardRef<HTMLDivElement, LazyPageProps>(
       }
     }, [pageData.url]);
 
-    const handleCommentCreated = useCallback(() => {
-      onCommentCreatedRef.current();
-      onFetchCommentsRef.current().then(setComments);
-    }, []);
-
-    const pageLabel = `หน้า ${imageIndex + 1}/${totalPages}`;
-    const commentCount = comments.length;
-
     return (
       <Box
-        ref={setRefs}
+        ref={ref}
         sx={{
           position: "relative",
           width: "100%",
@@ -347,8 +133,8 @@ const LazyPageWithComments = forwardRef<HTMLDivElement, LazyPageProps>(
             sx={{
               position: "absolute",
               inset: 0,
-              bgcolor: "rgba(255, 255, 255, 0.03)",
-              borderRadius: "4px",
+              bgcolor: maggaColors.surface,
+              borderRadius: `${maggaRadii.sm}px`,
               overflow: "hidden",
               opacity: imageLoading ? 1 : 0,
               transition: "opacity 0.3s ease-in-out",
@@ -359,8 +145,7 @@ const LazyPageWithComments = forwardRef<HTMLDivElement, LazyPageProps>(
                 content: '""',
                 position: "absolute",
                 inset: 0,
-                background:
-                  "linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.04), transparent)",
+                background: `linear-gradient(90deg, transparent, ${maggaColors.borderSubtle}, transparent)`,
                 animation: "shimmer 1.5s infinite",
               },
               "@keyframes shimmer": {
@@ -384,128 +169,13 @@ const LazyPageWithComments = forwardRef<HTMLDivElement, LazyPageProps>(
               width: "100%",
               height: "auto",
               display: "block",
-              borderRadius: "4px",
+              borderRadius: `${maggaRadii.sm}px`,
             }}
-            priority={imageIndex === 0}
-            loading={imageIndex === 0 ? "eager" : "lazy"}
+            preload={imageIndex === 0}
+            loading={imageIndex === 0 ? undefined : "lazy"}
             onLoad={() => setImageLoading(false)}
             onError={() => setImageLoading(false)}
           />
-        </Box>
-
-        {/* Desktop: Comment Panel - โหลดเฉพาะเมื่อ visible */}
-        <Box
-          sx={{
-            display: { xs: "none", md: "block" },
-            position: "absolute",
-            top: 0,
-            left: "100%",
-            width: 340,
-            height: "100%",
-            pointerEvents: "none", // Outer container doesn't block clicks
-          }}
-        >
-          <Box
-            sx={{
-              position: "sticky",
-              top: 80,
-              width: 320,
-              maxHeight: "calc(100vh - 100px)",
-              display: "flex",
-              flexDirection: "column",
-              marginLeft: "20px",
-              pointerEvents: "auto", // Inner panel is interactive
-              bgcolor: maggaColors.surface,
-              backdropFilter: "blur(8px)",
-              borderRadius: `${maggaRadii.card}px`,
-              border: `1px solid ${maggaColors.border}`,
-              zIndex: 100,
-            }}
-          >
-            <Box sx={{ p: 1.5, flexShrink: 0 }}>
-              <Typography
-                variant="subtitle2"
-                sx={{
-                  fontWeight: 600,
-                  color: "white",
-                }}
-              >
-                {pageLabel}
-              </Typography>
-              <Typography
-                variant="caption"
-                sx={{
-                  color: "text.secondary",
-                }}
-              >
-                {isVisible ? `${commentCount} ความคิดเห็น` : "กำลังโหลด..."}
-              </Typography>
-            </Box>
-
-            {isVisible ? (
-              <Box
-                sx={{
-                  flex: 1,
-                  overflowY: "auto",
-                  px: 1.5,
-                  pb: 2,
-                  scrollbarWidth: "none",
-                  "&::-webkit-scrollbar": { display: "none" },
-                }}
-              >
-                <CommentBox
-                  mangaId={mangaId}
-                  imageIndex={imageIndex}
-                  onCommentCreated={handleCommentCreated}
-                  placeholder="แสดงความคิดเห็น..."
-                />
-
-                {commentCount > 0 && (
-                  <Divider
-                    sx={{ my: 2, borderColor: "rgba(255,255,255,0.08)" }}
-                  />
-                )}
-
-                {loadError && (
-                  <Alert
-                    severity="error"
-                    action={
-                      <Button disabled={isLoading} onClick={onRetry}>
-                        ลองใหม่
-                      </Button>
-                    }
-                  >
-                    {loadError}
-                  </Alert>
-                )}
-                {isLoading ? (
-                  <Box
-                    sx={{ display: "flex", justifyContent: "center", py: 3 }}
-                  >
-                    <CircularProgress size={24} />
-                  </Box>
-                ) : (
-                  <CommentList
-                    comments={comments}
-                    mangaId={mangaId}
-                    imageIndex={imageIndex}
-                    onRefresh={handleCommentCreated}
-                  />
-                )}
-              </Box>
-            ) : (
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "center",
-                  py: 4,
-                  px: 1.5,
-                }}
-              >
-                <CircularProgress size={20} />
-              </Box>
-            )}
-          </Box>
         </Box>
       </Box>
     );

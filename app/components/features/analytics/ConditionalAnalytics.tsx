@@ -43,7 +43,7 @@ export default function ConditionalAnalytics() {
 
   return (
     <>
-      <SpeedInsights />
+      <SpeedInsights sampleRate={0.1} />
       <Analytics />
     </>
   );

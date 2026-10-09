@@ -24,7 +24,7 @@ export function getAdvertisementLinks(ad: AdvertisementLinks): string[] {
   return [...new Set(candidates.filter((value): value is string => typeof value === "string").map(normalizeAdvertisementLink).filter((url): url is string => url !== null))].slice(0, maxAdvertisementLinks);
 }
 
-/** Call once per activation; each configured destination has equal probability. */
+/** Call once per advertisement per document load; each destination has equal probability. */
 export function chooseAdvertisementLink(ad: AdvertisementLinks, random: () => number = Math.random): string | null {
   const links = getAdvertisementLinks(ad);
   if (!links.length) return null;

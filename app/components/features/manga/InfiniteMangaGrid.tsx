@@ -5,6 +5,7 @@ import { Grid, Box, Button, CircularProgress, Alert } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import MangaCard, { MangaWithDetails } from "./MangaCard";
 import { AdCard } from "@/app/components/features/ads";
+import { useAds } from "@/app/components/features/ads/AdsProvider";
 import EmptyState from "@/app/components/ui/EmptyState";
 import { useSession } from "@/lib/auth-client";
 import { maggaColors } from "@/lib/design-tokens";
@@ -45,6 +46,8 @@ export default function InfiniteMangaGrid({
   sort,
   author,
 }: InfiniteMangaGridProps) {
+  const { getAdsByPlacement } = useAds();
+  const visitAds = getAdsByPlacement("grid");
   const { data: session, isPending: isSessionPending } = useSession();
   const [blockedTagIds, setBlockedTagIds] = useState<string[]>([]);
   const [mangas, setMangas] = useState<MangaWithDetails[]>(initialMangas);
@@ -203,7 +206,7 @@ export default function InfiniteMangaGrid({
             {item.type === "manga" ? (
               <MangaCard manga={item.data} priority={index < 4} />
             ) : (
-              <AdCard ad={item.data} />
+              <AdCard ad={visitAds.find((ad) => ad.id === item.data.id) ?? item.data} />
             )}
           </Grid>
         ))}
