@@ -61,5 +61,7 @@ jobs:
           CREATE FUNCTION private.is_admin() RETURNS boolean LANGUAGE sql AS 'SELECT false';
           SQL
       - name: Create disposable database schema
-        run: bun run db:push --force
+        run: bun run db:push --config ./scripts/disposable-db.config.ts --force
+      - name: Verify disposable database schema
+        run: bun --no-env-file scripts/disposable-schema-check.ts
       - run: bun run build

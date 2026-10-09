@@ -2,6 +2,8 @@
 
 import { Box, Paper } from "@mui/material";
 import { useAdTracking } from "./useAdTracking";
+import { advertisementNavigation } from "./adNavigation";
+import { maggaColors } from "@/lib/design-tokens";
 import { adDeviceDisplay } from "@/lib/advertisements";
 
 interface AdBannerProps {
@@ -13,6 +15,7 @@ interface AdBannerProps {
     title: string;
     imageUrl: string;
     linkUrl?: string | null;
+    linkUrls?: string[] | null;
     content?: string | null;
     targetDevice?: string;
   };
@@ -20,6 +23,7 @@ interface AdBannerProps {
 
 export default function AdBanner({ ad, fillArea = false, priority = false }: AdBannerProps) {
   const tracking = useAdTracking(ad.id);
+  const navigation = advertisementNavigation(ad, tracking.onClick);
   const imageAlt = ad.title ? `โฆษณา: ${ad.title}` : "โฆษณา";
   const content = (
     <Box
@@ -55,23 +59,22 @@ export default function AdBanner({ ad, fillArea = false, priority = false }: AdB
       : { borderRadius: 1, position: "relative" as const, width: "100%", height: { xs: 100, md: 150 } }),
     display: adDeviceDisplay(ad.targetDevice),
     overflow: "hidden",
-    cursor: ad.linkUrl ? "pointer" : "default",
+    cursor: navigation.href ? "pointer" : "default",
     transition: "opacity 0.2s ease, outline-color 0.2s ease",
-    "&:hover": ad.linkUrl ? { opacity: 0.9 } : {},
-    "&:focus-visible": ad.linkUrl
-      ? { outline: "2px solid #fbbf24", outlineOffset: 2 }
+    "&:hover": navigation.href ? { opacity: 0.9 } : {},
+    "&:focus-visible": navigation.href
+      ? { outline: `2px solid ${maggaColors.archiveGoldHover}`, outlineOffset: 2 }
       : {},
     boxShadow: "none",
   };
 
-  return ad.linkUrl ? (
+  return navigation.href ? (
     <Paper
       component="a"
-      href={ad.linkUrl}
+      {...navigation}
       target="_blank"
       rel="noopener noreferrer"
       aria-label={`เปิดโฆษณา: ${ad.title || ad.id}`}
-      onClick={tracking.onClick}
       sx={surfaceSx}
     >
       {content}

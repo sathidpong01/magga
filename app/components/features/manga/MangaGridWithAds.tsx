@@ -14,6 +14,7 @@ interface Ad {
   title: string;
   imageUrl: string;
   linkUrl?: string | null;
+  linkUrls?: string[] | null;
   content?: string | null;
   repeatCount?: number; // จำนวนครั้งที่แสดงซ้ำ
   targetDevice?: string;

@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { Dialog, Box, IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { useAdTracking } from "./useAdTracking";
+import { advertisementNavigation } from "./adNavigation";
+import { maggaColors } from "@/lib/design-tokens";
 
 interface AdModalProps {
   ad: {
@@ -12,6 +14,7 @@ interface AdModalProps {
     title: string;
     imageUrl: string;
     linkUrl?: string | null;
+    linkUrls?: string[] | null;
     content?: string | null;
   };
 }
@@ -37,8 +40,9 @@ export default function AdModal({ ad }: AdModalProps) {
 
   const handleClick = () => {
     tracking.onClick();
-    handleClose();
+    setTimeout(handleClose, 0);
   };
+  const navigation = advertisementNavigation(ad, handleClick);
   const imageAlt = ad.title ? `โฆษณา: ${ad.title}` : "โฆษณา";
   const image = (
     <Box
@@ -89,18 +93,17 @@ export default function AdModal({ ad }: AdModalProps) {
       </IconButton>
 
       {/* Flexible auto-ratio image */}
-      {ad.linkUrl ? (
+      {navigation.href ? (
         <Box
           component="a"
-          href={ad.linkUrl}
+          {...navigation}
           target="_blank"
           rel="noopener noreferrer"
           aria-label={`เปิดโฆษณา: ${ad.title || ad.id}`}
-          onClick={handleClick}
           sx={{
             cursor: "pointer",
             display: "block",
-            "&:focus-visible": { outline: "2px solid #fbbf24", outlineOffset: 2 },
+            "&:focus-visible": { outline: `2px solid ${maggaColors.archiveGoldHover}`, outlineOffset: 2 },
           }}
         >
           {image}

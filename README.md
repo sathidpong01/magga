@@ -189,6 +189,12 @@ Deployment uses `framework: "nextjs"`, `bunVersion: "1.4.x"`, `bun install --fro
 
 Before submitting changes, run `bun run runtime:check`, `bun run lint`, `bun run typecheck`, `bun run test`, and `bun run build`. Tests use Bun's native test runner through `bun run test`; per-file isolation prevents mocked modules from leaking between suites.
 
+For a checkout without local environment files, `bun run build:local` builds against a newly created synthetic PGlite database at `127.0.0.1:55433`. It creates both `public` and `private` schemas, verifies the guest-comment foreign key and advertisement fields, and closes the database when finished. It refuses existing environment files or an occupied fixture port. `bun run build:local --keep-db` retains the disposable database for local browser checks; Ctrl+C closes it. Temporary fixture paths are printed so the synthetic data can be inspected.
+
+For browser verification, copy the printed `fixture.json` environment into the local app process and run `bun run start --hostname 127.0.0.1 --port 3101`, then open `http://localhost:3101`. The fixture's app URLs use `localhost` to match Next's runtime request origin while the listener binds to loopback. Its `MAGGA_DISPOSABLE_DATABASE=true` setting accepts only the synthetic `postgres:postgres` credentials at `127.0.0.1:55433/postgres`, with a PostgreSQL protocol and no query parameters or fragment. It limits the application pool to one connection because PGlite's socket multiplexer shares unnamed prepared-statement state across connections. Leave `NEXT_PHASE` unset during runtime verification. This fixture verifies functional behavior; native PostgreSQL is still needed for concurrent database/load testing.
+
+Write tests in `__tests__/` with imports from `bun:test`. Run a focused file with `bun run test ./__tests__/example.test.ts`, filter by name with `bun run test --test-name-pattern "example"`, or use `bun run test:watch` while editing. These scripts preserve per-file isolation. Run `bun run test --coverage` when coverage is needed. Historical checkpoint reports retain their original commands and results.
+
 GitHub CI runs only through `workflow_dispatch`; pushes and pull requests do not trigger it automatically. Vercel Preview builds continue automatically for the experimental branch.
 
 ### 🚀 Performance Optimizations (2026-02-14 Major Update)

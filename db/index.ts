@@ -32,14 +32,27 @@ if (isLocalMcp) {
   }
 }
 
+const isDisposableDatabase = process.env.MAGGA_DISPOSABLE_DATABASE === 'true';
+if (isDisposableDatabase) {
+  const target = new URL(connectionString);
+  if (!['postgres:', 'postgresql:'].includes(target.protocol)
+    || target.hostname !== '127.0.0.1' || target.port !== '55433' || target.pathname !== '/postgres'
+    || target.username !== 'postgres' || target.password !== 'postgres'
+    || connectionString.includes('?') || connectionString.includes('#')) {
+    throw new Error('Disposable database mode requires the synthetic loopback endpoint and credentials.');
+  }
+}
+
 // Disable prepare to support connection pooling like PgBouncer in Supabase
 // Limit pool size to 1 during Next.js builds to prevent exhausting database connections
 // (Next.js spawns up to 5 workers during build, each with their own connection pool)
 // In Vercel serverless, allow up to 3 connections per instance to handle parallel queries (Promise.all)
 // without starving the pooler, while setting sensible timeouts for cold starts and lock contention.
+// PGlite's socket multiplexer shares unnamed statement state; disposable browser
+// verification must serialize queries through one application connection.
 const client = postgres(connectionString, { 
   prepare: false, 
-  max: isBuild || isLocalMcp ? 1 : isServerless ? 3 : 10,
+  max: isBuild || isLocalMcp || isDisposableDatabase ? 1 : isServerless ? 3 : 10,
   idle_timeout: isBuild ? 1 : isServerless ? 15 : 20,
   connect_timeout: isServerless ? 15 : 10,
   max_lifetime: isServerless ? 120 : null,

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Box, IconButton, Paper, Portal } from "@mui/material";
 import { useAdTracking } from "./useAdTracking";
+import { advertisementNavigation } from "./adNavigation";
 import { adDeviceDisplay } from "@/lib/advertisements";
 import { maggaColors } from "@/lib/design-tokens";
 import CloseIcon from "@mui/icons-material/Close";
@@ -14,6 +15,7 @@ interface FloatingAdProps {
     title: string;
     imageUrl: string;
     linkUrl?: string | null;
+    linkUrls?: string[] | null;
     content?: string | null;
     targetDevice?: string;
   };
@@ -21,6 +23,7 @@ interface FloatingAdProps {
 
 export default function FloatingAd({ ad }: FloatingAdProps) {
   const tracking = useAdTracking(ad.id);
+  const navigation = advertisementNavigation(ad, tracking.onClick);
   const [isVisible, setIsVisible] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
 
@@ -100,18 +103,17 @@ export default function FloatingAd({ ad }: FloatingAdProps) {
         <CloseIcon fontSize="small" />
       </IconButton>
 
-      {ad.linkUrl ? (
+      {navigation.href ? (
         <Box
           component="a"
-          href={ad.linkUrl}
+          {...navigation}
           target="_blank"
           rel="noopener noreferrer"
           aria-label={`เปิดโฆษณา: ${ad.title || ad.id}`}
-          onClick={tracking.onClick}
           sx={{
             cursor: "pointer",
             display: "block",
-            "&:focus-visible": { outline: "2px solid #fbbf24", outlineOffset: 2 },
+            "&:focus-visible": { outline: `2px solid ${maggaColors.archiveGoldHover}`, outlineOffset: 2 },
           }}
         >
           {image}

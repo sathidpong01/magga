@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 function loadDatabase(url: string, local = true) {
   // Each import needs a fresh module registry because db reads its environment at module load.
   const result = Bun.spawnSync([process.execPath, fileURLToPath(new URL("./helpers/db-connection.ts", import.meta.url))], {
-    env: { ...process.env, VERCEL: "", NEXT_PHASE: "", POSTGRES_URL: "", POSTGRES_PRISMA_URL: "", POSTGRES_URL_NON_POOLING: "", MCP_LOCAL_DATABASE: String(local), DATABASE_URL: url },
+    env: { ...process.env, VERCEL: "", NEXT_PHASE: "", MAGGA_DISPOSABLE_DATABASE: "", POSTGRES_URL: "", POSTGRES_PRISMA_URL: "", POSTGRES_URL_NON_POOLING: "", MCP_LOCAL_DATABASE: String(local), DATABASE_URL: url },
   });
   expect(result.exitCode).toBe(0);
   return JSON.parse(result.stdout.toString()) as { error: string; calls: [string, { max: number }][] };

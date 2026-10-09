@@ -40,7 +40,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import { adCtr } from "@/lib/advertisements";
+import { adCtr, getAdvertisementLinks, maxAdvertisementLinks, normalizeAdvertisementLink } from "@/lib/advertisements";
 import { maggaColors } from "@/lib/design-tokens";
 import Image from "next/image";
 import { authFetch } from "@/lib/auth-fetch";
@@ -56,6 +56,7 @@ interface Advertisement {
   title: string;
   imageUrl: string;
   linkUrl: string | null;
+  linkUrls?: string[] | null;
   content: string | null;
   placement: string;
   repeatCount: number;
@@ -578,6 +579,7 @@ export default function AdvertisementsPage() {
   const [placementFilter, setPlacementFilter] = useState("all");
   const [deviceFilter, setDeviceFilter] = useState("all");
   const [saving, setSaving] = useState(false);
+  const [linkErrors, setLinkErrors] = useState<Record<number, string>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -590,7 +592,7 @@ export default function AdvertisementsPage() {
     type: "affiliate",
     title: "",
     imageUrl: "",
-    linkUrl: "",
+    linkUrls: [""],
     content: "",
     placement: "grid",
     repeatCount: 1,
@@ -637,13 +639,15 @@ export default function AdvertisementsPage() {
   };
 
   const handleOpenDialog = (ad?: Advertisement) => {
+    setLinkErrors({});
+    setError(null);
     if (ad) {
       setEditingAd(ad);
       setFormData({
         type: ad.type,
         title: ad.title,
         imageUrl: ad.imageUrl,
-        linkUrl: ad.linkUrl || "",
+        linkUrls: getAdvertisementLinks(ad).length ? getAdvertisementLinks(ad) : [""],
         content: ad.content || "",
         placement: ad.placement,
         repeatCount: ad.repeatCount || 1,
@@ -657,7 +661,7 @@ export default function AdvertisementsPage() {
         type: "affiliate",
         title: "",
         imageUrl: "",
-        linkUrl: "",
+        linkUrls: [""],
         content: "",
         placement: "grid",
         repeatCount: 1,
@@ -732,6 +736,17 @@ export default function AdvertisementsPage() {
       return;
     }
 
+    const linkUrls = formData.linkUrls.map((link) => link.trim()).filter(Boolean);
+    const invalidLinks: Record<number, string> = {};
+    formData.linkUrls.forEach((link, index) => {
+      if (link.trim() && !normalizeAdvertisementLink(link)) invalidLinks[index] = "ใช้ URL ที่ขึ้นต้นด้วย https:// หรือ http:// และไม่มีช่องว่าง";
+    });
+    setLinkErrors(invalidLinks);
+    if (Object.keys(invalidLinks).length) {
+      setError("กรุณาตรวจสอบลิงก์ปลายทางก่อนบันทึก");
+      return;
+    }
+    setError(null);
     setSaving(true);
     try {
       const url = editingAd
@@ -742,7 +757,7 @@ export default function AdvertisementsPage() {
       const res = await authFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, linkUrls }),
       });
 
       if (!res.ok) {
@@ -1153,7 +1168,7 @@ export default function AdvertisementsPage() {
         <DialogContent sx={{ px: { xs: 2, md: 3 }, py: { xs: 2, md: 2.5 } }}>
           <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, gap: 2.25, mt: 0.5 }}>
             {/* Left: Form */}
-            <Box sx={{ flex: 1, ...adDialogPanelSx, p: { xs: 1.5, md: 2 } }}>
+            <Box sx={{ flex: 1, minWidth: 0, ...adDialogPanelSx, p: { xs: 1.5, md: 2 } }}>
               <Box sx={{ mb: 2 }}>
                 <Typography sx={{ color: "#fafafa", fontWeight: 800, fontSize: "0.95rem" }}>
                   รายละเอียดโฆษณา
@@ -1254,15 +1269,57 @@ export default function AdvertisementsPage() {
                 )}
               </Box>
 
-              <TextField
-                fullWidth
-                label="ลิงก์ปลายทาง"
-                value={formData.linkUrl}
-                onChange={(e) =>
-                  setFormData({ ...formData, linkUrl: e.target.value })
-                }
-                sx={{ mb: 2, ...adDialogFieldSx }}
-              />
+              <Box component="fieldset" sx={{ border: 0, p: 0, m: 0, mb: 2, minWidth: 0 }}>
+                <Typography component="legend" sx={{ color: maggaColors.textPrimary, fontWeight: 700, fontSize: "0.875rem", mb: 1 }}>
+                  ลิงก์ปลายทาง
+                </Typography>
+                <Typography id="ad-links-help" sx={{ color: maggaColors.textSecondary, fontSize: "0.75rem", mb: 2 }}>
+                  สุ่มเปิด 1 ลิงก์ต่อคลิก โดยแต่ละลิงก์มีโอกาสเท่ากัน เพิ่มได้สูงสุด 20 ลิงก์ หรือเว้นว่างเพื่อแสดงภาพอย่างเดียว
+                </Typography>
+                <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                  {formData.linkUrls.map((link, index) => (
+                    <Box key={index} sx={{ display: "flex", alignItems: "flex-start", gap: 1, minWidth: 0 }}>
+                      <TextField
+                        id={`ad-destination-${index + 1}`}
+                        name={`linkUrls[${index}]`}
+                        fullWidth
+                        type="url"
+                        label={`ลิงก์ปลายทาง ${index + 1}`}
+                        value={link}
+                        disabled={saving || uploading}
+                        error={Boolean(linkErrors[index])}
+                        helperText={linkErrors[index]}
+                        slotProps={{ htmlInput: { "aria-describedby": linkErrors[index] ? `ad-destination-${index + 1}-helper-text ad-links-help` : "ad-links-help", maxLength: 2048, inputMode: "url" } }}
+                        onBlur={() => setLinkErrors((current) => ({ ...current, [index]: link.trim() && !normalizeAdvertisementLink(link) ? "ใช้ URL ที่ขึ้นต้นด้วย https:// หรือ http:// และไม่มีช่องว่าง" : "" }))}
+                        onChange={(e) => {
+                          setFormData((current) => ({ ...current, linkUrls: current.linkUrls.map((value, position) => position === index ? e.target.value : value) }));
+                          setLinkErrors((current) => ({ ...current, [index]: "" }));
+                        }}
+                        sx={adDialogFieldSx}
+                      />
+                      <IconButton
+                        aria-label={`ลบลิงก์ปลายทาง ${index + 1}`}
+                        disabled={saving || uploading}
+                        onClick={() => {
+                          setFormData((current) => ({ ...current, linkUrls: current.linkUrls.length === 1 ? [""] : current.linkUrls.filter((_, position) => position !== index) }));
+                          setLinkErrors({});
+                        }}
+                        sx={{ width: 44, height: 44, mt: 0.75, flexShrink: 0, color: maggaColors.textSecondary, "&:hover": { color: maggaColors.archiveGoldHover }, "&:focus-visible": { outline: `2px solid ${maggaColors.archiveGoldHover}`, outlineOffset: 2 } }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  ))}
+                </Box>
+                <Button
+                  startIcon={<AddIcon />}
+                  disabled={saving || uploading || formData.linkUrls.length >= maxAdvertisementLinks}
+                  onClick={() => setFormData((current) => ({ ...current, linkUrls: [...current.linkUrls, ""] }))}
+                  sx={{ mt: 1, minHeight: 44, color: maggaColors.archiveGoldHover, textTransform: "none" }}
+                >
+                  เพิ่มลิงก์ ({formData.linkUrls.length}/{maxAdvertisementLinks})
+                </Button>
+              </Box>
 
               <TextField
                 fullWidth

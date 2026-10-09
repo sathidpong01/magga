@@ -9,6 +9,7 @@ interface Ad {
   title: string;
   imageUrl: string;
   linkUrl?: string | null;
+  linkUrls?: string[] | null;
   content?: string | null;
   placement: string;
   targetDevice?: string;

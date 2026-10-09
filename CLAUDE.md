@@ -29,6 +29,7 @@ Every agent change must update the project version before completion.
 - Read the relevant project files before editing; prefer existing patterns over new abstractions.
 - Keep changes scoped to the requested task.
 - Run focused validation after changes. Use `bun run lint`, `bun run typecheck`, and `bun run test` when feasible; add `bun run build` for release-sensitive or framework/package updates.
+- Write project tests with imports from `bun:test`; preserve per-file isolation by running tests through the package scripts.
 - For dependency updates, run `bun outdated` after installation and `bun audit`; report any remaining audit risk separately from outdated packages.
 
 
@@ -216,27 +217,16 @@ React and Next.js performance optimization guidelines from Vercel Engineering. T
 - `.claude/skills/vercel-react-best-practices/rules/server-serialization.md`: The React Server/Client boundary serializes all object properties into strings and embeds them in the HTML response and subsequent RSC requests. This serialized data directly impacts page weight and load time, so **size matters a lot**. Only pass fields that the client actually uses.
 - `.claude/skills/vercel-react-best-practices/rules/_template.md`: **Impact: MEDIUM (optional impact description)**
 
-## Core
+## Project Tests
 
-Vitest fast unit testing framework powered by Vite with Jest-compatible API. Use when writing tests, mocking, configuring coverage, or working with test filtering and fixtures.
+Use Bun 1.4.2's native test runner and import test APIs from `bun:test`. Tests live in `__tests__/`, configured by `bunfig.toml`. Use `mock`, `mock.module`, and `spyOn` from `bun:test` for mocks; follow existing suites for cleanup and environment setup.
 
-- `.claude/skills/vitest/SKILL.md`
-- `.claude/skills/vitest/GENERATION.md`
-- `.claude/skills/vitest/references/advanced-environments.md`: Configure environments like jsdom, happy-dom for browser APIs
-- `.claude/skills/vitest/references/advanced-projects.md`: Multi-project configuration for monorepos and different test types
-- `.claude/skills/vitest/references/advanced-type-testing.md`: Test TypeScript types with expectTypeOf and assertType
-- `.claude/skills/vitest/references/advanced-vi.md`: vi helper for mocking, timers, utilities
-- `.claude/skills/vitest/references/core-cli.md`: Command line interface commands and options
-- `.claude/skills/vitest/references/core-config.md`: Configure Vitest with vite.config.ts or vitest.config.ts
-- `.claude/skills/vitest/references/core-describe.md`: describe/suite for grouping tests into logical blocks
-- `.claude/skills/vitest/references/core-expect.md`: Assertions with matchers, asymmetric matchers, and custom matchers
-- `.claude/skills/vitest/references/core-hooks.md`: beforeEach, afterEach, beforeAll, afterAll, and around hooks
-- `.claude/skills/vitest/references/core-test-api.md`: test/it function for defining tests with modifiers
-- `.claude/skills/vitest/references/features-concurrency.md`: Concurrent tests, parallel execution, and sharding
-- `.claude/skills/vitest/references/features-context.md`: Test context, custom fixtures with test.extend
-- `.claude/skills/vitest/references/features-coverage.md`: Code coverage with V8 or Istanbul providers
-- `.claude/skills/vitest/references/features-filtering.md`: Filter tests by name, file patterns, and tags
-- `.claude/skills/vitest/references/features-mocking.md`: Mock functions, modules, timers, and dates with vi utilities
-- `.claude/skills/vitest/references/features-snapshots.md`: Snapshot testing with file, inline, and file snapshots
+- `bun run test`: run all suites with per-file isolation (`bun test --isolate`).
+- `bun run test ./__tests__/example.test.ts`: run a focused test file with the same isolation.
+- `bun run test --test-name-pattern "example"`: filter tests by name.
+- `bun run test:watch`: watch tests with per-file isolation.
+- `bun run test --coverage`: collect coverage with Bun's native runner.
+
+Use the package scripts when testing mocked modules so mocks cannot leak between files. Historical checkpoint reports retain the test runner and commands used when those results were recorded.
 
 <!-- autoskills:end -->

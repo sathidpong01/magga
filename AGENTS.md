@@ -23,6 +23,7 @@ Every agent change must update the project version before completion.
 - Read the relevant project files before editing; prefer existing patterns over new abstractions.
 - Keep changes scoped to the requested task.
 - Run focused validation after changes. Use `bun run lint`, `bun run typecheck`, and `bun run test` when feasible; add `bun run build` for release-sensitive or framework/package updates.
+- Write project tests with imports from `bun:test`; preserve per-file isolation by running tests through the package scripts.
 - For dependency updates, run `bun outdated` after installation and `bun audit`; report any remaining audit risk separately from outdated packages.
 
 ## Design System & Theme Guidelines

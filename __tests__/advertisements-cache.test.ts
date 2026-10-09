@@ -58,7 +58,7 @@ describe("advertisement activation", () => {
     expect((await PATCH(update, { params: Promise.resolve({ id: "ad-1" }) })).status).toBe(200);
 
     expect(await (await GET(publicRequest)).json()).toEqual([
-      { id: "ad-1", placement: "manga-end" },
+      { id: "ad-1", placement: "manga-end", linkUrls: [] },
     ]);
     expect(mocks.revalidateTag).toHaveBeenCalledWith("advertisements", { expire: 0 });
   });

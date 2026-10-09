@@ -90,6 +90,7 @@ config.local.ts
 
 
 !db/migrations/0013_guest_comments.sql
+!db/migrations/0014_advertisement_links.sql
 
 # Browser verification artifacts (may contain fixture identifiers)
 .playwright-cli/

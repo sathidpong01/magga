@@ -45,6 +45,7 @@ export const advertisements = pgTable("advertisements", {
 	title: text().notNull(),
 	imageUrl: text("image_url").notNull(),
 	linkUrl: text("link_url"),
+	linkUrls: jsonb("link_urls").$type<string[]>().default([]).notNull(),
 	content: text(),
 	placement: text().notNull(),
 	repeatCount: integer("repeat_count").default(1).notNull(),

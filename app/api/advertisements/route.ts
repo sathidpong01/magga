@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     let ads = await getPublicAds();
 
     if (placement) {
-      ads = ads.filter((ad: any) => ad.placement === placement);
+      ads = ads.filter((ad) => ad.placement === placement);
     }
 
     return NextResponse.json(ads, {
