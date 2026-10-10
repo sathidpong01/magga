@@ -29,15 +29,11 @@ function getViewerKey(request: NextRequest, mangaId: string) {
   const cookieVisitorId = request.cookies.get(VISITOR_COOKIE_NAME)?.value;
   const validCookie = cookieVisitorId && /^[a-f0-9]{32}$/.test(cookieVisitorId) ? cookieVisitorId : undefined;
   const visitorId = validCookie || createVisitorId();
-  const userAgent = request.headers.get('user-agent') || 'unknown';
-  const ip = getClientIP(request);
   const hashKey = (key: string) => createHash('sha256').update(`${key}:${mangaId}`).digest('hex').slice(0, 24);
   const viewerKey = hashKey(`visitor:${visitorId}`);
-  const firstTouchAlias = validCookie ? undefined : hashKey(`fallback:${ip}:${userAgent}`);
 
   return {
     viewerKey,
-    firstTouchAlias,
     visitorId,
     shouldSetCookie: !validCookie,
   };
@@ -53,8 +49,7 @@ function withVisitorCookie(response: NextResponse, visitorId: string, shouldSetC
 /**
  * POST /api/manga/[id]/view
  * Increment read count with DB-level dedup (persists across serverless invocations).
- * Uses a stable first-party visitor cookie when available, with IP+UA fallback on first touch.
- * Dedup window is 10 minutes per visitor per manga.
+ * Uses a stable first-party visitor cookie per visitor per manga (10-minute dedup window).
  */
 export async function POST(
   request: NextRequest,
@@ -70,8 +65,8 @@ export async function POST(
       status: 429,
       headers: { 'Cache-Control': 'private, no-store', 'Retry-After': String(Math.max(1, Math.ceil(((quota.resetTime ?? Date.now() + 60000) - Date.now()) / 1000))) },
     });
-    const { viewerKey, firstTouchAlias, visitorId, shouldSetCookie } = getViewerKey(request, id);
-    const result = await recordMangaView(db, id, viewerKey, firstTouchAlias);
+    const { viewerKey, visitorId, shouldSetCookie } = getViewerKey(request, id);
+    const result = await recordMangaView(db, id, viewerKey);
     if (!result) return NextResponse.json({ error: "Manga not found" }, { status: 404 });
     return withVisitorCookie(NextResponse.json(result, { headers: { "Cache-Control": "private, no-store" } }), visitorId, shouldSetCookie);
   } catch (error: any) {

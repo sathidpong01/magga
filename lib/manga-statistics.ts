@@ -20,7 +20,7 @@ export async function recordMangaRating(database: Pick<typeof db, "transaction">
   });
 }
 
-export async function recordMangaView(database: Pick<typeof db, "transaction">, id: string, viewerKey: string, firstTouchAlias?: string) {
+export async function recordMangaView(database: Pick<typeof db, "transaction">, id: string, viewerKey: string) {
   return database.transaction(async tx => {
     const [work] = await tx.select({ viewCount: manga.viewCount }).from(manga)
       .where(and(eq(manga.id, id), eq(manga.isHidden, false))).for("update");
@@ -28,9 +28,7 @@ export async function recordMangaView(database: Pick<typeof db, "transaction">, 
     const marker = (key: string) => tx.insert(mangaViews).values({ mangaId: id, ipHash: key, viewedAt: new Date() })
       .onConflictDoUpdate({ target: [mangaViews.mangaId, mangaViews.ipHash], set: { viewedAt: sql`NOW()` }, setWhere: sql`${mangaViews.viewedAt} < NOW() - INTERVAL '10 minutes'` })
       .returning({ viewerKey: mangaViews.ipHash });
-    const fresh = (await marker(firstTouchAlias ?? viewerKey)).length > 0;
-    // The generated cookie's marker exists before the first response reaches the browser.
-    if (firstTouchAlias) await marker(viewerKey);
+    const fresh = (await marker(viewerKey)).length > 0;
     if (!fresh) return { viewCount: Number(work.viewCount), deduplicated: true };
     const [updated] = await tx.update(manga).set({ viewCount: sql`${manga.viewCount} + 1` }).where(eq(manga.id, id)).returning({ viewCount: manga.viewCount });
     return { viewCount: Number(updated.viewCount), deduplicated: false };

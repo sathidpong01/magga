@@ -23,18 +23,18 @@ it("keeps the aggregate equal to vote rows across new and edited votes", async (
   expect((await pg.query("SELECT rating_sum::int AS sum,rating_count::int AS count,average_rating AS average FROM manga")).rows[0]).toEqual({ sum: 4, count: 2, average: 2 });
   expect((await pg.query("SELECT sum(rating)::int AS sum,count(*)::int AS count FROM manga_ratings")).rows[0]).toEqual({ sum: 4, count: 2 });
 });
-it("deduplicates first touch, the returned cookie and parallel first-touch aliases", async () => {
-  expect(await recordMangaView(testDatabase, id, "cookie-one", "first-touch")).toEqual({ viewCount: 1, deduplicated: false });
+it("deduplicates views by visitor key within the 10-minute window", async () => {
+  expect(await recordMangaView(testDatabase, id, "cookie-one")).toEqual({ viewCount: 1, deduplicated: false });
   expect(await recordMangaView(testDatabase, id, "cookie-one")).toEqual({ viewCount: 1, deduplicated: true });
-  expect(await recordMangaView(testDatabase, id, "cookie-two", "first-touch")).toEqual({ viewCount: 1, deduplicated: true });
-  expect(await recordMangaView(testDatabase, id, "cookie-two")).toEqual({ viewCount: 1, deduplicated: true });
+  expect(await recordMangaView(testDatabase, id, "cookie-two")).toEqual({ viewCount: 2, deduplicated: false });
+  expect(await recordMangaView(testDatabase, id, "cookie-two")).toEqual({ viewCount: 2, deduplicated: true });
 });
 it("rolls back the dedup marker if incrementing fails, so retry can count", async () => {
   await pg.exec("CREATE FUNCTION reject_view() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'fixture failure'; END $$; CREATE TRIGGER fail_view BEFORE UPDATE ON manga FOR EACH ROW EXECUTE FUNCTION reject_view();");
   await expect(recordMangaView(testDatabase, id, "failed-cookie")).rejects.toThrow();
   expect((await pg.query("SELECT ip_hash FROM manga_views WHERE ip_hash='failed-cookie'")).rows).toEqual([]);
   await pg.exec("DROP TRIGGER fail_view ON manga");
-  expect(await recordMangaView(testDatabase, id, "failed-cookie")).toEqual({ viewCount: 2, deduplicated: false });
+  expect(await recordMangaView(testDatabase, id, "failed-cookie")).toEqual({ viewCount: 3, deduplicated: false });
 });
 it("does not write ratings or view markers for hidden or nonexistent manga", async () => {
   await pg.exec("UPDATE manga SET is_hidden=true");
