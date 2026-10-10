@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/db";
 import { profiles as usersTable, blockedUsers, blockedTags, accounts } from "@/db/schema";
-import { eq, count } from "drizzle-orm";
+import { eq, count, sql } from "drizzle-orm";
 import { Container } from "@mui/material";
 import AccountSettings from "./AccountSettings";
 
@@ -30,13 +30,13 @@ export default async function SettingsPage() {
         username: true,
         email: true,
         image: true,
-        password: true,
         commentPreference: true,
       },
+      extras: { legacyPasswordExists: sql<boolean>`${usersTable.password} IS NOT NULL AND ${usersTable.password} <> ''`.as("legacy_password_exists") },
     }),
     db.select({ count: count() }).from(blockedUsers).where(eq(blockedUsers.userId, session.user.id)),
     db.select({ count: count() }).from(blockedTags).where(eq(blockedTags.userId, session.user.id)),
-    db.select({ providerId: accounts.providerId }).from(accounts).where(eq(accounts.userId, session.user.id)),
+    db.select({ providerId: accounts.providerId, hasPassword: sql<boolean>`${accounts.password} IS NOT NULL AND ${accounts.password} <> ''` }).from(accounts).where(eq(accounts.userId, session.user.id)),
   ]);
 
   if (!user) {
@@ -44,12 +44,13 @@ export default async function SettingsPage() {
   }
 
   const linkedProviders = linkedAccounts.map((a) => a.providerId);
+  const { legacyPasswordExists, ...publicUser } = user;
 
   return (
     <Container maxWidth="md" sx={{ py: { xs: 3, md: 5 } }}>
       <AccountSettings
-        user={user}
-        hasPassword={!!user.password}
+        user={publicUser}
+        hasPassword={legacyPasswordExists || linkedAccounts.some((account) => account.providerId === "credential" && account.hasPassword)}
         blockedUserCount={blockedUserCount[0]?.count ?? 0}
         blockedTagCount={blockedTagCount[0]?.count ?? 0}
         linkedProviders={linkedProviders}

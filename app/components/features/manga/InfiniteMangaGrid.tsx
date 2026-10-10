@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Grid, Box, Button, CircularProgress, Alert } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import MangaCard, { MangaWithDetails } from "./MangaCard";
@@ -10,6 +10,7 @@ import EmptyState from "@/app/components/ui/EmptyState";
 import { useSession } from "@/lib/auth-client";
 import { maggaColors } from "@/lib/design-tokens";
 import { adDeviceDisplay } from "@/lib/advertisements";
+import { appendUniqueMangas, buildMangaPageQuery } from "@/lib/manga-query";
 
 interface Ad {
   id: string;
@@ -30,7 +31,7 @@ interface InfiniteMangaGridProps {
   pageSize?: number;
   search?: string;
   categoryId?: string;
-  tags?: string;
+  tags?: string[];
   sort?: string;
   author?: string;
 }
@@ -38,7 +39,6 @@ interface InfiniteMangaGridProps {
 export default function InfiniteMangaGrid({
   initialMangas,
   initialHasMore,
-  ads = [],
   pageSize = 12,
   search,
   categoryId,
@@ -47,7 +47,7 @@ export default function InfiniteMangaGrid({
   author,
 }: InfiniteMangaGridProps) {
   const { getAdsByPlacement } = useAds();
-  const visitAds = getAdsByPlacement("grid");
+  const ads = getAdsByPlacement("grid");
   const { data: session, isPending: isSessionPending } = useSession();
   const [blockedTagIds, setBlockedTagIds] = useState<string[]>([]);
   const [mangas, setMangas] = useState<MangaWithDetails[]>(initialMangas);
@@ -56,74 +56,81 @@ export default function InfiniteMangaGrid({
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState("");
 
-  // Fetch blocked tags only when the session is known to avoid noisy 401s for guests.
+  const listGeneration = useRef(0);
+  const activeListRequest = useRef<AbortController | null>(null);
+  const actorId = session?.user?.id;
+  const scope = buildMangaPageQuery({ page: 1, pageSize, search, author, categoryId, tagNames: tags, sort }).toString();
+
   useEffect(() => {
-    if (isSessionPending) {
-      return;
-    }
-
-    if (!session?.user?.id) {
-      setBlockedTagIds([]);
-      return;
-    }
-
-    fetch("/api/user/blocked-tags")
-      .then((r) => (r.ok ? r.json() : null))
+    const controller = new AbortController();
+    setBlockedTagIds([]);
+    if (isSessionPending || !actorId) return () => controller.abort();
+    fetch("/api/user/blocked-tags", { signal: controller.signal, cache: "no-store" })
+      .then((response) => response.ok ? response.json() : null)
       .then((data) => {
-        const nextBlockedTagIds = Array.isArray(data?.blockedTags)
-          ? data.blockedTags.map((t: any) => t.tagId)
-          : [];
-        setBlockedTagIds(nextBlockedTagIds);
+        if (controller.signal.aborted) return;
+        setBlockedTagIds(Array.isArray(data?.blockedTags)
+          ? data.blockedTags.flatMap((tag: { tagId?: unknown }) => typeof tag.tagId === "string" ? [tag.tagId] : [])
+          : []);
       })
-      .catch(() => {
-        setBlockedTagIds([]);
-      });
-  }, [isSessionPending, session?.user?.id]);
+      .catch(() => { if (!controller.signal.aborted) setBlockedTagIds([]); });
+    return () => controller.abort();
+  }, [isSessionPending, actorId]);
 
-  // Filter out manga that contain any blocked tag, and apply when blocked tags change
   const filteredMangas = blockedTagIds.length === 0
     ? mangas
-    : mangas.filter((m) => !m.tags.some((t) => blockedTagIds.includes(t.id)));
+    : mangas.filter((manga) => !manga.tags.some((tag) => blockedTagIds.includes(tag.id)));
 
-  // Reset when filters change
   useEffect(() => {
-    setMangas(initialMangas);
+    listGeneration.current++;
+    activeListRequest.current?.abort();
+    activeListRequest.current = null;
+    setMangas(appendUniqueMangas([], initialMangas));
     setPage(1);
     setHasMore(initialHasMore);
-  }, [initialMangas, initialHasMore]);
+    setLoadError("");
+    setIsLoading(false);
+    return () => { activeListRequest.current?.abort(); };
+  }, [initialMangas, initialHasMore, scope]);
 
-  // Fetch more mangas
+  useEffect(() => {
+    listGeneration.current++;
+    activeListRequest.current?.abort();
+    activeListRequest.current = null;
+    setIsLoading(false);
+    setLoadError("");
+  }, [actorId]);
+
   const fetchMore = useCallback(async () => {
-    if (isLoading || !hasMore) return;
-
+    // A synchronous lock also covers double-clicks before React re-renders.
+    if (activeListRequest.current || !hasMore) return;
+    const controller = new AbortController();
+    activeListRequest.current = controller;
+    const generation = listGeneration.current;
+    const nextPage = page + 1;
     setIsLoading(true);
     setLoadError("");
     try {
-      const params = new URLSearchParams();
-      params.set("page", String(page + 1));
-      params.set("pageSize", String(pageSize));
-      if (search) params.set("search", search);
-      if (author) params.set("author", author);
-      if (categoryId && categoryId !== "all")
-        params.set("categoryId", categoryId);
-      if (tags) params.set("tags", tags);
-      if (sort) params.set("sort", sort);
-      if (blockedTagIds.length > 0) params.set("excludeTagIds", blockedTagIds.join(","));
-
-      const res = await fetch(`/api/manga/list?${params}`);
-      if (!res.ok) throw new Error("Failed to fetch");
-
-      const data = await res.json();
-      setMangas((prev) => [...prev, ...data.mangas]);
-      setPage((p) => p + 1);
+      // All pages use the same public dataset; blocked tags are filtered locally.
+      const params = new URLSearchParams(scope);
+      params.set("page", String(nextPage));
+      const response = await fetch(`/api/manga/list?${params}`, { signal: controller.signal, cache: "no-store" });
+      if (!response.ok) throw new Error("Failed to fetch");
+      const data = await response.json();
+      if (!Array.isArray(data.mangas) || typeof data.hasMore !== "boolean") throw new Error("Invalid list response");
+      if (controller.signal.aborted || generation !== listGeneration.current) return;
+      setMangas((previous) => appendUniqueMangas(previous, data.mangas));
+      setPage(nextPage);
       setHasMore(data.hasMore);
-    } catch (error) {
-      console.error("Error fetching more mangas:", error);
-      setLoadError("โหลดรายการเพิ่มเติมไม่ได้ กรุณาลองใหม่อีกครั้ง");
+    } catch {
+      if (!controller.signal.aborted && generation === listGeneration.current) {
+        setLoadError("โหลดรายการเพิ่มเติมไม่ได้ กรุณาลองใหม่อีกครั้ง");
+      }
     } finally {
-      setIsLoading(false);
+      if (activeListRequest.current === controller) activeListRequest.current = null;
+      if (!controller.signal.aborted && generation === listGeneration.current) setIsLoading(false);
     }
-  }, [page, hasMore, isLoading, pageSize, search, author, categoryId, tags, sort, blockedTagIds]);
+  }, [page, hasMore, scope]);
 
   // สร้าง items พร้อม ads แทรก
   const itemsWithAds = (() => {
@@ -173,14 +180,11 @@ export default function InfiniteMangaGrid({
   const orphanAtThreeColumns = totalItems % 3 === 1;
   const orphanAtFourColumns = totalItems % 4 === 1;
 
-  if (filteredMangas.length === 0 && !isLoading) {
-    return <EmptyState />;
-  }
-
   return (
     <>
+      {filteredMangas.length === 0 && !isLoading && <EmptyState />}
       {/* Add minHeight to prevent CLS when grid content loads */}
-      <Grid container spacing={{ xs: 1.5, sm: 2, md: 3 }} sx={{ minHeight: 400 * 3, alignContent: "start" }}>
+      <Grid container spacing={{ xs: 1.5, sm: 2, md: 3 }} sx={{ minHeight: filteredMangas.length ? 400 * 3 : 0, alignContent: "start" }}>
         {itemsWithAds.map((item, index) => (
           <Grid
             key={
@@ -206,7 +210,7 @@ export default function InfiniteMangaGrid({
             {item.type === "manga" ? (
               <MangaCard manga={item.data} priority={index < 4} />
             ) : (
-              <AdCard ad={visitAds.find((ad) => ad.id === item.data.id) ?? item.data} />
+              <AdCard ad={item.data} />
             )}
           </Grid>
         ))}

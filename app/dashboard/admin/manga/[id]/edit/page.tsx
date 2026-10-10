@@ -1,3 +1,4 @@
+import { requireAdminPage } from "@/lib/auth-helpers";
 import type { Metadata } from "next";
 import { db } from "@/db";
 import { manga as mangaTable, mangaTags as mangaTagsTable } from "@/db/schema";
@@ -17,6 +18,7 @@ export default async function EditMangaPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireAdminPage();
   const { id } = await params;
 
   const mangaData = await db.query.manga.findFirst({

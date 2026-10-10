@@ -5,15 +5,18 @@ import { eq, inArray } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { requireAdmin } from "@/lib/auth-helpers";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { invalidateMangaContent } from "@/lib/manga-invalidation";
+import { z } from "zod";
 
 export async function PATCH(req: NextRequest) {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
+    const session = await auth.api.getSession({ headers: await headers(), query: { disableCookieCache: true } });
     const authError = requireAdmin(session);
     if (authError) return authError;
 
-    const body = await req.json();
+    const parsed = z.object({ id: z.uuid(), categoryName: z.string().max(100).optional(), tagNames: z.array(z.string().max(100)).max(100).optional(), authorName: z.string().max(200).optional() }).safeParse(await req.json());
+    if (!parsed.success) return NextResponse.json({ error: "Invalid manga data" }, { status: 400 });
+    const body = parsed.data;
     const { id, categoryName, tagNames, authorName } = body as {
       id: string;
       categoryName?: string;
@@ -60,23 +63,25 @@ export async function PATCH(req: NextRequest) {
       authorId = author?.id || null;
     }
 
-    // Update manga
-    const [updatedManga] = await db
+    const result = await db.transaction(async tx => {
+    const [before] = await tx.select({ slug: mangaTable.slug }).from(mangaTable).where(eq(mangaTable.id,id)).for("update");
+    if (!before) return null;
+    await tx
       .update(mangaTable)
-      .set({ categoryId, authorId })
+      .set({ categoryId, authorId, authorName: authorName || null })
       .where(eq(mangaTable.id, id))
       .returning();
 
     // Update tags: delete old and insert new
-    await db.delete(mangaTagsTable).where(eq(mangaTagsTable.mangaId, id));
+    await tx.delete(mangaTagsTable).where(eq(mangaTagsTable.mangaId, id));
     if (tagIds.length > 0) {
-      await db.insert(mangaTagsTable).values(
-        tagIds.map((tagId) => ({ mangaId: id, tagId }))
+      await tx.insert(mangaTagsTable).values(
+        [...new Set(tagIds)].map((tagId) => ({ mangaId: id, tagId }))
       );
     }
 
     // Fetch with relations for response
-    const mangaWithRelations = await db.query.manga.findFirst({
+    const mangaWithRelations = await tx.query.manga.findFirst({
       where: eq(mangaTable.id, id),
       with: {
         category: true,
@@ -87,13 +92,15 @@ export async function PATCH(req: NextRequest) {
       },
     });
 
-    revalidatePath("/dashboard/admin");
-    revalidatePath("/dashboard/admin/manga");
-    revalidatePath("/");
-    revalidateTag("manga-list", "max");
+    return { before, mangaWithRelations };
+    });
+    if (!result) return NextResponse.json({ error: "Manga not found" }, { status: 404 });
+    const { mangaWithRelations } = result;
+    const refreshed = invalidateMangaContent([result.before.slug, mangaWithRelations?.slug]);
 
     return NextResponse.json({
       success: true,
+      cache_refresh_pending: !refreshed,
       manga: {
         ...mangaWithRelations,
         tags: mangaWithRelations?.mangaTags_mangaId.map((mt: any) => mt.tag_tagId) || [],

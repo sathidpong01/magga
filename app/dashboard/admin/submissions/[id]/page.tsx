@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, useRef, use } from "react";
 import { useRouter } from "next/navigation";
 import {
   Box,
@@ -89,18 +89,31 @@ export default function SubmissionDetailPage({
   // Image Preview
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
+  const actionPending = useRef(false);
+  const actionController = useRef<AbortController | null>(null);
   useEffect(() => {
+    const controller = new AbortController();
+    actionController.current = controller;
+    setLoading(true);
+    setError("");
+    setSubmission(null);
+    setIsEditing(false);
+    setApproveOpen(false);
+    setRejectOpen(false);
     const fetchData = async () => {
       try {
         const [subRes, catRes, tagRes] = await Promise.all([
-          authFetch(`/api/admin/submissions/${submissionId}`),
-          fetch("/api/categories"),
-          fetch("/api/tags"),
+          authFetch(`/api/admin/submissions/${submissionId}`, { signal: controller.signal }),
+          fetch("/api/categories", { signal: controller.signal }),
+          fetch("/api/tags", { signal: controller.signal }),
         ]);
 
         if (!subRes.ok) throw new Error("Failed to fetch submission");
 
         const subData = await subRes.json();
+        const categoryData = catRes.ok ? await catRes.json() : [];
+        const tagData = tagRes.ok ? await tagRes.json() : [];
+        if (controller.signal.aborted) return;
         setSubmission(subData);
 
         // Init edit form
@@ -112,46 +125,64 @@ export default function SubmissionDetailPage({
           tagIds: subData.tags.map((t: any) => t.tagId),
         });
 
-        if (catRes.ok) setCategories(await catRes.json());
-        if (tagRes.ok) setTags(await tagRes.json());
+        setCategories(categoryData);
+        setTags(tagData);
       } catch (err) {
+        if (controller.signal.aborted) return;
         setError("Failed to load data");
         console.error(err);
       } finally {
-        setLoading(false);
+        if (!controller.signal.aborted) setLoading(false);
       }
     };
     fetchData();
+    return () => controller.abort();
   }, [submissionId]);
 
   const handleSaveEdit = async () => {
+    if (actionPending.current) return;
+    const controller = actionController.current;
+    if (!controller || controller.signal.aborted) return;
+    actionPending.current = true;
     setActionLoading(true);
     try {
       const res = await authFetch(`/api/admin/submissions/${submissionId}`, {
         method: "PUT",
+        signal: controller.signal,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editForm),
       });
 
       if (!res.ok) throw new Error("Failed to update");
 
+      if (controller.signal.aborted) return;
       setIsEditing(false);
-      const subRes = await authFetch(`/api/admin/submissions/${submissionId}`);
-      if (subRes.ok) setSubmission(await subRes.json());
+      const subRes = await authFetch(`/api/admin/submissions/${submissionId}`, { signal: controller.signal });
+      if (subRes.ok) {
+        const data = await subRes.json();
+        if (!controller.signal.aborted) setSubmission(data);
+      }
     } catch (err) {
+      if (controller.signal.aborted) return;
       alert("Failed to save changes");
     } finally {
-      setActionLoading(false);
+      actionPending.current = false;
+      if (!controller.signal.aborted) setActionLoading(false);
     }
   };
 
   const handleApprove = async () => {
+    if (actionPending.current) return;
+    const controller = actionController.current;
+    if (!controller || controller.signal.aborted) return;
+    actionPending.current = true;
     setActionLoading(true);
     try {
       const res = await authFetch(
         `/api/admin/submissions/${submissionId}/approve`,
         {
           method: "POST",
+          signal: controller.signal,
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ reviewNote, publishImmediately }),
         }
@@ -162,24 +193,32 @@ export default function SubmissionDetailPage({
         throw new Error(data.error || "Failed to approve");
       }
 
+      if (controller.signal.aborted) return;
       router.push(`/dashboard/admin/submissions?status=APPROVED`);
       router.refresh();
     } catch (err) {
+      if (controller.signal.aborted) return;
       alert(err instanceof Error ? err.message : "Error approving");
     } finally {
-      setActionLoading(false);
+      actionPending.current = false;
+      if (!controller.signal.aborted) setActionLoading(false);
       setApproveOpen(false);
     }
   };
 
   const handleReject = async () => {
+    if (actionPending.current) return;
+    const controller = actionController.current;
+    if (!controller || controller.signal.aborted) return;
     if (!rejectionReason) return;
+    actionPending.current = true;
     setActionLoading(true);
     try {
       const res = await authFetch(
         `/api/admin/submissions/${submissionId}/reject`,
         {
           method: "POST",
+          signal: controller.signal,
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ rejectionReason, reviewNote }),
         }
@@ -187,12 +226,15 @@ export default function SubmissionDetailPage({
 
       if (!res.ok) throw new Error("Failed to reject");
 
+      if (controller.signal.aborted) return;
       router.push(`/dashboard/admin/submissions?status=REJECTED`);
       router.refresh();
     } catch (err) {
+      if (controller.signal.aborted) return;
       alert("Error rejecting");
     } finally {
-      setActionLoading(false);
+      actionPending.current = false;
+      if (!controller.signal.aborted) setActionLoading(false);
       setRejectOpen(false);
     }
   };

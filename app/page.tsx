@@ -12,6 +12,7 @@ import AuthorHeaderCard from "./components/features/author/AuthorHeaderCard";
 import { getAuthorProfile } from "@/lib/manga-list";
 import { maggaColors } from "@/lib/design-tokens";
 import { getPublicAds } from "@/lib/advertisements-server";
+import { EMPTY_CATEGORY_ID, normalizeHomeFilters } from "@/lib/manga-query";
 
 const SearchFilters = dynamic(
   () => import("./components/features/search/SearchFilters"),
@@ -20,11 +21,11 @@ const SearchFilters = dynamic(
 
 type Props = {
   searchParams: Promise<{
-    search?: string;
-    category?: string;
+    search?: string | string[];
+    category?: string | string[];
     tags?: string | string[];
-    sort?: string;
-    author?: string;
+    sort?: string | string[];
+    author?: string | string[];
   }>;
 };
 
@@ -32,8 +33,8 @@ type Props = {
 export const revalidate = 3600;
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
-  const { search, category, tags, sort, author } = await searchParams;
-  const hasFilters = Boolean(search || category || (Array.isArray(tags) ? tags.length : tags) || sort || author);
+  const { search, category, tags, sort, author } = normalizeHomeFilters(await searchParams);
+  const hasFilters = Boolean(search || category || tags.length || sort !== "added" || author);
   return {
     alternates: { canonical: "/" },
     ...(hasFilters ? { robots: { index: false, follow: true } } : {}),
@@ -69,7 +70,7 @@ const getTags = unstable_cache(
 const getGridAds = async () => (await getPublicAds()).filter((ad) => ad.placement === "grid");
 
 export default async function Home({ searchParams }: Props) {
-  const params = await searchParams;
+  const params = normalizeHomeFilters(await searchParams);
   const { search, category: categoryName, tags: tagNames, sort, author } = params;
 
   // Fetch Categories, Tags, Grid Ads, and Author Profile in parallel with resilient fallbacks
@@ -96,7 +97,7 @@ export default async function Home({ searchParams }: Props) {
 
   // Resolve category name → UUID for DB query
   const categoryId = categoryName
-    ? categories.find((c) => c.name === categoryName)?.id
+    ? categories.find((c) => c.name === categoryName)?.id ?? EMPTY_CATEGORY_ID
     : undefined;
 
   const tagNameArray = tagNames

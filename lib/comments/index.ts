@@ -7,7 +7,7 @@ import { comments, commentVotes, manga, profiles, commentGuests } from "@/db/sch
 import { requireCommentActor, resolveCommentActor, resolveGuestActor, assertCommentOrigin, ensureGuestVerification, type CommentActor } from "./identity";
 import { consumeCommentLimit } from "./abuse";
 import { assertGuestCommentsEnabled } from "./config";
-import { reserveCommentAsset, finalizeCommentAsset, retireCommentAssets, decorateCommentImagePreviews, rollbackCommentAssetPublication, discardPublishedCommentStaging } from "./assets";
+import { reserveCommentAsset, finalizeCommentAsset, retireCommentAssets, purgeRetiredCommentAssets, decorateCommentImagePreviews, rollbackCommentAssetPublication, discardPublishedCommentStaging } from "./assets";
 import { requireUuid, validateCommentContent, validateImageIndex } from "./validation";
 import { CommentError, ForbiddenCommentError, NotFoundCommentError, ValidationCommentError, type CallerInput, type CreateCommentInput, type UpdateCommentInput, type VoteCommentInput, type ListCommentsOptions, type CommentListResult } from "./types";
 import { parseCompositeCommentCursor, getNextCommentCursor } from "./pagination";
@@ -35,7 +35,7 @@ async function resolveMemberGuest(headers: Headers) {
 }
 async function visibleManga(mangaId: string, actor?: CommentActor|null, imageIndex?: number|null) {
   requireUuid(mangaId,"mangaId");
-  const [work] = await db.select({id:manga.id,slug:manga.slug,isHidden:manga.isHidden,pages:manga.pages}).from(manga).where(eq(manga.id,mangaId)).limit(1);
+  const [work] = await db.select({id:manga.id,slug:manga.slug,isHidden:manga.isHidden,...(imageIndex != null ? {pages:manga.pages} : {})}).from(manga).where(eq(manga.id,mangaId)).limit(1);
   if (!work || (work.isHidden && !(actor?.kind === "member" && actor.role === "admin"))) throw new NotFoundCommentError("ไม่พบเรื่องนี้");
   if (imageIndex !== undefined && imageIndex !== null && (!Array.isArray(work.pages) || imageIndex>=work.pages.length)) throw new ValidationCommentError("หน้าการ์ตูนไม่ถูกต้อง");
   return work;
@@ -53,7 +53,7 @@ export function handleCommentError(error: unknown): NextResponse {
 }
 async function readPublicRows(ids: string[]) {
   if (!ids.length) return [];
-  const rows = await db.select({comment:comments,profile:{id:profiles.id,name:profiles.name,username:profiles.username,image:profiles.image},guest:{name:commentGuests.name,publicCode:commentGuests.publicCode}}).from(comments).leftJoin(profiles,eq(comments.userId,profiles.id)).leftJoin(commentGuests,eq(comments.guestId,commentGuests.id)).where(inArray(comments.id,ids));
+  const rows = await db.select({comment:{id:comments.id,content:comments.content,imageUrl:comments.imageUrl,voteScore:comments.voteScore,createdAt:comments.createdAt,updatedAt:comments.updatedAt,mangaId:comments.mangaId,imageIndex:comments.imageIndex,parentId:comments.parentId,status:comments.status,userId:comments.userId,guestId:comments.guestId,authorName:comments.authorName,guestPublicCode:comments.guestPublicCode},profile:{id:profiles.id,name:profiles.name,username:profiles.username,image:profiles.image},guest:{name:commentGuests.name,publicCode:commentGuests.publicCode}}).from(comments).leftJoin(profiles,eq(comments.userId,profiles.id)).leftJoin(commentGuests,eq(comments.guestId,commentGuests.id)).where(inArray(comments.id,ids));
   return rows.map(({comment:c,profile:p,guest:g}) => {
     const removed = c.status === "deleted";
     return {id:c.id,content:removed ? "ความคิดเห็นถูกลบแล้ว" : c.content,imageUrl:removed ? null : c.imageUrl,voteScore:c.voteScore,createdAt:c.createdAt,updatedAt:c.updatedAt,mangaId:c.mangaId,imageIndex:c.imageIndex,parentId:c.parentId,status:c.status,user:c.userId ? p : null,author:c.guestId ? {kind:"guest" as const,name:c.authorName || g?.name || "ผู้เยี่ยมชม",publicCode:c.guestPublicCode || g?.publicCode || undefined,image:null} : {kind:"member" as const,name:p?.name || p?.username || "สมาชิก",username:p?.username,image:p?.image || null},replies:[],repliesNextCursor:null as string|null};
@@ -138,11 +138,12 @@ export async function deleteComment(caller: CallerInput,commentId:string) {
   const guest = actor.kind === "member" ? await resolveMemberGuest(headers) : null;
   if (!isCommentOwner(actor,row) && !(guest && isCommentOwner(guest,row)) && !(actor.kind === "member" && actor.role === "admin")) throw new ForbiddenCommentError();
   await consumeCommentLimit(actor,headers,"comment");
-  await db.transaction(async tx => {
+  const retired = await db.transaction(async tx => {
     await tx.select({id:comments.id}).from(comments).where(eq(comments.id,commentId)).for("update");
     await tx.update(comments).set({status:"deleted",content:"",imageUrl:null,updatedAt:new Date().toISOString()}).where(eq(comments.id,commentId));
-    await retireCommentAssets(tx,commentId);
+    return retireCommentAssets(tx,commentId);
   });
+  await purgeRetiredCommentAssets(retired);
   revalidatePath(`/${work.slug}`);
   return {success:true};
 }
@@ -179,11 +180,12 @@ export async function listComments(options: ListCommentsOptions):Promise<Comment
     const timestamp = options.cursor.split("|")[0];
     conditions.push(parsed.id ? sql`(${comments.createdAt},${comments.id})<(${timestamp}::timestamptz,${parsed.id}::uuid)` : sql`${comments.createdAt}<${timestamp}::timestamptz`);
   }
-  const roots = await db.select().from(comments).where(and(...conditions)).orderBy(desc(comments.createdAt),desc(comments.id)).limit(limit+1);
+  const roots = await db.select({ id: comments.id, createdAt: comments.createdAt }).from(comments).where(and(...conditions)).orderBy(desc(comments.createdAt),desc(comments.id)).limit(limit+1);
   const hasNext = roots.length>limit;
   if (hasNext) roots.pop();
   const items = await readPublicRows(roots.map(row=>row.id));
-  const ordered = roots.map(row=>items.find(item=>item.id===row.id)!);
+  const itemsById = new Map(items.map(item => [item.id, item]));
+  const ordered = roots.map(row=>itemsById.get(row.id)!);
   if (ordered.length) {
     const ranked = db.select({id:comments.id,parentId:comments.parentId,rank:sql<number>`row_number() over (partition by ${comments.parentId} order by ${comments.createdAt} asc, ${comments.id} asc)`.as("reply_rank")}).from(comments).where(and(eq(comments.mangaId,options.mangaId),imageIndex === null ? isNull(comments.imageIndex) : eq(comments.imageIndex,imageIndex),inArray(comments.parentId,ordered.map(c=>c.id)),inArray(comments.status,["published","deleted"]))).as("ranked_replies");
     const replies = await db.select({id:ranked.id,parentId:ranked.parentId,rank:ranked.rank}).from(ranked).where(sql`${ranked.rank}<=21`).orderBy(asc(ranked.rank));
@@ -214,7 +216,7 @@ export async function listCommentReplies(options:{commentId:string;cursor?:strin
     const timestamp = options.cursor.split("|")[0];
     conditions.push(parsed.id ? sql`(${comments.createdAt},${comments.id})>(${timestamp}::timestamptz,${parsed.id}::uuid)` : sql`${comments.createdAt}>${timestamp}::timestamptz`);
   }
-  const rows = await db.select().from(comments).where(and(...conditions)).orderBy(asc(comments.createdAt),asc(comments.id)).limit(limit+1);
+  const rows = await db.select({ id: comments.id, createdAt: comments.createdAt }).from(comments).where(and(...conditions)).orderBy(asc(comments.createdAt),asc(comments.id)).limit(limit+1);
   const hasNext = rows.length>limit;
   if (hasNext) rows.pop();
   const items = await readPublicRows(rows.map(row=>row.id));
@@ -227,9 +229,10 @@ export async function getCommentCapabilities(headers:Headers,ids:string[],scope?
   ids.forEach(id=>requireUuid(id,"id"));
   const actor = await resolveCommentActor(headers);
   const guest = actor?.kind === "member" ? await resolveMemberGuest(headers) : null;
-  const rows = ids.length ? await db.select().from(comments).innerJoin(manga,eq(comments.mangaId,manga.id)).where(and(inArray(comments.id,ids),eq(manga.isHidden,false))) : [];
-  const votes = actor?.kind === "member" && ids.length ? await db.select().from(commentVotes).where(and(eq(commentVotes.userId,actor.userId),inArray(commentVotes.commentId,ids))) : [];
-  const capabilities = Object.fromEntries(rows.map(({comments:c})=>[c.id,{canEdit:!!actor && (isCommentOwner(actor,c) || !!guest && isCommentOwner(guest,c)) && c.status === "published",canDelete:!!actor && (isCommentOwner(actor,c) || !!guest && isCommentOwner(guest,c) || actor.kind === "member" && actor.role === "admin") && c.status !== "deleted",userVote:votes.find(v=>v.commentId===c.id)?.value ?? null}]));
+  const rows = ids.length ? await db.select({comments:{id:comments.id,userId:comments.userId,guestId:comments.guestId,status:comments.status}}).from(comments).innerJoin(manga,eq(comments.mangaId,manga.id)).where(and(inArray(comments.id,ids),eq(manga.isHidden,false))) : [];
+  const votes = actor?.kind === "member" && ids.length ? await db.select({commentId:commentVotes.commentId,value:commentVotes.value}).from(commentVotes).where(and(eq(commentVotes.userId,actor.userId),inArray(commentVotes.commentId,ids))) : [];
+  const votesById = new Map(votes.map(vote => [vote.commentId, vote.value]));
+  const capabilities = Object.fromEntries(rows.map(({comments:c})=>[c.id,{canEdit:!!actor && (isCommentOwner(actor,c) || !!guest && isCommentOwner(guest,c)) && c.status === "published",canDelete:!!actor && (isCommentOwner(actor,c) || !!guest && isCommentOwner(guest,c) || actor.kind === "member" && actor.role === "admin") && c.status !== "deleted",userVote:votesById.get(c.id) ?? null}]));
   let ownComments = [] as Awaited<ReturnType<typeof readPublicRows>>;
   if (actor && scope) {
     await visibleManga(scope.mangaId,null,validateImageIndex(scope.imageIndex));

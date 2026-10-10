@@ -1,3 +1,4 @@
+import { requireAdminPage } from "@/lib/auth-helpers";
 import type { Metadata } from "next";
 import { db } from "@/db";
 import { categories as categoriesTable, tags as tagsTable } from "@/db/schema";
@@ -16,6 +17,7 @@ export const metadata: Metadata = {
 };
 
 export default async function MetadataPage() {
+  await requireAdminPage();
   const categories = await db.query.categories.findMany({
     columns: { id: true, name: true },
     orderBy: [asc(categoriesTable.name)],

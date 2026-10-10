@@ -1,12 +1,13 @@
-import { beforeEach, describe, expect, it, jest, mock } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, jest, mock } from "bun:test";
 import type { ReactElement } from "react";
+import { restoreGlobals, stubGlobal } from "./helpers/globals";
 
-const mocks = { fetch: jest.fn() };
+const mocks = { fetch: jest.fn(), effects: [] as Array<() => void | (() => void)>, cleanups: [] as Array<() => void> };
 const originalReact = await import("react");
 mock.module("react", () => ({
   ...originalReact,
   useState: (initial: unknown) => [typeof initial === "function" ? initial() : initial, jest.fn()],
-  useEffect: jest.fn(),
+  useEffect: (effect: () => void | (() => void)) => { mocks.effects.push(effect); },
   useRef: (current: unknown) => ({ current }),
   useCallback: (callback: unknown) => callback,
 }));
@@ -41,7 +42,7 @@ function findElement(node: unknown, matches: (element: FormElement) => boolean):
 }
 
 function renderForm(isHidden: boolean) {
-  return MangaForm({
+  const tree = MangaForm({
     mode: "admin",
     manga: {
       id: "manga-id", title: "Draft", slug: "draft", coverImage: "/cover.png",
@@ -52,13 +53,22 @@ function renderForm(isHidden: boolean) {
       viewCount: 0, ratingSum: 0, ratingCount: 0, averageRating: 0, fts: null,
     },
   });
+  for (const effect of mocks.effects.splice(0)) {
+    const cleanup = effect();
+    if (typeof cleanup === "function") mocks.cleanups.push(cleanup);
+  }
+  return tree;
 }
 
 describe("manga editor publishing", () => {
   beforeEach(() => {
+    mocks.effects = [];
+    mocks.cleanups = [];
+    stubGlobal("fetch", async () => Response.json([]));
     mocks.fetch.mockReset();
     mocks.fetch.mockResolvedValue({ ok: true, json: async () => ({ id: "manga-id" }) });
   });
+  afterEach(() => { mocks.cleanups.forEach((cleanup) => cleanup()); restoreGlobals(); });
 
   it.each([true, false])("preserves stored visibility on a normal update (hidden=%s)", async (isHidden) => {
     const tree = renderForm(isHidden);
@@ -77,5 +87,23 @@ describe("manga editor publishing", () => {
     expect(button).toBeDefined();
     await button!.props.onClick!({ preventDefault: jest.fn() });
     expect(JSON.parse(mocks.fetch.mock.calls[0][1].body).isHidden).toBe(false);
+  });
+  it("allows only one save request while its acknowledgement is pending", async () => {
+    let acknowledge!: (response: { ok: boolean; json: () => Promise<{ id: string }> }) => void;
+    mocks.fetch.mockImplementation(() => new Promise((resolve) => { acknowledge = resolve; }));
+    const tree = renderForm(true);
+    const form = findElement(tree, (element) => element.props.component === "form")!;
+    const first = form.props.onSubmit!({ preventDefault: jest.fn() });
+    await form.props.onSubmit!({ preventDefault: jest.fn() });
+    expect(mocks.fetch).toHaveBeenCalledTimes(1);
+    acknowledge({ ok: true, json: async () => ({ id: "manga-id" }) });
+    await first;
+  });
+  it("does not replay a saved edit while its public cache refresh is pending", async () => {
+    mocks.fetch.mockResolvedValue({ ok: true, json: async () => ({ id: "manga-id", cache_refresh_pending: true }) });
+    const form = findElement(renderForm(true), (element) => element.props.component === "form")!;
+    await form.props.onSubmit!({ preventDefault: jest.fn() });
+    await form.props.onSubmit!({ preventDefault: jest.fn() });
+    expect(mocks.fetch).toHaveBeenCalledTimes(1);
   });
 });

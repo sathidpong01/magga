@@ -1274,7 +1274,7 @@ export default function AdvertisementsPage() {
                   ลิงก์ปลายทาง
                 </Typography>
                 <Typography id="ad-links-help" sx={{ color: maggaColors.textSecondary, fontSize: "0.75rem", mb: 2 }}>
-                  สุ่มเปิด 1 ลิงก์ต่อคลิก โดยแต่ละลิงก์มีโอกาสเท่ากัน เพิ่มได้สูงสุด 20 ลิงก์ หรือเว้นว่างเพื่อแสดงภาพอย่างเดียว
+                  สุ่มเลือก 1 ลิงก์เมื่อโหลดหน้า และใช้ลิงก์เดิมตลอดการเข้าชม โดยแต่ละลิงก์มีโอกาสเท่ากัน เพิ่มได้สูงสุด 20 ลิงก์ หรือเว้นว่างเพื่อแสดงภาพอย่างเดียว
                 </Typography>
                 <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                   {formData.linkUrls.map((link, index) => (

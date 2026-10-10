@@ -13,7 +13,7 @@ state.database = database;
 mock.module('@/db', () => ({ get db() { return state.database; } }));
 mock.module('@/lib/comments/identity', () => ({ resolveCommentActor: state.actor, resolveGuestActor: state.guest }));
 mock.module('@/lib/storage/comment-private', () => ({ getCommentPrivateStorage: () => ({ get: state.get, put: state.put, delete: state.remove, publish: state.publish, previewUrl: state.preview,publicUrl:state.publicUrl,unpublish:state.unpublish,discardStaging:state.discard }) }));
-const { createCommentAsset, reserveCommentAsset, finalizeCommentAsset, readPublishedCommentAsset, cleanupCommentAssets, retireCommentAssets, decorateCommentImagePreviews, rollbackCommentAssetPublication, discardPublishedCommentStaging } = await import('@/lib/comments/assets');
+const { createCommentAsset, reserveCommentAsset, finalizeCommentAsset, readPublishedCommentAsset, cleanupCommentAssets, retireCommentAssets, purgeRetiredCommentAssets, decorateCommentImagePreviews, rollbackCommentAssetPublication, discardPublishedCommentStaging } = await import('@/lib/comments/assets');
 
 const { ForbiddenCommentError, NotFoundCommentError } = await import('@/lib/comments/types');
 
@@ -182,16 +182,21 @@ describe('comment assets with real Postgres ownership and visibility queries', (
     await expect(readPublishedCommentAsset(assetId)).rejects.toThrow('database unavailable');
     expect(state.get).not.toHaveBeenCalled();
   });
-  it('deletes attached objects immediately and retains exact metadata on failed deletion for retry', async () => {
+  it('commits retirement before deleting objects and retains failed deletion for retry', async () => {
     await pg.exec(`UPDATE private.comment_assets SET state='published',comment_id='${commentId}'`);
+    await expect(database.transaction(async tx => {
+      await retireCommentAssets(tx as never, commentId);
+      throw new Error('rollback fixture');
+    })).rejects.toThrow('rollback fixture');
+    expect(state.remove).not.toHaveBeenCalled();
+    expect((await pg.query('SELECT state FROM private.comment_assets')).rows).toEqual([{state:'published'}]);
+    const retired = await database.transaction(tx => retireCommentAssets(tx as never, commentId));
+    expect(state.remove).not.toHaveBeenCalled();
     state.remove.mockRejectedValueOnce(new Error('R2 unavailable'));
-    await expect(database.transaction(tx => retireCommentAssets(tx as never, commentId))).rejects.toThrow('R2 unavailable');
-    expect((await pg.query(`SELECT object_key,state FROM private.comment_assets`)).rows).toEqual([{object_key:'comments/test.webp',state:'published'}]);
-    await database.transaction(tx => retireCommentAssets(tx as never, commentId));
-    expect(state.remove).toHaveBeenCalledWith('comments/test.webp');
-    expect((await pg.query(`SELECT id FROM private.comment_assets`)).rows).toHaveLength(0);
-    await database.transaction(tx => retireCommentAssets(tx as never, commentId));
-    expect(state.remove).toHaveBeenCalledTimes(2);
+    expect(await purgeRetiredCommentAssets(retired)).toBe(false);
+    expect((await pg.query('SELECT object_key,state FROM private.comment_assets')).rows).toEqual([{object_key:'comments/test.webp',state:'deleted'}]);
+    expect(await purgeRetiredCommentAssets(retired)).toBe(true);
+    expect((await pg.query('SELECT id FROM private.comment_assets')).rows).toHaveLength(0);
   });
   it('publishes direct R2 URLs but never publishes pending attachments', async () => {
     await database.transaction(async tx => {

@@ -8,7 +8,7 @@ const database = drizzle(pg, { schema });
 state.database = database;
 mock.module('@/db',()=>({get db(){return state.database;}}));
 mock.module('@/lib/auth',()=>({auth:{api:{getSession:jest.fn()}}}));
-mock.module('@/lib/comments/assets',()=>({reserveCommentAsset:jest.fn(),finalizeCommentAsset:jest.fn(),retireCommentAssets:jest.fn(),rollbackCommentAssetPublication:jest.fn(),discardPublishedCommentStaging:jest.fn(),decorateCommentImagePreviews:async(rows:unknown[])=>rows}));
+mock.module('@/lib/comments/assets',()=>({reserveCommentAsset:jest.fn(),finalizeCommentAsset:jest.fn(),purgeRetiredCommentAssets:jest.fn().mockResolvedValue(true),retireCommentAssets:jest.fn().mockResolvedValue([]),rollbackCommentAssetPublication:jest.fn(),discardPublishedCommentStaging:jest.fn(),decorateCommentImagePreviews:async(rows:unknown[])=>rows}));
 mock.module('next/cache',()=>({revalidatePath:jest.fn()}));
 const { listComments,listCommentReplies } = await import('@/lib/comments');
 const { GET } = await import('@/app/api/comments/[commentId]/replies/route');

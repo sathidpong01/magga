@@ -55,9 +55,19 @@ export async function storeAssets(
 ): Promise<StoredAsset[]> {
   const results: StoredAsset[] = [];
 
-  for (const file of files) {
-    const stored = await storeAsset(file, context, adapter);
-    results.push(stored);
+  try {
+    for (const file of files) {
+      const stored = await storeAsset(file, context, adapter);
+      results.push(stored);
+    }
+  } catch (error) {
+    // These UUID keys were created in this operation and were never returned.
+    // Cleanup never takes its authority from caller-supplied URLs.
+    if (results.length) {
+      try { await adapter.delete(results.map(asset => asset.key)); }
+      catch { throw new Error("Upload failed; storage rollback requires retry"); }
+    }
+    throw error;
   }
 
   return results;
@@ -72,15 +82,22 @@ export async function deleteAssets(
   const publicUrl = adapter.getPublicUrl("");
   const publicBase = publicUrl.replace(/\/+$/, "");
 
-  const keys = keysOrUrls.map((item) => {
-    let key = item;
-    if (key.startsWith(publicBase)) {
-      key = key.slice(publicBase.length);
-    }
-    return key.replace(/^\/+/, "");
-  });
+  const keys = keysOrUrls.map(item => storageObjectKey(item, publicBase));
 
   return adapter.delete(keys);
+}
+
+export function storageObjectKey(item: string, publicBase: string): string {
+  let key = item;
+  if (/^https?:\/\//i.test(item)) {
+    const base = new URL(`${publicBase.replace(/\/+$/, "")}/`);
+    const target = new URL(item);
+    if (target.origin !== base.origin || !target.pathname.startsWith(base.pathname) || target.search || target.hash) throw new Error("Invalid storage URL");
+    key = target.pathname.slice(base.pathname.length);
+  }
+  key = key.replace(/^\/+/, "");
+  if (!key || key.includes("..") || key.includes("\\") || key.includes(":") || /%2f|%2e|%5c/i.test(key)) throw new Error("Invalid storage key");
+  return key;
 }
 
 export function getStoragePublicUrl(

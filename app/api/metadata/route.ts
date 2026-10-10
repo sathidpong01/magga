@@ -1,151 +1,29 @@
 import { NextResponse } from "next/server";
 import { parse } from "node-html-parser";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { getClientIp, validateExternalUrl } from "@/lib/network-security";
-
-const MAX_REDIRECTS = 3;
-const REQUEST_TIMEOUT_MS = 5000;
-
-function getFaviconUrl(targetUrl: URL) {
-  return `https://www.google.com/s2/favicons?domain=${targetUrl.hostname}&sz=128`;
-}
-
-function getTitleFromUrl(targetUrl: URL) {
-  let name = targetUrl.pathname.split("/").filter(Boolean).pop();
-  if (!name) {
-    name = targetUrl.hostname;
-  }
-
-  return name;
-}
-
-async function fetchMetadataResponse(targetUrl: URL, redirectsRemaining = MAX_REDIRECTS): Promise<{ response: Response; finalUrl: URL }> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
-
-  try {
-    const response = await fetch(targetUrl.toString(), {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-      },
-      redirect: "manual",
-      signal: controller.signal,
-    });
-
-    if (response.status >= 300 && response.status < 400) {
-      const location = response.headers.get("location");
-      if (!location || redirectsRemaining <= 0) {
-        throw new Error("Redirect target is invalid");
-      }
-
-      const nextTarget = new URL(location, targetUrl);
-      const validation = await validateExternalUrl(nextTarget.toString());
-      if (!validation.valid || !validation.url) {
-        throw new Error(validation.error || "Redirect target is not allowed");
-      }
-
-      return fetchMetadataResponse(validation.url, redirectsRemaining - 1);
-    }
-
-    return { response, finalUrl: targetUrl };
-  } finally {
-    clearTimeout(timeoutId);
-  }
-}
-
+import { getClientIp } from "@/lib/network-security";
+import { fetchMetadataHtml } from "@/lib/metadata-fetch";
 export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const url = searchParams.get("url");
-
-  if (!url) {
-    return NextResponse.json({ error: "URL is required" }, { status: 400 });
-  }
-
-  const clientIp = getClientIp(request.headers);
-  const rateLimit = await checkRateLimit(`metadata:${clientIp}`, 20, 15 * 60 * 1000);
-  if (!rateLimit.allowed) {
-    return NextResponse.json({ error: "Too many metadata requests. Please try again later." }, { status: 429 });
-  }
-
-  const validation = await validateExternalUrl(url);
-  if (!validation.valid || !validation.url) {
-    return NextResponse.json({ error: validation.error }, { status: 400 });
-  }
-
+  const input = new URL(request.url).searchParams.get("url");
+  if (!input || input.length > 4096) return NextResponse.json({ error: "A valid URL is required" }, { status: 400 });
+  let target: URL;
+  try { target = new URL(input); if (!["https:", "http:"].includes(target.protocol)) throw new Error(); }
+  catch { return NextResponse.json({ error: "A valid HTTP(S) URL is required" }, { status: 400 }); }
+  const limit = await checkRateLimit(`metadata:${getClientIp(request.headers)}`, 20, 15 * 60 * 1000);
+  if (!limit.allowed) return NextResponse.json({ error: "Too many metadata requests" }, { status: 429 });
+  const fallback = (url: URL) => ({ title: (url.pathname.split("/").filter(Boolean).pop() || url.hostname).slice(0, 300), icon: `https://www.google.com/s2/favicons?domain=${encodeURIComponent(url.hostname)}&sz=128` });
   try {
-    const { response, finalUrl } = await fetchMetadataResponse(validation.url);
-
-    if (!response.ok) {
-      return NextResponse.json({
-        title: getTitleFromUrl(finalUrl),
-        icon: getFaviconUrl(finalUrl),
-      });
+    const result = await fetchMetadataHtml(input);
+    target = result.url;
+    const document = parse(result.html);
+    const title = document.querySelector('meta[property="og:title"]')?.getAttribute("content") || document.querySelector('meta[name="twitter:title"]')?.getAttribute("content") || document.querySelector("title")?.textContent || fallback(target).title;
+    const rawIcon = document.querySelector('link[rel="icon"]')?.getAttribute("href") || document.querySelector('link[rel="shortcut icon"]')?.getAttribute("href") || document.querySelector('link[rel="apple-touch-icon"]')?.getAttribute("href") || document.querySelector('meta[property="og:image"]')?.getAttribute("content") || "/favicon.ico";
+    let icon = fallback(target).icon;
+    if (rawIcon.length <= 4096) {
+      try { const candidate = new URL(rawIcon, target); if (["https:", "http:"].includes(candidate.protocol) && !candidate.username && !candidate.password) icon = candidate.toString(); } catch { /* fallback */ }
     }
-
-    const contentType = response.headers.get("content-type") || "";
-    if (
-      contentType &&
-      !contentType.includes("text/html") &&
-      !contentType.includes("application/xhtml+xml")
-    ) {
-      return NextResponse.json({
-        title: getTitleFromUrl(finalUrl),
-        icon: getFaviconUrl(finalUrl),
-      });
-    }
-
-    const html = await response.text();
-    const document = parse(html);
-
-    // Get Title
-    let title =
-      document.querySelector('meta[property="og:title"]')?.getAttribute("content") ||
-      document.querySelector('meta[name="twitter:title"]')?.getAttribute("content") ||
-      document.querySelector("title")?.textContent;
-
-    if (!title) {
-      title = getTitleFromUrl(finalUrl);
-    }
-
-    // Get Icon
-    let icon =
-      document.querySelector('link[rel="icon"]')?.getAttribute("href") ||
-      document.querySelector('link[rel="shortcut icon"]')?.getAttribute("href") ||
-      document.querySelector('link[rel="apple-touch-icon"]')?.getAttribute("href") ||
-      document.querySelector('meta[property="og:image"]')?.getAttribute("content") ||
-      "/favicon.ico";
-
-    // Handle relative URLs for icon or missing icon
-    if (!icon || (!icon.startsWith("http") && !icon.startsWith("data:"))) {
-      try {
-        if (icon && !icon.startsWith("data:")) {
-           icon = new URL(icon, finalUrl.origin).toString();
-        } else {
-           icon = getFaviconUrl(finalUrl);
-        }
-      } catch {
-        icon = getFaviconUrl(finalUrl);
-      }
-    }
-
-    return NextResponse.json({
-      title: title.trim(),
-      icon: icon,
-    });
-  } catch (error) {
-    let fallbackIcon = "/favicon.ico";
-    let fallbackTitle = url;
-    try {
-      fallbackIcon = getFaviconUrl(validation.url);
-      fallbackTitle = getTitleFromUrl(validation.url);
-    } catch {}
-
-    return NextResponse.json({
-      title: fallbackTitle,
-      icon: fallbackIcon,
-    });
+    return NextResponse.json({ title: title.trim().slice(0, 300), icon });
+  } catch {
+    return NextResponse.json(fallback(target));
   }
 }

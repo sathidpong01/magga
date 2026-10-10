@@ -22,12 +22,15 @@ import {
   Pagination,
   CircularProgress,
   Tooltip,
+  Alert,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import Link from "next/link";
 import { authFetch } from "@/lib/auth-fetch";
+import { useSearchParams } from "next/navigation";
+import { normalizeSubmissionStatus } from "@/lib/submission-status";
 import {
   dashboardTokens,
   dashboardRadii,
@@ -50,18 +53,25 @@ export type AdminSubmission = {
 export default function SubmissionsManager({
   initialSubmissions,
   initialTotalPages,
+  initialStatus = "ALL",
 }: {
   initialSubmissions: AdminSubmission[];
   initialTotalPages: number;
+  initialStatus?: string;
 }) {
+  const searchParams = useSearchParams();
+  const statusFilter = normalizeSubmissionStatus(searchParams.get("status"));
   const [submissions, setSubmissions] = useState<AdminSubmission[]>(initialSubmissions);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(initialTotalPages);
-  const [statusFilter, setStatusFilter] = useState("ALL");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const hasMountedRef = useRef(false);
+  const activeRequest = useRef<AbortController | null>(null);
+  const [fetchError, setFetchError] = useState("");
+
+  useEffect(() => { setPage(1); }, [statusFilter]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -72,7 +82,11 @@ export default function SubmissionsManager({
   }, [search]);
 
   const fetchSubmissions = useCallback(async () => {
+    activeRequest.current?.abort();
+    const controller = new AbortController();
+    activeRequest.current = controller;
     setLoading(true);
+    setFetchError("");
     try {
       const params = new URLSearchParams({
         page: page.toString(),
@@ -81,32 +95,39 @@ export default function SubmissionsManager({
       });
       if (debouncedSearch) params.append("search", debouncedSearch);
 
-      const res = await authFetch(`/api/admin/submissions?${params}`);
+      const res = await authFetch(`/api/admin/submissions?${params}`, { signal: controller.signal });
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
+      if (controller.signal.aborted || activeRequest.current !== controller) return;
       setSubmissions(data.submissions);
       setTotalPages(data.pagination.pages);
     } catch (error) {
-      console.error(error);
+      if (!controller.signal.aborted && activeRequest.current === controller) setFetchError("ไม่สามารถโหลดรายการได้ กรุณาลองรีเฟรชอีกครั้ง");
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted && activeRequest.current === controller) setLoading(false);
     }
   }, [page, statusFilter, debouncedSearch]);
 
   useEffect(() => {
     if (!hasMountedRef.current) {
       hasMountedRef.current = true;
-      return;
+      if (statusFilter === initialStatus) return;
     }
 
-    fetchSubmissions();
-  }, [fetchSubmissions]);
+    void fetchSubmissions();
+    return () => activeRequest.current?.abort();
+  }, [fetchSubmissions, initialStatus, statusFilter]);
+
+  useEffect(() => () => activeRequest.current?.abort(), []);
 
   const handleStatusChange = (
     _: React.SyntheticEvent,
     newValue: string
   ) => {
-    setStatusFilter(newValue);
+    const params = new URLSearchParams(searchParams.toString());
+    const status = normalizeSubmissionStatus(newValue);
+    if (status === "ALL") params.delete("status"); else params.set("status", status);
+    window.history.pushState(null, "", `${window.location.pathname}${params.size ? `?${params}` : ""}`);
     setPage(1);
   };
 
@@ -127,6 +148,7 @@ export default function SubmissionsManager({
 
   return (
     <Box>
+      {fetchError && <Alert severity="error" sx={{ mb: 2 }}>{fetchError}</Alert>}
       <Box
         sx={{
           display: "flex",

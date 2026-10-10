@@ -1,4 +1,5 @@
 import sharp from "sharp";
+import { randomUUID } from "node:crypto";
 import { readValidatedImageFile, sanitizeObjectKeySegment } from "../image-security";
 import { AssetKind, StoreAssetContext } from "./types";
 
@@ -50,7 +51,7 @@ export const ASSET_POLICIES: Record<AssetKind, AssetPolicy> = {
 
       const { year, month } = getDateSegments();
       const mangaId = sanitizeObjectKeySegment(context.mangaId, "uncategorized");
-      const safeName = `${Date.now()}-${sanitizeFileName(file.name)}`;
+      const safeName = `${randomUUID()}-${sanitizeFileName(file.name)}`;
       const key = `uploads/${year}/${month}/${mangaId}/${safeName}`;
 
       return {
@@ -81,7 +82,7 @@ export const ASSET_POLICIES: Record<AssetKind, AssetPolicy> = {
         allowedMimeTypes: ASSET_POLICIES["comment-image"].allowedMimeTypes,
       });
 
-      const sharpInstance = sharp(buffer);
+      const sharpInstance = sharp(buffer, { limitInputPixels: 32_000_000 }).timeout({ seconds: 10 });
       const metadata = await sharpInstance.metadata();
 
       if (metadata.width && metadata.width > 1280) {
@@ -95,7 +96,7 @@ export const ASSET_POLICIES: Record<AssetKind, AssetPolicy> = {
       const { year, month } = getDateSegments();
       const userId = sanitizeObjectKeySegment(context.userId, "anonymous");
       const safeBaseName = sanitizeFileName(file.name.replace(/\.[^/.]+$/, ""));
-      const key = `uploads/comments/${year}/${month}/${userId}/${Date.now()}-${safeBaseName}.webp`;
+      const key = `uploads/comments/${year}/${month}/${userId}/${randomUUID()}-${safeBaseName}.webp`;
 
       return {
         data: new Uint8Array(compressedBuffer),
@@ -127,13 +128,13 @@ export const ASSET_POLICIES: Record<AssetKind, AssetPolicy> = {
         allowedMimeTypes: ASSET_POLICIES.avatar.allowedMimeTypes,
       });
 
-      const processedBuffer = await sharp(buffer)
+      const processedBuffer = await sharp(buffer, { limitInputPixels: 32_000_000 }).timeout({ seconds: 10 })
         .resize(200, 200, { fit: "cover", position: "centre" })
         .webp({ quality: 85 })
         .toBuffer();
 
       const userId = sanitizeObjectKeySegment(context.userId, "unknown");
-      const key = `uploads/avatars/${userId}/${Date.now()}-avatar.webp`;
+      const key = `uploads/avatars/${userId}/${randomUUID()}-avatar.webp`;
 
       return {
         data: new Uint8Array(processedBuffer),
@@ -163,12 +164,12 @@ export const ASSET_POLICIES: Record<AssetKind, AssetPolicy> = {
         allowedMimeTypes: ASSET_POLICIES.advertisement.allowedMimeTypes,
       });
 
-      const processedBuffer = await sharp(buffer)
+      const processedBuffer = await sharp(buffer, { limitInputPixels: 32_000_000 }).timeout({ seconds: 10 })
         .resize(1200, 800, { fit: "inside", withoutEnlargement: true })
         .webp({ quality: 85 })
         .toBuffer();
 
-      const key = `ads/${Date.now()}.webp`;
+      const key = `ads/${randomUUID()}.webp`;
 
       return {
         data: new Uint8Array(processedBuffer),

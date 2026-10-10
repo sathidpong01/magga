@@ -25,9 +25,8 @@ export function createDependencies(db: typeof database): Dependencies { return {
   catalog: createCatalog(db),
   drafts: createDraftService(db, process.env.MCP_PUBLIC_SOURCE_HOSTS === undefined ? undefined : process.env.MCP_PUBLIC_SOURCE_HOSTS.split(',').map((host) => host.trim().toLowerCase()).filter(Boolean)),
   review: createReviewService(db, async () => {
-    const { revalidatePath, revalidateTag } = await import('next/cache');
-    revalidateTag('manga-list', 'max');
-    revalidatePath('/', 'layout');
+    const { invalidateMangaContent } = await import('@/lib/manga-invalidation');
+    if (!invalidateMangaContent()) throw new Error('Cache refresh pending');
   }, process.env.MCP_PUBLIC_SOURCE_HOSTS === undefined ? undefined : process.env.MCP_PUBLIC_SOURCE_HOSTS.split(',').map((host) => host.trim().toLowerCase()).filter(Boolean)),
   audit: async (event) => { await db.insert(mcpAuditEvents).values(event); },
 }; }

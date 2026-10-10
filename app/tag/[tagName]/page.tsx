@@ -4,6 +4,7 @@ import Link from "next/link";
 import CloseIcon from "@mui/icons-material/Close";
 import MangaCard from "@/app/components/features/manga/MangaCard";
 import { getMangasByTagName } from "@/lib/manga-list";
+import { decodeTaxonomyPageParam } from "@/lib/taxonomy-route-param";
 import { maggaColors } from "@/lib/design-tokens";
 import type { Metadata } from "next";
 
@@ -17,8 +18,7 @@ type TagPageProps = {
 export const revalidate = 3600;
 
 export async function generateMetadata({ params }: TagPageProps): Promise<Metadata> {
-  const { tagName: encodedTagName } = await params;
-  const tagName = decodeURIComponent(encodedTagName);
+  const { tagName } = await params;
   const tag = await getMangasByTagName(tagName);
   const title = `แท็ก: ${tagName} - MAGGA`;
   const description = `รวมการ์ตูนแท็ก ${tagName} ที่อ่านได้บน MAGGA`;
@@ -34,8 +34,7 @@ export async function generateMetadata({ params }: TagPageProps): Promise<Metada
 }
 
 export default async function TagPage({ params }: TagPageProps) {
-  const { tagName: encodedTagName } = await params;
-  const tagName = decodeURIComponent(encodedTagName);
+  const tagName = decodeTaxonomyPageParam((await params).tagName);
 
   const tag = await getMangasByTagName(tagName);
 

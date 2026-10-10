@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { enrichUnchangedItem } from "@/lib/form-metadata";
 import { useRouter } from "next/navigation";
 import type { InferSelectModel } from "drizzle-orm";
 import type { authors } from "@/db/schema";
@@ -69,6 +70,8 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
   const [isFetching, setIsFetching] = useState<number | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [authorToDelete, setAuthorToDelete] = useState<Author | null>(null);
+  const enrichmentGeneration = useRef(0);
+  const savePending = useRef(false);
 
   useEffect(() => {
     setAuthors(initialAuthors);
@@ -78,6 +81,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
   const handleAutoFetch = async (index: number) => {
     const link = socialLinks[index];
     if (!link.url) return;
+    const generation = ++enrichmentGeneration.current;
 
     setIsFetching(index);
 
@@ -88,28 +92,22 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
       if (!res.ok) throw new Error("ไม่สามารถดึงข้อมูลได้");
       const data = await res.json();
 
-      const newLinks = [...socialLinks];
-      if (data.title) {
-        newLinks[index].label = data.title;
-      }
-      if (data.icon) {
-        newLinks[index].icon = data.icon;
-      }
-      setSocialLinks(newLinks);
+      if (generation !== enrichmentGeneration.current) return;
+      setSocialLinks((current) => enrichUnchangedItem(current, link, data));
     } catch {
-      showError("ไม่สามารถดึงข้อมูลจาก URL นี้ได้");
+      if (generation === enrichmentGeneration.current) showError("ไม่สามารถดึงข้อมูลจาก URL นี้ได้");
     } finally {
-      setIsFetching(null);
+      if (generation === enrichmentGeneration.current) setIsFetching(null);
     }
   };
 
   const addSocialLink = () => {
-    setSocialLinks([...socialLinks, { url: "", label: "", icon: "" }]);
+    setSocialLinks((current) => [...current, { url: "", label: "", icon: "" }]);
   };
 
   const removeSocialLink = (index: number) => {
     if (socialLinks.length > 1) {
-      setSocialLinks(socialLinks.filter((_, i) => i !== index));
+      setSocialLinks((current) => current.filter((_, i) => i !== index));
     }
   };
 
@@ -118,13 +116,15 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
     field: keyof SocialLink,
     value: string
   ) => {
-    const newLinks = [...socialLinks];
-    newLinks[index][field] = value;
-    setSocialLinks(newLinks);
+    setSocialLinks((current) => current.map((link, i) => i === index ? { ...link, [field]: value } : link));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (savePending.current) return;
+    savePending.current = true;
+    enrichmentGeneration.current++;
+    setIsFetching(null);
     setIsLoading(true);
 
     // Filter out empty links and prepare data
@@ -161,17 +161,23 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
     } catch (err) {
       showError(err instanceof Error ? err.message : "เกิดข้อผิดพลาด");
     } finally {
+      savePending.current = false;
       setIsLoading(false);
     }
   };
 
   const resetForm = () => {
+    enrichmentGeneration.current++;
+    setIsFetching(null);
     setName("");
     setSocialLinks([{ url: "", label: "", icon: "" }]);
     setEditingAuthor(null);
   };
 
   const handleEdit = (author: Author) => {
+    if (savePending.current) return;
+    enrichmentGeneration.current++;
+    setIsFetching(null);
     setEditingAuthor(author);
     setName(author.name);
 
@@ -258,6 +264,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
               <Button
                 variant="outlined"
                 onClick={resetForm}
+                disabled={isLoading}
                 sx={{
                   borderColor: "rgba(255,255,255,0.1)",
                   color: "#a3a3a3",
@@ -296,6 +303,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
         </Stack>
 
         <form id="author-form" onSubmit={handleSubmit}>
+          <Box component="fieldset" disabled={isLoading} sx={{ border: 0, p: 0, m: 0, minWidth: 0 }}>
           <Stack spacing={2.5}>
             {/* Author Name only - icons come from social links */}
             <Box>
@@ -514,6 +522,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
               </Button>
             </Box>
           </Stack>
+          </Box>
         </form>
       </Paper>
 

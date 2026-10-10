@@ -1,63 +1,21 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { manga as mangaTable } from "@/db/schema";
-import { eq, inArray } from "drizzle-orm";
+import { manga } from "@/db/schema";
+import { inArray } from "drizzle-orm";
 import { removeMangaWithComments } from "@/lib/comments/manga-removal";
 import { requireModerationAdmin } from "@/lib/comments/moderation";
 import { handleCommentError } from "@/lib/comments";
-
+import { bulkMangaSchema } from "@/lib/manga-input";
+import { invalidateMangaContent } from "@/lib/manga-invalidation";
 export async function POST(req: NextRequest) {
   try {
-    await requireModerationAdmin(req,true);
-
-    const body = await req.json();
-    const { ids, action } = body as {
-      ids: string[];
-      action: "delete" | "show" | "hide";
-    };
-
-    if (!ids || !Array.isArray(ids) || ids.length === 0) {
-      return NextResponse.json(
-        { error: "No manga IDs provided" },
-        { status: 400 }
-      );
-    }
-
-    if (!["delete", "show", "hide"].includes(action)) {
-      return NextResponse.json({ error: "Invalid action" }, { status: 400 });
-    }
-
-    let count = 0;
-
-    switch (action) {
-      case "delete":
-        const deleted = await removeMangaWithComments(ids);
-        count = deleted.length;
-        break;
-      case "show":
-        const shown = await db
-          .update(mangaTable)
-          .set({ isHidden: false })
-          .where(inArray(mangaTable.id, ids))
-          .returning({ id: mangaTable.id });
-        count = shown.length;
-        break;
-      case "hide":
-        const hidden = await db
-          .update(mangaTable)
-          .set({ isHidden: true })
-          .where(inArray(mangaTable.id, ids))
-          .returning({ id: mangaTable.id });
-        count = hidden.length;
-        break;
-    }
-
-    return NextResponse.json({
-      success: true,
-      action,
-      count,
-    });
-  } catch (error) {
-    return handleCommentError(error);
-  }
+    await requireModerationAdmin(req, true);
+    const parsed = bulkMangaSchema.safeParse(await req.json());
+    if (!parsed.success) return NextResponse.json({ error: "Invalid action or manga IDs (maximum 200)" }, { status: 400 });
+    const { ids, action } = parsed.data;
+    const before = await db.select({ id: manga.id, slug: manga.slug }).from(manga).where(inArray(manga.id, ids));
+    const changed = action === "delete" ? await removeMangaWithComments(ids) : await db.update(manga).set({ isHidden: action === "hide" }).where(inArray(manga.id, ids)).returning({ id: manga.id });
+    const refreshed = invalidateMangaContent(before.map(row => row.slug));
+    return NextResponse.json({ success: true, cache_refresh_pending: !refreshed, action, count: changed.length, ids: changed.map(row => row.id) });
+  } catch (error) { return handleCommentError(error); }
 }

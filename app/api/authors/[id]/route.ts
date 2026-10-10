@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { authors as authorsTable, manga as mangaTable } from "@/db/schema";
-import { eq, count } from "drizzle-orm";
-import { auth } from "@/lib/auth";
-import { revalidatePath } from "next/cache";
+import { eq, count, and } from "drizzle-orm";
+import { authenticateRequest } from "@/lib/auth-helpers";
+import { invalidateMangaContent } from "@/lib/manga-invalidation";
+import { UUID_PATTERN } from "@/lib/manga-query";
+import { sanitizeInput } from "@/lib/sanitize";
 
 type RouteParams = {
   params: Promise<{
@@ -14,6 +16,7 @@ type RouteParams = {
 // GET a single author
 export async function GET(request: Request, { params }: RouteParams) {
   const { id } = await params;
+  if (!UUID_PATTERN.test(id)) return NextResponse.json({ error: "Invalid identifier" }, { status: 400 });
 
   try {
     const author = await db.query.authors.findFirst({
@@ -28,7 +31,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     const [{ mangaCount }] = await db
       .select({ mangaCount: count() })
       .from(mangaTable)
-      .where(eq(mangaTable.authorId, id));
+      .where(and(eq(mangaTable.authorId, id), eq(mangaTable.isHidden, false)));
 
     return NextResponse.json({ ...author, _count: { mangas: Number(mangaCount) } });
   } catch {
@@ -38,31 +41,32 @@ export async function GET(request: Request, { params }: RouteParams) {
 
 // PUT to update an author (admin only)
 export async function PUT(request: Request, { params }: RouteParams) {
-  const session = await auth.api.getSession({ headers: request.headers });
-  if (!session || (session?.user as any)?.role !== "admin") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authorization = await authenticateRequest(request, { role: "admin" });
+  if (!authorization.ok) return authorization.response;
 
-  const { name, profileUrl, socialLinks } = await request.json();
+  const { name, profileUrl, socialLinks } = await request.json().catch(() => ({}));
   const { id } = await params;
+  if (!UUID_PATTERN.test(id)) return NextResponse.json({ error: "Invalid identifier" }, { status: 400 });
 
-  if (!name || typeof name !== "string" || name.trim().length === 0) {
+  if (!name || typeof name !== "string" || !sanitizeInput(name).trim() || name.length > 100) {
     return NextResponse.json({ error: "Name is required" }, { status: 400 });
   }
 
   try {
-    const [updatedAuthor] = await db
-      .update(authorsTable)
-      .set({
-        name: name.trim(),
-        profileUrl: profileUrl ?? null,
-        socialLinks: socialLinks ?? null,
-      })
-      .where(eq(authorsTable.id, id))
-      .returning();
+    const updatedAuthor = await db.transaction(async (transaction) => {
+      const [updated] = await transaction.update(authorsTable).set({
+        name: sanitizeInput(name).trim(), profileUrl: profileUrl ?? null, socialLinks: socialLinks ?? null,
+      }).where(eq(authorsTable.id, id)).returning();
+      if (updated) {
+        // Keep the legacy fallback and FTS source aligned with the canonical relation.
+        await transaction.update(mangaTable).set({ authorName: updated.name }).where(eq(mangaTable.authorId, id));
+      }
+      return updated;
+    });
 
-    revalidatePath("/dashboard/admin/authors");
-    return NextResponse.json(updatedAuthor);
+    if (!updatedAuthor) return NextResponse.json({ error: "Author not found" }, { status: 404 });
+    const cacheRefreshed = invalidateMangaContent();
+    return NextResponse.json({ ...updatedAuthor, cache_refresh_pending: !cacheRefreshed });
   } catch (error: any) {
     if (error.code === "23505") {
       return NextResponse.json({ error: "Author name already exists" }, { status: 409 });
@@ -73,17 +77,16 @@ export async function PUT(request: Request, { params }: RouteParams) {
 
 // DELETE an author (admin only)
 export async function DELETE(request: Request, { params }: RouteParams) {
-  const session = await auth.api.getSession({ headers: request.headers });
-  if (!session || (session?.user as any)?.role !== "admin") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const authorization = await authenticateRequest(request, { role: "admin" });
+  if (!authorization.ok) return authorization.response;
 
   const { id } = await params;
+  if (!UUID_PATTERN.test(id)) return NextResponse.json({ error: "Invalid identifier" }, { status: 400 });
 
   try {
     await db.delete(authorsTable).where(eq(authorsTable.id, id));
-    revalidatePath("/dashboard/admin/authors");
-    return new NextResponse(null, { status: 204 });
+    const cacheRefreshed = invalidateMangaContent();
+    return new NextResponse(null, { status: 204, headers: cacheRefreshed ? {} : { "X-Magga-Cache-Refresh": "pending" } });
   } catch {
     return NextResponse.json(
       { error: "Failed to delete author. It might be in use." },

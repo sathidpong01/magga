@@ -70,6 +70,7 @@ export default function MangaViewRating({
 
   // Load FingerprintJS and fetch existing rating
   useEffect(() => {
+    if (hideInteractive) return;
     let cancelled = false;
     import("@fingerprintjs/fingerprintjs").then((FingerprintJS) => {
       FingerprintJS.load().then((fp) => fp.get()).then((result) => {
@@ -86,9 +87,9 @@ export default function MangaViewRating({
           })
           .catch(() => {});
       });
-    });
+    }).catch(() => {});
     return () => { cancelled = true; };
-  }, [mangaId]);
+  }, [mangaId, hideInteractive]);
 
   const handleRate = async (rating: number) => {
     if (!fingerprint || isSubmitting) return;

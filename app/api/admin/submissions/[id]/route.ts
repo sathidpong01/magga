@@ -4,6 +4,8 @@ import { mangaSubmissions as submissionsTable, mangaSubmissionTags as submission
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { extractMangaPageUrls } from "@/lib/manga-pages";
+import { z } from "zod";
+import { submissionSchema } from "@/lib/submissions";
 import { requireAdmin } from "@/lib/auth-helpers";
 
 // GET: Fetch submission details
@@ -12,11 +14,12 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth.api.getSession({ headers: req.headers });
+    const session = await auth.api.getSession({ headers: req.headers, query: { disableCookieCache: true } });
     const authError = requireAdmin(session);
     if (authError) return authError;
 
     const { id } = await params;
+    if (!z.string().uuid().safeParse(id).success) return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
 
     const submission = await db.query.mangaSubmissions.findFirst({
       where: eq(submissionsTable.id, id),
@@ -52,7 +55,7 @@ export async function GET(
       user: submission.profile,
       pages: extractMangaPageUrls(JSON.parse(submission.pages)),
       tags: submission.mangaSubmissionTags,
-    });
+    }, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to fetch submission" },
@@ -67,45 +70,26 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth.api.getSession({ headers: req.headers });
+    const session = await auth.api.getSession({ headers: req.headers, query: { disableCookieCache: true } });
     const authError = requireAdmin(session);
     if (authError) return authError;
 
     const { id } = await params;
     const body = await req.json();
-    const { title, slug, description, categoryId, tagIds, status } = body;
-
-    const updateData: any = {
-      title,
-      slug,
-      description,
-      categoryId,
-    };
-
-    if (status) updateData.status = status;
-
-    // Handle Tags Update if provided
-    if (tagIds) {
-      // Delete existing tags
-      await db
-        .delete(submissionTagsTable)
-        .where(eq(submissionTagsTable.submissionId, id));
-      // Create new tags
-      if (tagIds.length > 0) {
-        await db.insert(submissionTagsTable).values(
-          tagIds.map((tagId: string) => ({
-            submissionId: id,
-            tagId,
-          }))
-        );
+    const parsed = submissionSchema.omit({ coverImage: true, pages: true, status: true }).partial().extend({ status: z.enum(["PENDING", "UNDER_REVIEW", "REJECTED"]).optional() }).safeParse(body);
+    if (!z.string().uuid().safeParse(id).success || !parsed.success) return NextResponse.json({ error: "Invalid submission input" }, { status: 400 });
+    const updatedSubmission = await db.transaction(async tx => {
+      const [current] = await tx.select({ status: submissionsTable.status }).from(submissionsTable).where(eq(submissionsTable.id, id)).for("update");
+      if (!current || current.status === "APPROVED") return null;
+      const { tagIds, ...values } = parsed.data;
+      if (tagIds) {
+        await tx.delete(submissionTagsTable).where(eq(submissionTagsTable.submissionId, id));
+        if (tagIds.length) await tx.insert(submissionTagsTable).values(tagIds.map(tagId => ({ submissionId: id, tagId })));
       }
-    }
-
-    const [updatedSubmission] = await db
-      .update(submissionsTable)
-      .set(updateData)
-      .where(eq(submissionsTable.id, id))
-      .returning();
+      const [updated] = await tx.update(submissionsTable).set({ ...values, updatedAt: new Date().toISOString() }).where(eq(submissionsTable.id, id)).returning();
+      return updated;
+    });
+    if (!updatedSubmission) return NextResponse.json({ error: "Submission not found or already approved" }, { status: 409 });
 
     return NextResponse.json(updatedSubmission);
   } catch (error) {

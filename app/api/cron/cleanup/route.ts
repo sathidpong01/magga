@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { loginAttempts as loginAttemptsTable, mangaSubmissions as submissionsTable, advertisementEvents } from "@/db/schema";
-import { lt, eq, and, inArray, sql } from "drizzle-orm";
-import { deleteAssets } from "@/lib/storage";
-import { extractMangaPageUrls } from "@/lib/manga-pages";
+import { lt, eq, and, sql, count } from "drizzle-orm";
 
 export async function GET(req: Request) {
   // Verify secret to prevent unauthorized calls (supports both query param and header)
@@ -21,6 +19,7 @@ export async function GET(req: Request) {
       rateLimitsDeleted: 0,
       submissionsDeleted: 0,
       r2FilesDeleted: 0,
+      submissionsDeferred: 0,
       adEventsDeleted: 0,
     };
 
@@ -49,8 +48,8 @@ export async function GET(req: Request) {
     `);
     results.adEventsDeleted = Number(deletedEvents[0]?.count || 0);
 
-    const oldRejectedSubmissions = await db
-      .select()
+    const [deferred] = await db
+      .select({ count: count() })
       .from(submissionsTable)
       .where(
         and(
@@ -59,35 +58,10 @@ export async function GET(req: Request) {
         )
       );
 
-    if (oldRejectedSubmissions.length > 0) {
-      // Collect ALL asset URLs to delete
-      const allUrls: string[] = [];
-
-      for (const submission of oldRejectedSubmissions) {
-        if (submission.coverImage) {
-          allUrls.push(submission.coverImage);
-        }
-        try {
-          const pageUrls = extractMangaPageUrls(JSON.parse(submission.pages as string));
-          allUrls.push(...pageUrls);
-        } catch { /* skip unparseable pages */ }
-      }
-
-      try {
-        results.r2FilesDeleted = await deleteAssets(allUrls);
-      } catch (err) {
-        console.error("[Cron Cleanup] Storage batch delete failed:", err);
-      }
-
-      // Batch delete all submission records
-      const ids = oldRejectedSubmissions.map((s) => s.id);
-      await db.delete(submissionsTable).where(inArray(submissionsTable.id, ids));
-      results.submissionsDeleted = ids.length;
-
-      console.log(
-        `[Cron Cleanup] Deleted ${results.submissionsDeleted} submissions, ${results.r2FilesDeleted} R2 files`
-      );
-    }
+    // Submission URLs can reference published or externally owned objects.
+    // Keep the records as a retry/review ledger until ownership and references
+    // are migrated. A status snapshot is never authority to delete an object.
+    results.submissionsDeferred = Number(deferred?.count ?? 0);
 
     return NextResponse.json({ 
       success: true,

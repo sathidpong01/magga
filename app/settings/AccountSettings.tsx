@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useBlockedItems } from "./useBlockedItems";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Box,
@@ -145,6 +146,8 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
   };
   const [commentPrefs, setCommentPrefs] = useState<Set<string>>(initialCommentPrefs);
   const [commentPrefSaving, setCommentPrefSaving] = useState(false);
+  const confirmedCommentPrefs = useRef(new Set(initialCommentPrefs()));
+  const commentPrefPending = useRef(false);
   const [formData, setFormData] = useState({
     name: user.name || "",
     username: user.username || "",
@@ -271,6 +274,8 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
   };
 
   const handleCommentPrefToggle = async (pref: 'sidebar' | 'bottom') => {
+    if (commentPrefPending.current) return;
+    commentPrefPending.current = true;
     const next = new Set(commentPrefs);
     if (next.has(pref)) next.delete(pref); else next.add(pref);
     setCommentPrefs(next);
@@ -290,11 +295,13 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
         throw new Error("บันทึกการตั้งค่าความคิดเห็นไม่สำเร็จ");
       }
 
+      confirmedCommentPrefs.current = new Set(next);
       showSuccess("อัปเดตรูปแบบความคิดเห็นแล้ว");
     } catch (error: any) {
-      setCommentPrefs(new Set(initialCommentPrefs()));
+      setCommentPrefs(new Set(confirmedCommentPrefs.current));
       showError(error.message || "บันทึกการตั้งค่าไม่สำเร็จ");
     } finally {
+      commentPrefPending.current = false;
       setCommentPrefSaving(false);
     }
   };
@@ -777,69 +784,24 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
 }
 
 function BlockedUsersPanel({ onCountChange }: { onCountChange?: (n: number) => void }) {
-  const { data: session, isPending: isSessionPending } = useSession();
-  const [blockedList, setBlockedList] = useState<any[]>([]);
-  const [loadingData, setLoadingData] = useState(true);
-  const [removing, setRemoving] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (isSessionPending) {
-      return;
-    }
-
-    if (!session?.user?.id) {
-      setBlockedList([]);
-      onCountChange?.(0);
-      setLoadingData(false);
-      return;
-    }
-
-    let cancelled = false;
-
-    (async () => {
-      try {
-        const res = await fetch("/api/user/blocked-users");
-        if (res.ok) {
-          const data = await res.json();
-          const list = data.blockedUsers || [];
-          if (!cancelled) {
-            setBlockedList(list);
-            onCountChange?.(list.length);
-          }
-        }
-      } finally {
-        if (!cancelled) {
-          setLoadingData(false);
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isSessionPending, onCountChange, session?.user?.id]);
-
+  const { items: blockedList, loading: loadingData, busy: removing, error, mutate, refresh } =
+    useBlockedItems<any>("/api/user/blocked-users", "blockedUsers", onCountChange);
   const handleUnblock = async (blockedUserId: string) => {
-    setRemoving(blockedUserId);
-    await fetch(`/api/user/blocked-users?blockedUserId=${blockedUserId}`, { method: "DELETE" });
-    setBlockedList((prev) => {
-      const next = prev.filter((u) => u.blockedUserId !== blockedUserId);
-      onCountChange?.(next.length);
-      return next;
-    });
-    setRemoving(null);
+    await mutate(blockedUserId, `/api/user/blocked-users?blockedUserId=${encodeURIComponent(blockedUserId)}`,
+      { method: "DELETE" }, (items) => items.filter((item) => item.blockedUserId !== blockedUserId));
   };
 
   if (loadingData) {
     return <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}><CircularProgress size={24} sx={{ color: maggaColors.archiveGold }} /></Box>;
   }
 
-  if (blockedList.length === 0) {
+  if (blockedList.length === 0 && !error) {
     return <Typography variant="body2" sx={{ color: maggaColors.textSecondary }}>ยังไม่มีผู้ใช้ที่บล็อก</Typography>;
   }
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+      {error && <Alert severity="error" action={<Button onClick={refresh}>ลองใหม่</Button>}>{error}</Alert>}
       {blockedList.map((item) => (
         <Box
           key={item.id}
@@ -871,7 +833,7 @@ function BlockedUsersPanel({ onCountChange }: { onCountChange?: (n: number) => v
             size="small"
             variant="outlined"
             onClick={() => handleUnblock(item.blockedUserId)}
-            disabled={removing === item.blockedUserId}
+            disabled={Boolean(removing)}
             sx={{ color: maggaColors.dangerRed, borderColor: "rgba(239,68,68,0.3)", "&:hover": { borderColor: maggaColors.dangerRed, bgcolor: "rgba(239,68,68,0.08)" }, minWidth: 80 }}
           >
             {removing === item.blockedUserId ? <CircularProgress size={14} /> : "ยกเลิกบล็อก"}
@@ -883,57 +845,26 @@ function BlockedUsersPanel({ onCountChange }: { onCountChange?: (n: number) => v
 }
 
 function BlockedTagsPanel({ onCountChange }: { onCountChange?: (n: number) => void }) {
-  const { data: session, isPending: isSessionPending } = useSession();
-  const [blockedList, setBlockedList] = useState<any[]>([]);
-  const [loadingData, setLoadingData] = useState(true);
-  const [removing, setRemoving] = useState<string | null>(null);
+  const { items: blockedList, loading: loadingData, busy: removing, error, mutate, refresh, actor } =
+    useBlockedItems<any>("/api/user/blocked-tags", "blockedTags", onCountChange);
   const [search, setSearch] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
-
   const [allTags, setAllTags] = useState<any[]>([]);
-
+  const [tagsError, setTagsError] = useState("");
+  const [tagsReload, setTagsReload] = useState(0);
   useEffect(() => {
-    if (isSessionPending) {
-      return;
-    }
-
-    if (!session?.user?.id) {
-      setBlockedList([]);
-      onCountChange?.(0);
-      setLoadingData(false);
-      return;
-    }
-
-    let cancelled = false;
-
-    (async () => {
-      try {
-        const [tagsRes, blockedRes] = await Promise.all([
-          fetch("/api/tags"),
-          fetch("/api/user/blocked-tags"),
-        ]);
-        if (tagsRes.ok && !cancelled) {
-          setAllTags(await tagsRes.json());
-        }
-        if (blockedRes.ok) {
-          const data = await blockedRes.json();
-          const list = data.blockedTags || [];
-          if (!cancelled) {
-            setBlockedList(list);
-            onCountChange?.(list.length);
-          }
-        }
-      } finally {
-        if (!cancelled) {
-          setLoadingData(false);
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [isSessionPending, onCountChange, session?.user?.id]);
+    const controller = new AbortController();
+    setSearch("");
+    setSearchResults([]);
+    setAllTags([]);
+    setTagsError("");
+    if (actor) void fetch("/api/tags", { signal: controller.signal }).then(async (response) => {
+      if (!response.ok) throw new Error("ไม่สามารถโหลดแท็กได้");
+      const data = await response.json();
+      if (!controller.signal.aborted) setAllTags(data);
+    }).catch(() => { if (!controller.signal.aborted) setTagsError("ไม่สามารถโหลดแท็กได้"); });
+    return () => controller.abort();
+  }, [actor, tagsReload]);
 
   const handleSearch = (q: string) => {
     setSearch(q);
@@ -946,34 +877,15 @@ function BlockedTagsPanel({ onCountChange }: { onCountChange?: (n: number) => vo
   };
 
   const handleBlockTag = async (tagId: string, tagName: string) => {
-    const res = await fetch("/api/user/blocked-tags", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tagId }),
-    });
-    if (res.ok) {
-      setBlockedList((prev) => {
-        if (prev.some((item) => item.tagId === tagId)) {
-          return prev;
-        }
-        const next = [...prev, { id: Date.now().toString(), tagId, tag: { name: tagName } }];
-        onCountChange?.(next.length);
-        return next;
-      });
-      setSearch("");
-      setSearchResults([]);
-    }
+    const acknowledged = await mutate(tagId, "/api/user/blocked-tags", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tagId }),
+    }, (items) => items.some((item) => item.tagId === tagId) ? items
+      : [...items, { id: crypto.randomUUID(), tagId, tag: { name: tagName } }]);
+    if (acknowledged) { setSearch(""); setSearchResults([]); }
   };
-
   const handleUnblock = async (tagId: string) => {
-    setRemoving(tagId);
-    await fetch(`/api/user/blocked-tags?tagId=${tagId}`, { method: "DELETE" });
-    setBlockedList((prev) => {
-      const next = prev.filter((t) => t.tagId !== tagId);
-      onCountChange?.(next.length);
-      return next;
-    });
-    setRemoving(null);
+    await mutate(tagId, `/api/user/blocked-tags?tagId=${encodeURIComponent(tagId)}`,
+      { method: "DELETE" }, (items) => items.filter((item) => item.tagId !== tagId));
   };
 
   if (loadingData) {
@@ -982,6 +894,8 @@ function BlockedTagsPanel({ onCountChange }: { onCountChange?: (n: number) => vo
 
   return (
     <Box>
+      {error && <Alert severity="error" action={<Button onClick={refresh}>ลองใหม่</Button>} sx={{ mb: 1 }}>{error}</Alert>}
+      {tagsError && <Alert severity="error" action={<Button onClick={() => setTagsReload((value) => value + 1)}>ลองใหม่</Button>} sx={{ mb: 1 }}>{tagsError}</Alert>}
       <TextField
         fullWidth
         size="small"
@@ -995,7 +909,7 @@ function BlockedTagsPanel({ onCountChange }: { onCountChange?: (n: number) => vo
           {searchResults.slice(0, 8).map((tag) => (
             <Box
               key={tag.id}
-              onClick={() => handleBlockTag(tag.id, tag.name)}
+              onClick={() => { if (!removing) void handleBlockTag(tag.id, tag.name); }}
               sx={{
                 px: 2, py: 1,
                 cursor: "pointer",
@@ -1018,7 +932,7 @@ function BlockedTagsPanel({ onCountChange }: { onCountChange?: (n: number) => vo
             <Chip
               key={item.id}
               label={item.tag?.name || item.tagId}
-              onDelete={() => handleUnblock(item.tagId)}
+              onDelete={removing ? undefined : () => handleUnblock(item.tagId)}
               deleteIcon={removing === item.tagId ? <CircularProgress size={14} /> : undefined}
               sx={{
                 bgcolor: "rgba(255,255,255,0.06)",

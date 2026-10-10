@@ -12,6 +12,7 @@ mock.module('@/lib/storage/comment-private',()=>({getCommentPrivateStorage:()=>(
 mock.module('@/db',()=>({get db(){return state.database;}}));
 mock.module('@/lib/comments/moderation',()=>({requireModerationAdmin:state.admin}));
 mock.module('@/lib/auth',()=>({auth:{api:{getSession:jest.fn()}}}));
+const { purgeRetiredCommentAssets } = await import('@/lib/comments/assets');
 const { deleteUserPreservingComments } = await import('@/lib/comments/user-removal');
 const { ForbiddenCommentError } = await import('@/lib/comments/types');
 const { DELETE } = await import('@/app/api/admin/users/[id]/route');
@@ -70,13 +71,15 @@ describe('admin account deletion preserves comment conversations transactionally
     expect(state.remove.mock.calls).toEqual([['comments/target-linked.webp'],['comments/target-staged.webp']]);
     expect((await pg.query(`SELECT id,object_key,user_id,state FROM private.comment_assets`)).rows).toEqual([{id:otherAsset,object_key:'comments/other.webp',user_id:'other',state:'published'}]);
   });
-  it('fails account deletion and keeps tracked keys for retry when storage removal fails',async()=>{
+  it('commits account deletion and retains retired keys for a later storage retry',async()=>{
     state.remove.mockRejectedValueOnce(new Error('R2 unavailable'));
-    await expect(deleteUserPreservingComments('target')).rejects.toThrow('R2 unavailable');
-    expect((await pg.query(`SELECT id FROM profiles WHERE id='target'`)).rows).toHaveLength(1);
-    expect((await pg.query(`SELECT object_key FROM private.comment_assets WHERE user_id='target'`)).rows).toHaveLength(2);
-    await deleteUserPreservingComments('target');
-    expect((await pg.query(`SELECT id FROM profiles WHERE id='target'`)).rows).toHaveLength(0);
+    await expect(deleteUserPreservingComments('target')).resolves.toEqual({success:true});
+    expect((await pg.query("SELECT id FROM profiles WHERE id='target'")).rows).toHaveLength(0);
+    const retired=(await pg.query<{id:string;user_id:null;state:string}>("SELECT id,user_id,state FROM private.comment_assets WHERE state='deleted'")).rows;
+    expect(retired).toHaveLength(2);
+    expect(retired.every(row=>row.user_id===null)).toBe(true);
+    expect(await purgeRetiredCommentAssets(retired.map(row=>row.id))).toBe(true);
+    expect((await pg.query("SELECT id FROM private.comment_assets WHERE state='deleted'")).rows).toHaveLength(0);
   });
   it('removes only own reports and blocking audit references while clearing their reviewer assignment elsewhere',async()=>{
     await deleteUserPreservingComments('target');

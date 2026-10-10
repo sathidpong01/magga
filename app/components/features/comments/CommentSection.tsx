@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
   Box,
   Typography,
@@ -33,8 +33,12 @@ export default function CommentSection({
   const [loadError, setLoadError] = useState("");
   const [failedCursor, setFailedCursor] = useState<string | undefined>();
 
+  const requestRef = useRef<AbortController | null>(null);
   const fetchComments = useCallback(
     async (cursor?: string) => {
+      requestRef.current?.abort();
+      const controller = new AbortController();
+      requestRef.current = controller;
       setLoadError("");
       try {
         const loadingMore = !!cursor;
@@ -52,14 +56,15 @@ export default function CommentSection({
           params.append("cursor", cursor);
         }
 
-        const res = await fetch(`/api/comments?${params}`);
+        const res = await fetch(`/api/comments?${params}`, { signal: controller.signal });
         if (!res.ok) throw new Error("Failed to fetch");
 
         const data = await res.json();
+        if (controller.signal.aborted) return;
 
         if (loadingMore) {
           // Append to existing comments
-          setComments((prev) => [...prev, ...(data.comments || [])]);
+          setComments((prev) => [...new Map([...prev, ...(data.comments || [])].map((comment: PublicComment) => [comment.id, comment])).values()]);
         } else {
           // Replace comments
           setComments(data.comments || []);
@@ -73,19 +78,22 @@ export default function CommentSection({
           setTotalCount((prev) => prev + (data.comments?.length || 0));
         }
       } catch (error) {
+        if (controller.signal.aborted) return;
         console.error("Error fetching comments:", error);
         setFailedCursor(cursor);
         setLoadError("โหลดความคิดเห็นไม่ได้ กรุณาลองใหม่อีกครั้ง");
       } finally {
-        setIsLoading(false);
-        setIsLoadingMore(false);
+        if (!controller.signal.aborted) { setIsLoading(false); setIsLoadingMore(false); }
       }
     },
     [mangaId, imageIndex],
   );
 
   useEffect(() => {
-    fetchComments();
+    setComments([]);
+    setTotalCount(0);
+    void fetchComments();
+    return () => requestRef.current?.abort();
   }, [fetchComments]);
 
   const handleLoadMore = () => {
@@ -160,7 +168,7 @@ export default function CommentSection({
       )}
 
       {/* Comments List */}
-      {isLoading ? (
+      {isLoading && comments.length === 0 ? (
         <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
           <CircularProgress size={32} aria-label="กำลังโหลดความคิดเห็น" />
         </Box>

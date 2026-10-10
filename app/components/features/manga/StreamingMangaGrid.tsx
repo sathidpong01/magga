@@ -83,7 +83,7 @@ export default async function StreamingMangaGrid({
       pageSize={pageSize}
       search={search}
       categoryId={categoryId}
-      tags={(tagNames ?? []).join(",")}
+      tags={tagNames ?? []}
       sort={sort}
       author={author}
     />

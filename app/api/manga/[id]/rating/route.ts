@@ -1,3 +1,6 @@
+import { z } from "zod";
+import { recordMangaRating } from "@/lib/manga-statistics";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { manga as mangaTable, mangaRatings as mangaRatingsTable } from '@/db/schema';
@@ -43,12 +46,14 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    if (!z.uuid().safeParse(id).success) return NextResponse.json({ error: "Invalid manga ID" }, { status: 400 });
     const { searchParams } = new URL(request.url);
     const fingerprint = searchParams.get('fingerprint');
+    if (fingerprint && fingerprint.length > 256) return NextResponse.json({ error: 'Invalid fingerprint' }, { status: 400 });
 
     // ดึงข้อมูลมังงะ
     const manga = await db.query.manga.findFirst({
-      where: eq(mangaTable.id, id),
+      where: and(eq(mangaTable.id, id), eq(mangaTable.isHidden, false)),
       columns: {
         id: true,
         averageRating: true,
@@ -87,7 +92,7 @@ export async function GET(
       userRating,
     }, {
       headers: {
-        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
+        'Cache-Control': 'private, no-store',
       },
     });
   } catch (error) {
@@ -109,109 +114,31 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
+    if (!z.uuid().safeParse(id).success) return NextResponse.json({ error: "Invalid manga ID" }, { status: 400 });
     const body = await request.json();
     const { rating, fingerprint } = body;
 
     // Validate inputs
-    if (!fingerprint || typeof fingerprint !== 'string') {
+    if (!fingerprint || typeof fingerprint !== 'string' || fingerprint.length > 256) {
       return NextResponse.json(
         { error: 'Fingerprint is required' },
         { status: 400 }
       );
     }
 
-    if (!rating || typeof rating !== 'number' || rating < 1 || rating > 5) {
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
       return NextResponse.json(
         { error: 'Rating must be between 1 and 5' },
         { status: 400 }
       );
     }
 
-    const result = await db.transaction(async (tx) => {
-      // ตรวจสอบว่ามังงะมีอยู่จริง
-      const manga = await tx.query.manga.findFirst({
-        where: eq(mangaTable.id, id),
-        columns: { id: true, ratingSum: true, ratingCount: true },
-      });
-
-      if (!manga) {
-        return { error: 'Manga not found', status: 404 };
-      }
-
-      // Hash fingerprint และ IP
-      const hashedFingerprint = hashString(fingerprint);
-      const clientIP = getClientIP(request);
-      const hashedIP = hashString(clientIP);
-
-      // ตรวจสอบว่าผู้ใช้เคยให้คะแนนหรือยัง
-      const existingRating = await tx.query.mangaRatings.findFirst({
-        where: and(
-          eq(mangaRatingsTable.mangaId, id),
-          eq(mangaRatingsTable.fingerprint, hashedFingerprint)
-        ),
-      });
-
-      let newRatingSum: number;
-      let newRatingCount: number;
-
-      if (existingRating) {
-        // อัพเดทคะแนนเดิม - คำนวณ delta
-        const delta = rating - existingRating.rating;
-        newRatingSum = Number(manga.ratingSum) + delta;
-        newRatingCount = Number(manga.ratingCount); // ไม่เปลี่ยน
-
-        // อัพเดท MangaRating
-        await tx.update(mangaRatingsTable).set({
-          rating,
-          ipAddress: hashedIP, // อัพเดท IP ล่าสุด
-          updatedAt: new Date().toISOString(),
-        }).where(
-          and(
-            eq(mangaRatingsTable.mangaId, id),
-            eq(mangaRatingsTable.fingerprint, hashedFingerprint)
-          )
-        );
-      } else {
-        // สร้างคะแนนใหม่
-        newRatingSum = Number(manga.ratingSum) + rating;
-        newRatingCount = Number(manga.ratingCount) + 1;
-
-        // สร้าง MangaRating ใหม่
-        await tx.insert(mangaRatingsTable).values({
-          mangaId: id,
-          fingerprint: hashedFingerprint,
-          ipAddress: hashedIP,
-          rating,
-        });
-      }
-
-      // คำนวณคะแนนเฉลี่ยใหม่
-      const newAverageRating = newRatingCount > 0 
-        ? newRatingSum / newRatingCount 
-        : 0;
-
-      // อัพเดทข้อมูลในตาราง Manga
-      await tx.update(mangaTable).set({
-        ratingSum: newRatingSum,
-        ratingCount: newRatingCount,
-        averageRating: newAverageRating,
-      }).where(eq(mangaTable.id, id));
-
-      return {
-        data: {
-          averageRating: newAverageRating,
-          ratingCount: newRatingCount,
-          userRating: rating,
-          message: existingRating ? 'Rating updated' : 'Rating added',
-        }
-      };
-    });
-
-    if (result.error) {
-      return NextResponse.json({ error: result.error }, { status: result.status });
-    }
-
-    return NextResponse.json(result.data);
+    const hashedIP = hashString(getClientIP(request));
+    const quota = await checkRateLimit(`rating:${hashedIP}`, 60, 60 * 60 * 1000, { failClosed: true });
+    if (!quota.allowed) return NextResponse.json({ error: "Too many rating requests" }, { status: 429 });
+    const result = await recordMangaRating(db, id, rating, hashString(fingerprint), hashedIP);
+    if (!result) return NextResponse.json({ error: "Manga not found" }, { status: 404 });
+    return NextResponse.json(result, { headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
     console.error("Update rating error:", error);
     return NextResponse.json(

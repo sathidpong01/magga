@@ -9,7 +9,7 @@ import {
   dashboardSecondaryButtonSx,
 } from "@/app/components/dashboard/system";
 
-type LinkButtonProps = ButtonProps & { href: string };
+type LinkButtonProps = ButtonProps & { href: string; prefetch?: boolean };
 
 export default function LinkButton({ href, sx, ...props }: LinkButtonProps) {
   const variantStyles =
@@ -23,6 +23,7 @@ export default function LinkButton({ href, sx, ...props }: LinkButtonProps) {
     <Button
       component={Link}
       href={href}
+      prefetch={false}
       sx={[variantStyles, sx] as SxProps<Theme>}
       {...props}
     />

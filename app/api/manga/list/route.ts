@@ -3,6 +3,7 @@ import {
   DEFAULT_MANGA_PAGE_SIZE,
   getMangasWithPagination,
 } from "@/lib/manga-list";
+import { MANGA_SORTS, UUID_PATTERN } from "@/lib/manga-query";
 
 export async function GET(request: Request) {
   try {
@@ -19,13 +20,14 @@ export async function GET(request: Request) {
     const search = searchParams.get("search") || undefined;
     const categoryId = searchParams.get("categoryId") || undefined;
     const author = searchParams.get("author") || undefined;
-    const tagsParam = searchParams.get("tags");
-    const tagNames = tagsParam ? tagsParam.split(",").filter(Boolean) : undefined;
+    const tagNames = searchParams.getAll("tags");
     const sort = searchParams.get("sort") || undefined;
-    const excludeTagIdsParam = searchParams.get("excludeTagIds");
-    const excludeTagIds = excludeTagIdsParam
-      ? excludeTagIdsParam.split(",").filter(Boolean)
-      : undefined;
+    if ((search && search.length > 200) || (author && author.length > 100) ||
+      (categoryId && categoryId !== "all" && !UUID_PATTERN.test(categoryId)) ||
+      tagNames.length > 50 || tagNames.some((tag) => tag.length > 100) ||
+      (sort && !MANGA_SORTS.includes(sort as typeof MANGA_SORTS[number]))) {
+      return NextResponse.json({ error: "Invalid manga filters" }, { status: 400, headers: { "Cache-Control": "no-store" } });
+    }
 
     const result = await getMangasWithPagination(
       page,
@@ -34,13 +36,13 @@ export async function GET(request: Request) {
       categoryId,
       tagNames,
       sort,
-      excludeTagIds,
+      undefined,
       author
     );
 
     return NextResponse.json(result, {
       headers: {
-        "Cache-Control": "s-maxage=60, stale-while-revalidate=300",
+        "Cache-Control": "no-store",
       },
     });
   } catch (error) {

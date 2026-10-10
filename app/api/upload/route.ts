@@ -27,13 +27,23 @@ export async function POST(request: Request) {
   }
 
   try {
+    if (Number(request.headers.get("content-length")) > 64 * 1024 * 1024) {
+      return NextResponse.json({ error: "Upload batch is too large" }, { status: 413 });
+    }
     const form = await request.formData();
-    const files = form.getAll("files") as File[];
+    const entries = form.getAll("files");
+    if (entries.some(file => !(file instanceof File))) return NextResponse.json({ error: "Invalid file" }, { status: 400 });
+    const files = entries as File[];
     const mangaId = (form.get("mangaId") as string) || "uncategorized";
 
     if (!files || files.length === 0) {
       return NextResponse.json({ error: "No files uploaded" }, { status: 400 });
     }
+    if (files.length > 150 || files.reduce((bytes, file) => bytes + file.size, 0) > 64 * 1024 * 1024) {
+      return NextResponse.json({ error: "Upload batch exceeds 150 files or 64 MB" }, { status: 413 });
+    }
+    const assetsLimit = await checkRateLimit(`upload-assets:${caller.user.id}`, maxUploads, 60 * 60 * 1000, { cost: files.length, failClosed: true });
+    if (!assetsLimit.allowed) return NextResponse.json({ error: "Upload asset limit reached" }, { status: 429 });
 
     const saved = await storeAssets(files, { kind: "manga-page", mangaId });
 

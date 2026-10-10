@@ -1,4 +1,5 @@
 "use client";
+import { requestCommentIdentity } from "./identity-request";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Avatar,
@@ -63,30 +64,36 @@ export default function CommentBox({
   const input = useRef<HTMLInputElement>(null);
   const submission = useRef<{ fingerprint: string; key: string } | null>(null);
   const submitting = useRef(false);
+  const identityGeneration = useRef(0);
   const loadIdentity = useCallback(async () => {
+    const generation = ++identityGeneration.current;
+    setIdentityLoaded(false);
+    setActor(null);
     try {
-      const result = await commentRequest<{
-        actor: CommentActor | null;
-        turnstileSiteKey: string | null;
-      }>("/api/comments/identity");
+      const result = await requestCommentIdentity(session?.user?.id || "guest");
+      if (generation !== identityGeneration.current) return;
       setActor(result.actor);
       setSiteKey(result.turnstileSiteKey);
       setIdentityLoaded(true);
       setIdentityError("");
     } catch (cause) {
+      if (generation !== identityGeneration.current) return;
       setIdentityError(
         cause instanceof Error ? cause.message : "ตรวจตัวตนไม่ได้",
       );
     }
-  }, []);
+  }, [session?.user?.id]);
   useEffect(() => {
+    const generation = identityGeneration;
     void loadIdentity();
     const refreshIdentity = () => {
       void loadIdentity();
     };
     window.addEventListener("magga-comment-identity", refreshIdentity);
-    return () =>
+    return () => {
+      ++generation.current;
       window.removeEventListener("magga-comment-identity", refreshIdentity);
+    };
   }, [loadIdentity, session?.user?.id]);
   useEffect(() => {
     if (!file) {

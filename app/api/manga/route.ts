@@ -1,30 +1,16 @@
 import { NextResponse } from "next/server";
-import { revalidatePath, revalidateTag } from "next/cache";
 import { db } from "@/db";
 import { manga as mangaTable, mangaTags as mangaTagsTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { requireAdmin } from "@/lib/auth-helpers";
-import { z } from "zod";
+import { mangaInputSchema } from "@/lib/manga-input";
+import { invalidateMangaContent } from "@/lib/manga-invalidation";
 
-const mangaSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  description: z.string().optional(),
-  categoryId: z.string().nullable().optional(),
-  authorId: z.string().nullable().optional(),
-  selectedTags: z.array(z.string()),
-  coverImage: z.string().url().optional(),
-  pages: z.array(z.string().url()).optional(),
-  isHidden: z.boolean().optional(),
-  authorName: z.string().nullish(),
-  slug: z
-    .string()
-    .min(1, "Slug is required")
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Invalid slug format"),
-});
+const mangaSchema = mangaInputSchema;
 
 export async function POST(request: Request) {
-  const session = await auth.api.getSession({ headers: request.headers });
+  const session = await auth.api.getSession({ headers: request.headers, query: { disableCookieCache: true } });
   const authError = requireAdmin(session);
   if (authError) return authError;
 
@@ -66,8 +52,8 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create manga
-    const [newManga] = await db
+    const newManga = await db.transaction(async tx => {
+    const [created] = await tx
       .insert(mangaTable)
       .values({
         title,
@@ -76,7 +62,7 @@ export async function POST(request: Request) {
         categoryId: categoryId || null,
         authorId: authorId || null,
         coverImage: coverImage || "https://via.placeholder.com/300x400.png?text=Cover",
-        pages: JSON.stringify(pages || []),
+        pages: pages || [],
         isHidden: isHidden || false,
         authorName: authorName || null,
       })
@@ -84,19 +70,18 @@ export async function POST(request: Request) {
 
     // Add tags if any
     if (selectedTags.length > 0) {
-      await db.insert(mangaTagsTable).values(
+      await tx.insert(mangaTagsTable).values(
         selectedTags.map((tagId) => ({
-          mangaId: newManga.id,
+          mangaId: created.id,
           tagId,
         }))
       );
     }
 
-    revalidatePath("/dashboard/admin");
-    revalidatePath("/dashboard/admin/manga");
-    revalidatePath("/");
-    revalidateTag("manga-list", "max");
-    return NextResponse.json(newManga, { status: 201 });
+    return created;
+    });
+    const refreshed = invalidateMangaContent([newManga.slug]);
+    return NextResponse.json({ ...newManga, cache_refresh_pending: !refreshed }, { status: 201 });
   } catch (error) {
     console.error("Error creating manga:", error);
     return NextResponse.json(

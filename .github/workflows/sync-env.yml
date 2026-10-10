@@ -1,38 +1,30 @@
-name: Sync Environment Variables to Vercel
-
+name: Preview Environment Sync Plan
 on:
-  push:
-    paths:
-      - '.env.local'
-    branches: [main, develop]
-
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Vercel environment to review
+        required: true
+        type: choice
+        options: [preview, development, production]
+      keys:
+        description: Explicit comma-separated environment keys
+        required: true
+        type: string
 permissions:
   contents: read
-
 jobs:
-  sync-env:
+  dry-run:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
         with:
           bun-version: '1.4.2'
-          
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-        
-      - name: Pull Vercel Environment Variables
-        run: bun run --bun vercel env pull .env.vercel
+      - run: bun install --frozen-lockfile
+      - name: Review selected keys without exporting or changing secrets
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          
-      - name: Sync Environment Variables
-        run: bun run env:sync
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          SYNC_TARGET: ${{ inputs.target }}
+          SYNC_KEYS: ${{ inputs.keys }}
+        run: |
+          bun --no-env-file -e 'const {parseOptions,syncEnvironment}=require("./scripts/sync-env.js"); const opts=parseOptions(["--target",process.env.SYNC_TARGET,"--keys",process.env.SYNC_KEYS,"--dry-run"]); syncEnvironment(opts,Object.fromEntries(opts.keys.map(key=>[key,""])));'

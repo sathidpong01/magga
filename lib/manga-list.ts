@@ -1,7 +1,7 @@
 import "server-only";
 
 import { unstable_cache } from "next/cache";
-import { and, asc, desc, eq, ilike, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   authors as authorsTable,
@@ -10,6 +10,7 @@ import {
   mangaTags as mangaTagsTable,
   tags as tagsTable,
 } from "@/db/schema";
+import { literalSearchPattern, normalizeMangaQuery } from "@/lib/manga-query";
 
 export const DEFAULT_MANGA_PAGE_SIZE = 12;
 
@@ -34,7 +35,7 @@ export const getAuthorProfile = unstable_cache(
         socialLinks: authorsTable.socialLinks,
       })
       .from(authorsTable)
-      .where(ilike(authorsTable.name, authorName.trim()))
+      .where(sql`lower(${authorsTable.name}) = lower(${authorName.trim()})`)
       .limit(1);
 
     // 2. Count published mangas by author
@@ -44,7 +45,7 @@ export const getAuthorProfile = unstable_cache(
       .where(
         and(
           eq(mangaTable.isHidden, false),
-          sql`(${mangaTable.authorName} ILIKE ${authorName.trim()} OR ${author ? eq(mangaTable.authorId, author.id) : sql`false`} OR EXISTS (
+          sql`(lower(${mangaTable.authorName}) = lower(${authorName.trim()}) OR ${author ? eq(mangaTable.authorId, author.id) : sql`false`} OR EXISTS (
             SELECT 1 FROM public.manga_contributors mc
             WHERE mc.manga_id = "manga"."id"
               AND mc.author_id = ${author?.id ?? "00000000-0000-0000-0000-000000000000"}
@@ -84,7 +85,7 @@ const mangaCardColumns = {
   viewCount: mangaTable.viewCount,
   averageRating: mangaTable.averageRating,
   categoryId: mangaTable.categoryId,
-  authorName: mangaTable.authorName,
+  authorName: sql<string | null>`coalesce(${authorsTable.name}, ${mangaTable.authorName})`,
 };
 
 type MangaCardRow = {
@@ -135,6 +136,7 @@ export const getMangasByCategoryName = unstable_cache(
         categoryName: categoriesTable.name,
       })
       .from(mangaTable)
+      .leftJoin(authorsTable, eq(authorsTable.id, mangaTable.authorId))
       .innerJoin(
         categoriesTable,
         eq(categoriesTable.id, mangaTable.categoryId)
@@ -145,7 +147,7 @@ export const getMangasByCategoryName = unstable_cache(
           eq(mangaTable.isHidden, false)
         )
       )
-      .orderBy(desc(mangaTable.createdAt));
+      .orderBy(desc(mangaTable.createdAt), desc(mangaTable.id));
 
     if (!rows.length) {
       const [category] = await db
@@ -174,6 +176,7 @@ export const getMangasByTagName = unstable_cache(
         categoryName: categoriesTable.name,
       })
       .from(mangaTable)
+      .leftJoin(authorsTable, eq(authorsTable.id, mangaTable.authorId))
       .innerJoin(
         mangaTagsTable,
         eq(mangaTagsTable.mangaId, mangaTable.id)
@@ -186,7 +189,7 @@ export const getMangasByTagName = unstable_cache(
       .where(
         and(eq(tagsTable.name, tagName), eq(mangaTable.isHidden, false))
       )
-      .orderBy(desc(mangaTable.createdAt));
+      .orderBy(desc(mangaTable.createdAt), desc(mangaTable.id));
 
     if (!rows.length) {
       const [tag] = await db
@@ -207,7 +210,7 @@ export const getMangasByTagName = unstable_cache(
   { revalidate: 3600, tags: ["manga-list"] }
 );
 
-export const getMangasWithPagination = unstable_cache(
+const getCachedMangasWithPagination = unstable_cache(
   async (
     page: number,
     pageSize: number,
@@ -223,26 +226,26 @@ export const getMangasWithPagination = unstable_cache(
 
     if (author) {
       conditions.push(
-        sql`(${mangaTable.authorName} ILIKE ${author.trim()} OR EXISTS (
+        sql`(lower(${mangaTable.authorName}) = lower(${author.trim()}) OR EXISTS (
           SELECT 1 FROM ${authorsTable}
           WHERE ${authorsTable.id} = ${mangaTable.authorId}
-          AND ${authorsTable.name} ILIKE ${author.trim()}
+          AND lower(${authorsTable.name}) = lower(${author.trim()})
         ) OR EXISTS (
           SELECT 1 FROM public.manga_contributors mc
           INNER JOIN public.authors ca ON ca.id = mc.author_id
           WHERE mc.manga_id = "manga"."id"
-            AND ca.name ILIKE ${author.trim()}
+            AND lower(ca.name) = lower(${author.trim()})
         ))`
       );
     }
 
     if (search) {
       conditions.push(
-        sql`(${mangaTable.title} ILIKE ${'%' + search + '%'} OR ${mangaTable.authorName} ILIKE ${'%' + search + '%'} OR EXISTS (
+        sql`(${mangaTable.title} ILIKE ${literalSearchPattern(search)} OR ${mangaTable.authorName} ILIKE ${literalSearchPattern(search)} OR ${authorsTable.name} ILIKE ${literalSearchPattern(search)} OR EXISTS (
           SELECT 1 FROM public.manga_contributors mc
           INNER JOIN public.authors ca ON ca.id = mc.author_id
           WHERE mc.manga_id = "manga"."id"
-            AND ca.name ILIKE ${'%' + search + '%'}
+            AND ca.name ILIKE ${literalSearchPattern(search)}
         ))`
       );
     }
@@ -303,11 +306,12 @@ export const getMangasWithPagination = unstable_cache(
         viewCount: mangaTable.viewCount,
         averageRating: mangaTable.averageRating,
         categoryId: mangaTable.categoryId,
-        authorName: mangaTable.authorName,
+        authorName: sql<string | null>`coalesce(${authorsTable.name}, ${mangaTable.authorName})`,
       })
       .from(mangaTable)
+      .leftJoin(authorsTable, eq(authorsTable.id, mangaTable.authorId))
       .where(and(...conditions))
-      .orderBy(orderByClause)
+      .orderBy(orderByClause, desc(mangaTable.id))
       .offset(offset)
       .limit(pageSize + 1);
 
@@ -366,6 +370,16 @@ export const getMangasWithPagination = unstable_cache(
       hasMore,
     };
   },
-  ["manga-list"],
+  ["manga-list-v3"],
   { revalidate: 300, tags: ["manga-list"] }
 );
+
+/** Normalize before the cache boundary so equivalent filters share one key. */
+export function getMangasWithPagination(
+  page: number, pageSize: number, search?: string, categoryId?: string,
+  tagNames?: string[], sort?: string, excludeTagIds?: string[], author?: string
+) {
+  const query = normalizeMangaQuery({ page, pageSize, search, categoryId, tagNames, sort, excludeTagIds, author });
+  return getCachedMangasWithPagination(query.page, query.pageSize, query.search, query.categoryId,
+    query.tagNames, query.sort, query.excludeTagIds, query.author);
+}

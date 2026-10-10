@@ -1,7 +1,9 @@
+import { requireAdminPage } from "@/lib/auth-helpers";
 import type { Metadata } from "next";
 import { db } from "@/db";
 import { mangaSubmissions as submissionsTable } from "@/db/schema";
-import { desc, count } from "drizzle-orm";
+import { desc, count, eq } from "drizzle-orm";
+import { normalizeSubmissionStatus } from "@/lib/submission-status";
 import SubmissionsManager, {
   type AdminSubmission,
 } from "./SubmissionsManager";
@@ -15,9 +17,13 @@ export const metadata: Metadata = {
   twitter: { title: "ตรวจรายการฝากลง - MAGGA", description: "ตรวจสอบผลงานที่ฝากลงบน MAGGA" },
 };
 
-export default async function AdminSubmissionsPage() {
+export default async function AdminSubmissionsPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
+  await requireAdminPage();
+  const status = normalizeSubmissionStatus((await searchParams).status);
+  const where = status === "ALL" ? undefined : eq(submissionsTable.status, status);
   const limit = 10;
   const submissions = await db.query.mangaSubmissions.findMany({
+    where,
     with: {
       profile: {
         columns: { name: true, email: true, username: true },
@@ -28,7 +34,7 @@ export default async function AdminSubmissionsPage() {
     limit,
   });
 
-  const [{ total }] = await db.select({ total: count() }).from(submissionsTable);
+  const [{ total }] = await db.select({ total: count() }).from(submissionsTable).where(where);
   const totalPages = Math.max(1, Math.ceil(Number(total) / limit));
 
   const initialSubmissions: AdminSubmission[] = submissions.map((submission) => ({
@@ -48,6 +54,7 @@ export default async function AdminSubmissionsPage() {
     <SubmissionsManager
       initialSubmissions={initialSubmissions}
       initialTotalPages={totalPages}
+      initialStatus={status}
     />
   );
 }

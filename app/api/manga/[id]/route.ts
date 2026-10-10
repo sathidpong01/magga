@@ -1,5 +1,8 @@
+import { mangaInputSchema } from "@/lib/manga-input";
+import { invalidateMangaContent } from "@/lib/manga-invalidation";
+import { z } from "zod";
+import { requireAdmin } from "@/lib/auth-helpers";
 import { NextResponse } from "next/server";
-import { revalidatePath, revalidateTag } from "next/cache";
 import { db } from "@/db";
 import { manga as mangaTable, mangaTags as mangaTagsTable } from "@/db/schema";
 import { eq, and, ne } from "drizzle-orm";
@@ -9,13 +12,15 @@ import { requireModerationAdmin } from "@/lib/comments/moderation";
 import { handleCommentError } from "@/lib/comments";
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await auth.api.getSession({ headers: request.headers });
-  if (!session || (session?.user as any)?.role !== "admin") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const session = await auth.api.getSession({ headers: request.headers, query: { disableCookieCache: true } });
+  const authError = requireAdmin(session);
+  if (authError) return authError;
 
   const { id } = await params;
-  const data = await request.json();
+  if (!z.uuid().safeParse(id).success) return NextResponse.json({ error: "Invalid manga ID" }, { status: 400 });
+  const parsed = mangaInputSchema.safeParse(await request.json());
+  if (!parsed.success) return NextResponse.json({ error: "Invalid manga data", details: parsed.error.flatten() }, { status: 400 });
+  const data = parsed.data;
   const { title, description, categoryId, authorId, selectedTags, coverImage, pages, isHidden, authorName, slug } = data;
 
   if (!title) {
@@ -36,8 +41,10 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       }
     }
 
-    // Update manga
-    const [updatedManga] = await db
+    const result = await db.transaction(async tx => {
+    const [before] = await tx.select({ slug: mangaTable.slug }).from(mangaTable).where(eq(mangaTable.id,id)).for("update");
+    if (!before) return null;
+    const [updatedManga] = await tx
       .update(mangaTable)
       .set({
         title,
@@ -46,7 +53,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         categoryId: categoryId || null,
         authorId: authorId || null,
         coverImage: coverImage || undefined,
-        pages: pages ? JSON.stringify(pages) : undefined,
+        pages: pages ?? undefined,
         isHidden,
         authorName,
       })
@@ -54,22 +61,18 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       .returning();
 
     // Update tags: delete old, insert new
-    await db.delete(mangaTagsTable).where(eq(mangaTagsTable.mangaId, id));
+    await tx.delete(mangaTagsTable).where(eq(mangaTagsTable.mangaId, id));
     if (selectedTags && selectedTags.length > 0) {
-      await db.insert(mangaTagsTable).values(
+      await tx.insert(mangaTagsTable).values(
         selectedTags.map((tagId: string) => ({ mangaId: id, tagId }))
       );
     }
 
-    revalidatePath("/dashboard/admin");
-    revalidatePath("/dashboard/admin/manga");
-    revalidatePath("/");
-    revalidateTag("manga-list", "max");
-    if (updatedManga.slug) {
-      revalidatePath(`/${updatedManga.slug}`);
-    }
-
-    return NextResponse.json(updatedManga);
+    return { before, updatedManga };
+    });
+    if (!result) return NextResponse.json({ error: "Manga not found" }, { status: 404 });
+    const refreshed = invalidateMangaContent([result.before.slug, result.updatedManga.slug]);
+    return NextResponse.json({ ...result.updatedManga, cache_refresh_pending: !refreshed });
   } catch (error) {
     return NextResponse.json({ error: "Failed to update manga" }, { status: 500 });
   }
@@ -82,12 +85,11 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   const { id } = await params;
 
   try {
+    if (!z.uuid().safeParse(id).success) return NextResponse.json({ error: "Invalid manga ID" }, { status: 400 });
+    const [before] = await db.select({ slug: mangaTable.slug }).from(mangaTable).where(eq(mangaTable.id, id));
     await removeMangaWithComments([id]);
-    revalidatePath("/dashboard/admin");
-    revalidatePath("/dashboard/admin/manga");
-    revalidatePath("/");
-    revalidateTag("manga-list", "max");
-    return new NextResponse(null, { status: 204 });
+    const refreshed = invalidateMangaContent([before?.slug]);
+    return new NextResponse(null, { status: 204, headers: { "X-Magga-Cache-Refresh-Pending": String(!refreshed) } });
   } catch (error) {
     return NextResponse.json({ error: "Failed to delete manga" }, { status: 500 });
   }

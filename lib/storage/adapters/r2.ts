@@ -57,7 +57,7 @@ export class R2StorageAdapter implements StorageAdapter {
 
     for (let i = 0; i < keys.length; i += chunkSize) {
       const chunk = keys.slice(i, i + chunkSize);
-      await this.client.send(
+      const response = await this.client.send(
         new DeleteObjectsCommand({
           Bucket: this.bucket,
           Delete: {
@@ -65,7 +65,10 @@ export class R2StorageAdapter implements StorageAdapter {
           },
         })
       );
-      totalDeleted += chunk.length;
+      if (response.Errors?.length) {
+        throw new Error(`Storage deletion failed for ${response.Errors.length} object(s)`);
+      }
+      totalDeleted += response.Deleted?.length ?? chunk.length;
     }
 
     return totalDeleted;

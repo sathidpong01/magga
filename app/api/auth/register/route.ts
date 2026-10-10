@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { profiles as usersTable } from "@/db/schema";
 import { eq, or } from "drizzle-orm";
-import bcrypt from "bcryptjs";
+import { auth } from "@/lib/auth";
 import { z } from "zod";
 import { validatePassword } from "@/lib/password-validation";
 import { checkRateLimit } from "@/lib/rate-limit";
@@ -59,24 +59,11 @@ export async function POST(req: Request) {
       );
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create user
-    const [user] = await db.insert(usersTable).values({
-      id: crypto.randomUUID(),
-      username,
-      email,
-      password: hashedPassword,
-      role: "user", // Default role
-    }).returning();
-
-    return NextResponse.json({
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email,
-      },
+    // Use Better Auth so the credential account and session cookie are created
+    // by the same path as the current signup UI.
+    return auth.api.signUpEmail({
+      asResponse: true, headers: req.headers,
+      body: { name: username, username, email, password },
     });
   } catch (error) {
     if (error instanceof z.ZodError) {

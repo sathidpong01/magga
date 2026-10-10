@@ -5,7 +5,7 @@ import { requireCommentActor, assertCommentOrigin } from './identity';
 import { consumeCommentLimit } from './abuse';
 import { ForbiddenCommentError, ValidationCommentError } from './types';
 import { requireUuid } from './validation';
-import { retireCommentAssets } from './assets';
+import { retireCommentAssets, purgeRetiredCommentAssets } from './assets';
 
 export const MODERATION_ACTIONS = ['delete', 'ban-guest', 'unban-guest'] as const;
 export type ModerationAction = typeof MODERATION_ACTIONS[number];
@@ -33,7 +33,8 @@ export async function requireModerationAdmin(request: Request, mutation = false)
 export async function moderateComments(request: Request, body: unknown) {
   const actor = await requireModerationAdmin(request, true);
   const { commentIds, action, reason } = parseModerationBody(body);
-  return db.transaction(async tx => {
+  const retired: string[] = [];
+  const result = await db.transaction(async tx => {
     const selected = await tx.select({ id: comments.id, guestId: comments.guestId, content: comments.content, imageUrl: comments.imageUrl, status: comments.status }).from(comments).where(inArray(comments.id, commentIds)).orderBy(comments.id).for('update');
     const ids = selected.map(c => c.id);
     if (!ids.length) return { updated: 0, deleted: 0 };
@@ -45,7 +46,7 @@ export async function moderateComments(request: Request, body: unknown) {
     } else {
       for (const comment of selected) {
         if (action === 'delete') {
-          await retireCommentAssets(tx, comment.id);
+          retired.push(...await retireCommentAssets(tx, comment.id));
           await tx.update(comments).set({ status: 'deleted', content: '', imageUrl: null, updatedAt: new Date().toISOString() }).where(eq(comments.id, comment.id));
 
         }
@@ -54,6 +55,8 @@ export async function moderateComments(request: Request, body: unknown) {
     await tx.insert(commentModerationEvents).values(selected.map(c => ({ actorUserId: actor.userId, commentId: c.id, guestId: c.guestId, action, reason })));
     return { updated: ids.length, deleted: action === 'delete' ? ids.length : 0 };
   });
+  await purgeRetiredCommentAssets(retired);
+  return result;
 }
 
 export function parseReportBody(body: unknown) {

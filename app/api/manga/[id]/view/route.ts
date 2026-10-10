@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
-import { manga as mangaTable } from '@/db/schema';
-import { eq, sql } from 'drizzle-orm';
+import { recordMangaView } from '@/lib/manga-statistics';
+import { checkRateLimit } from '@/lib/rate-limit';
+import { z } from 'zod';
 import { createHash } from 'crypto';
 import {
   createVisitorId,
@@ -26,21 +27,19 @@ function getClientIP(request: NextRequest): string {
 
 function getViewerKey(request: NextRequest, mangaId: string) {
   const cookieVisitorId = request.cookies.get(VISITOR_COOKIE_NAME)?.value;
-  const visitorId = cookieVisitorId || createVisitorId();
+  const validCookie = cookieVisitorId && /^[a-f0-9]{32}$/.test(cookieVisitorId) ? cookieVisitorId : undefined;
+  const visitorId = validCookie || createVisitorId();
   const userAgent = request.headers.get('user-agent') || 'unknown';
   const ip = getClientIP(request);
-  const rawViewerKey = cookieVisitorId
-    ? `visitor:${visitorId}`
-    : `fallback:${ip}:${userAgent}`;
-  const viewerKey = createHash('sha256')
-    .update(`${rawViewerKey}:${mangaId}`)
-    .digest('hex')
-    .slice(0, 24);
+  const hashKey = (key: string) => createHash('sha256').update(`${key}:${mangaId}`).digest('hex').slice(0, 24);
+  const viewerKey = hashKey(`visitor:${visitorId}`);
+  const firstTouchAlias = validCookie ? undefined : hashKey(`fallback:${ip}:${userAgent}`);
 
   return {
     viewerKey,
+    firstTouchAlias,
     visitorId,
-    shouldSetCookie: !cookieVisitorId,
+    shouldSetCookie: !validCookie,
   };
 }
 
@@ -63,55 +62,18 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    const { viewerKey, visitorId, shouldSetCookie } = getViewerKey(request, id);
-
-    // Single atomic upsert: only increments view if last view was > 10 min ago
-    const dedupResult = await db.execute(sql`
-      INSERT INTO manga_views (manga_id, ip_hash, viewed_at)
-      VALUES (${id}::uuid, ${viewerKey}, NOW())
-      ON CONFLICT (manga_id, ip_hash) DO UPDATE 
-        SET viewed_at = NOW()
-        WHERE manga_views.viewed_at < NOW() - INTERVAL '10 minutes'
-      RETURNING true AS is_new
-    `);
-
-    const isNewView = dedupResult.length > 0;
-
-    if (!isNewView) {
-      return withVisitorCookie(
-        NextResponse.json({ viewCount: -1, deduplicated: true }),
-        visitorId,
-        shouldSetCookie
-      );
-    }
-
-    // Atomic increment
-    const [updatedManga] = await db
-      .update(mangaTable)
-      .set({
-        viewCount: sql`${mangaTable.viewCount} + 1`,
-      })
-      .where(eq(mangaTable.id, id))
-      .returning({ viewCount: mangaTable.viewCount });
-
-    if (!updatedManga) {
-      return withVisitorCookie(
-        NextResponse.json(
-          { error: 'Manga not found' },
-          { status: 404 }
-        ),
-        visitorId,
-        shouldSetCookie
-      );
-    }
-
-    return withVisitorCookie(
-      NextResponse.json({
-        viewCount: updatedManga.viewCount,
-      }),
-      visitorId,
-      shouldSetCookie
-    );
+    if (!z.uuid().safeParse(id).success) return NextResponse.json({ error: "Invalid manga ID" }, { status: 400 });
+    // Bound cookie rotation abuse independently of the client-controlled visitor ID.
+    const quotaKey = createHash('sha256').update(getClientIP(request)).digest('hex');
+    const quota = await checkRateLimit(`view:${quotaKey}`, 240, 10 * 60 * 1000, { failClosed: true });
+    if (!quota.allowed) return NextResponse.json({ error: "Too many view requests" }, {
+      status: 429,
+      headers: { 'Cache-Control': 'private, no-store', 'Retry-After': String(Math.max(1, Math.ceil(((quota.resetTime ?? Date.now() + 60000) - Date.now()) / 1000))) },
+    });
+    const { viewerKey, firstTouchAlias, visitorId, shouldSetCookie } = getViewerKey(request, id);
+    const result = await recordMangaView(db, id, viewerKey, firstTouchAlias);
+    if (!result) return NextResponse.json({ error: "Manga not found" }, { status: 404 });
+    return withVisitorCookie(NextResponse.json(result, { headers: { "Cache-Control": "private, no-store" } }), visitorId, shouldSetCookie);
   } catch (error: any) {
     console.error("View increment error:", error);
     return NextResponse.json(

@@ -1,3 +1,4 @@
+import { requireAdminPage } from "@/lib/auth-helpers";
 import type { Metadata } from "next";
 import { db } from "@/db";
 import { profiles as usersTable, comments as commentsTable, mangaSubmissions as submissionsTable } from "@/db/schema";
@@ -19,6 +20,7 @@ export const metadata: Metadata = {
 };
 
 export default async function UsersPage() {
+  await requireAdminPage();
   const usersQuery = await db.select({
     id: usersTable.id,
     name: usersTable.name,
@@ -26,7 +28,7 @@ export default async function UsersPage() {
     username: usersTable.username,
     image: usersTable.image,
     role: usersTable.role,
-    banned: sql<boolean>`coalesce(${usersTable.banned}, ${usersTable.isBanned}, false)`,
+    banned: sql<boolean>`(coalesce(${usersTable.banned}, false) OR ${usersTable.isBanned})`,
     banReason: usersTable.banReason,
     createdAt: usersTable.createdAt,
     commentsCount: sql<number>`count(distinct ${commentsTable.id})::int`,

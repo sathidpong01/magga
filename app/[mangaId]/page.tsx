@@ -31,7 +31,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import { maggaColors, maggaRadii } from "@/lib/design-tokens";
 import { SuspendedMangaReader } from "./manga-content";
 import { CommentSectionSkeleton } from "./loading-skeletons";
-import CommentSection from "@/app/components/features/comments/CommentSection";
+import CommentSection from "@/app/components/features/comments/LazyCommentSection";
 import { cache, Suspense } from "react";
 import { AdContainer } from "@/app/components/features/ads";
 import ScrollToTop from "@/app/components/ui/ScrollToTop";
@@ -457,7 +457,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
                       <Typography variant="body2" sx={{ color: maggaColors.textMuted, fontSize: "0.95rem" }}>
                         {person.role}:
                       </Typography>
-                      <Link href={`/?author=${encodeURIComponent(person.name)}`} style={{ textDecoration: "none" }}>
+                      <Link href={`/?author=${encodeURIComponent(person.name)}`} prefetch={false} style={{ textDecoration: "none" }}>
                         <Typography component="span" sx={{ color: maggaColors.archiveGold, fontWeight: 700, fontSize: "1.05rem", "&:hover": { textDecoration: "underline" } }}>
                           {person.name}
                         </Typography>
@@ -568,16 +568,16 @@ export default async function MangaPage({ params }: MangaPageProps) {
           mangaTitle={manga.title}
           pages={pages}
         />
-        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mr: { xs: 0, md: "340px" }, mt: 4 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mt: 4 }}>
           <Box sx={{ width: "100%", maxWidth: "1000px" }}>
             <AdContainer placement="manga-end" />
           </Box>
         </Box>
-        <Box sx={{ mt: 6, maxWidth: "800px", mx: "auto" }}>
+        {!manga.isHidden && <Box sx={{ mt: 6, maxWidth: "800px", mx: "auto" }}>
           <Suspense fallback={<CommentSectionSkeleton />}>
             <CommentSection mangaId={manga.id} />
           </Suspense>
-        </Box>
+        </Box>}
       </Container>
 
       <ScrollToTop />

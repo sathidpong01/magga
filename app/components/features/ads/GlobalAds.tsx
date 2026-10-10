@@ -1,17 +1,18 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useParams } from "next/navigation";
 import { AdContainer } from "@/app/components/features/ads";
 
 export default function GlobalAds() {
   const pathname = usePathname();
+  const params = useParams();
 
   // ไม่แสดง ads บนหน้า dashboard
   const isDashboard = pathname.startsWith("/dashboard");
 
   // แสดงเฉพาะหน้าแรก (/) และหน้าอ่านมังงะ (/[mangaId])
   const isHomePage = pathname === "/";
-  const isMangaPage = pathname.match(/^\/[^\/]+$/) && !isDashboard;
+  const isMangaPage = typeof params.mangaId === "string" && pathname.split("/").filter(Boolean).length === 1;
 
   // Don't show ads on dashboard pages
   if (isDashboard) {

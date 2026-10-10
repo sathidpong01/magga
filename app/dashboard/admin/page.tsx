@@ -1,3 +1,4 @@
+import { requireAdminPage } from "@/lib/auth-helpers";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
@@ -50,7 +51,8 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  await requireAdminPage();
+  const session = await auth.api.getSession({ headers: await headers(), query: { disableCookieCache: true } });
   if (!isAdminRole(session)) {
     redirect("/auth/signin?callbackUrl=/dashboard/admin");
   }

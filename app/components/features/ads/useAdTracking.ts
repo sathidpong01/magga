@@ -2,27 +2,36 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import { deliverAdEvent } from "@/lib/ad-event-transport";
 
 export function useAdTracking(adId: string) {
   const imageRef = useRef<HTMLImageElement>(null);
   const eventId = useRef<string | null>(null);
   const sent = useRef(new Set<string>());
+  const pending = useRef(new Set<string>());
   const [loaded, setLoaded] = useState(false);
   const pathname = usePathname();
 
   const send = (kind: "impression" | "click") => {
-    if (sent.current.has(kind) || !eventId.current || pathname.startsWith("/dashboard")) return;
-    sent.current.add(kind);
-    const body = JSON.stringify({ eventId: eventId.current, kind });
+    if (sent.current.has(kind) || pending.current.has(kind) || !eventId.current || pathname.startsWith("/dashboard")) return;
+    const currentEventId = eventId.current;
+    pending.current.add(kind);
     const url = `/api/advertisements/${adId}/events`;
-    void fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body, keepalive: true })
-      .catch(() => fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body, keepalive: true }))
-      .catch(() => {});
+    void deliverAdEvent(url, { eventId: currentEventId, kind }, {
+      isCurrent: () => eventId.current === currentEventId,
+    }).then((acknowledged) => {
+      if (eventId.current !== currentEventId) return;
+      pending.current.delete(kind);
+      if (acknowledged) sent.current.add(kind);
+    });
   };
 
   useEffect(() => {
     eventId.current = crypto.randomUUID();
     sent.current.clear();
+    pending.current.clear();
+    setLoaded(false);
+    return () => { eventId.current = null; };
   }, [adId, pathname]);
 
   useEffect(() => {

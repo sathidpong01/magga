@@ -30,6 +30,7 @@ export interface CallerContext {
 export interface AuthOptions {
   role?: string;
   allowBanned?: boolean;
+  fresh?: boolean;
 }
 
 export type AuthResult =
@@ -58,7 +59,7 @@ export function isAdminRole(session: SessionLike): boolean {
 
 export function isUserBanned(session: SessionLike): boolean {
   const user = session?.user;
-  return Boolean(user && (user.banned ?? user.isBanned));
+  return Boolean(user && (user.banned || user.isBanned));
 }
 
 export function canModifyResource(
@@ -90,7 +91,10 @@ export async function authenticateRequest(
   request: Request,
   options?: AuthOptions
 ): Promise<AuthRequestResult> {
-  const result = await authenticateCaller(request.headers, options);
+  const result = await authenticateCaller(request.headers, {
+    ...options,
+    fresh: options?.fresh ?? (request.method !== "GET" || Boolean(options?.role)),
+  });
   if (!result.ok) {
     return {
       ok: false,
@@ -124,7 +128,10 @@ export async function authenticateCaller(
   }
 
   const { auth } = await import("@/lib/auth");
-  const session = await auth.api.getSession({ headers: resolvedHeaders });
+  const session = await auth.api.getSession({
+    headers: resolvedHeaders,
+    query: { disableCookieCache: options?.fresh ?? Boolean(options?.role) },
+  });
 
   if (!session?.user?.id) {
     return {
@@ -208,4 +215,14 @@ export function requireAuth(session: SessionLike): NextResponse | null {
   }
 
   return null;
+}
+
+/** Guard at the data-reading page, since a layout cannot protect sibling RSC work. */
+export async function requireAdminPage() {
+  const result = await authenticateCaller(undefined, { role: "admin", fresh: true });
+  if (!result.ok) {
+    const { redirect } = await import("next/navigation");
+    return redirect(result.status === 401 ? "/auth/signin?callbackUrl=/dashboard/admin" : "/");
+  }
+  return result.caller;
 }

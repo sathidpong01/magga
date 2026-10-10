@@ -20,9 +20,8 @@ function EmptyStateContent({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const hasFilters = searchParams.get("search") ||
-                     searchParams.get("categoryId") ||
-                     searchParams.get("tags");
+  const hasFilters = ["search", "category", "categoryId", "tags", "tag", "author", "sort"]
+    .some((key) => Boolean(searchParams.get(key)));
 
   const handleClearFilters = () => {
     router.push("/");

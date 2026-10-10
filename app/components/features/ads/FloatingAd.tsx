@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { hasAdSessionFlag, setAdSessionFlag } from "@/lib/ad-session-state";
 import { Box, IconButton, Paper, Portal } from "@mui/material";
 import { useAdTracking } from "./useAdTracking";
 import { advertisementNavigation } from "./adNavigation";
@@ -29,7 +30,7 @@ export default function FloatingAd({ ad }: FloatingAdProps) {
 
   useEffect(() => {
     // Check if dismissed in this session
-    const dismissed = sessionStorage.getItem(`ad_dismissed_${ad.id}`);
+    const dismissed = hasAdSessionFlag(`ad_dismissed_${ad.id}`);
     if (dismissed) {
       setIsDismissed(true);
       return;
@@ -41,7 +42,7 @@ export default function FloatingAd({ ad }: FloatingAdProps) {
   }, [ad.id]);
 
   const handleDismiss = () => {
-    sessionStorage.setItem(`ad_dismissed_${ad.id}`, "true");
+    setAdSessionFlag(`ad_dismissed_${ad.id}`);
     setIsVisible(false);
     setIsDismissed(true);
   };

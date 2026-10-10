@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Alert,
   Avatar,
@@ -83,10 +83,20 @@ function CommentItem({
   >({});
   useEffect(() => {
     setExtraReplies([]);
+    setExtraCapabilities({});
     setReplyCursor(comment.repliesNextCursor || null);
   }, [comment.repliesNextCursor, comment.replies]);
+  const replyGeneration = useRef(0);
+  useEffect(() => {
+    const requestGeneration = replyGeneration;
+    const clear = () => { ++requestGeneration.current; setExtraCapabilities({}); setReplyLoading(false); };
+    clear();
+    window.addEventListener("magga-comment-identity", clear);
+    return () => { ++requestGeneration.current; window.removeEventListener("magga-comment-identity", clear); };
+  }, [session?.user?.id, comment.id, mangaId, imageIndex]);
   const loadReplies = async () => {
     if (!replyCursor || replyLoading) return;
+    const generation = ++replyGeneration.current;
     setReplyLoading(true);
     setReplyError("");
     try {
@@ -100,6 +110,7 @@ function CommentItem({
       const personal = await commentRequest<{
         capabilities: Record<string, Capability>;
       }>(`/api/comments/me?ids=${encodeURIComponent(ids)}`);
+      if (generation !== replyGeneration.current) return;
       setExtraReplies((previous) => [
         ...previous,
         ...data.comments.filter(
@@ -112,15 +123,18 @@ function CommentItem({
       }));
       setReplyCursor(data.nextCursor);
     } catch (cause) {
+      if (generation !== replyGeneration.current) return;
       setReplyError(cause instanceof Error ? cause.message : "โหลดคำตอบไม่ได้");
     } finally {
-      setReplyLoading(false);
+      if (generation === replyGeneration.current) setReplyLoading(false);
     }
   };
   const childCapabilities = { ...capabilities, ...extraCapabilities };
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(comment.content);
   const [reply, setReply] = useState(false);
+  const [replyMounted, setReplyMounted] = useState(false);
+  useEffect(() => { if (reply) setReplyMounted(true); }, [reply]);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [report, setReport] = useState(false);
   const [reason, setReason] = useState("spam");
@@ -213,6 +227,7 @@ function CommentItem({
             <Typography
               component={Link}
               href={`/profile/${encodeURIComponent(author.username)}`}
+              prefetch={false}
               variant="subtitle2"
               sx={{ color: maggaColors.textPrimary }}
             >
@@ -545,7 +560,7 @@ function CommentItem({
           {error && <Alert severity="error">{error}</Alert>}
           {notice && <Typography color="success.main">{notice}</Typography>}
         </Box>
-        <Collapse in={reply}>
+        {!isReply && replyMounted && <Collapse in={reply}>
           <Box sx={{ mt: 2 }}>
             <CommentBox
               mangaId={mangaId}
@@ -558,7 +573,7 @@ function CommentItem({
               }}
             />
           </Box>
-        </Collapse>
+        </Collapse>}
         {[
           ...(comment.replies || []),
           ...extraReplies.filter(
@@ -622,7 +637,7 @@ function CommentItem({
     </Box>
   );
 }
-export default function CommentList({
+function ScopedCommentList({
   comments,
   mangaId,
   imageIndex,
@@ -645,7 +660,11 @@ export default function CommentList({
       ...(comment.replies || []).map((reply) => reply.id),
     ])
     .join(",");
+  const generationRef = useRef(0);
   const load = useCallback(async () => {
+    const generation = ++generationRef.current;
+    setCapabilities({});
+    setPersonalComments([]);
     try {
       type PersonalComments = {
         capabilities: Record<string, Capability>;
@@ -669,18 +688,22 @@ export default function CommentList({
         );
         Object.assign(nextCapabilities, extra.capabilities);
       }
+      if (generation !== generationRef.current) return;
       setCapabilities(nextCapabilities);
       setPersonalComments(data.comments || []);
       setError("");
     } catch {
+      if (generation !== generationRef.current) return;
       setCapabilities({});
+      setPersonalComments([]);
       setError("ตรวจสิทธิ์จัดการความคิดเห็นไม่ได้");
     }
   }, [ids, mangaId, imageIndex]);
   useEffect(() => {
+    const requestGeneration = generationRef;
     void load();
     window.addEventListener("magga-comment-identity", load);
-    return () => window.removeEventListener("magga-comment-identity", load);
+    return () => { ++requestGeneration.current; window.removeEventListener("magga-comment-identity", load); };
   }, [load, session?.user?.id]);
   const ownRoots = personalComments.filter(
     (item) =>
@@ -716,7 +739,7 @@ export default function CommentList({
       )}
       {all.map((comment) => (
         <CommentItem
-          key={comment.id}
+          key={`${session?.user?.id || "guest"}:${comment.id}`}
           comment={comment}
           mangaId={mangaId}
           imageIndex={imageIndex}
@@ -727,4 +750,9 @@ export default function CommentList({
       ))}
     </Box>
   );
+}
+
+export default function CommentList(props: { comments: PublicComment[]; mangaId: string; imageIndex?: number | null; onRefresh: () => void }) {
+  const { data: session } = useSession();
+  return <ScopedCommentList key={`${session?.user?.id || "guest"}:${props.mangaId}:${props.imageIndex ?? "all"}`} {...props} />;
 }

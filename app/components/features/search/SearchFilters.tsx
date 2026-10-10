@@ -17,10 +17,12 @@ import {
   ListItemText,
   ListItemAvatar,
   Avatar,
+  IconButton,
 } from "@mui/material";
 import type { InferSelectModel } from "drizzle-orm";
 import type { categories, tags } from "@/db/schema";
 import { maggaColors } from "@/lib/design-tokens";
+import { buildSearchFilterUrl, normalizeMangaSort } from "@/lib/manga-query";
 
 type Category = InferSelectModel<typeof categories>;
 type Tag = InferSelectModel<typeof tags>;
@@ -37,11 +39,9 @@ type SearchItem = {
   id: string;
   slug: string;
   title: string;
-  description: string;
   coverImage: string;
   authorName: string;
   category: string;
-  tags: string;
 };
 
 export default function SearchFilters({ categories, tags }: Props) {
@@ -56,141 +56,91 @@ export default function SearchFilters({ categories, tags }: Props) {
   const tagsInputId = useId();
   const filterPanelId = useId();
 
-  // State for filters
+  const urlKey = searchParams.toString();
+  const currentAuthor = searchParams.get("author");
   const [search, setSearch] = useState(searchParams.get("search") || "");
-  const [category, setCategory] = useState(
-    searchParams.get("category") || "all"
-  );
-  const [sort, setSort] = useState(searchParams.get("sort") || "added");
-  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
-
-  // Server-side search state (Fuse.js runs on server, client only receives results)
+  const [category, setCategory] = useState(searchParams.get("category") || "all");
+  const [sort, setSort] = useState<string>(normalizeMangaSort(searchParams.get("sort")));
+  const [selectedTags, setSelectedTags] = useState<Tag[]>(() => tags.filter((tag) => searchParams.getAll("tags").includes(tag.name)));
   const [searchResults, setSearchResults] = useState<SearchItem[]>([]);
-  const [inputValue, setInputValue] = useState("");
+  const [inputValue, setInputValue] = useState(searchParams.get("search") || "");
   const [isSearching, setIsSearching] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [searchError, setSearchError] = useState(false);
+  const suggestionController = useRef<AbortController | null>(null);
+  const suggestionGeneration = useRef(0);
+  const composing = useRef(false);
+  const lastNavigation = useRef<string | null>(null);
 
-  // Debounced server-side search
+  // The URL is authoritative on initial load and browser Back/Forward.
   useEffect(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
+    const params = new URLSearchParams(urlKey);
+    setSearch(params.get("search") || "");
+    setInputValue(params.get("search") || "");
+    setCategory(params.get("category") || "all");
+    setSort(normalizeMangaSort(params.get("sort")));
+    setSelectedTags(tags.filter((tag) => params.getAll("tags").includes(tag.name)));
+    lastNavigation.current = null;
+  }, [urlKey, tags]);
 
-    if (inputValue.length < 2) {
-      setSearchResults([]);
-      return;
-    }
-
-    debounceRef.current = setTimeout(async () => {
+  // Draft typing fetches suggestions only; a committed search changes the page.
+  useEffect(() => {
+    const generation = ++suggestionGeneration.current;
+    const controller = new AbortController();
+    suggestionController.current = controller;
+    const query = inputValue.trim();
+    setSearchError(false);
+    setSearchResults([]);
+    setIsSearching(false);
+    if (query.length < 2) return () => controller.abort();
+    const timer = setTimeout(async () => {
+      if (controller.signal.aborted || generation !== suggestionGeneration.current) return;
       setIsSearching(true);
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(inputValue)}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data)) {
-            setSearchResults(data);
-          }
+        const res = await fetch(`/api/search?q=${encodeURIComponent(query.slice(0, 200))}`, { signal: controller.signal });
+        if (!res.ok) throw new Error("Search failed");
+        const data = await res.json();
+        if (!controller.signal.aborted && generation === suggestionGeneration.current) {
+          setSearchResults(Array.isArray(data) ? data : []);
         }
-      } catch (error) {
-        console.error("Search failed:", error);
+      } catch {
+        if (!controller.signal.aborted && generation === suggestionGeneration.current) setSearchError(true);
       } finally {
-        setIsSearching(false);
+        if (!controller.signal.aborted && generation === suggestionGeneration.current) setIsSearching(false);
       }
     }, 300);
-
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
+    return () => { clearTimeout(timer); controller.abort(); };
   }, [inputValue]);
 
-  // Initialize selected tags from URL
-  useEffect(() => {
-    const tagNames = searchParams.getAll("tags");
+  const navigate = useCallback((url: string) => {
+    suggestionGeneration.current++;
+    suggestionController.current?.abort();
+    setIsSearching(false);
+    setSearchResults([]);
+    if (lastNavigation.current === url) return;
+    lastNavigation.current = url;
+    router.push(url);
+  }, [router]);
 
-    // Deep compare to avoid infinite loop
-    const currentTagNames = selectedTags.map((t) => t.name).sort();
-    const newTagNames = [...tagNames].sort();
-    const isSame =
-      currentTagNames.length === newTagNames.length &&
-      currentTagNames.every((name, index) => name === newTagNames[index]);
+  const applyFilters = useCallback((overrides: { search?: string; category?: string; sort?: string; tags?: Tag[] } = {}) => {
+    const nextSearch = overrides.search ?? search;
+    setSearch(nextSearch);
+    navigate(buildSearchFilterUrl({
+      search: nextSearch,
+      category: overrides.category ?? category,
+      sort: overrides.sort ?? sort,
+      tagNames: (overrides.tags ?? selectedTags).map((tag) => tag.name),
+      author: currentAuthor,
+    }));
+  }, [search, category, sort, selectedTags, currentAuthor, navigate]);
 
-    if (isSame) return;
-
-    if (tagNames.length > 0) {
-      const foundTags = tags.filter((tag) => tagNames.includes(tag.name));
-      setSelectedTags(foundTags);
-    } else {
-      setSelectedTags([]);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, tags]);
-
-  // Sync search input from URL search params
-  useEffect(() => {
-    const urlSearch = searchParams.get("search") || "";
-    if (urlSearch !== search) {
-      setSearch(urlSearch);
-      setInputValue(urlSearch);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
-
-  const isInitialMount = useRef(true);
-  const currentAuthor = searchParams.get("author");
-
-  const applyFilters = useCallback(() => {
-    const params = new URLSearchParams();
-
-    // Preserve author filter if present
-    if (currentAuthor) {
-      params.set("author", currentAuthor);
-    }
-
-    // Only add params if they differ from defaults
-    if (search.trim() !== "") params.set("search", search);
-    if (category && category !== "all")
-      params.set("category", category);
-    if (sort && sort !== "added") params.set("sort", sort);
-
-    selectedTags.forEach((tag) => params.append("tags", tag.name)); // Use name instead of ID
-
-    const queryString = params.toString();
-    if (queryString) {
-      router.push(`/?${queryString}`);
-    } else {
-      router.push("/");
-    }
-  }, [search, category, sort, selectedTags, currentAuthor, router]);
-
-  // Debounce search (skip initial mount to prevent clearing URL params)
-  useEffect(() => {
-    if (isInitialMount.current) {
-      isInitialMount.current = false;
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      applyFilters();
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [applyFilters]);
-
+  const commitSearch = () => {
+    if (!composing.current) applyFilters({ search: inputValue });
+  };
   const handleClearFilters = () => {
-    setSearch("");
-    setInputValue("");
-    setCategory("all");
-    setSort("added");
-    setSelectedTags([]);
-    router.push("/");
+    setSearch(""); setInputValue(""); setCategory("all"); setSort("added"); setSelectedTags([]);
+    navigate("/");
   };
-
-  const handleExpandClick = () => {
-    setExpanded(!expanded);
-  };
-
-  const handleSelectResult = (item: SearchItem | null) => {
-    if (item) {
-      router.push(`/${item.slug}`);
-    }
-  };
+  const handleExpandClick = () => setExpanded((value) => !value);
 
   const activeFilterCount =
     (category !== "all" ? 1 : 0) +
@@ -228,20 +178,33 @@ export default function SearchFilters({ categories, tags }: Props) {
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Autocomplete
               freeSolo
+              value={null}
+              filterOptions={(options) => options}
+              loading={isSearching}
+              loadingText="กำลังค้นหา..."
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && (composing.current || event.nativeEvent.isComposing)) {
+                  (event as typeof event & { defaultMuiPrevented: boolean }).defaultMuiPrevented = true;
+                  event.preventDefault();
+                } else if (event.key === "Enter" && !inputValue.trim()) {
+                  (event as typeof event & { defaultMuiPrevented: boolean }).defaultMuiPrevented = true;
+                  event.preventDefault();
+                  commitSearch();
+                }
+              }}
               sx={{ "& .MuiAutocomplete-popupIndicator, & .MuiAutocomplete-clearIndicator": { minWidth: 44, minHeight: 44 } }}
               options={searchResults}
               getOptionLabel={(option) =>
                 typeof option === "string" ? option : option.title
               }
               inputValue={inputValue}
-              onInputChange={(_, newValue) => {
-                setInputValue(newValue);
-                setSearch(newValue);
+              onInputChange={(_, newValue, reason) => {
+                if (reason === "input" || reason === "clear") setInputValue(newValue);
               }}
               onChange={(_, newValue) => {
-                if (newValue && typeof newValue !== "string") {
-                  handleSelectResult(newValue);
-                }
+                if (composing.current) return;
+                if (typeof newValue === "string") applyFilters({ search: newValue });
+                else if (newValue) navigate(`/${encodeURIComponent(newValue.slug)}`);
               }}
               renderOption={(props, option) => {
                 const { key, ...otherProps } = props;
@@ -261,7 +224,7 @@ export default function SearchFilters({ categories, tags }: Props) {
                           ? `[${option.authorName}] ${option.title}`
                           : option.title
                       }
-                      secondary={option.category || option.tags.slice(0, 30)}
+                      secondary={option.category || ""}
                       slotProps={{
                         primary: {
                           variant: "body2",
@@ -282,6 +245,8 @@ export default function SearchFilters({ categories, tags }: Props) {
                 <TextField
                   {...params}
                   id={searchInputId}
+                  onCompositionStart={() => { composing.current = true; }}
+                  onCompositionEnd={() => { composing.current = false; }}
                   placeholder={
                     currentAuthor
                       ? `ค้นหาในผลงานของ ${currentAuthor}...`
@@ -332,13 +297,16 @@ export default function SearchFilters({ categories, tags }: Props) {
                 />
               )}
               noOptionsText={
-                inputValue.length >= 2
+                searchError ? "ค้นหาไม่สำเร็จ กรุณาลองใหม่" : inputValue.length >= 2
                   ? "ไม่พบผลลัพธ์"
                   : "พิมพ์อย่างน้อย 2 ตัวอักษร"
               }
             />
           </Box>
 
+          <IconButton aria-label="ค้นหา" onClick={commitSearch} sx={{ color: maggaColors.archiveGold, minWidth: 44, minHeight: 44 }}>
+            <SearchIcon />
+          </IconButton>
           {/* Filters & tags Button (Tailspace Style) */}
           <ButtonBase
             aria-controls={filterPanelId}
@@ -423,7 +391,7 @@ export default function SearchFilters({ categories, tags }: Props) {
                   fullWidth
                   id={categorySelectId}
                   value={category}
-                  onChange={(e) => setCategory(e.target.value)}
+                  onChange={(e) => { setCategory(e.target.value); applyFilters({ category: e.target.value }); }}
                   variant="standard"
                   sx={{
                     "& .MuiSelect-select": {
@@ -463,7 +431,7 @@ export default function SearchFilters({ categories, tags }: Props) {
                   fullWidth
                   id={sortSelectId}
                   value={sort}
-                  onChange={(e) => setSort(e.target.value)}
+                  onChange={(e) => { setSort(e.target.value); applyFilters({ sort: e.target.value }); }}
                   variant="standard"
                   sx={{
                     "& .MuiSelect-select": {
@@ -483,7 +451,6 @@ export default function SearchFilters({ categories, tags }: Props) {
                   <MenuItem value="updated">อัปเดตล่าสุด (Updated)</MenuItem>
                   <MenuItem value="added">เพิ่มล่าสุด (Added)</MenuItem>
                   <MenuItem value="az">ชื่อเรื่อง ก-ฮ (Title A-Z)</MenuItem>
-                  <MenuItem value="random">สุ่มเรื่อง (Random)</MenuItem>
                 </TextField>
               </Grid>
 
@@ -501,7 +468,8 @@ export default function SearchFilters({ categories, tags }: Props) {
                   options={tags}
                   getOptionLabel={(option) => option.name}
                   value={selectedTags}
-                  onChange={(_, newValue) => setSelectedTags(newValue)}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  onChange={(_, newValue) => { setSelectedTags(newValue); applyFilters({ tags: newValue }); }}
                   renderInput={(params) => (
                     <TextField
                       {...params}

@@ -1,3 +1,4 @@
+import { requireAdminPage } from "@/lib/auth-helpers";
 import type { Metadata } from "next";
 import { db } from "@/db";
 import {
@@ -30,6 +31,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminMangaPage() {
+  await requireAdminPage();
   const [mangasQuery, allCategories, allTags, allAuthors] = await Promise.all([
     db
       .select({

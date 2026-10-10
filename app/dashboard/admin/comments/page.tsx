@@ -1,3 +1,4 @@
+import { requireAdminPage } from "@/lib/auth-helpers";
 import type { Metadata } from "next";
 import { db } from "@/db";
 import { comments as commentsTable } from "@/db/schema";
@@ -20,6 +21,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminCommentsPage() {
+  await requireAdminPage();
   await requireModerationAdmin(new Request(process.env.BETTER_AUTH_URL || "http://localhost:3000", { headers: await headers() }));
   const page = 1;
   const limit = 20;

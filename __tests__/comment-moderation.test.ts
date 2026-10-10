@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, jest, mock } from 'bun:test';
-const mocks = { actor: jest.fn(), origin: jest.fn(), quota: jest.fn(), select: jest.fn(), update: jest.fn(), insert: jest.fn(), transaction: jest.fn(), retire: jest.fn() };
-mock.module('@/lib/comments/assets',()=>({retireCommentAssets:mocks.retire}));
+const mocks = { actor: jest.fn(), origin: jest.fn(), quota: jest.fn(), select: jest.fn(), update: jest.fn(), insert: jest.fn(), transaction: jest.fn(), retire: jest.fn().mockResolvedValue([]) };
+mock.module('@/lib/comments/assets',()=>({purgeRetiredCommentAssets:jest.fn().mockResolvedValue(true),retireCommentAssets:mocks.retire}));
 mock.module('@/db', () => ({ db: { select: mocks.select, transaction: mocks.transaction } }));
 mock.module('@/lib/comments/identity', () => ({ requireCommentActor: mocks.actor, assertCommentOrigin: mocks.origin }));
 mock.module('@/lib/comments/abuse', () => ({ consumeCommentLimit: mocks.quota }));

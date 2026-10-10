@@ -18,6 +18,7 @@ const {
   canModifyResource,
   isValidCallbackUrl,
   BANNED_ERROR,
+  isUserBanned,
 } = await import("../lib/auth-helpers");
 
 describe("Auth Intake Module (lib/auth-helpers.ts)", () => {
@@ -26,6 +27,19 @@ describe("Auth Intake Module (lib/auth-helpers.ts)", () => {
   });
 
   describe("authenticateRequest", () => {
+    it("rejects either ban flag even if the other flag is false", async () => {
+      expect(isUserBanned({ user: { banned: false, isBanned: true } })).toBe(true);
+      expect(isUserBanned({ user: { banned: true, isBanned: false } })).toBe(true);
+    });
+    it("bypasses cookie cache for privileged reads and mutations", async () => {
+      mocks.getSession.mockResolvedValue({ user: { id: "admin", role: "admin" } });
+      await authenticateRequest(new Request("http://localhost/api/admin"), { role: "admin" });
+      expect(mocks.getSession.mock.calls.at(-1)?.[0].query.disableCookieCache).toBe(true);
+      await authenticateRequest(new Request("http://localhost/api/upload", { method: "POST" }));
+      expect(mocks.getSession.mock.calls.at(-1)?.[0].query.disableCookieCache).toBe(true);
+      await authenticateRequest(new Request("http://localhost/api/profile"));
+      expect(mocks.getSession.mock.calls.at(-1)?.[0].query.disableCookieCache).toBe(false);
+    });
     it("returns 401 response when unauthenticated", async () => {
       mocks.getSession.mockResolvedValue(null);
 

@@ -1,4 +1,4 @@
-import { getCommentPrivateStorage } from "@/lib/storage/comment-private";
+import { purgeRetiredCommentAssets } from "./assets";
 import { randomBytes } from "node:crypto";
 import { eq, inArray, or, sql, asc } from "drizzle-orm";
 import { db } from "@/db";
@@ -8,7 +8,8 @@ import { NotFoundCommentError, ValidationCommentError } from "./types";
 /** Preserves other authors' replies while removing the member and their private references. */
 export async function deleteUserPreservingComments(userId: string) {
   if (typeof userId !== "string" || !userId || userId.length>128) throw new ValidationCommentError("Invalid user ID");
-  return db.transaction(async tx => {
+  const retired: string[] = [];
+  const result = await db.transaction(async tx => {
     // The profile lock also prevents new foreign-key references appearing during removal.
     const [user] = await tx.select({id:profiles.id}).from(profiles).where(eq(profiles.id,userId)).for("update");
     if (!user) throw new NotFoundCommentError("User not found");
@@ -27,9 +28,8 @@ export async function deleteUserPreservingComments(userId: string) {
       const [tombstone] = await tx.insert(commentGuests).values({name:"ผู้ใช้ที่ถูกลบ",publicCode:`DELETED-${randomBytes(12).toString("hex")}`,isBanned:true,banReason:"Account removed"}).returning({id:commentGuests.id});
       await tx.update(comments).set({userId:null,guestId:tombstone.id,authorName:"ผู้ใช้ที่ถูกลบ",guestPublicCode:null,content:"",imageUrl:null,status:"deleted",idempotencyKey:null,requestHash:null,updatedAt:new Date().toISOString()}).where(eq(comments.userId,userId));
       if (ownedAssets.length) {
-        const storage = getCommentPrivateStorage();
-        for (const asset of ownedAssets) await storage.delete(asset.objectKey);
-        await tx.delete(commentAssets).where(inArray(commentAssets.id,ownedAssets.map(asset=>asset.id)));
+        retired.push(...ownedAssets.map(asset => asset.id));
+        await tx.update(commentAssets).set({ userId: null, guestId: tombstone.id, state: "deleted", expiresAt: new Date(), updatedAt: new Date() }).where(inArray(commentAssets.id, retired));
       }
     }
     const ownedReports = await tx.select({id:commentReports.id}).from(commentReports).where(eq(commentReports.userId,userId)).for("update");
@@ -40,4 +40,6 @@ export async function deleteUserPreservingComments(userId: string) {
     await tx.delete(profiles).where(eq(profiles.id,userId));
     return {success:true};
   });
+  await purgeRetiredCommentAssets(retired);
+  return result;
 }

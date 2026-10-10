@@ -17,17 +17,20 @@ interface RateLimitResult {
 export async function checkRateLimit(
   identifier: string,
   limit: number = 5,
-  duration: number = 15 * 60 * 1000 // 15 minutes
+  duration: number = 15 * 60 * 1000, // 15 minutes
+  options: { cost?: number; failClosed?: boolean } = {}
 ): Promise<RateLimitResult> {
+  const cost = options.cost ?? 1;
+  if (!Number.isSafeInteger(cost) || cost < 1 || cost > limit) return { allowed: false, remaining: 0 };
   try {
     const durationInterval = `${Math.floor(duration / 1000)} seconds`;
     const result = await db.execute(sql`
       INSERT INTO login_attempts (identifier, count, expires_at)
-      VALUES (${identifier}, 1, NOW() + ${durationInterval}::interval)
+      VALUES (${identifier}, ${cost}, NOW() + ${durationInterval}::interval)
       ON CONFLICT (identifier) DO UPDATE SET
         count = CASE 
-          WHEN login_attempts.expires_at < NOW() THEN 1
-          ELSE login_attempts.count + 1
+          WHEN login_attempts.expires_at < NOW() THEN ${cost}
+          ELSE login_attempts.count + ${cost}
         END,
         expires_at = CASE
           WHEN login_attempts.expires_at < NOW() THEN NOW() + ${durationInterval}::interval
@@ -38,7 +41,7 @@ export async function checkRateLimit(
 
     const row = result[0] as { count: number; expires_at: string } | undefined;
     if (!row) {
-      return { allowed: true, remaining: limit };
+      return { allowed: !options.failClosed, remaining: options.failClosed ? 0 : limit };
     }
 
     const count = Number(row.count);
@@ -52,7 +55,7 @@ export async function checkRateLimit(
   } catch (error) {
     console.error("Rate limit check failed:", error);
     // Allow on error to prevent blocking legitimate users
-    return { allowed: true, remaining: limit };
+    return { allowed: !options.failClosed, remaining: options.failClosed ? 0 : limit };
   }
 }
 

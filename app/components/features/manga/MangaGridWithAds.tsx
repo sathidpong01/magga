@@ -28,19 +28,18 @@ interface MangaGridWithAdsProps {
 
 export default function MangaGridWithAds({
   mangas,
-  ads = [],
 }: MangaGridWithAdsProps) {
   const { getAdsByPlacement } = useAds();
   const visitAds = getAdsByPlacement("grid");
   // ใช้ตำแหน่งแบบ deterministic (ไม่สุ่ม) เพื่อหลีกเลี่ยง hydration mismatch
   const itemsWithAds = useMemo(() => {
-    if (ads.length === 0) {
+    if (visitAds.length === 0) {
       return mangas.map((manga) => ({ type: "manga" as const, data: manga }));
     }
 
     // ขยาย ads ตาม repeatCount (เช่น repeatCount=3 จะได้ ad ตัวเดิม 3 ครั้ง)
     const expandedAds: Ad[] = [];
-    ads.forEach((ad) => {
+    visitAds.forEach((ad) => {
       const count = ad.repeatCount || 1;
       for (let i = 0; i < count; i++) {
         expandedAds.push(ad);
@@ -74,7 +73,7 @@ export default function MangaGridWithAds({
     }
 
     return items;
-  }, [mangas, ads]);
+  }, [mangas, visitAds]);
 
   return (
     <Grid container spacing={3}>
@@ -91,7 +90,7 @@ export default function MangaGridWithAds({
           {item.type === "manga" ? (
             <MangaCard manga={item.data} priority={index < 6} />
           ) : (
-            <AdCard ad={visitAds.find((ad) => ad.id === item.data.id) ?? item.data} />
+            <AdCard ad={item.data} />
           )}
         </Grid>
       ))}

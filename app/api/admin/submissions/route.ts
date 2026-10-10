@@ -16,7 +16,7 @@ function parsePageParam(value: string | null, fallback: number, max: number) {
 
 export async function GET(req: Request) {
   try {
-    const session = await auth.api.getSession({ headers: req.headers });
+    const session = await auth.api.getSession({ headers: req.headers, query: { disableCookieCache: true } });
     const authError = requireAdmin(session);
     if (authError) return authError;
 

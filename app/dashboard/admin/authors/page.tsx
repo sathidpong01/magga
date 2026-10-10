@@ -1,3 +1,4 @@
+import { requireAdminPage } from "@/lib/auth-helpers";
 import type { Metadata } from "next";
 import { db } from "@/db";
 import { authors as authorsTable } from "@/db/schema";
@@ -16,6 +17,7 @@ export const metadata: Metadata = {
 };
 
 export default async function AuthorsPage() {
+  await requireAdminPage();
   const authors = await db.query.authors.findMany({
     orderBy: [asc(authorsTable.name)],
   });

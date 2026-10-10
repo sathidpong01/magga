@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Box,
   Table,
@@ -46,6 +46,7 @@ import { useToast } from "@/app/contexts/ToastContext";
 import { dashboardTokens, dashboardPrimaryButtonSx } from "@/app/components/dashboard/system";
 import { authFetch } from "@/lib/auth-fetch";
 import { getMetadataChipSx } from "@/lib/metadata-chip-tone";
+import CacheRefreshNotice from "@/app/components/dashboard/CacheRefreshNotice";
 
 type Manga = {
   id: string;
@@ -101,6 +102,10 @@ export default function MangaDataTable({
   const router = useRouter();
   const { showSuccess, showError } = useToast();
   const [mangas, setMangas] = useState(initialMangas);
+  const mutationInFlight = useRef(false);
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [cacheRefreshPending, setCacheRefreshPending] = useState(false);
+  useEffect(() => { setMangas(initialMangas); }, [initialMangas]);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
 
@@ -134,25 +139,22 @@ export default function MangaDataTable({
   };
 
   const handleToggleVisibility = async (id: string, currentState: boolean) => {
+    if (mutationInFlight.current) return;
+    mutationInFlight.current = true;
+    setBulkBusy(true);
     try {
-      const res = await fetch(`/api/manga/${id}/toggle-visibility`, {
-        method: "PATCH",
+      const res = await authFetch(`/api/manga/${id}/toggle-visibility`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isHidden: !currentState }),
       });
-
-      if (res.ok) {
-        setMangas((prev) =>
-          prev.map((m) => (m.id === id ? { ...m, isHidden: !currentState } : m))
-        );
-        showSuccess(
-          !currentState ? "ซ่อนมังงะเรียบร้อย" : "แสดงมังงะเรียบร้อย"
-        );
-      } else {
-        showError("ไม่สามารถเปลี่ยนสถานะได้");
-      }
-    } catch (error) {
-      console.error("Failed to toggle visibility:", error);
-      showError("เกิดข้อผิดพลาดในการเปลี่ยนสถานะ");
-    }
+      if (!res.ok) throw new Error("ไม่สามารถเปลี่ยนสถานะได้");
+      const updated = await res.json() as { isHidden: boolean; cache_refresh_pending?: boolean };
+      if (updated.cache_refresh_pending) setCacheRefreshPending(true);
+      setMangas(previous => previous.map(manga => manga.id === id ? { ...manga, isHidden: updated.isHidden } : manga));
+      showSuccess(updated.isHidden ? "ซ่อนมังงะเรียบร้อย" : "แสดงมังงะเรียบร้อย");
+      router.refresh();
+    } catch (error) { showError(error instanceof Error ? error.message : "เกิดข้อผิดพลาดในการเปลี่ยนสถานะ"); }
+    finally { mutationInFlight.current = false; setBulkBusy(false); }
   };
 
   const handleOpenSettings = (manga: Manga) => {
@@ -180,6 +182,7 @@ export default function MangaDataTable({
 
       if (res.ok) {
         const data = await res.json();
+        if (data.cache_refresh_pending) setCacheRefreshPending(true);
 
         // Update local state immediately
         setMangas((prev) =>
@@ -220,6 +223,7 @@ export default function MangaDataTable({
       });
 
       if (res.ok) {
+        if (res.headers.get("X-Magga-Cache-Refresh") === "pending") setCacheRefreshPending(true);
         setMangas((prev) => prev.filter((m) => m.id !== mangaToDelete.id));
         setDeleteDialogOpen(false);
         setMangaToDelete(null);
@@ -233,47 +237,32 @@ export default function MangaDataTable({
     }
   };
 
-  const handleBulkDelete = async () => {
+  const runBulkAction = async (action: "delete" | "hide" | "show") => {
+    if (mutationInFlight.current || !selected.length) return;
+    mutationInFlight.current = true;
+    setBulkBusy(true);
+    const requested = [...selected];
     try {
-      const deletePromises = selected.map((id) =>
-        fetch(`/api/manga/${id}`, { method: "DELETE" })
-      );
-
-      const results = await Promise.all(deletePromises);
-      const successCount = results.filter((r) => r.ok).length;
-
-      setMangas((prev) => prev.filter((m) => !selected.includes(m.id)));
-      setSelected([]);
-      showSuccess(`ลบมังงะ ${successCount} เรื่องเรียบร้อย`);
-    } catch (error) {
-      console.error("Failed to bulk delete:", error);
-      showError("เกิดข้อผิดพลาดในการลบ");
-    }
+      const res = await authFetch("/api/admin/manga/bulk-action", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: requested, action }),
+      });
+      if (!res.ok) throw new Error("ไม่สามารถบันทึกการเปลี่ยนแปลงได้");
+      const data = await res.json() as { ids: string[]; cache_refresh_pending?: boolean };
+      if (data.cache_refresh_pending) setCacheRefreshPending(true);
+      const changed = new Set(data.ids);
+      setMangas(previous => action === "delete"
+        ? previous.filter(manga => !changed.has(manga.id))
+        : previous.map(manga => changed.has(manga.id) ? { ...manga, isHidden: action === "hide" } : manga));
+      setSelected(previous => previous.filter(id => !changed.has(id)));
+      showSuccess(`บันทึกแล้ว ${changed.size} เรื่อง`);
+      if (changed.size < requested.length) showError("บางรายการไม่พบแล้ว กรุณารีเฟรชและตรวจรายการที่ยังเลือกอยู่");
+      router.refresh();
+    } catch (error) { showError(error instanceof Error ? error.message : "เกิดข้อผิดพลาด"); }
+    finally { mutationInFlight.current = false; setBulkBusy(false); }
   };
-
-  const handleBulkToggleVisibility = async (hidden: boolean) => {
-    try {
-      const togglePromises = selected.map((id) =>
-        fetch(`/api/manga/${id}/toggle-visibility`, { method: "PATCH" })
-      );
-
-      await Promise.all(togglePromises);
-
-      setMangas((prev) =>
-        prev.map((m) =>
-          selected.includes(m.id) ? { ...m, isHidden: hidden } : m
-        )
-      );
-
-      setSelected([]);
-      showSuccess(
-        `${hidden ? "ซ่อน" : "แสดง"}มังงะ ${selected.length} เรื่องเรียบร้อย`
-      );
-    } catch (error) {
-      console.error("Failed to bulk toggle:", error);
-      showError("เกิดข้อผิดพลาดในการเปลี่ยนสถานะ");
-    }
-  };
+  const handleBulkDelete = () => runBulkAction("delete");
+  const handleBulkToggleVisibility = (hidden: boolean) => runBulkAction(hidden ? "hide" : "show");
 
   return (
     <Box
@@ -282,6 +271,7 @@ export default function MangaDataTable({
         p: { xs: 2, md: 2.5 },
       }}
     >
+      {cacheRefreshPending && <CacheRefreshNotice onRefreshed={() => { setCacheRefreshPending(false); router.refresh(); }} />}
       {selected.length > 0 && (
         <Toolbar
           sx={{
@@ -301,6 +291,7 @@ export default function MangaDataTable({
             <Button
               size="small"
               startIcon={<VisibilityOffIcon />}
+              disabled={bulkBusy}
               onClick={() => handleBulkToggleVisibility(true)}
               sx={{ color: "#d4d4d4", borderRadius: 1.1, fontWeight: 700, textTransform: "none" }}
             >
@@ -309,6 +300,7 @@ export default function MangaDataTable({
             <Button
               size="small"
               startIcon={<VisibilityIcon />}
+              disabled={bulkBusy}
               onClick={() => handleBulkToggleVisibility(false)}
               sx={{ color: "#10b981", borderRadius: 1.1, fontWeight: 700, textTransform: "none" }}
             >
@@ -317,6 +309,7 @@ export default function MangaDataTable({
             <Button
               size="small"
               startIcon={<DeleteIcon />}
+              disabled={bulkBusy}
               onClick={handleBulkDelete}
               sx={{ color: "#ef4444", borderRadius: 1.1, fontWeight: 700, textTransform: "none" }}
             >

@@ -65,10 +65,27 @@ export async function rollbackCommentAssetPublication(assetId: string) {
 
 export async function retireCommentAssets(tx: Transaction, commentId: string) {
   const assets = await tx.select().from(commentAssets).where(eq(commentAssets.commentId, commentId)).orderBy(commentAssets.id).for("update");
-  if (!assets.length) return;
-  const storage = getCommentPrivateStorage();
-  for (const asset of assets) await storage.delete(asset.objectKey);
-  await tx.delete(commentAssets).where(inArray(commentAssets.id, assets.map(asset => asset.id)));
+  if (!assets.length) return [];
+  await tx.update(commentAssets).set({ state: "deleted", expiresAt: new Date(), updatedAt: new Date() }).where(inArray(commentAssets.id, assets.map(asset => asset.id)));
+  return assets.map(asset => asset.id);
+}
+
+/** Business mutations commit the retirement ledger first. Failed object deletes
+ * stay queued for the existing cleanup cron; a DB rollback never deletes files. */
+export async function purgeRetiredCommentAssets(ids: string[]) {
+  if (!ids.length) return true;
+  try {
+    for (const id of [...new Set(ids)]) await db.transaction(async tx => {
+      const [asset] = await tx.select().from(commentAssets).where(and(eq(commentAssets.id, id), eq(commentAssets.state, "deleted"))).for("update");
+      if (!asset) return;
+      await getCommentPrivateStorage().delete(asset.objectKey);
+      await tx.delete(commentAssets).where(eq(commentAssets.id, id));
+    });
+    return true;
+  } catch {
+    console.error("Comment object cleanup pending; retirement ledger retained");
+    return false;
+  }
 }
 
 /** Only call after authorizing every row for an owner/admin response. */

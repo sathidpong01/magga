@@ -6,6 +6,7 @@ import { eq, and } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { validatePassword } from "@/lib/password-validation";
+import { isUserBanned } from "@/lib/auth-helpers";
 import { checkRateLimit } from "@/lib/rate-limit";
 
 const passwordSchema = z.object({
@@ -23,11 +24,13 @@ const passwordSchema = z.object({
 
 export async function PUT(req: Request) {
   try {
-    const session = await auth.api.getSession({ headers: req.headers });
+    const session = await auth.api.getSession({ headers: req.headers, query: { disableCookieCache: true } });
 
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    if (isUserBanned(session)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     // Rate limiting: 3 password changes per hour per user
     const limitCheck = await checkRateLimit(
@@ -62,7 +65,8 @@ export async function PUT(req: Request) {
       ),
     });
 
-    if (hasCredentialAccount) {
+    let passwordResponse: Response;
+    if (hasCredentialAccount?.password) {
       // User has a credentials account -> use changePassword which verifies current password automatically
       if (!currentPassword) {
         return NextResponse.json(
@@ -71,7 +75,8 @@ export async function PUT(req: Request) {
         );
       }
 
-      await auth.api.changePassword({
+      passwordResponse = await auth.api.changePassword({
+        asResponse: true,
         body: {
           currentPassword,
           newPassword,
@@ -101,7 +106,8 @@ export async function PUT(req: Request) {
       }
 
       // Link credentials account by setting password for the first time
-      await auth.api.setPassword({
+      passwordResponse = await auth.api.setPassword({
+        asResponse: true,
         body: {
           newPassword,
         },
@@ -109,7 +115,10 @@ export async function PUT(req: Request) {
       });
     }
 
-    return NextResponse.json({ message: "Password updated successfully" });
+    if (!passwordResponse.ok) return passwordResponse;
+    const response = NextResponse.json({ message: "Password updated successfully" });
+    for (const cookie of passwordResponse.headers.getSetCookie()) response.headers.append("Set-Cookie", cookie);
+    return response;
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

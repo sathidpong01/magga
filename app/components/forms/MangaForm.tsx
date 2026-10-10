@@ -39,13 +39,15 @@ import ZoomOutRoundedIcon from "@mui/icons-material/ZoomOutRounded";
 import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import PublishIcon from "@mui/icons-material/Publish";
 import NotificationModal from "@/app/components/modals/NotificationModal";
+import CacheRefreshNotice from "@/app/components/dashboard/CacheRefreshNotice";
 import { SortableItem } from "@/app/components/ui/SortableItem";
 import UploadProgress, {
   UploadFileStatus,
 } from "@/app/components/ui/UploadProgress";
 import { authFetch } from "@/lib/auth-fetch";
 import { normalizeMangaPages } from "@/lib/manga-pages";
-import { extractFirstUploadUrl } from "@/lib/storage/client";
+import { DraftFileUploader } from "@/lib/storage/client-upload";
+import { enrichUnchangedItem } from "@/lib/form-metadata";
 import {
   DashboardPageHeader,
   DashboardSectionTitle,
@@ -91,6 +93,21 @@ type PageItem = {
 export default function MangaForm({ manga, mode }: MangaFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submittingRef = useRef(false);
+  const cachePendingRef = useRef(false);
+  const [cacheRefreshPending, setCacheRefreshPending] = useState(false);
+  const retryingFiles = useRef(new Set<string>());
+  const [retryCount, setRetryCount] = useState(0);
+  const uploaderRef = useRef<DraftFileUploader | null>(null);
+  const requestController = useRef<AbortController | null>(null);
+  const uploader = () => {
+    if (!requestController.current || requestController.current.signal.aborted) throw new Error("ยกเลิกการอัปโหลดแล้ว");
+    return (uploaderRef.current ??= new DraftFileUploader());
+  };
+  const formFetch = (url: string, options?: RequestInit) => authFetch(url, {
+    ...options,
+    signal: AbortSignal.any([requestController.current!.signal, AbortSignal.timeout(120_000)]),
+  });
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const formRef = useRef<HTMLFormElement>(null);
@@ -238,6 +255,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
   }, [coverItem]);
 
   const handleDragEnd = (event: DragEndEvent) => {
+    if (submittingRef.current || cachePendingRef.current || retryingFiles.current.size) return;
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
@@ -250,6 +268,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
   };
 
   const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (submittingRef.current || cachePendingRef.current || retryingFiles.current.size) return;
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -259,7 +278,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
     }
 
     setCoverItem({
-      id: `cover-${Date.now()}`,
+      id: `cover-${crypto.randomUUID()}`,
       type: "file",
       content: file,
       preview: URL.createObjectURL(file),
@@ -267,11 +286,12 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
   };
 
   const handlePagesUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (submittingRef.current || cachePendingRef.current || retryingFiles.current.size) return;
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
     const newItems: PageItem[] = Array.from(files).map((file, index) => ({
-      id: `page-${Date.now()}-${index}`,
+      id: `page-${crypto.randomUUID()}-${index}`,
       type: "file",
       content: file,
       preview: URL.createObjectURL(file),
@@ -281,6 +301,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
   };
 
   const handleRemovePage = (id: string) => {
+    if (submittingRef.current || cachePendingRef.current || retryingFiles.current.size) return;
     setPageItems((prev) => {
       const item = prev.find((p) => p.id === id);
       if (item?.type === "file") {
@@ -291,6 +312,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
   };
 
   const handleRemoveCover = () => {
+    if (submittingRef.current || cachePendingRef.current || retryingFiles.current.size) return;
     if (coverItem?.type === "file") {
       URL.revokeObjectURL(coverItem.preview);
     }
@@ -299,7 +321,11 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
 
   // Cleanup object URLs on unmount
   useEffect(() => {
+    requestController.current = new AbortController();
     return () => {
+      requestController.current?.abort();
+      uploaderRef.current?.abortAll();
+      uploaderRef.current = null;
       pageItemsRef.current.forEach((item) => {
         if (item.type === "file") URL.revokeObjectURL(item.preview);
       });
@@ -382,7 +408,8 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
     setCredits(newCredits);
   };
   const handleFetchCreditInfo = async (index: number) => {
-    const url = credits[index].url;
+    const original = credits[index];
+    const url = original.url;
     if (!url) return;
     try {
       const res = await authFetch(
@@ -390,13 +417,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
       );
       if (!res.ok) throw new Error("ไม่สามารถดึงข้อมูลลิงก์ได้");
       const data = await res.json();
-      const newCredits = [...credits];
-      newCredits[index] = {
-        ...newCredits[index],
-        label: data.title || newCredits[index].label,
-        icon: data.icon || newCredits[index].icon,
-      };
-      setCredits(newCredits);
+      if (!submittingRef.current) setCredits((current) => enrichUnchangedItem(current, original, data));
     } catch (error) {}
   };
 
@@ -449,6 +470,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
     saveAsDraft?: boolean
   ) => {
     e.preventDefault();
+    if (submittingRef.current || cachePendingRef.current || retryingFiles.current.size) return;
     const nextErrors: Record<string, string> = {};
     if (!title.trim()) nextErrors.title = "กรุณากรอกชื่อเรื่อง";
     if (!slug.trim()) nextErrors.slug = "กรุณาระบุ slug ของเรื่อง";
@@ -461,6 +483,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
       focusInvalidField(firstInvalid || "coverImage");
       return;
     }
+    submittingRef.current = true;
     setIsSubmitting(true);
 
     try {
@@ -478,7 +501,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
             authorBody.socialLinks = JSON.stringify(credits);
           }
 
-          const authorRes = await authFetch("/api/authors", {
+          const authorRes = await formFetch("/api/authors", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(authorBody),
@@ -490,7 +513,9 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
           finalAuthorId = newAuthor.id;
 
           // Update available authors list
-          setAvailableAuthors((prev) => [...prev, newAuthor]);
+          setAvailableAuthors((prev) => prev.some((author) => author.id === newAuthor.id) ? prev : [...prev, newAuthor]);
+          setSelectedAuthor(newAuthor);
+          setPendingAuthorName("");
         } catch (error) {
           throw new Error(
             `ไม่สามารถสร้างข้อมูลผู้แต่งได้: ${
@@ -503,15 +528,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
       // 1. Upload Cover if it's a file
       let finalCoverUrl = "";
       if (coverItem.type === "file") {
-        const fd = new FormData();
-        fd.append("files", coverItem.content as File);
-        const res = await authFetch("/api/upload", {
-          method: "POST",
-          body: fd,
-        });
-        if (!res.ok) throw new Error("ไม่สามารถอัปโหลดรูปปกได้");
-        const json = await res.json();
-        finalCoverUrl = extractFirstUploadUrl(json);
+        finalCoverUrl = await uploader().upload(coverItem.id, coverItem.content as File);
       } else {
         finalCoverUrl = coverItem.content as string;
       }
@@ -556,74 +573,22 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
         const CONCURRENCY = 3;
         let hasUploadErrors = false;
 
-        const uploadFile = (item: PageItem) => {
-          return new Promise<void>((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            const fd = new FormData();
-            fd.append("files", item.content as File);
-
-            xhr.upload.onprogress = (event) => {
-              if (event.lengthComputable) {
-                const progress = (event.loaded / event.total) * 100;
-                setUploadFiles((prev) =>
-                  prev.map((f) =>
-                    f.id === item.id
-                      ? { ...f, progress, status: "uploading" }
-                      : f
-                  )
-                );
-              }
-            };
-
-            xhr.onload = () => {
-              if (xhr.status >= 200 && xhr.status < 300) {
-                try {
-                  const response = JSON.parse(xhr.responseText);
-                  const url = extractFirstUploadUrl(response);
-                  uploadedUrlMap[item.id] = url;
-                  setUploadedUrls((prev) => ({ ...prev, [item.id]: url }));
-                  setUploadFiles((prev) =>
-                    prev.map((f) =>
-                      f.id === item.id
-                        ? { ...f, progress: 100, status: "completed", error: undefined }
-                        : f
-                    )
-                  );
-                  resolve();
-                } catch (e) {
-                  reject(new Error("รูปแบบข้อมูลตอบกลับไม่ถูกต้อง"));
-                }
-              } else {
-                let errorMsg = "อัปโหลดไฟล์ไม่สำเร็จ";
-                try {
-                  const response = JSON.parse(xhr.responseText);
-                  if (response?.error) {
-                    errorMsg = typeof response.error === "string" ? response.error : JSON.stringify(response.error);
-                  }
-                } catch {}
-                setUploadFiles((prev) =>
-                  prev.map((f) =>
-                    f.id === item.id ? { ...f, status: "error", error: errorMsg } : f
-                  )
-                );
-                reject(new Error(errorMsg));
-              }
-            };
-
-            xhr.onerror = () => {
-              const networkErrorMsg = "เกิดปัญหาเครือข่ายระหว่างอัปโหลด";
-              setUploadFiles((prev) =>
-                prev.map((f) =>
-                  f.id === item.id ? { ...f, status: "error", error: networkErrorMsg } : f
-                )
-              );
-              reject(new Error(networkErrorMsg));
-            };
-
-            xhr.withCredentials = true;
-            xhr.open("POST", "/api/upload");
-            xhr.send(fd);
-          });
+        const uploadFile = async (item: PageItem) => {
+          try {
+            const url = await uploader().upload(item.id, item.content as File, (progress) => {
+              setUploadFiles((previous) => previous.map((file) => file.id === item.id
+                ? { ...file, progress, status: "uploading" } : file));
+            });
+            uploadedUrlMap[item.id] = url;
+            setUploadedUrls((previous) => ({ ...previous, [item.id]: url }));
+            setUploadFiles((previous) => previous.map((file) => file.id === item.id
+              ? { ...file, progress: 100, status: "completed", error: undefined } : file));
+          } catch (error) {
+            const message = error instanceof Error ? error.message : "อัปโหลดไฟล์ไม่สำเร็จ";
+            setUploadFiles((previous) => previous.map((file) => file.id === item.id
+              ? { ...file, status: "error", error: message } : file));
+            throw error;
+          }
         };
 
         // Process queue
@@ -703,7 +668,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
             : "/api/submissions";
       const method = manga ? "PUT" : "POST";
 
-      const response = await authFetch(endpoint, {
+      const response = await formFetch(endpoint, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -736,6 +701,9 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
       }
 
       const data = await response.json();
+      const cachePending = mode === "admin" && (data.cache_refresh_pending === true || response.headers?.get("X-Magga-Cache-Refresh") === "pending");
+      cachePendingRef.current = cachePending;
+      setCacheRefreshPending(cachePending);
 
       setNotificationType("success");
       setNotificationTitle(
@@ -756,6 +724,10 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
             ? `สร้างรายการ "${title}" เรียบร้อยแล้ว`
             : `ส่ง "${title}" เข้าตรวจเรียบร้อยแล้ว`
       );
+      if (cachePending) {
+        setNotificationTitle("บันทึกแล้ว แคชยังรออัปเดต");
+        setNotificationMessage("ข้อมูลถูกบันทึกแล้ว แต่หน้าเว็บสาธารณะยังอาจแสดงข้อมูลเดิม กรุณากลับไปอัปเดตแคชโดยไม่ต้องบันทึกข้อมูลซ้ำ");
+      }
       setNotificationOpen(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "เกิดข้อผิดพลาด");
@@ -766,89 +738,33 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
       );
       setNotificationOpen(true);
     } finally {
+      submittingRef.current = false;
       setIsSubmitting(false);
     }
   };
 
-  const handleRetryUpload = (fileId: string) => {
-    // Reset status to pending for this file
-    setUploadFiles((prev) =>
-      prev.map((f) =>
-        f.id === fileId ? { ...f, status: "pending", progress: 0 } : f
-      )
-    );
-
-    // Trigger submit again - it will filter and pick up pending/failed files
-    // We can't easily trigger the full form submit from here without the event object
-    // But we can just trigger the upload logic if we extracted it.
-    // For simplicity, let's just ask the user to click "Save" again,
-    // OR we can try to re-run the submit logic if we had access to it.
-    // Better UX: The user clicks "Retry" on the file, we could just try to upload THAT file immediately.
-
-    const item = pageItems.find((p) => p.id === fileId);
+  const handleRetryUpload = async (fileId: string) => {
+    if (submittingRef.current || cachePendingRef.current || retryingFiles.current.has(fileId)) return;
+    const item = pageItems.find((page) => page.id === fileId);
     if (!item || item.type !== "file") return;
-
-    // Simple single file upload retry
-    const xhr = new XMLHttpRequest();
-    const fd = new FormData();
-    fd.append("files", item.content as File);
-
-    setUploadFiles((prev) =>
-      prev.map((f) =>
-        f.id === fileId ? { ...f, status: "uploading", progress: 0 } : f
-      )
-    );
-
-    xhr.upload.onprogress = (event) => {
-      if (event.lengthComputable) {
-        const progress = (event.loaded / event.total) * 100;
-        setUploadFiles((prev) =>
-          prev.map((f) =>
-            f.id === fileId ? { ...f, progress, status: "uploading" } : f
-          )
-        );
-      }
-    };
-
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        try {
-          const response = JSON.parse(xhr.responseText);
-          const url = extractFirstUploadUrl(response);
-          setUploadedUrls((prev) => ({ ...prev, [fileId]: url }));
-          setUploadFiles((prev) =>
-            prev.map((f) =>
-              f.id === fileId ? { ...f, progress: 100, status: "completed", error: undefined } : f
-            )
-          );
-        } catch (e) {
-          setUploadFiles((prev) =>
-            prev.map((f) => (f.id === fileId ? { ...f, status: "error", error: "รูปแบบข้อมูลตอบกลับไม่ถูกต้อง" } : f))
-          );
-        }
-      } else {
-        let errorMsg = "อัปโหลดไฟล์ไม่สำเร็จ";
-        try {
-          const response = JSON.parse(xhr.responseText);
-          if (response?.error) {
-            errorMsg = typeof response.error === "string" ? response.error : JSON.stringify(response.error);
-          }
-        } catch {}
-        setUploadFiles((prev) =>
-          prev.map((f) => (f.id === fileId ? { ...f, status: "error", error: errorMsg } : f))
-        );
-      }
-    };
-
-    xhr.onerror = () => {
-      setUploadFiles((prev) =>
-        prev.map((f) => (f.id === fileId ? { ...f, status: "error", error: "เกิดปัญหาเครือข่ายระหว่างอัปโหลด" } : f))
-      );
-    };
-
-    xhr.withCredentials = true;
-    xhr.open("POST", "/api/upload");
-    xhr.send(fd);
+    retryingFiles.current.add(fileId);
+    setRetryCount(retryingFiles.current.size);
+    setUploadFiles((previous) => previous.map((file) => file.id === fileId
+      ? { ...file, status: "uploading", progress: 0, error: undefined } : file));
+    try {
+      const url = await uploader().upload(fileId, item.content as File, (progress) => {
+        setUploadFiles((previous) => previous.map((file) => file.id === fileId ? { ...file, progress } : file));
+      });
+      setUploadedUrls((previous) => ({ ...previous, [fileId]: url }));
+      setUploadFiles((previous) => previous.map((file) => file.id === fileId
+        ? { ...file, status: "completed", progress: 100, error: undefined } : file));
+    } catch (error) {
+      setUploadFiles((previous) => previous.map((file) => file.id === fileId
+        ? { ...file, status: "error", error: error instanceof Error ? error.message : "อัปโหลดไฟล์ไม่สำเร็จ" } : file));
+    } finally {
+      retryingFiles.current.delete(fileId);
+      setRetryCount(retryingFiles.current.size);
+    }
   };
 
   const handleCloseNotification = () => {
@@ -889,7 +805,11 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
 
   return (
     <>
+      {cacheRefreshPending && <CacheRefreshNotice onRefreshed={() => { cachePendingRef.current = false; setCacheRefreshPending(false); handleGoToList(); }} />}
       <Box component="form" ref={formRef} onSubmit={(e) => handleSubmitWithDraft(e)}>
+        <Box component="fieldset" disabled={isSubmitting || cacheRefreshPending || retryCount > 0}
+          onClickCapture={(event) => { if (submittingRef.current || cachePendingRef.current || retryingFiles.current.size) event.stopPropagation(); }}
+          sx={{ border: 0, m: 0, p: 0, minWidth: 0 }}>
         <DashboardPageHeader
           eyebrow={mode === "admin" ? "CONTENT MANAGER" : "SUBMISSION"}
           title={pageTitle}
@@ -1737,6 +1657,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
             </DashboardSurface>
           </Grid>
         </Grid>
+        </Box>
       </Box>
 
       {/* Notification Modal */}
@@ -1747,7 +1668,9 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
         title={notificationTitle}
         message={notificationMessage}
         primaryAction={
-              notificationType === "success"
+              cacheRefreshPending
+                ? { label: "กลับไปอัปเดตแคช", onClick: handleCloseNotification }
+                : notificationType === "success"
                 ? {
                 label: "ไปที่รายการ",
                 onClick: handleGoToList,

@@ -95,3 +95,9 @@ config.local.ts
 # Browser verification artifacts (may contain fixture identifiers)
 .playwright-cli/
 output/playwright/
+
+# Generated environment and local credential artifacts
+.env.vercel
+.local/mcp/
+.local/mcp-production-backup/
+!db/migrations/0012_advertisement_management.sql

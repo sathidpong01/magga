@@ -2,9 +2,8 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { tags as tagsTable } from "@/db/schema";
 import { asc } from "drizzle-orm";
-import { auth } from "@/lib/auth";
-import { revalidatePath } from "next/cache";
-import { requireAdmin } from "@/lib/auth-helpers";
+import { authenticateRequest } from "@/lib/auth-helpers";
+import { invalidateMangaContent } from "@/lib/manga-invalidation";
 import { sanitizeInput } from "@/lib/sanitize";
 
 // GET all tags
@@ -17,14 +16,13 @@ export async function GET() {
 
 // POST a new tag
 export async function POST(request: Request) {
-  const session = await auth.api.getSession({ headers: request.headers });
-  const authError = requireAdmin(session);
-  if (authError) return authError;
+  const authorization = await authenticateRequest(request, { role: "admin" });
+  if (!authorization.ok) return authorization.response;
 
-  const { name } = await request.json();
-  const sanitizedName = sanitizeInput(name);
+  const { name } = await request.json().catch(() => ({}));
+  const sanitizedName = typeof name === "string" ? sanitizeInput(name).trim() : "";
 
-  if (!sanitizedName) {
+  if (!sanitizedName || sanitizedName.length > 100) {
     return NextResponse.json({ error: "Name is required" }, { status: 400 });
   }
 
@@ -32,9 +30,8 @@ export async function POST(request: Request) {
     const [newTag] = await db.insert(tagsTable)
       .values({ name: sanitizedName })
       .returning();
-    revalidatePath("/dashboard/admin/metadata");
-    revalidatePath("/"); // Refresh home page to show new tag
-    return NextResponse.json(newTag, { status: 201 });
+    const cacheRefreshed = invalidateMangaContent();
+    return NextResponse.json({ ...newTag, cache_refresh_pending: !cacheRefreshed }, { status: 201 });
   } catch {
     return NextResponse.json({ error: "Tag already exists" }, { status: 409 });
   }

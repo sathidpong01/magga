@@ -1,3 +1,4 @@
+import { requireAdminPage } from "@/lib/auth-helpers";
 import type { Metadata } from "next";
 import Link from 'next/link';
 import { headers } from 'next/headers';
@@ -38,6 +39,7 @@ export const metadata: Metadata = {
 };
 
 export default async function McpDraftsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  await requireAdminPage();
   const session = await auth.api.getSession({ headers: await headers(), query: { disableCookieCache: true } });
   if (!session?.user.id || !isAdminRole(session) || session.user.banned || ('isBanned' in session.user && session.user.isBanned)) redirect(`/auth/signin?callbackUrl=${base}`);
   const filter = draftFilters(await searchParams);

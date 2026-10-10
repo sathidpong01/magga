@@ -6,6 +6,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import { useAdTracking } from "./useAdTracking";
 import { advertisementNavigation } from "./adNavigation";
 import { maggaColors } from "@/lib/design-tokens";
+import { hasAdSessionFlag, setAdSessionFlag } from "@/lib/ad-session-state";
 
 interface AdModalProps {
   ad: {
@@ -25,16 +26,18 @@ export default function AdModal({ ad }: AdModalProps) {
 
   useEffect(() => {
     // Check if shown in this session
-    const shown = sessionStorage.getItem(`ad_modal_shown_${ad.id}`);
+    const shown = hasAdSessionFlag(`ad_modal_shown_${ad.id}`);
     if (!shown) {
       // Show after 1 second delay
-      const timer = setTimeout(() => setOpen(true), 1000);
+      const timer = setTimeout(() => {
+        setAdSessionFlag(`ad_modal_shown_${ad.id}`);
+        setOpen(true);
+      }, 1000);
       return () => clearTimeout(timer);
     }
   }, [ad.id]);
 
   const handleClose = () => {
-    sessionStorage.setItem(`ad_modal_shown_${ad.id}`, "true");
     setOpen(false);
   };
 

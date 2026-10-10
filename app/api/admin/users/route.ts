@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { profiles as usersTable, comments as commentsTable, mangaSubmissions as submissionsTable } from "@/db/schema";
+import { profiles as usersTable, comments as commentsTable, mangaSubmissions as submissionsTable, sessions } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { requireAdmin } from "@/lib/auth-helpers";
@@ -9,7 +9,7 @@ import { eq, desc, sql } from "drizzle-orm";
 // GET - List all users with counts
 export async function GET() {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
+    const session = await auth.api.getSession({ headers: await headers(), query: { disableCookieCache: true } });
     const authError = requireAdmin(session);
     if (authError) return authError;
 
@@ -21,8 +21,8 @@ export async function GET() {
       image: usersTable.image,
       role: usersTable.role,
       createdAt: usersTable.createdAt,
-      commentsCount: sql<number>`(SELECT count(*)::int FROM comment WHERE comment.user_id = ${usersTable.id})`,
-      submissionsCount: sql<number>`(SELECT count(*)::int FROM submission WHERE submission.user_id = ${usersTable.id})`,
+      commentsCount: sql<number>`(SELECT count(*)::int FROM ${commentsTable} WHERE ${commentsTable.userId} = ${usersTable.id})`,
+      submissionsCount: sql<number>`(SELECT count(*)::int FROM ${submissionsTable} WHERE ${submissionsTable.userId} = ${usersTable.id})`,
     })
       .from(usersTable)
       .orderBy(desc(usersTable.createdAt));
@@ -48,7 +48,7 @@ export async function GET() {
 // PUT - Update user role
 export async function PUT(request: NextRequest) {
   try {
-    const session = await auth.api.getSession({ headers: await headers() });
+    const session = await auth.api.getSession({ headers: await headers(), query: { disableCookieCache: true } });
     const authError = requireAdmin(session);
     if (authError) return authError;
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -56,7 +56,7 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { userId, role } = body;
 
-    if (!userId || !role) {
+    if (typeof userId !== "string" || !userId || typeof role !== "string" || !role) {
       return NextResponse.json(
         { error: "userId and role are required" },
         { status: 400 }
@@ -77,7 +77,8 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const [updatedUser] = await db.update(usersTable)
+    const updatedUser = await db.transaction(async (tx) => {
+    const [updated] = await tx.update(usersTable)
       .set({ role: normalizedRole, updatedAt: new Date() })
       .where(eq(usersTable.id, userId))
       .returning({
@@ -88,6 +89,10 @@ export async function PUT(request: NextRequest) {
         role: usersTable.role,
       });
 
+    if (updated) await tx.delete(sessions).where(eq(sessions.userId, userId));
+    return updated;
+    });
+    if (!updatedUser) return NextResponse.json({ error: "User not found" }, { status: 404 });
     return NextResponse.json(updatedUser);
   } catch (error) {
     console.error("Error updating user:", error);

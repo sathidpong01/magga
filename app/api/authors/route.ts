@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { authors as authorsTable } from "@/db/schema";
-import { asc, eq } from "drizzle-orm";
-import { auth } from "@/lib/auth";
-import { revalidatePath } from "next/cache";
-import { requireAuth } from "@/lib/auth-helpers";
+import { asc } from "drizzle-orm";
+import { authenticateRequest } from "@/lib/auth-helpers";
+import { invalidateMangaContent } from "@/lib/manga-invalidation";
 import { sanitizeInput } from "@/lib/sanitize";
 
 // GET all authors
@@ -17,14 +16,13 @@ export async function GET() {
 
 // POST a new author
 export async function POST(request: Request) {
-  const session = await auth.api.getSession({ headers: request.headers });
-  const authError = requireAuth(session); // Allow authenticated users to create authors
-  if (authError) return authError;
+  const authorization = await authenticateRequest(request);
+  if (!authorization.ok) return authorization.response;
 
-  const { name, profileUrl, socialLinks } = await request.json();
-  const sanitizedName = sanitizeInput(name);
+  const { name, profileUrl, socialLinks } = await request.json().catch(() => ({}));
+  const sanitizedName = typeof name === "string" ? sanitizeInput(name).trim() : "";
 
-  if (!sanitizedName || sanitizedName.length === 0) {
+  if (!sanitizedName || sanitizedName.length > 100) {
     return NextResponse.json({ error: "Name is required" }, { status: 400 });
   }
 
@@ -37,9 +35,8 @@ export async function POST(request: Request) {
         socialLinks: socialLinks || null,
       })
       .returning();
-    revalidatePath("/dashboard/admin/authors");
-    revalidatePath("/dashboard/submit");
-    return NextResponse.json(newAuthor, { status: 201 });
+    const cacheRefreshed = invalidateMangaContent();
+    return NextResponse.json({ ...newAuthor, cache_refresh_pending: !cacheRefreshed }, { status: 201 });
   } catch (error: any) {
     // Handle unique constraint violation (Postgres error code 23505)
     if (error.code === "23505") {

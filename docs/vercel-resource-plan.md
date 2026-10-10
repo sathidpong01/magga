@@ -1,5 +1,7 @@
 # แผนลดทรัพยากร Vercel Hobby ของ Magga
 
+ผล implementation วันที่ 10 ตุลาคม 2026 อยู่ใน [รายงานเวอร์ชัน 2.25.0](vercel-cpu-implementation-2026-10-10.md): comments/search และ correctness แก้แล้ว; taxonomy full-route ISR พักเนื่องจาก Next matcher bug กับ `%`; reader cache และ ad batching ยังรอข้อมูลตาม gate ตัวเลข baseline ด้านล่างยังเป็น snapshot เดิม
+
 วันที่ตรวจ: 9 ตุลาคม 2026 ใช้การอ่านโค้ดร่วมกับ Vercel Usage และ Production Observability
 ตัวเลขเป็น snapshot ณ เวลาตรวจ ไม่ใช่ผลประหยัดหลังแก้ และไม่ใช่วันรีเซ็ตโควตา
 
