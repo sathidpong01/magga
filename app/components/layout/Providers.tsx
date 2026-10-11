@@ -130,30 +130,29 @@ const darkTheme = createTheme({
     },
     MuiCssBaseline: {
       styleOverrides: {
-        body: {
-          scrollbarColor: `${maggaColors.ironSurface} ${maggaColors.midnightCanvas}`,
-          "&::-webkit-scrollbar, & *::-webkit-scrollbar": {
-            backgroundColor: maggaColors.midnightCanvas,
-            width: "8px",
+        "*": {
+          scrollbarWidth: "thin",
+          scrollbarColor: `${maggaColors.softDivider} ${maggaColors.background}`,
+          "@supports selector(::-webkit-scrollbar)": {
+            scrollbarWidth: "auto",
+            scrollbarColor: "auto",
           },
-          "&::-webkit-scrollbar-thumb, & *::-webkit-scrollbar-thumb": {
-            borderRadius: 8,
-            backgroundColor: maggaColors.ironSurface,
+          "&::-webkit-scrollbar": {
+            width: "6px",
+            height: "6px",
+            backgroundColor: maggaColors.background,
+          },
+          "&::-webkit-scrollbar-thumb": {
+            borderRadius: maggaRadii.pill,
+            backgroundColor: maggaColors.softDivider,
             minHeight: 24,
-            border: `2px solid ${maggaColors.midnightCanvas}`,
           },
-          "&::-webkit-scrollbar-thumb:focus, & *::-webkit-scrollbar-thumb:focus":
-            {
-              backgroundColor: "#525252",
-            },
-          "&::-webkit-scrollbar-thumb:active, & *::-webkit-scrollbar-thumb:active":
-            {
-              backgroundColor: "#525252",
-            },
-          "&::-webkit-scrollbar-thumb:hover, & *::-webkit-scrollbar-thumb:hover":
-            {
-              backgroundColor: "#525252",
-            },
+          "&::-webkit-scrollbar-thumb:hover, &::-webkit-scrollbar-thumb:active": {
+            backgroundColor: maggaColors.textMuted,
+          },
+          "&::-webkit-scrollbar-corner": {
+            backgroundColor: maggaColors.background,
+          },
         },
       },
     },

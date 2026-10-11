@@ -31,6 +31,7 @@ import ListAltIcon from "@mui/icons-material/ListAlt";
 import { useToast } from "@/app/contexts/ToastContext";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
+import { maggaColors, maggaRadii } from "@/lib/design-tokens";
 const AuthModal = dynamic(() => import("@/app/components/features/auth/AuthModal"), { ssr: false });
 
 export default function Header() {
@@ -61,6 +62,8 @@ export default function Header() {
 
   const isAdmin = isAdminRole(session);
   const banned = isUserBanned(session);
+  // Author and category filters also use the home route.
+  const isCatalogPage = pathname === "/" || pathname.startsWith("/tag/") || pathname.startsWith("/category/");
 
   return (
     <>
@@ -112,6 +115,7 @@ export default function Header() {
               textDecoration: "none",
               display: "flex",
               alignItems: "center",
+              marginRight: 8,
             }}
           >
             <Image
@@ -182,47 +186,49 @@ export default function Header() {
 
           <Box sx={{ flexGrow: 1 }} />
 
+          <Button
+            component={Link}
+            href={session ? "/dashboard/submit" : "/auth/signin?callbackUrl=%2Fdashboard%2Fsubmit"}
+            prefetch={false}
+            variant="contained"
+            startIcon={<CloudUploadIcon sx={{ fontSize: 18 }} />}
+            sx={{
+              display: { xs: isCatalogPage ? "inline-flex" : "none", lg: "inline-flex" },
+              bgcolor: maggaColors.archiveGold,
+              color: maggaColors.background,
+              fontWeight: 600,
+              fontSize: { xs: "0.8rem", sm: "0.85rem" },
+              borderRadius: `${maggaRadii.md}px`,
+              textTransform: "none",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+              minHeight: { xs: 44, lg: 36 },
+              mr: { xs: 0.5, md: 1.5 },
+              px: { xs: 1.25, sm: 2 },
+              py: 0.75,
+              "&:hover": { bgcolor: maggaColors.archiveGoldHover },
+              boxShadow:
+                pathname === "/dashboard/submit"
+                  ? "0 0 0 2px rgba(255,255,255,0.4)"
+                  : "none",
+              // Hide for admin but keep space
+              visibility: isAdmin ? "hidden" : "visible",
+              position: isAdmin ? "absolute" : "relative",
+            }}
+          >
+            ฝากลงมังงะ
+          </Button>
+
           {/* Desktop Navigation */}
           <Box
             sx={{
               display: { xs: "none", md: "flex" },
               alignItems: "center",
               gap: 1.5,
-              // Reserve minimum space for buttons to prevent CLS
-              minWidth: 180,
+              minWidth: isAdmin ? 180 : 88,
               justifyContent: "flex-end",
             }}
           >
-            {/* Submit Manga Button - Always render but hide for Admin */}
-            <Button
-              component={Link}
-              href={session ? "/dashboard/submit" : "/auth/signin?callbackUrl=%2Fdashboard%2Fsubmit"}
-              prefetch={false}
-              variant="contained"
-              startIcon={<CloudUploadIcon sx={{ fontSize: 18 }} />}
-              sx={{
-                bgcolor:
-                  pathname === "/dashboard/submit" ? "#d97706" : "#f59e0b",
-                color: "#000000",
-                fontWeight: 600,
-                fontSize: "0.85rem",
-                borderRadius: "8px",
-                textTransform: "none",
-                px: 2,
-                py: 0.75,
-                "&:hover": { bgcolor: "#d97706" },
-                boxShadow:
-                  pathname === "/dashboard/submit"
-                    ? "0 0 0 2px rgba(255,255,255,0.4)"
-                    : "none",
-                // Hide for admin but keep space
-                visibility: isAdmin ? "hidden" : "visible",
-                position: isAdmin ? "absolute" : "relative",
-              }}
-            >
-              ฝากลงมังงะ
-            </Button>
-
             {/* Admin Dashboard (Only for Admin) */}
             {isAdmin && (
               <Button
@@ -394,6 +400,7 @@ export default function Header() {
                     component={Link}
                     href="/dashboard/submit"
                     prefetch={false}
+                    sx={{ display: { xs: "none", lg: "flex" } }}
                   >
                     <ListItemIcon>
                       <CloudUploadIcon sx={{ color: "#fbbf24" }} />
@@ -483,13 +490,14 @@ export default function Header() {
                   component={Link}
                   href="/auth/signin?callbackUrl=/dashboard/submit"
                   prefetch={false}
+                  sx={{ display: { xs: "none", lg: "flex" } }}
                 >
                   <ListItemIcon>
                     <CloudUploadIcon sx={{ color: "#fbbf24" }} />
                   </ListItemIcon>
                   ฝากลงมังงะ
                 </MenuItem>
-                <Divider sx={{ borderColor: "rgba(255,255,255,0.1)" }} />
+                <Divider sx={{ display: { xs: "none", lg: "block" }, borderColor: "rgba(255,255,255,0.1)" }} />
                 <MenuItem
                   onClick={() => { handleMenuClose(); setAuthModalOpen(true); }}
                 >
