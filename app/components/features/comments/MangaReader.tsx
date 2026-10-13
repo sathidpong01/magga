@@ -4,7 +4,7 @@ import { useRef, useEffect, useState, forwardRef, useMemo } from "react";
 import Image from "next/image";
 import { Box } from "@mui/material";
 import ReadingProgress from "@/app/components/ui/ReadingProgress";
-import { maggaColors, maggaRadii } from "@/lib/design-tokens";
+import { maggaColors, maggaLayout } from "@/lib/design-tokens";
 
 // Page data can be string (legacy) or object with dimensions (new)
 interface PageData {
@@ -79,7 +79,7 @@ export default function MangaReader({
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          gap: 0,
+          gap: maggaLayout.reader.gap,
         }}
       >
         {normalizedPages.map((pageData, index) => (
@@ -122,7 +122,7 @@ const ReaderPage = forwardRef<HTMLDivElement, ReaderPageProps>(
         sx={{
           position: "relative",
           width: "100%",
-          maxWidth: "1000px",
+          maxWidth: maggaLayout.reader.maxWidth,
           lineHeight: 0,
         }}
       >
@@ -134,11 +134,9 @@ const ReaderPage = forwardRef<HTMLDivElement, ReaderPageProps>(
               position: "absolute",
               inset: 0,
               bgcolor: maggaColors.surface,
-              borderRadius: `${maggaRadii.sm}px`,
               overflow: "hidden",
               opacity: imageLoading ? 1 : 0,
               transition: "opacity 0.3s ease-in-out",
-              minHeight: 400,
               pointerEvents: "none",
               zIndex: 0,
               "&::after": {
@@ -161,7 +159,7 @@ const ReaderPage = forwardRef<HTMLDivElement, ReaderPageProps>(
             // Use dimensions when available (prevents CLS), fallback to standard manga ratio for legacy data
             width={pageData.width || 900}
             height={pageData.height || 1273}
-            sizes="(max-width: 1000px) 100vw, 1000px"
+            sizes="(max-width: 1199px) 100vw, 1000px"
             unoptimized
             style={{
               position: "relative",
@@ -169,7 +167,6 @@ const ReaderPage = forwardRef<HTMLDivElement, ReaderPageProps>(
               width: "100%",
               height: "auto",
               display: "block",
-              borderRadius: `${maggaRadii.sm}px`,
             }}
             preload={imageIndex === 0}
             loading={imageIndex === 0 ? undefined : "lazy"}

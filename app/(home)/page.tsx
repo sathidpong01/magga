@@ -6,16 +6,17 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import { unstable_cache } from "next/cache";
-import MangaGridSkeleton from "./components/features/manga/MangaGridSkeleton";
-import StreamingMangaGrid from "./components/features/manga/StreamingMangaGrid";
-import AuthorHeaderCard from "./components/features/author/AuthorHeaderCard";
+import MangaGridSkeleton from "@/app/components/features/manga/MangaGridSkeleton";
+import StreamingMangaGrid from "@/app/components/features/manga/StreamingMangaGrid";
+import AuthorHeaderCard from "@/app/components/features/author/AuthorHeaderCard";
+import { HomeSkeleton } from "@/app/components/ui/PageSkeletons";
 import { getAuthorProfile } from "@/lib/manga-list";
 import { maggaColors } from "@/lib/design-tokens";
 import { getPublicAds } from "@/lib/advertisements-server";
 import { EMPTY_CATEGORY_ID, normalizeHomeFilters } from "@/lib/manga-query";
 
 const SearchFilters = dynamic(
-  () => import("./components/features/search/SearchFilters"),
+  () => import("@/app/components/features/search/SearchFilters"),
   { ssr: true }
 );
 
@@ -71,6 +72,10 @@ const getGridAds = async () => (await getPublicAds()).filter((ad) => ad.placemen
 
 export default async function Home({ searchParams }: Props) {
   const params = normalizeHomeFilters(await searchParams);
+  return <Suspense fallback={<HomeSkeleton author={params.author} />}><HomeContent params={params} /></Suspense>;
+}
+
+async function HomeContent({ params }: { params: ReturnType<typeof normalizeHomeFilters> }) {
   const { search, category: categoryName, tags: tagNames, sort, author } = params;
 
   // Fetch Categories, Tags, Grid Ads, and Author Profile in parallel with resilient fallbacks

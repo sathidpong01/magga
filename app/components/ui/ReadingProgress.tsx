@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Box, Typography, LinearProgress, Button } from "@mui/material";
+import { Box, Typography, LinearProgress, Button, Portal } from "@mui/material";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 
 const STORAGE_KEY = "magga_reading_progress";
@@ -108,7 +108,7 @@ export default function ReadingProgress({
   }, [savedPage, totalPages, pageRefs]);
 
   return (
-    <>
+    <Portal>
       {/* Resume Reading Banner */}
       {showResume && (
         <Box
@@ -156,6 +156,7 @@ export default function ReadingProgress({
           <Button
             size="small"
             onClick={() => setShowResume(false)}
+            aria-label="ปิดการแจ้งเตือนอ่านต่อ"
             sx={{ color: "#737373", minWidth: "auto", px: 1 }}
           >
             ✕
@@ -194,6 +195,7 @@ export default function ReadingProgress({
           </Typography>
           <Box sx={{ flex: 1, mx: 2, maxWidth: 200 }}>
             <LinearProgress
+              aria-label="ความคืบหน้าการอ่าน"
               variant="determinate"
               value={progress}
               sx={{
@@ -214,6 +216,6 @@ export default function ReadingProgress({
           </Typography>
         </Box>
       </Box>
-    </>
+    </Portal>
   );
 }

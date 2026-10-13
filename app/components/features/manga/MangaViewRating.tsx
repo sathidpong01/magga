@@ -35,6 +35,7 @@ export default function MangaViewRating({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [fingerprint, setFingerprint] = useState<string | null>(null);
   const viewTracked = useRef(false);
+  const ratingRef = useRef<HTMLDivElement | null>(null);
 
   // Track a page view only from the designated instance and only once the tab is visible.
   useEffect(() => {
@@ -72,8 +73,8 @@ export default function MangaViewRating({
   useEffect(() => {
     if (hideInteractive) return;
     let cancelled = false;
-    import("@fingerprintjs/fingerprintjs").then((FingerprintJS) => {
-      FingerprintJS.load().then((fp) => fp.get()).then((result) => {
+    const loadRating = () => { void import("@fingerprintjs/fingerprintjs").then((FingerprintJS) => {
+      return FingerprintJS.load().then((fp) => fp.get()).then((result) => {
         if (cancelled) return;
         const visitorId = result.visitorId;
         setFingerprint(visitorId);
@@ -87,8 +88,13 @@ export default function MangaViewRating({
           })
           .catch(() => {});
       });
-    }).catch(() => {});
-    return () => { cancelled = true; };
+    }).catch(() => {}); };
+    // Avoid loading rating identity while the control is below the fold.
+    const observer = new IntersectionObserver((entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) { observer.disconnect(); loadRating(); }
+    });
+    if (ratingRef.current) observer.observe(ratingRef.current);
+    return () => { cancelled = true; observer.disconnect(); };
   }, [mangaId, hideInteractive]);
 
   const handleRate = async (rating: number) => {
@@ -125,7 +131,7 @@ export default function MangaViewRating({
   }
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+    <Box ref={ratingRef} sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
       {/* Average rating display (read-only, visual) */}
       {!hideAverage && <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
         {[1, 2, 3, 4, 5].map((pos) => (
@@ -142,9 +148,10 @@ export default function MangaViewRating({
       {/* Interactive user rating row */}
       {!hideInteractive && <Box sx={{ display: "flex", alignItems: "center", gap: 0.25 }}>
         {[1, 2, 3, 4, 5].map((star) => (
-          <Tooltip key={star} title={`ให้ ${star} ดาว`} placement="top">
+          <Tooltip key={star} title={`ให้ ${star} ดาว`} placement="top" describeChild>
             <span>
               <IconButton
+                aria-label={`ให้ ${star} ดาว`}
                 size="small"
                 onClick={() => handleRate(star)}
                 onMouseEnter={() => setHoverRating(star)}
@@ -157,7 +164,7 @@ export default function MangaViewRating({
             </span>
           </Tooltip>
         ))}
-        {isSubmitting && <CircularProgress size={14} sx={{ ml: 0.5, color: maggaColors.archiveGold }} />}
+        {isSubmitting && <CircularProgress aria-label="กำลังบันทึกคะแนน" size={14} sx={{ ml: 0.5, color: maggaColors.archiveGold }} />}
         {userRating && !isSubmitting && (
           <Typography variant="caption" sx={{ color: "text.secondary", ml: 0.5 }}>
             คุณให้ {userRating} ดาว

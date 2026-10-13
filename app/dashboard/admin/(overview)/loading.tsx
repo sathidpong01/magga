@@ -1,70 +1,19 @@
+import { DashboardPageHeader, DashboardStat } from "@/app/components/dashboard/system";
 import { Box, Grid, Skeleton, Stack } from "@mui/material";
 import { DashboardSurface, dashboardInsetSurfaceSx } from "@/app/components/dashboard/system";
 
 export default function AdminDashboardLoading() {
   return (
-    <Box>
-      {/* Header Skeleton */}
-      <Box sx={{ mb: 2 }}>
-        <Skeleton
-          variant="text"
-          width={130}
-          height={16}
-          sx={{ bgcolor: "rgba(255,255,255,0.06)", mb: 0.75, borderRadius: "4px" }}
-        />
-        <Skeleton
-          variant="text"
-          width={260}
-          height={38}
-          sx={{ bgcolor: "rgba(255,255,255,0.08)", mb: 0.75, borderRadius: "6px" }}
-        />
-        <Skeleton
-          variant="text"
-          width="min(100%, 540px)"
-          height={20}
-          sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: "4px" }}
-        />
-      </Box>
-
-      {/* KPI Stats Strip Skeleton: Single row on desktop (7 cols) */}
-      <Grid container spacing={1.5} columns={{ xs: 12, sm: 12, md: 12, lg: 7 }} sx={{ mb: 2.5 }}>
-        {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-          <Grid key={i} size={{ xs: 6, sm: 3, md: 3, lg: 1 }}>
-            <DashboardSurface
-              sx={{
-                p: 1.5,
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                minHeight: 78,
-              }}
-            >
-              <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", mb: 0.75 }}>
-                <Skeleton
-                  variant="text"
-                  width={55}
-                  height={16}
-                  sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: "4px" }}
-                />
-                <Skeleton
-                  variant="rectangular"
-                  width={30}
-                  height={30}
-                  sx={{ bgcolor: "rgba(255,255,255,0.07)", borderRadius: "8px" }}
-                />
-              </Stack>
-              <Skeleton
-                variant="text"
-                width={45}
-                height={26}
-                sx={{ bgcolor: "rgba(255,255,255,0.08)", borderRadius: "4px" }}
-              />
-            </DashboardSurface>
-          </Grid>
-        ))}
+    <Box data-skeleton="admin-overview">
+      <DashboardPageHeader
+        eyebrow="ADMIN WORKSPACE"
+        title="ภาพรวมการดูแลระบบ"
+        description="สรุปภาพรวมของมังงะ ผู้ใช้ คอมเมนต์ และรายการฝากลง เพื่อให้ตัดสินใจและจัดการงานประจำวันได้จากหน้าเดียว"
+        sx={{ mb: 2 }}
+      />
+      <Grid data-skeleton-kpis container spacing={1.5} columns={{xs:12,sm:12,md:12,lg:7}} sx={{mb:2.5}}>
+        {["มังงะทั้งหมด","ฉบับร่าง","รายการรอตรวจ","ผู้ใช้ทั้งหมด","คอมเมนต์","หมวดหมู่","แท็ก"].map((label,i)=><Grid key={label} size={{xs:i===6?12:6,sm:i>=4?4:3,md:i>=4?4:3,lg:1}}><DashboardStat label={label} value={<Skeleton width={45} height="1.1em" />} icon={<Skeleton variant="rectangular" width={18} height={18} />} compact /></Grid>)}
       </Grid>
-
       {/* Popular Manga: Side-by-side Top 3 (Left 7) & Top 4-10 (Right 5) */}
       <Grid container spacing={2} sx={{ alignItems: "stretch" }}>
         {/* Left: Top 3 Manga Skeleton */}
@@ -103,7 +52,7 @@ export default function AdminDashboardLoading() {
                       width="100%"
                       sx={{
                         aspectRatio: "3 / 4",
-                        maxHeight: { xs: 260, md: 220, xl: 250 },
+                        height: "auto",
                         borderRadius: "8px",
                         bgcolor: "rgba(255,255,255,0.06)",
                         mb: 1,

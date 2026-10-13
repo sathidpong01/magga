@@ -361,7 +361,7 @@ export function DashboardStat({
   compact = false,
 }: {
   label: string;
-  value: string | number;
+  value: React.ReactNode;
   icon: React.ReactNode;
   href?: string;
   compact?: boolean;

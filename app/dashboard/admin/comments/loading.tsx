@@ -74,7 +74,7 @@ export default function CommentsLoading() {
                 },
               }}
             >
-              {["", "ผู้ใช้", "ข้อความ", "มังงะ", "คะแนน", "วันที่", "จัดการ"].map((h) => (
+              {["", "ผู้เขียน", "ความคิดเห็น", "มังงะ", "สถานะ", "จัดการ"].map((h) => (
                 <TableCell key={h}>
                   <Skeleton variant="text" width={h === "" ? 20 : 60} height={20} sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: "4px" }} />
                 </TableCell>
@@ -109,10 +109,7 @@ export default function CommentsLoading() {
                   <Skeleton variant="text" width={120} height={20} sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: "4px" }} />
                 </TableCell>
                 <TableCell>
-                  <Skeleton variant="text" width={40} height={20} sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: "4px" }} />
-                </TableCell>
-                <TableCell>
-                  <Skeleton variant="text" width={80} height={20} sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: "4px" }} />
+                  <Skeleton variant="rectangular" width={80} height={24} sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: "6px" }} />
                 </TableCell>
                 <TableCell>
                   <Skeleton variant="rectangular" width={32} height={32} sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: "6px" }} />

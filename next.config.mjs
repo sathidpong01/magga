@@ -5,6 +5,9 @@ const r2PublicUrl = process.env.R2_PUBLIC_URL || defaultR2PublicUrl;
 const r2PublicHostname = new URL(r2PublicUrl).hostname;
 
 const nextConfig = {
+  // Keep dynamic reader descriptions in <head> for browsers and crawlers alike.
+  // Content Suspense boundaries continue to stream; metadata resolves first.
+  htmlLimitedBots: /.*/,
   images: {
     // Let Vercel Image CDN optimize cover images (auto AVIF, resize, edge cache)
     // Manga reader pages use per-image unoptimized={true} to stay within Hobby plan limits

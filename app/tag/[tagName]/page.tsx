@@ -5,7 +5,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import MangaCard from "@/app/components/features/manga/MangaCard";
 import { getMangasByTagName } from "@/lib/manga-list";
 import { decodeTaxonomyPageParam } from "@/lib/taxonomy-route-param";
-import { maggaColors } from "@/lib/design-tokens";
+import { maggaColors, maggaLayout } from "@/lib/design-tokens";
 import type { Metadata } from "next";
 
 type TagPageProps = {
@@ -182,9 +182,9 @@ export default async function TagPage({ params }: TagPageProps) {
       </Box>
 
       {/* Manga Grid */}
-      <Grid container spacing={{ xs: 1.5, sm: 2, md: 2.5 }}>
+      <Grid container spacing={maggaLayout.taxonomyGrid.spacing}>
         {tag.mangas.map((manga) => (
-          <Grid key={manga.id} size={{ xs: 6, sm: 4, md: 3, lg: 2.4 }}>
+          <Grid key={manga.id} size={maggaLayout.taxonomyGrid.columns}>
             <MangaCard manga={manga} />
           </Grid>
         ))}

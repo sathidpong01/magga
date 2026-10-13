@@ -68,7 +68,7 @@ export default function UsersLoading() {
                 "ผู้ใช้",
                 "อีเมล",
                 "Role",
-                "สถานะ",
+                "สถิติ",
                 "วันที่สมัคร",
                 "จัดการ",
               ].map((header) => (
@@ -129,9 +129,9 @@ export default function UsersLoading() {
                 </TableCell>
                 <TableCell>
                   <Skeleton
-                    variant="rectangular"
+                    variant="text"
                     width={72}
-                    height={24}
+                    height={20}
                     sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: "6px" }}
                   />
                 </TableCell>

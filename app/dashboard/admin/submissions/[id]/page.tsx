@@ -1,5 +1,7 @@
 "use client";
 
+import SubmissionDetailLoading from "./loading";
+
 import { useState, useEffect, useRef, use } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -274,20 +276,7 @@ export default function SubmissionDetailPage({
     }
   };
 
-  if (loading)
-    return (
-      <Box
-        sx={{
-          p: 4,
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: 400,
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    );
+  if (loading) return <SubmissionDetailLoading />;
 
   if (error || !submission)
     return (
@@ -328,12 +317,13 @@ export default function SubmissionDetailPage({
           กลับหน้ารายการ
         </Button>
 
-        <Box sx={{ display: "flex", gap: 3, alignItems: "flex-start" }}>
+        <Box sx={{ display: "flex", gap: 3, alignItems: "flex-start", flexWrap: { xs: "wrap", md: "nowrap" } }}>
           {/* Cover Thumbnail */}
           <Box
             sx={{
+              position: "relative",
               width: 120,
-              height: 170,
+              height: 160,
               borderRadius: dashboardRadii.surface,
               overflow: "hidden",
               flexShrink: 0,
@@ -350,7 +340,7 @@ export default function SubmissionDetailPage({
           </Box>
 
           {/* Title & Meta */}
-          <Box sx={{ flex: 1 }}>
+          <Box sx={{ flex: 1, minWidth: 0, flexBasis: { xs: "100%", sm: 0 }, overflowWrap: "anywhere" }}>
             <Typography 
               variant="h4" 
               sx={{ 

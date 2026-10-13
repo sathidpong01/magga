@@ -153,6 +153,7 @@ const MangaCard = ({ manga, priority = false }: MangaCardProps) => {
             component="h2"
             sx={{
               fontWeight: 500,
+              minHeight: "1.2rem",
               color: maggaColors.textPrimary,
               overflow: "hidden",
               textOverflow: "ellipsis",
@@ -219,6 +220,7 @@ const MangaCard = ({ manga, priority = false }: MangaCardProps) => {
             display: "flex",
             alignItems: "center",
             gap: 0.75,
+            minHeight: "1.2rem",
             fontSize: "0.75rem",
             color: maggaColors.textSecondary,
             mt: 0.15,

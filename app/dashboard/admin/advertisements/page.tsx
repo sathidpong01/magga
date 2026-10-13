@@ -1,5 +1,7 @@
 "use client";
 
+import AdvertisementsLoading from "./loading";
+
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
   Box,
@@ -820,6 +822,8 @@ export default function AdvertisementsPage() {
       setBusyId(null);
     }
   };
+
+  if (loading) return <AdvertisementsLoading />;
 
   return (
     <Box>

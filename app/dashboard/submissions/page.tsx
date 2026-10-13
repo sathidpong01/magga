@@ -1,5 +1,7 @@
 "use client";
 
+import SubmissionsLoading from "./loading";
+
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, isUserBanned } from "@/lib/auth-client";
@@ -120,13 +122,7 @@ export default function MySubmissionsPage() {
   const canDelete = (status: string) =>
     status === "PENDING" || status === "REJECTED";
 
-  if (authLoading || (!authLoading && session && !banned && loading)) {
-    return (
-      <Box sx={{ py: 8, display: "flex", justifyContent: "center" }}>
-        <CircularProgress sx={{ color: dashboardTokens.accent }} />
-      </Box>
-    );
-  }
+  if (authLoading || (!authLoading && session && !banned && loading)) return <SubmissionsLoading />;
 
   if (banned) {
     return (

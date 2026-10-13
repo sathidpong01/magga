@@ -28,7 +28,17 @@ export default function LayoutWrapper({
       <Container maxWidth="lg">
         <AdContainer placement="header" />
       </Container>
-      <Container component="main" sx={{ flexGrow: 1, py: 3 }}>
+      <Container
+        component="main"
+        sx={{
+          flexGrow: 1,
+          py: 3,
+          ...(isMangaPage && {
+            px: { xs: 0, lg: 3 },
+            maxWidth: { xs: "none", lg: "1200px" },
+          }),
+        }}
+      >
         {children}
       </Container>
       {/* โฆษณาเหนือ Footer */}

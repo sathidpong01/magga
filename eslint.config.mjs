@@ -6,6 +6,7 @@ const eslintConfig = [
       "**/node_modules/",
       ".next/",
       "out/",
+      "output/",
       "coverage/",
       "scripts/",
       "check_credits.ts",

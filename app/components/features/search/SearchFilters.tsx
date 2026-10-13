@@ -311,7 +311,7 @@ export default function SearchFilters({ categories, tags }: Props) {
           <ButtonBase
             aria-controls={filterPanelId}
             aria-expanded={expanded}
-            aria-label={expanded ? "ซ่อนตัวกรอง" : "เปิดตัวกรอง & แท็ก"}
+            aria-label={expanded ? "ตัวกรอง & แท็ก: ซ่อน" : "ตัวกรอง & แท็ก: เปิด"}
             onClick={handleExpandClick}
             sx={{
               minHeight: 44,

@@ -182,6 +182,10 @@ Fields use light text and gold focus borders. Validation, pending states, visibl
 
 Use the existing spacing scale and responsive layout rather than a new page grid. Reserve dimensions for dynamic content; skeletons should match rendered content. Fixed widgets such as Cookie Consent use MUI Portal. Verify that text enlargement does not hide essential actions. Keep manga art centered and responsive in the vertical reader.
 
+Reader pages fill the viewport below the `lg` breakpoint (1200px), with square corners. Leave 8px between pages below `sm` (600px), and 12px from `sm` on tablets and desktop; reader loading placeholders use the same spacing. From `lg`, keep pages centered at a maximum width of 1000px. Metadata and end-of-work comments retain container padding; page numbers remain in the floating reading-progress bar only.
+
+Scope route loading placeholders to the content they represent. Homepage and admin overview placeholders belong in their route groups so that policy pages and dashboard lists do not inherit unrelated layouts. Reuse grid spacing and reader dimensions from `maggaLayout`; reader placeholders with known pages use their actual aspect ratios. Dashboard forms, mobile advertisement cards, account accordions, and MCP draft workspaces should retain the same responsive structure while loading.
+
 ## Do's and Don'ts
 
 ### Do

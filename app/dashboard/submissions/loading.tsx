@@ -1,44 +1,7 @@
-import { Skeleton, Box, Paper, Grid } from "@mui/material";
-import { dashboardSurfaceSx, dashboardRadii } from "@/app/components/dashboard/system";
-
-export default function SubmissionsLoading() {
-  return (
-    <Box>
-      {/* Header */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-        <Skeleton variant="text" width={200} height={38} sx={{ bgcolor: "rgba(255,255,255,0.08)", borderRadius: "6px" }} />
-        <Skeleton variant="rectangular" width={140} height={38} sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: dashboardRadii.button }} />
-      </Box>
-
-      {/* Submissions Grid */}
-      <Grid container spacing={2}>
-        {[1, 2, 3, 4].map((i) => (
-          <Grid key={i} size={12}>
-            <Paper sx={{ p: 2.5, ...dashboardSurfaceSx, display: "flex", gap: 2.5 }}>
-              {/* Cover 3:4 */}
-              <Skeleton 
-                variant="rectangular" 
-                width={75} 
-                height={100} 
-                sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: "8px", flexShrink: 0 }} 
-              />
-              
-              {/* Content */}
-              <Box sx={{ flex: 1 }}>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 1.5 }}>
-                  <Skeleton variant="text" width={220} height={28} sx={{ bgcolor: "rgba(255,255,255,0.08)", borderRadius: "4px" }} />
-                  <Box sx={{ display: "flex", gap: 1 }}>
-                    <Skeleton variant="rectangular" width={70} height={24} sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: "6px" }} />
-                    <Skeleton variant="rectangular" width={28} height={28} sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: "6px" }} />
-                    <Skeleton variant="rectangular" width={28} height={28} sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: "6px" }} />
-                  </Box>
-                </Box>
-                <Skeleton variant="text" width={160} height={20} sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: "4px" }} />
-              </Box>
-            </Paper>
-          </Grid>
-        ))}
-      </Grid>
-    </Box>
-  );
+import { Box, Grid, Skeleton, Stack } from "@mui/material";
+import { DashboardPageHeader, DashboardSurface } from "@/app/components/dashboard/system";
+import { SkeletonLine } from "@/app/components/ui/PageSkeletons";
+export default function Loading() {
+return <Box data-skeleton="my-submissions"><DashboardPageHeader eyebrow="MY SUBMISSIONS" title="รายการฝากลงของฉัน" description="ติดตามสถานะเรื่องที่ส่งเข้ามา แก้ไขรายการที่ยังไม่ผ่าน และเปิดดูเรื่องที่เผยแพร่แล้วได้จากที่เดียว"><SkeletonLine width={166} height={40} /></DashboardPageHeader>
+<Grid container spacing={2.5}>{[1,2,3,4].map(i=><Grid key={i} size={{xs:12,md:6}}><DashboardSurface sx={{p:2.5}}><Box sx={{display:"flex",flexDirection:{xs:"column",sm:"row"},gap:2.5}}><Box sx={{width:{xs:"100%",sm:105},height:{xs:200,sm:140},flexShrink:0,borderRadius:"10px",overflow:"hidden"}}><Skeleton variant="rectangular" width="100%" height="100%" /></Box><Stack spacing={1.5} sx={{flex:1,minWidth:0}}><SkeletonLine width="90%" height={24} /><SkeletonLine width="70%" height={20} /><SkeletonLine width={180} height={28} /><SkeletonLine width="80%" height={20} /></Stack></Box></DashboardSurface></Grid>)}</Grid></Box>;
 }

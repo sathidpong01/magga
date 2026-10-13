@@ -11,7 +11,7 @@ import {
 import { asc, desc, eq, inArray } from "drizzle-orm";
 import { Box, Button, Chip, Stack, Typography } from "@mui/material";
 import Link from "next/link";
-import MangaDataTable from "./MangaDataTable";
+import MangaDataTable from "../MangaDataTable";
 import {
   DashboardSurface,
   dashboardTokens,

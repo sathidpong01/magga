@@ -7,8 +7,8 @@ mock.module("@/db", () => ({ db: { select: read, query: { manga: { findFirst: re
 const navigation = await import("next/navigation");
 mock.module("next/navigation", () => ({ ...navigation, redirect: (url: string) => { throw new Error(`REDIRECT:${url}`); } }));
 const Users = (await import("@/app/dashboard/admin/users/page")).default;
-const Mangas = (await import("@/app/dashboard/admin/manga/page")).default;
-const Submissions = (await import("@/app/dashboard/admin/submissions/page")).default;
+const Mangas = (await import("@/app/dashboard/admin/manga/(list)/page")).default;
+const Submissions = (await import("@/app/dashboard/admin/submissions/(list)/page")).default;
 const Edit = (await import("@/app/dashboard/admin/manga/[id]/edit/page")).default;
 beforeEach(() => { session.mockReset(); read.mockClear(); });
 it.each([null, { user: { id: "member", role: "user" } }, { user: { id: "staff", role: "admin", banned: false, isBanned: true } }])("guards nested pages before private data reads: %j", async actor => {

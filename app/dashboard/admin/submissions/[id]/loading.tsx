@@ -22,7 +22,7 @@ export default function SubmissionDetailLoading() {
           />
           
           {/* Title & Meta */}
-          <Box sx={{ flex: 1, minWidth: 240 }}>
+          <Box sx={{ flex: 1, minWidth: 0, maxWidth: "100%", flexBasis: { xs: "100%", sm: 0 } }}>
             <Skeleton variant="text" width="min(100%, 340px)" height={44} sx={{ bgcolor: "rgba(255,255,255,0.08)", mb: 1, borderRadius: "6px" }} />
             <Box sx={{ display: "flex", gap: 2, mb: 2, alignItems: "center" }}>
               <Skeleton variant="rectangular" width={80} height={26} sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: "6px" }} />
@@ -66,6 +66,7 @@ export default function SubmissionDetailLoading() {
                     bgcolor: "rgba(255,255,255,0.06)", 
                     borderRadius: "8px",
                     aspectRatio: "3 / 4",
+                    height: "auto",
                   }} 
                 />
               ))}
@@ -96,6 +97,7 @@ export default function SubmissionDetailLoading() {
                 bgcolor: "rgba(255,255,255,0.06)", 
                 borderRadius: "10px",
                 aspectRatio: "3 / 4",
+                height: "auto",
               }} 
             />
           </Paper>

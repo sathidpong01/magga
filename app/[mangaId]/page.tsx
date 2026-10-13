@@ -21,7 +21,6 @@ import {
   Container,
   Grid,
   Paper,
-  Avatar,
   Stack,
 } from "@mui/material";
 import Image from "next/image";
@@ -38,6 +37,7 @@ import ScrollToTop from "@/app/components/ui/ScrollToTop";
 import ShareButton from "@/app/components/ui/ShareButton";
 import { getSiteUrl } from "@/lib/site-url";
 import { normalizeMangaPages } from "@/lib/manga-pages";
+import SocialLinkIcon from "@/app/components/ui/SocialLinkIcon";
 
 type MangaPageProps = {
   params: Promise<{
@@ -313,10 +313,10 @@ export default async function MangaPage({ params }: MangaPageProps) {
         >
           <Image
             src={manga.coverImage}
-            alt={`Background of ${manga.title}`}
-            role="presentation"
+            alt=""
             fill
-            sizes="100vw"
+            sizes="256px"
+            loading="lazy"
             style={{ objectFit: "cover" }}
           />
           <Box
@@ -361,7 +361,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
                   src={manga.coverImage}
                   alt={`Cover of ${manga.title}`}
                   fill
-                  sizes="(max-width: 600px) 100vw, 33vw"
+                  sizes="(max-width: 899px) 280px, (max-width: 1199px) 33vw, 256px"
                   style={{ objectFit: "cover" }}
                   priority
                   placeholder="blur"
@@ -389,7 +389,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
                 <Box sx={{ mb: 2 }}>
                   <Typography
                     variant="caption"
-                    sx={{ color: maggaColors.textMuted, fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase", mb: 0.75, display: "block" }}
+                    sx={{ color: maggaColors.textSecondary, fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase", mb: 0.75, display: "block" }}
                   >
                     หมวดหมู่ / แท็ก
                   </Typography>
@@ -454,7 +454,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
                 {authorCredits.length > 0 ? authorCredits.map((person) => (
                   <Box key={person.id} sx={{ mb: 1.5 }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.75, flexWrap: "wrap" }}>
-                      <Typography variant="body2" sx={{ color: maggaColors.textMuted, fontSize: "0.95rem" }}>
+                      <Typography variant="body2" sx={{ color: maggaColors.textSecondary, fontSize: "0.95rem" }}>
                         {person.role}:
                       </Typography>
                       <Link href={`/?author=${encodeURIComponent(person.name)}`} prefetch={false} style={{ textDecoration: "none" }}>
@@ -467,7 +467,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
                       {parseSocialLinks(person.socialLinks).map((link) => (
                         <Chip
                           key={link.url}
-                          avatar={link.icon ? <Avatar src={link.icon} alt="" sx={{ width: 28, height: 28 }} /> : undefined}
+                          icon={<SocialLinkIcon url={link.url} />}
                           label={link.label || person.name}
                           component="a"
                           href={link.url}
@@ -495,7 +495,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
                   }}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                     <VisibilityIcon sx={{ fontSize: 20 }} />
-                    <Typography variant="subtitle1" sx={{
+                    <Typography component="span" variant="subtitle1" sx={{
                       fontWeight: 500
                     }}>
                       {Number(manga.viewCount).toLocaleString()} Views
@@ -535,7 +535,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
                   <Typography
                     variant="caption"
                     sx={{
-                      color: maggaColors.textMuted,
+                      color: maggaColors.textSecondary,
                       fontWeight: 600,
                       letterSpacing: 0.5,
                       textTransform: "uppercase",
@@ -562,12 +562,14 @@ export default async function MangaPage({ params }: MangaPageProps) {
         </Container>
       </Box>
 
-      <Container maxWidth="lg" sx={{ mt: 6 }}>
+      <Container maxWidth="lg" sx={{ mt: 6, px: { xs: 0, lg: 3 } }}>
         <SuspendedMangaReader
           mangaId={manga.id}
           mangaTitle={manga.title}
           pages={pages}
         />
+      </Container>
+      <Container maxWidth="lg">
         <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mt: 4 }}>
           <Box sx={{ width: "100%", maxWidth: "1000px" }}>
             <AdContainer placement="manga-end" />

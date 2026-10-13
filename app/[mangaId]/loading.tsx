@@ -1,25 +1,13 @@
 import { Container, Box } from "@mui/material";
 import { MangaReaderSkeleton } from "./loading-skeletons";
+import { ReaderHeroSkeleton } from "@/app/components/ui/PageSkeletons";
+import { maggaColors } from "@/lib/design-tokens";
 
 export default function MangaLoading() {
   return (
-    <Container maxWidth="lg">
-      <MangaReaderSkeleton />
-      
-      {/* Pages Skeleton */}
-      <Box sx={{ mt: 4, display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
-        {[1, 2, 3].map((i) => (
-          <Box 
-            key={i}
-            sx={{ 
-              width: "100%",
-              height: 400,
-              bgcolor: "rgba(255, 255, 255, 0.02)",
-              borderRadius: 1
-            }}
-          />
-        ))}
-      </Box>
-    </Container>
+    <Box sx={{ minHeight: "100vh", bgcolor: maggaColors.background, pb: 8 }}>
+      <ReaderHeroSkeleton />
+      <Container maxWidth="lg" sx={{ mt: 6, px: { xs: 0, lg: 3 } }}><MangaReaderSkeleton /></Container>
+    </Box>
   );
 }

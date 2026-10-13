@@ -8,7 +8,7 @@ import { AdCard } from "@/app/components/features/ads";
 import { useAds } from "@/app/components/features/ads/AdsProvider";
 import EmptyState from "@/app/components/ui/EmptyState";
 import { useSession } from "@/lib/auth-client";
-import { maggaColors } from "@/lib/design-tokens";
+import { maggaColors, maggaLayout } from "@/lib/design-tokens";
 import { adDeviceDisplay } from "@/lib/advertisements";
 import { appendUniqueMangas, buildMangaPageQuery } from "@/lib/manga-query";
 
@@ -184,7 +184,7 @@ export default function InfiniteMangaGrid({
     <>
       {filteredMangas.length === 0 && !isLoading && <EmptyState />}
       {/* Add minHeight to prevent CLS when grid content loads */}
-      <Grid container spacing={{ xs: 1.5, sm: 2, md: 3 }} sx={{ minHeight: filteredMangas.length ? 400 * 3 : 0, alignContent: "start" }}>
+      <Grid container spacing={maggaLayout.mangaGrid.spacing} sx={{ minHeight: filteredMangas.length ? 400 * 3 : 0, alignContent: "start" }}>
         {itemsWithAds.map((item, index) => (
           <Grid
             key={

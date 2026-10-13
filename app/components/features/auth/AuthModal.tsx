@@ -120,6 +120,7 @@ export default function AuthModal({
       onClose={onClose}
       maxWidth="xs"
       fullWidth
+      aria-labelledby="auth-modal-title"
       slotProps={{
         backdrop: { sx: { backgroundColor: "rgba(0,0,0,0.85)", backdropFilter: "blur(8px)" } },
         paper: {
@@ -146,6 +147,7 @@ export default function AuthModal({
         >
           <IconButton
             onClick={onClose}
+            aria-label="ปิดหน้าต่างเข้าสู่ระบบ"
             size="small"
             sx={{
               position: "absolute",
@@ -176,6 +178,8 @@ export default function AuthModal({
             </Box>
 
             <Typography
+              id="auth-modal-title"
+              component="h1"
               variant="h5"
               sx={{
                 fontWeight: 700,
@@ -237,7 +241,7 @@ export default function AuthModal({
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">
-                      <AlternateEmailRoundedIcon sx={{ color: "#71717a", fontSize: 18 }} />
+                      <AlternateEmailRoundedIcon sx={{ color: maggaColors.textSecondary, fontSize: 18 }} />
                     </InputAdornment>
                   ),
                 }
@@ -265,7 +269,7 @@ export default function AuthModal({
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">
-                      <LockRoundedIcon sx={{ color: "#71717a", fontSize: 18 }} />
+                      <LockRoundedIcon sx={{ color: maggaColors.textSecondary, fontSize: 18 }} />
                     </InputAdornment>
                   ),
                   endAdornment: (
@@ -274,7 +278,7 @@ export default function AuthModal({
                         onClick={() => setShowPassword(!showPassword)}
                         edge="end"
                         aria-label={showPassword ? "ซ่อนรหัสผ่าน" : "แสดงรหัสผ่าน"}
-                        sx={{ color: "#71717a" }}
+                        sx={{ color: maggaColors.textSecondary }}
                       >
                         {showPassword ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
                       </IconButton>
@@ -312,7 +316,7 @@ export default function AuthModal({
             </Button>
           </Box>
 
-          <Divider sx={{ my: 2, borderColor: "rgba(255, 255, 255, 0.08)", "& .MuiDivider-wrapper": { color: "#71717a", fontSize: "0.8rem" } }}>
+          <Divider sx={{ my: 2, borderColor: "rgba(255, 255, 255, 0.08)", "& .MuiDivider-wrapper": { color: maggaColors.textSecondary, fontSize: "0.8rem" } }}>
             หรือ
           </Divider>
 

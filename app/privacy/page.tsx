@@ -12,8 +12,8 @@ export default function PrivacyPage() {
     <Container maxWidth="md" sx={{ py: 6 }}>
       <Paper sx={{ p: { xs: 3, md: 5 }, bgcolor: maggaColors.surface, borderRadius: "14px", border: `1px solid ${maggaColors.border}`, boxShadow: "0 4px 20px -2px rgba(0, 0, 0, 0.4)" }}>
         <Typography
-          variant="h4"
-          component="h1"
+          component="h1" variant="h4"
+
           gutterBottom
           sx={{
             fontWeight: "bold",
@@ -31,12 +31,12 @@ export default function PrivacyPage() {
         </Typography>
 
         <Typography variant="body1" sx={{ color: '#d4d4d4', mb: 4, lineHeight: 1.8 }}>
-          ผู้ดูแลเว็บไซต์ให้ความสำคัญกับสิทธิด้านความเป็นส่วนตัวของผู้ใช้งาน และมุ่งมั่นสร้างสภาพแวดล้อมที่ปลอดภัยในการใช้งาน 
+          ผู้ดูแลเว็บไซต์ให้ความสำคัญกับสิทธิด้านความเป็นส่วนตัวของผู้ใช้งาน และมุ่งมั่นสร้างสภาพแวดล้อมที่ปลอดภัยในการใช้งาน
           นโยบายนี้ครอบคลุมข้อมูลส่วนบุคคลที่สามารถระบุตัวตนได้ ซึ่งอาจถูกเก็บ รวบรวม ใช้ หรือประมวลผลผ่านการใช้งานเว็บไซต์
         </Typography>
 
         <Typography variant="body2" sx={{ color: '#a3a3a3', mb: 4 }}>
-          นโยบายนี้ไม่ครอบคลุมถึงเว็บไซต์หรือบริการอื่นที่ไม่ได้อยู่ภายใต้การควบคุมของผู้ดูแลเว็บไซต์ 
+          นโยบายนี้ไม่ครอบคลุมถึงเว็บไซต์หรือบริการอื่นที่ไม่ได้อยู่ภายใต้การควบคุมของผู้ดูแลเว็บไซต์
           ผู้ใช้งานควรศึกษา "ข้อตกลงและเงื่อนไขการใช้งาน" ควบคู่กับนโยบายฉบับนี้
         </Typography>
 
@@ -154,7 +154,7 @@ export default function PrivacyPage() {
           <Divider sx={{ borderColor: maggaColors.border }} />
 
           <Section title="9. การเก็บรักษาข้อมูลส่วนบุคคล">
-            <Typography variant="subtitle2" sx={{ color: maggaColors.archiveGold, mb: 1, fontWeight: 700 }}>
+            <Typography component="h3" variant="subtitle2" sx={{ color: maggaColors.archiveGold, mb: 1, fontWeight: 700 }}>
               9.1 การลบบัญชีตามคำขอของผู้ใช้งาน
             </Typography>
             <Box component="ul">
@@ -162,7 +162,7 @@ export default function PrivacyPage() {
               <Typography component="li">เมื่อบัญชีถูกลบ ข้อมูลส่วนบุคคลที่อยู่ในโปรไฟล์จะถูกลบออกจากระบบหลัก อย่างไรก็ตาม อาจยังคงปรากฏอยู่ในระบบสำรอง (backup) ตามรอบการเก็บรักษาของระบบ</Typography>
               <Typography component="li">เนื้อหาที่ผู้ใช้งานเคยเผยแพร่ เช่น ผลงานแปล อาจยังคงอยู่เพื่อรักษาความสมบูรณ์ของเว็บไซต์</Typography>
             </Box>
-            <Typography variant="subtitle2" sx={{ color: maggaColors.archiveGold, mb: 1, mt: 2, fontWeight: 700 }}>
+            <Typography component="h3" variant="subtitle2" sx={{ color: maggaColors.archiveGold, mb: 1, mt: 2, fontWeight: 700 }}>
               9.2 การปิดบัญชีโดยเว็บไซต์
             </Typography>
             <Box component="ul">
@@ -231,7 +231,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   return (
     <Box>
       <Typography
-        variant="h6"
+        component="h2" variant="h6"
         sx={{
           fontWeight: "bold",
           color: maggaColors.archiveGold,
@@ -239,9 +239,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
         }}>
         {title}
       </Typography>
-      <Box sx={{ 
-        color: maggaColors.textMuted, 
-        '& ul': { pl: 3, mt: 1, mb: 2 }, 
+      <Box sx={{
+        color: maggaColors.textSecondary,
+        '& ul': { pl: 3, mt: 1, mb: 2 },
         '& li': { mb: 1 },
         '& p': { mb: 2, lineHeight: 1.8 },
         '& strong': { color: '#d4d4d4' }

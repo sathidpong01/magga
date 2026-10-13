@@ -5,7 +5,7 @@ import { profiles } from "@/db/schema";
 import { eq, or } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { Container, Box, Typography } from "@mui/material";
-import ProfileView from "./ProfileView";
+import ProfileView from "../ProfileView";
 
 interface Props {
   params: Promise<{ username: string }>;

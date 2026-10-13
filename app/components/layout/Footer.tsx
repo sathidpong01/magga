@@ -1,5 +1,7 @@
 "use client";
 
+import { maggaColors } from "@/lib/design-tokens";
+
 import {
   Box,
   Container,
@@ -137,7 +139,7 @@ export default function Footer() {
         >
           <Typography
             variant="body2"
-            sx={{ color: "#71717a", fontSize: "0.8rem" }}
+            sx={{ color: maggaColors.textSecondary, fontSize: "0.8rem" }}
           >
             Copyright © {new Date().getFullYear()} MAGGA. All rights reserved.
           </Typography>
@@ -169,7 +171,7 @@ export default function Footer() {
                   variant="text"
                   size="small"
                   sx={{
-                    color: "#71717a",
+                    color: maggaColors.textSecondary,
                     fontSize: "0.8rem",
                     minWidth: "auto",
                     p: 0,

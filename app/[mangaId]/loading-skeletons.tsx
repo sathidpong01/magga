@@ -1,40 +1,30 @@
 "use client";
 
 import { Box, Skeleton } from "@mui/material";
+import { maggaColors, maggaLayout } from "@/lib/design-tokens";
+import type { MangaPageRecord } from "@/lib/manga-pages";
 
-export function MangaReaderSkeleton() {
+export function MangaReaderSkeleton({ pages }: { pages?: MangaPageRecord[] }) {
   return (
     <Box
       sx={{
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: 0.5,
+        gap: maggaLayout.reader.gap,
       }}
     >
-      {/* First page skeleton - visible immediately with fixed aspect ratio to prevent CLS */}
-      <Skeleton
+      {(pages?.length ? pages.slice(0, 3) : [undefined, undefined, undefined]).map((page, index) => <Skeleton
+        key={index}
         variant="rectangular"
         sx={{
           width: "100%",
-          maxWidth: "1000px",
-          aspectRatio: "2/3",
-          minHeight: { xs: 400, md: 600 },
-          borderRadius: 0.5,
-          bgcolor: "rgba(255,255,255,0.08)",
+          maxWidth: maggaLayout.reader.maxWidth,
+          height: "auto",
+          aspectRatio: page?.width && page?.height ? `${page.width} / ${page.height}` : maggaLayout.reader.aspectRatio,
+          bgcolor: maggaColors.surface,
         }}
-      />
-      {/* Second page hint */}
-      <Skeleton
-        variant="rectangular"
-        sx={{
-          width: "100%",
-          maxWidth: "1000px",
-          height: 100,
-          borderRadius: 0.5,
-          bgcolor: "rgba(255,255,255,0.05)",
-        }}
-      />
+      />)}
     </Box>
   );
 }

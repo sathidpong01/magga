@@ -275,8 +275,8 @@ export default function ChangelogPage() {
     <Container maxWidth="md" sx={{ py: 8 }}>
       <Box sx={{ mb: 6, textAlign: "center" }}>
         <Typography
-          variant="h3"
-          component="h1"
+          component="h1" variant="h3"
+
           gutterBottom
           sx={{
             fontWeight: "bold",
@@ -284,7 +284,7 @@ export default function ChangelogPage() {
           }}>
           บันทึกการอัพเดท
         </Typography>
-        <Typography variant="subtitle1" sx={{ color: maggaColors.textMuted }}>
+        <Typography variant="subtitle1" sx={{ color: maggaColors.textSecondary }}>
           ประวัติการปรับปรุงและพัฒนาเว็บไซต์ล่าสุด
         </Typography>
       </Box>
@@ -318,8 +318,8 @@ export default function ChangelogPage() {
             >
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
                 <Typography
-                  variant="h5"
-                  component="h2"
+                  component="h2" variant="h5"
+
                   sx={{
                     fontWeight: "bold",
                     color: "#fafafa"
@@ -342,7 +342,7 @@ export default function ChangelogPage() {
                   display: "flex",
                   alignItems: "center",
                   gap: 1,
-                  color: maggaColors.textMuted,
+                  color: maggaColors.textSecondary,
                 }}
               >
                 <UpdateIcon sx={{ fontSize: 18 }} />

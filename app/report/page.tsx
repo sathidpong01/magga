@@ -17,8 +17,8 @@ export default function ReportPage() {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
           <ReportProblemIcon sx={{ color: maggaColors.archiveGold, fontSize: 32 }} />
           <Typography
-            variant="h4"
-            component="h1"
+            component="h1" variant="h4"
+
             sx={{
               fontWeight: "bold",
               color: '#fafafa'
@@ -28,16 +28,16 @@ export default function ReportPage() {
         </Box>
 
         <Typography variant="body1" sx={{ color: '#d4d4d4', mb: 4, lineHeight: 1.8 }}>
-          หากต้องการแจ้งเรื่องการละเมิดลิขสิทธิ์กับเว็บไซต์ MAGGA คุณจะต้องส่งคำร้องเป็นลายลักษณ์อักษรผ่านช่องทางการติดต่อ 
+          หากต้องการแจ้งเรื่องการละเมิดลิขสิทธิ์กับเว็บไซต์ MAGGA คุณจะต้องส่งคำร้องเป็นลายลักษณ์อักษรผ่านช่องทางการติดต่อ
           โดยต้องมีข้อมูลตามที่ระบุไว้ในมาตรา 512(c)(3) ของกฎหมาย Digital Millennium Copyright Act (DMCA)
         </Typography>
 
-        <Alert 
-          severity="info" 
+        <Alert
+          severity="info"
           icon={<EmailIcon sx={{ color: maggaColors.archiveGold }} />}
-          sx={{ 
-            mb: 4, 
-            bgcolor: 'rgba(251, 191, 36, 0.08)', 
+          sx={{
+            mb: 4,
+            bgcolor: 'rgba(251, 191, 36, 0.08)',
             border: '1px solid rgba(251, 191, 36, 0.25)',
             borderRadius: 2,
             '& .MuiAlert-message': { color: '#fafafa' }
@@ -55,10 +55,10 @@ export default function ReportPage() {
             }}>
               รายละเอียดที่ต้องระบุในคำร้อง DMCA ได้แก่:
             </Typography>
-            
+
             <Box sx={{ pl: 2 }}>
               <Typography sx={{ mb: 2 }}>
-                <Box component="strong" sx={{ color: maggaColors.archiveGold }}>ก) ระบุตัวตน:</Box> แจ้งว่าคุณเป็นเจ้าของลิขสิทธิ์ผลงานหรือสิทธิ์แต่เพียงผู้เดียวที่ถูกละเมิด 
+                <Box component="strong" sx={{ color: maggaColors.archiveGold }}>ก) ระบุตัวตน:</Box> แจ้งว่าคุณเป็นเจ้าของลิขสิทธิ์ผลงานหรือสิทธิ์แต่เพียงผู้เดียวที่ถูกละเมิด
                 หรือเป็นผู้ที่ได้รับมอบอำนาจให้กระทำการแทนเจ้าของ พร้อมแนบลายเซ็นจริงหรือลายเซ็นอิเล็กทรอนิกส์
               </Typography>
 
@@ -67,17 +67,17 @@ export default function ReportPage() {
               </Typography>
 
               <Typography sx={{ mb: 2 }}>
-                <Box component="strong" sx={{ color: maggaColors.archiveGold }}>ค) ระบุตำแหน่งของเนื้อหาที่ละเมิดลิขสิทธิ์:</Box> ระบุ URL ของหน้าที่ละเมิดลิขสิทธิ์ในเว็บไซต์ 
+                <Box component="strong" sx={{ color: maggaColors.archiveGold }}>ค) ระบุตำแหน่งของเนื้อหาที่ละเมิดลิขสิทธิ์:</Box> ระบุ URL ของหน้าที่ละเมิดลิขสิทธิ์ในเว็บไซต์
                 ห้ามส่งไฟล์แนบใดๆ เช่น รูปภาพ หรือไฟล์ PDF ให้ใส่ URL ทั้งหมดในเนื้อหาจดหมาย เพื่อการดำเนินการที่รวดเร็วยิ่งขึ้น
               </Typography>
 
               <Typography sx={{ mb: 2 }}>
-                <Box component="strong" sx={{ color: maggaColors.archiveGold }}>ง) ข้อมูลติดต่อของคุณ:</Box> ระบุชื่อ ที่อยู่ และอีเมล 
+                <Box component="strong" sx={{ color: maggaColors.archiveGold }}>ง) ข้อมูลติดต่อของคุณ:</Box> ระบุชื่อ ที่อยู่ และอีเมล
                 หากกระทำการแทนเจ้าของลิขสิทธิ์ ให้ระบุความเกี่ยวข้องของคุณ (เช่น ทนายความ, ตัวแทน)
               </Typography>
 
               <Typography sx={{ mb: 2 }}>
-                <Box component="strong" sx={{ color: maggaColors.archiveGold }}>จ) ยืนยันว่าคุณเชื่อโดยสุจริต:</Box> ระบุว่าคุณเชื่อโดยสุจริตว่าการใช้เนื้อหาดังกล่าวไม่ได้รับอนุญาตจากเจ้าของลิขสิทธิ์ 
+                <Box component="strong" sx={{ color: maggaColors.archiveGold }}>จ) ยืนยันว่าคุณเชื่อโดยสุจริต:</Box> ระบุว่าคุณเชื่อโดยสุจริตว่าการใช้เนื้อหาดังกล่าวไม่ได้รับอนุญาตจากเจ้าของลิขสิทธิ์
                 ตัวแทน หรือไม่ชอบด้วยกฎหมาย
               </Typography>
 
@@ -86,10 +86,10 @@ export default function ReportPage() {
               }}>
                 <Box component="strong" sx={{ color: maggaColors.archiveGold }}>ฉ) ยืนยันความถูกต้องของข้อมูล:</Box> ระบุข้อความต่อไปนี้เพื่อรับรองความถูกต้องของข้อมูลภายใต้บทลงโทษของการให้การเท็จ:
               </Typography>
-              
+
               <Paper sx={{ p: 2, bgcolor: maggaColors.background, border: `1px solid ${maggaColors.border}`, borderRadius: 1.5, mb: 2 }}>
-                <Typography variant="body2" sx={{ color: maggaColors.textMuted }}>
-                  "I swear, under penalty of perjury, that the information in the notification is accurate and that I am the (copyright) owner 
+                <Typography variant="body2" sx={{ color: maggaColors.textSecondary }}>
+                  "I swear, under penalty of perjury, that the information in the notification is accurate and that I am the (copyright) owner
                   or am authorized to act on behalf of the owner of an exclusive right that is allegedly infringed."
                 </Typography>
               </Paper>
@@ -109,8 +109,8 @@ export default function ReportPage() {
             }}>
               ตามที่ระบุไว้ในกฎหมาย 17 U.S. Code § 512(c)(3):
             </Typography>
-            <Typography variant="body2" sx={{ color: maggaColors.textMuted, pl: 2, borderLeft: `2px solid ${maggaColors.border}` }}>
-              (B) คำร้องที่ไม่สมบูรณ์ - หากเนื้อหาหรือกิจกรรมที่ถูกอ้างว่าละเมิดลิขสิทธิ์ 
+            <Typography variant="body2" sx={{ color: maggaColors.textSecondary, pl: 2, borderLeft: `2px solid ${maggaColors.border}` }}>
+              (B) คำร้องที่ไม่สมบูรณ์ - หากเนื้อหาหรือกิจกรรมที่ถูกอ้างว่าละเมิดลิขสิทธิ์
               ไม่สอดคล้องกับข้อกำหนดในอนุมาตรา (A) อย่างมีนัยสำคัญ จะไม่ได้รับการพิจารณาภายใต้ย่อหน้า (1)(C)...
             </Typography>
             <Typography sx={{ mt: 2, color: maggaColors.archiveGold, fontWeight: 600 }}>
@@ -124,11 +124,11 @@ export default function ReportPage() {
             <Typography sx={{
               marginBottom: "16px"
             }}>
-              คำร้องที่กรอกข้อมูลถูกต้อง จะถูกดำเนินการลบเนื้อหา 100% 
+              คำร้องที่กรอกข้อมูลถูกต้อง จะถูกดำเนินการลบเนื้อหา 100%
               หาก MAGGA ได้รับแจ้งการละเมิดลิขสิทธิ์ที่ถูกต้อง จะดำเนินการลบเนื้อหาที่ละเมิดอย่างรวดเร็ว
             </Typography>
             <Typography>
-              อย่างไรก็ตาม MAGGA จะไม่ส่งการยืนยันการดำเนินการลบเนื้อหาซ้ำให้แก่ผู้แจ้ง 
+              อย่างไรก็ตาม MAGGA จะไม่ส่งการยืนยันการดำเนินการลบเนื้อหาซ้ำให้แก่ผู้แจ้ง
               โปรดให้เวลาที่เหมาะสมในการตรวจสอบกรณี หากไม่มีการดำเนินการใดๆ ภายในระยะเวลาที่เหมาะสม โปรดติดต่อเราอีกครั้งเพื่อตรวจสอบซ้ำ
             </Typography>
           </Section>
@@ -139,19 +139,19 @@ export default function ReportPage() {
             <Box component="ul">
               <Typography component="li">MAGGA เป็นเว็บไซต์ที่ให้บริการด้านการอ่านและเผยแพร่เนื้อหาที่เกี่ยวข้องกับการ์ตูนแปลไทย</Typography>
               <Typography component="li">
-                ลิงก์และรูปภาพที่ปรากฏในเว็บไซต์ อาจเป็นการอ้างอิงจากแหล่งข้อมูลที่เผยแพร่บนเครือข่ายอินเทอร์เน็ต 
+                ลิงก์และรูปภาพที่ปรากฏในเว็บไซต์ อาจเป็นการอ้างอิงจากแหล่งข้อมูลที่เผยแพร่บนเครือข่ายอินเทอร์เน็ต
                 โดยถูกนำเสนอในลักษณะ "ตามสภาพที่เป็นอยู่" (as is) เว็บไซต์ไม่สามารถรับประกันความถูกต้อง ครบถ้วน หรือความทันสมัยของข้อมูลเหล่านั้นได้
               </Typography>
               <Typography component="li">
-                เว็บไซต์อนุญาตให้ผู้ใช้งานทั่วไปและผู้ใช้งานที่ลงทะเบียนส่งข้อมูลหรือความคิดเห็นเข้ามาได้ 
+                เว็บไซต์อนุญาตให้ผู้ใช้งานทั่วไปและผู้ใช้งานที่ลงทะเบียนส่งข้อมูลหรือความคิดเห็นเข้ามาได้
                 โดยข้อมูลดังกล่าวจะถูกเผยแพร่ในรูปแบบ "ตามสภาพที่เป็นอยู่" เช่นเดียวกัน
               </Typography>
               <Typography component="li">
-                หากมีการแจ้งเรื่องการละเมิดลิขสิทธิ์ เนื้อหานั้นจะต้องถูกพิจารณาผ่านกระบวนการที่เหมาะสม 
+                หากมีการแจ้งเรื่องการละเมิดลิขสิทธิ์ เนื้อหานั้นจะต้องถูกพิจารณาผ่านกระบวนการที่เหมาะสม
                 และเว็บไซต์อาจดำเนินการลบหรือระงับการเข้าถึงตามสมควร
               </Typography>
               <Typography component="li">
-                ความคิดเห็น ข้อความ และลิงก์ที่ผู้ใช้งานเผยแพร่ ถือเป็นความรับผิดชอบของผู้ใช้งานแต่ละราย 
+                ความคิดเห็น ข้อความ และลิงก์ที่ผู้ใช้งานเผยแพร่ ถือเป็นความรับผิดชอบของผู้ใช้งานแต่ละราย
                 เว็บไซต์ขอสงวนสิทธิ์ในการลบ แก้ไข หรือจำกัดการเข้าถึง หากเนื้อหาดังกล่าวไม่เหมาะสม ผิดกฎหมาย หรือมีการร้องเรียนอย่างเป็นทางการ
               </Typography>
             </Box>
@@ -174,7 +174,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   return (
     <Box>
       <Typography
-        variant="h6"
+        component="h2" variant="h6"
         sx={{
           fontWeight: "bold",
           color: maggaColors.archiveGold,
@@ -182,9 +182,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
         }}>
         {title}
       </Typography>
-      <Box sx={{ 
-        color: maggaColors.textMuted, 
-        '& ul': { pl: 3, mt: 1, mb: 2 }, 
+      <Box sx={{
+        color: maggaColors.textSecondary,
+        '& ul': { pl: 3, mt: 1, mb: 2 },
         '& li': { mb: 1.5, lineHeight: 1.7 },
         '& p': { mb: 2, lineHeight: 1.8 },
         '& strong': { color: '#d4d4d4' }

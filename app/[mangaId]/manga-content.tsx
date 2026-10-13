@@ -17,7 +17,7 @@ export function SuspendedMangaReader({
   pages,
 }: MangaContentProps) {
   return (
-    <Suspense fallback={<MangaReaderSkeleton />}>
+    <Suspense fallback={<MangaReaderSkeleton pages={pages} />}>
       <MangaReader mangaId={mangaId} mangaTitle={mangaTitle} pages={pages} />
     </Suspense>
   );

@@ -6,7 +6,7 @@ import { desc, count, eq } from "drizzle-orm";
 import { normalizeSubmissionStatus } from "@/lib/submission-status";
 import SubmissionsManager, {
   type AdminSubmission,
-} from "./SubmissionsManager";
+} from "../SubmissionsManager";
 
 export const dynamic = "force-dynamic";
 
