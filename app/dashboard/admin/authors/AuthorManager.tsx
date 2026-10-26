@@ -7,33 +7,7 @@ import type { InferSelectModel } from "drizzle-orm";
 import type { authors } from "@/db/schema";
 
 type Author = InferSelectModel<typeof authors>;
-import {
-  Button,
-  TextField,
-  Typography,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  IconButton,
-  Stack,
-  Alert,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  CircularProgress,
-  Tooltip,
-  Box,
-  Avatar,
-  Chip,
-  InputAdornment,
-  Divider,
-} from "@mui/material";
+import { Button, TextField, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Stack, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, CircularProgress, Tooltip, Box, Avatar, Chip, InputAdornment } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import LinkIcon from "@mui/icons-material/Link";
@@ -41,11 +15,7 @@ import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import AddIcon from "@mui/icons-material/Add";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { useToast } from "@/app/contexts/ToastContext";
-import {
-  dashboardTokens,
-  dashboardRadii,
-  dashboardPrimaryButtonSx,
-} from "@/app/components/dashboard/system";
+import { dashboardTokens, dashboardRadii, dashboardPrimaryButtonSx } from "@/app/components/dashboard/system";
 
 type SocialLink = {
   url: string;
@@ -59,6 +29,7 @@ type AuthorManagerProps = {
 
 export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
   const router = useRouter();
+  const [editorOpen, setEditorOpen] = useState(false);
   const [authors, setAuthors] = useState<Author[]>(initialAuthors);
   const { showSuccess, showError } = useToast();
   const [editingAuthor, setEditingAuthor] = useState<Author | null>(null);
@@ -87,7 +58,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
 
     try {
       const res = await fetch(
-        `/api/metadata?url=${encodeURIComponent(link.url)}`
+        `/api/metadata?url=${encodeURIComponent(link.url)}`,
       );
       if (!res.ok) throw new Error("ไม่สามารถดึงข้อมูลได้");
       const data = await res.json();
@@ -95,7 +66,8 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
       if (generation !== enrichmentGeneration.current) return;
       setSocialLinks((current) => enrichUnchangedItem(current, link, data));
     } catch {
-      if (generation === enrichmentGeneration.current) showError("ไม่สามารถดึงข้อมูลจาก URL นี้ได้");
+      if (generation === enrichmentGeneration.current)
+        showError("ไม่สามารถดึงข้อมูลจาก URL นี้ได้");
     } finally {
       if (generation === enrichmentGeneration.current) setIsFetching(null);
     }
@@ -114,9 +86,13 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
   const updateSocialLink = (
     index: number,
     field: keyof SocialLink,
-    value: string
+    value: string,
   ) => {
-    setSocialLinks((current) => current.map((link, i) => i === index ? { ...link, [field]: value } : link));
+    setSocialLinks((current) =>
+      current.map((link, i) =>
+        i === index ? { ...link, [field]: value } : link,
+      ),
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -154,7 +130,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
       }
 
       showSuccess(
-        editingAuthor ? "อัปเดตผู้แต่งเรียบร้อย" : "เพิ่มผู้แต่งเรียบร้อย"
+        editingAuthor ? "อัปเดตผู้แต่งเรียบร้อย" : "เพิ่มผู้แต่งเรียบร้อย",
       );
       resetForm();
       router.refresh();
@@ -167,6 +143,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
   };
 
   const resetForm = () => {
+    setEditorOpen(false);
     enrichmentGeneration.current++;
     setIsFetching(null);
     setName("");
@@ -175,6 +152,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
   };
 
   const handleEdit = (author: Author) => {
+    setEditorOpen(true);
     if (savePending.current) return;
     enrichmentGeneration.current++;
     setIsFetching(null);
@@ -188,7 +166,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
         setSocialLinks(
           links.length > 0
             ? links
-            : [{ url: author.profileUrl || "", label: "", icon: "" }]
+            : [{ url: author.profileUrl || "", label: "", icon: "" }],
         );
       } catch {
         setSocialLinks([{ url: author.profileUrl || "", label: "", icon: "" }]);
@@ -239,293 +217,378 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
 
   return (
     <>
-      {/* Form Section */}
-      <Paper
-        sx={{
-          p: 2.5,
-          mb: 3,
-          bgcolor: dashboardTokens.surface,
-          borderRadius: 1.25,
-          border: `1px solid ${dashboardTokens.border}`,
+      <Button
+        onClick={() => {
+          resetForm();
+          setEditorOpen(true);
         }}
+        sx={{ mb: 2 }}
       >
-        <Stack
-          direction="row"
-          sx={{
-            justifyContent: "space-between",
-            alignItems: "center",
-            mb: 2
-          }}>
-          <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#fafafa", letterSpacing: "0.03em" }}>
-            {editingAuthor ? "แก้ไขผู้แต่ง" : "เพิ่มผู้แต่ง"}
-          </Typography>
-          <Stack direction="row" spacing={1}>
-            {editingAuthor && (
-              <Button
-                variant="outlined"
-                onClick={resetForm}
-                disabled={isLoading}
-                sx={{
-                  borderColor: "rgba(255,255,255,0.1)",
-                  color: "#a3a3a3",
-                  fontWeight: 800,
-                  fontSize: "0.75rem",
-                  letterSpacing: "0",
-                  "&:hover": { borderColor: "rgba(255,255,255,0.2)", bgcolor: "rgba(255,255,255,0.02)" },
-                }}
-              >
-                ยกเลิก
-              </Button>
-            )}
-            <Button
-              type="submit"
-              form="author-form"
-              variant="contained"
-              disabled={isLoading || !name}
-              startIcon={
-                isLoading ? (
-                  <CircularProgress size={18} sx={{ color: "#0f0f14" }} />
-                ) : editingAuthor ? (
-                  <EditIcon />
-                ) : (
-                  <AddIcon />
-                )
-              }
+        เพิ่มผู้แต่ง
+      </Button>
+      {/* Form Section */}
+      <Dialog
+        open={editorOpen}
+        onClose={() => {
+          if (!isLoading) resetForm();
+        }}
+        fullWidth
+        maxWidth="md"
+        aria-label="ข้อมูลผู้แต่ง"
+      >
+        <DialogContent>
+          <Paper
+            sx={{
+              p: 2.5,
+              mb: 3,
+              bgcolor: dashboardTokens.surface,
+              borderRadius: 1.25,
+              border: `1px solid ${dashboardTokens.border}`,
+            }}
+          >
+            <Stack
+              direction="row"
               sx={{
-                minWidth: 100,
-                ...dashboardPrimaryButtonSx,
-                borderRadius: dashboardRadii.button,
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 2,
               }}
             >
-                {editingAuthor ? "บันทึกการแก้ไข" : "เพิ่ม"}
-            </Button>
-          </Stack>
-        </Stack>
-
-        <form id="author-form" onSubmit={handleSubmit}>
-          <Box component="fieldset" disabled={isLoading} sx={{ border: 0, p: 0, m: 0, minWidth: 0 }}>
-          <Stack spacing={2.5}>
-            {/* Author Name only - icons come from social links */}
-            <Box>
               <Typography
-                variant="caption"
-                sx={{ color: dashboardTokens.textMuted, mb: 0.5, display: "block", fontWeight: 700, textTransform: "none", fontSize: "0.75rem" }}
-              >
-                ชื่อผู้แต่ง *
-              </Typography>
-              <TextField
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                fullWidth
-                required
-                size="small"
-                placeholder="ชื่อผู้แต่งหรือชื่อปากกา..."
+                variant="subtitle1"
                 sx={{
-                  "& .MuiOutlinedInput-root": {
-                    bgcolor: dashboardTokens.surfaceMuted,
-                    borderRadius: dashboardRadii.field,
-                    "& fieldset": { borderColor: dashboardTokens.border },
-                    "&.Mui-focused fieldset": { borderColor: dashboardTokens.accent },
-                  },
+                  fontWeight: 800,
+                  color: "#fafafa",
+                  letterSpacing: "0.03em",
                 }}
-              />
-            </Box>
-
-            {/* Social Links Section */}
-            <Box>
-              <Typography
-                variant="subtitle2"
-                sx={{ color: "#a3a3a3", mb: 1.5, fontWeight: 900, textTransform: "none", letterSpacing: "0", fontSize: "0.75rem" }}
               >
-                ช่องทางโซเชียล
+                {editingAuthor ? "แก้ไขผู้แต่ง" : "เพิ่มผู้แต่ง"}
               </Typography>
-
-              <Stack spacing={2}>
-                {socialLinks.map((link, index) => (
-                  <Box
-                    key={index}
+              <Stack direction="row" spacing={1}>
+                {editingAuthor && (
+                  <Button
+                    variant="outlined"
+                    onClick={resetForm}
+                    disabled={isLoading}
                     sx={{
-                      p: 2.5,
-                      bgcolor: "rgba(255,255,255,0.01)",
-                      borderRadius: 1.25,
-                      border: "1px solid rgba(255,255,255,0.04)",
+                      borderColor: "rgba(255,255,255,0.1)",
+                      color: "#a3a3a3",
+                      fontWeight: 800,
+                      fontSize: "0.75rem",
+                      letterSpacing: "0",
+                      "&:hover": {
+                        borderColor: "rgba(255,255,255,0.2)",
+                        bgcolor: "rgba(255,255,255,0.02)",
+                      },
                     }}
                   >
-                    <Stack
-                      direction={{ xs: "column", md: "row" }}
-                      spacing={1.5}
+                    ยกเลิก
+                  </Button>
+                )}
+                <Button
+                  type="submit"
+                  form="author-form"
+                  variant="contained"
+                  disabled={isLoading || !name}
+                  startIcon={
+                    isLoading ? (
+                      <CircularProgress size={18} sx={{ color: "#0f0f14" }} />
+                    ) : editingAuthor ? (
+                      <EditIcon />
+                    ) : (
+                      <AddIcon />
+                    )
+                  }
+                  sx={{
+                    minWidth: 100,
+                    ...dashboardPrimaryButtonSx,
+                    borderRadius: dashboardRadii.button,
+                  }}
+                >
+                  {editingAuthor ? "บันทึกการแก้ไข" : "เพิ่ม"}
+                </Button>
+              </Stack>
+            </Stack>
+
+            <form id="author-form" onSubmit={handleSubmit}>
+              <Box
+                component="fieldset"
+                disabled={isLoading}
+                sx={{ border: 0, p: 0, m: 0, minWidth: 0 }}
+              >
+                <Stack spacing={2.5}>
+                  {/* Author Name only - icons come from social links */}
+                  <Box>
+                    <Typography
+                      variant="caption"
                       sx={{
-                        alignItems: "flex-end"
+                        color: dashboardTokens.textMuted,
+                        mb: 0.5,
+                        display: "block",
+                        fontWeight: 700,
+                        textTransform: "none",
+                        fontSize: "0.75rem",
                       }}
                     >
-                      <Box sx={{ flex: 2 }}>
-                        <Typography
-                          variant="caption"
-                          sx={{ color: "#737373", mb: 0.5, display: "block" }}
-                        >
-                          URL
-                        </Typography>
-                        <TextField
-                          value={link.url}
-                          onChange={(e) =>
-                            updateSocialLink(index, "url", e.target.value)
-                          }
-                          fullWidth
-                          size="small"
-                          placeholder="https://twitter.com/... หรือ pixiv.net/..."
-                          sx={{
-                            "& .MuiOutlinedInput-root": {
-                              bgcolor: dashboardTokens.surfaceMuted,
-                              borderRadius: dashboardRadii.field,
-                            },
-                          }}
-                          slotProps={{
-                            input: {
-                              startAdornment: (
-                                <InputAdornment position="start">
-                                  <LinkIcon
-                                    sx={{ color: dashboardTokens.textMuted, fontSize: 18 }}
-                                  />
-                                </InputAdornment>
-                              ),
-                            }
-                          }}
-                        />
-                      </Box>
-                      <Box sx={{ flex: 1 }}>
-                        <Typography
-                          variant="caption"
-                          sx={{ color: dashboardTokens.textSoft, mb: 0.5, display: "block" }}
-                        >
-                          ป้ายชื่อ
-                        </Typography>
-                        <TextField
-                          value={link.label}
-                          onChange={(e) =>
-                            updateSocialLink(index, "label", e.target.value)
-                          }
-                          fullWidth
-                          size="small"
-                          placeholder="ชื่อแสดง (เช่น Twitter)"
-                          sx={{
-                            "& .MuiOutlinedInput-root": {
-                              bgcolor: dashboardTokens.surfaceMuted,
-                              borderRadius: dashboardRadii.field,
-                            },
-                          }}
-                        />
-                      </Box>
-                      <Box sx={{ flex: 1 }}>
-                        <Typography
-                          variant="caption"
-                          sx={{ color: dashboardTokens.textSoft, mb: 0.5, display: "block" }}
-                        >
-                          URL ไอคอน
-                        </Typography>
-                        <Stack direction="row" spacing={1} sx={{
-                          alignItems: "center"
-                        }}>
-                          <TextField
-                            value={link.icon}
-                            onChange={(e) =>
-                              updateSocialLink(index, "icon", e.target.value)
-                            }
-                            fullWidth
-                            size="small"
-                              placeholder="วาง URL ไอคอน"
-                            sx={{
-                              "& .MuiOutlinedInput-root": {
-                                bgcolor: dashboardTokens.surfaceMuted,
-                                borderRadius: dashboardRadii.field,
-                              },
-                            }}
-                          />
-                          {link.icon && (
-                            <Avatar
-                              src={link.icon}
-                              sx={{ width: 28, height: 28 }}
-                            />
-                          )}
-                        </Stack>
-                      </Box>
-                      <Stack
-                        direction="row"
-                        spacing={0.5}
-                        sx={{ flexShrink: 0, pb: 0.5 }}
-                      >
-                        <Tooltip title="ดึงชื่อและไอคอนอัตโนมัติ">
-                          <Box component="span">
-                            <IconButton
-                              onClick={() => handleAutoFetch(index)}
-                              disabled={!link.url || isFetching === index}
-                              size="small"
-                              sx={{
-                                bgcolor: dashboardTokens.surfaceAlt,
-                                "&:hover": { bgcolor: dashboardTokens.surfaceMuted },
-                                color: dashboardTokens.textMuted,
-                              }}
-                            >
-                              {isFetching === index ? (
-                                <CircularProgress size={18} />
-                              ) : (
-                                <AutoFixHighIcon fontSize="small" />
-                              )}
-                            </IconButton>
-                          </Box>
-                        </Tooltip>
-                        {socialLinks.length > 1 && (
-                          <Tooltip title="ลบช่องทางนี้">
-                            <IconButton
-                              onClick={() => removeSocialLink(index)}
-                              size="small"
-                              sx={{
-                                bgcolor: "rgba(239, 68, 68, 0.1)",
-                                "&:hover": {
-                                  bgcolor: "#ef4444",
-                                  color: "#fff",
-                                },
-                                color: "#ef4444",
-                                borderRadius: 1
-                              }}
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                      </Stack>
-                    </Stack>
+                      ชื่อผู้แต่ง *
+                    </Typography>
+                    <TextField
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      fullWidth
+                      required
+                      size="small"
+                      placeholder="ชื่อผู้แต่งหรือชื่อปากกา..."
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          bgcolor: dashboardTokens.surfaceMuted,
+                          borderRadius: dashboardRadii.field,
+                          "& fieldset": { borderColor: dashboardTokens.border },
+                          "&.Mui-focused fieldset": {
+                            borderColor: dashboardTokens.accent,
+                          },
+                        },
+                      }}
+                    />
                   </Box>
-                ))}
-              </Stack>
 
-              <Button
-                onClick={addSocialLink}
-                variant="outlined"
-                size="small"
-                startIcon={<AddIcon />}
-                sx={{
-                  mt: 2,
-                  borderColor: "rgba(255,255,255,0.1)",
-                  color: dashboardTokens.accent,
-                  fontWeight: 800,
-                  textTransform: "none",
-                  fontSize: "0.7rem",
-                  letterSpacing: "0",
-                  borderRadius: dashboardRadii.button,
-                  "&:hover": {
-                    borderColor: dashboardTokens.accent,
-                    bgcolor: dashboardTokens.accentSoft,
-                  },
-                }}
-              >
-                เพิ่มช่องทาง
-              </Button>
-            </Box>
-          </Stack>
-          </Box>
-        </form>
-      </Paper>
+                  {/* Social Links Section */}
+                  <Box>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{
+                        color: "#a3a3a3",
+                        mb: 1.5,
+                        fontWeight: 900,
+                        textTransform: "none",
+                        letterSpacing: "0",
+                        fontSize: "0.75rem",
+                      }}
+                    >
+                      ช่องทางโซเชียล
+                    </Typography>
 
+                    <Stack spacing={2}>
+                      {socialLinks.map((link, index) => (
+                        <Box
+                          key={index}
+                          sx={{
+                            p: 2.5,
+                            bgcolor: "rgba(255,255,255,0.01)",
+                            borderRadius: 1.25,
+                            border: "1px solid rgba(255,255,255,0.04)",
+                          }}
+                        >
+                          <Stack
+                            direction={{ xs: "column", md: "row" }}
+                            spacing={1.5}
+                            sx={{
+                              alignItems: "flex-end",
+                            }}
+                          >
+                            <Box sx={{ flex: 2 }}>
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  color: "#737373",
+                                  mb: 0.5,
+                                  display: "block",
+                                }}
+                              >
+                                URL
+                              </Typography>
+                              <TextField
+                                value={link.url}
+                                onChange={(e) =>
+                                  updateSocialLink(index, "url", e.target.value)
+                                }
+                                fullWidth
+                                size="small"
+                                placeholder="https://twitter.com/... หรือ pixiv.net/..."
+                                sx={{
+                                  "& .MuiOutlinedInput-root": {
+                                    bgcolor: dashboardTokens.surfaceMuted,
+                                    borderRadius: dashboardRadii.field,
+                                  },
+                                }}
+                                slotProps={{
+                                  input: {
+                                    startAdornment: (
+                                      <InputAdornment position="start">
+                                        <LinkIcon
+                                          sx={{
+                                            color: dashboardTokens.textMuted,
+                                            fontSize: 18,
+                                          }}
+                                        />
+                                      </InputAdornment>
+                                    ),
+                                  },
+                                }}
+                              />
+                            </Box>
+                            <Box sx={{ flex: 1 }}>
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  color: dashboardTokens.textSoft,
+                                  mb: 0.5,
+                                  display: "block",
+                                }}
+                              >
+                                ป้ายชื่อ
+                              </Typography>
+                              <TextField
+                                value={link.label}
+                                onChange={(e) =>
+                                  updateSocialLink(
+                                    index,
+                                    "label",
+                                    e.target.value,
+                                  )
+                                }
+                                fullWidth
+                                size="small"
+                                placeholder="ชื่อแสดง (เช่น Twitter)"
+                                sx={{
+                                  "& .MuiOutlinedInput-root": {
+                                    bgcolor: dashboardTokens.surfaceMuted,
+                                    borderRadius: dashboardRadii.field,
+                                  },
+                                }}
+                              />
+                            </Box>
+                            <Box sx={{ flex: 1 }}>
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  color: dashboardTokens.textSoft,
+                                  mb: 0.5,
+                                  display: "block",
+                                }}
+                              >
+                                URL ไอคอน
+                              </Typography>
+                              <Stack
+                                direction="row"
+                                spacing={1}
+                                sx={{
+                                  alignItems: "center",
+                                }}
+                              >
+                                <TextField
+                                  value={link.icon}
+                                  onChange={(e) =>
+                                    updateSocialLink(
+                                      index,
+                                      "icon",
+                                      e.target.value,
+                                    )
+                                  }
+                                  fullWidth
+                                  size="small"
+                                  placeholder="วาง URL ไอคอน"
+                                  sx={{
+                                    "& .MuiOutlinedInput-root": {
+                                      bgcolor: dashboardTokens.surfaceMuted,
+                                      borderRadius: dashboardRadii.field,
+                                    },
+                                  }}
+                                />
+                                {link.icon && (
+                                  <Avatar
+                                    src={link.icon}
+                                    sx={{ width: 28, height: 28 }}
+                                  />
+                                )}
+                              </Stack>
+                            </Box>
+                            <Stack
+                              direction="row"
+                              spacing={0.5}
+                              sx={{ flexShrink: 0, pb: 0.5 }}
+                            >
+                              <Tooltip title="ดึงชื่อและไอคอนอัตโนมัติ">
+                                <Box component="span">
+                                  <IconButton
+                                    onClick={() => handleAutoFetch(index)}
+                                    disabled={!link.url || isFetching === index}
+                                    size="small"
+                                    sx={{
+                                      bgcolor: dashboardTokens.surfaceAlt,
+                                      "&:hover": {
+                                        bgcolor: dashboardTokens.surfaceMuted,
+                                      },
+                                      color: dashboardTokens.textMuted,
+                                    }}
+                                  >
+                                    {isFetching === index ? (
+                                      <CircularProgress size={18} />
+                                    ) : (
+                                      <AutoFixHighIcon fontSize="small" />
+                                    )}
+                                  </IconButton>
+                                </Box>
+                              </Tooltip>
+                              {socialLinks.length > 1 && (
+                                <Tooltip title="ลบช่องทางนี้">
+                                  <IconButton
+                                    onClick={() => removeSocialLink(index)}
+                                    size="small"
+                                    sx={{
+                                      bgcolor: "rgba(239, 68, 68, 0.1)",
+                                      "&:hover": {
+                                        bgcolor: "#ef4444",
+                                        color: "#fff",
+                                      },
+                                      color: "#ef4444",
+                                      borderRadius: 1,
+                                    }}
+                                  >
+                                    <DeleteIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                              )}
+                            </Stack>
+                          </Stack>
+                        </Box>
+                      ))}
+                    </Stack>
+
+                    <Button
+                      onClick={addSocialLink}
+                      variant="outlined"
+                      size="small"
+                      startIcon={<AddIcon />}
+                      sx={{
+                        mt: 2,
+                        borderColor: "rgba(255,255,255,0.1)",
+                        color: dashboardTokens.accent,
+                        fontWeight: 800,
+                        textTransform: "none",
+                        fontSize: "0.7rem",
+                        letterSpacing: "0",
+                        borderRadius: dashboardRadii.button,
+                        "&:hover": {
+                          borderColor: dashboardTokens.accent,
+                          bgcolor: dashboardTokens.accentSoft,
+                        },
+                      }}
+                    >
+                      เพิ่มช่องทาง
+                    </Button>
+                  </Box>
+                </Stack>
+              </Box>
+            </form>
+          </Paper>
+        </DialogContent>
+        <DialogActions>
+          <Button disabled={isLoading} onClick={resetForm}>
+            ปิด
+          </Button>
+        </DialogActions>
+      </Dialog>
       {/* Authors List */}
       <Paper
         sx={{
@@ -535,27 +598,60 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
           overflow: "hidden",
         }}
       >
-        <Box sx={{ px: 3, py: 2.5, borderBottom: `1px solid ${dashboardTokens.border}`, bgcolor: "rgba(255,255,255,0.02)" }}>
+        <Box
+          sx={{
+            px: 3,
+            py: 2.5,
+            borderBottom: `1px solid ${dashboardTokens.border}`,
+            bgcolor: "rgba(255,255,255,0.02)",
+          }}
+        >
           <Typography
             variant="subtitle1"
-            sx={{ fontWeight: 900, color: "#fafafa", textTransform: "none", fontSize: "0.85rem", letterSpacing: "0" }}
+            sx={{
+              fontWeight: 900,
+              color: "#fafafa",
+              textTransform: "none",
+              fontSize: "0.85rem",
+              letterSpacing: "0",
+            }}
           >
             รายชื่อผู้แต่ง ({authors.length})
           </Typography>
         </Box>
         <TableContainer>
-          <Table>
+          <Table className="admin-work-table" aria-label="รายการผู้แต่ง">
             <TableHead>
               <TableRow sx={{ bgcolor: "rgba(0,0,0,0.2)" }}>
-                <TableCell sx={{ fontWeight: 800, color: "#a3a3a3", fontSize: "0.75rem", letterSpacing: "0" }}>
+                <TableCell
+                  sx={{
+                    fontWeight: 800,
+                    color: "#a3a3a3",
+                    fontSize: "0.75rem",
+                    letterSpacing: "0",
+                  }}
+                >
                   ชื่อ
                 </TableCell>
-                <TableCell sx={{ fontWeight: 800, color: "#a3a3a3", fontSize: "0.75rem", letterSpacing: "0" }}>
+                <TableCell
+                  sx={{
+                    fontWeight: 800,
+                    color: "#a3a3a3",
+                    fontSize: "0.75rem",
+                    letterSpacing: "0",
+                  }}
+                >
                   ช่องทาง
                 </TableCell>
                 <TableCell
                   align="right"
-                  sx={{ fontWeight: 800, color: "#a3a3a3", fontSize: "0.75rem", letterSpacing: "0", width: 120 }}
+                  sx={{
+                    fontWeight: 800,
+                    color: "#a3a3a3",
+                    fontSize: "0.75rem",
+                    letterSpacing: "0",
+                    width: 120,
+                  }}
                 >
                   จัดการ
                 </TableCell>
@@ -572,19 +668,20 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                       "&:hover": { bgcolor: "rgba(255,255,255,0.02)" },
                     }}
                   >
-                    <TableCell>
+                    <TableCell data-label="ผู้แต่ง">
                       <Typography sx={{ fontWeight: 500, color: "#fafafa" }}>
                         {author.name}
                       </Typography>
                     </TableCell>
-                    <TableCell>
+                    <TableCell data-label="ช่องทาง">
                       <Stack
                         direction="row"
                         spacing={0.5}
                         sx={{
                           flexWrap: "wrap",
-                          gap: 0.5
-                        }}>
+                          gap: 0.5,
+                        }}
+                      >
                         {links.length > 0 ? (
                           links.map((link, i) => (
                             <Chip
@@ -612,7 +709,10 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                               sx={{
                                 bgcolor: dashboardTokens.surfaceAlt,
                                 color: dashboardTokens.textMuted,
-                                "&:hover": { bgcolor: dashboardTokens.surfaceMuted, color: dashboardTokens.text },
+                                "&:hover": {
+                                  bgcolor: dashboardTokens.surfaceMuted,
+                                  color: dashboardTokens.text,
+                                },
                                 borderRadius: 0.75,
                               }}
                             />
@@ -624,7 +724,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                         )}
                       </Stack>
                     </TableCell>
-                    <TableCell align="right">
+                    <TableCell data-label="จัดการ" align="right">
                       <Tooltip title="แก้ไข">
                         <IconButton
                           onClick={() => handleEdit(author)}
@@ -680,12 +780,14 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
               borderRadius: 1.25,
               border: `1px solid ${dashboardTokens.border}`,
               backgroundImage: "none",
-              boxShadow: "none"
+              boxShadow: "none",
             },
-          }
+          },
         }}
       >
-        <DialogTitle sx={{ fontWeight: 900, letterSpacing: "0", fontSize: "1rem" }}>
+        <DialogTitle
+          sx={{ fontWeight: 900, letterSpacing: "0", fontSize: "1rem" }}
+        >
           ยืนยันการลบ
         </DialogTitle>
         <DialogContent>
@@ -696,14 +798,25 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
         <DialogActions sx={{ p: 2.5, bgcolor: "rgba(0,0,0,0.2)" }}>
           <Button
             onClick={() => setDeleteDialogOpen(false)}
-            sx={{ color: "#a3a3a3", fontWeight: 800, textTransform: "none", fontSize: "0.75rem" }}
+            sx={{
+              color: "#a3a3a3",
+              fontWeight: 800,
+              textTransform: "none",
+              fontSize: "0.75rem",
+            }}
           >
             ยกเลิก
           </Button>
           <Button
             onClick={handleDeleteConfirm}
             variant="contained"
-            sx={{ bgcolor: "#ef4444", color: "#fff", fontWeight: 900, "&:hover": { bgcolor: "#dc2626" }, px: 3 }}
+            sx={{
+              bgcolor: "#ef4444",
+              color: "#fff",
+              fontWeight: 900,
+              "&:hover": { bgcolor: "#dc2626" },
+              px: 3,
+            }}
           >
             ลบ
           </Button>

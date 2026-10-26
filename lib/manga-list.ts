@@ -49,11 +49,15 @@ export const getAuthorProfile = unstable_cache(
             SELECT 1 FROM public.manga_contributors mc
             WHERE mc.manga_id = "manga"."id"
               AND mc.author_id = ${author?.id ?? "00000000-0000-0000-0000-000000000000"}
-          ))`
-        )
+          ))`,
+        ),
       );
 
-    let parsedSocialLinks: Array<{ url: string; label: string; icon?: string }> | null = null;
+    let parsedSocialLinks: Array<{
+      url: string;
+      label: string;
+      icon?: string;
+    }> | null = null;
     if (author?.socialLinks) {
       try {
         const parsed = JSON.parse(author.socialLinks);
@@ -74,7 +78,7 @@ export const getAuthorProfile = unstable_cache(
     };
   },
   ["author-profile"],
-  { revalidate: 300, tags: ["authors", "manga-list"] }
+  { revalidate: 300, tags: ["authors", "manga-list"] },
 );
 
 const mangaCardColumns = {
@@ -85,7 +89,9 @@ const mangaCardColumns = {
   viewCount: mangaTable.viewCount,
   averageRating: mangaTable.averageRating,
   categoryId: mangaTable.categoryId,
-  authorName: sql<string | null>`coalesce(${authorsTable.name}, ${mangaTable.authorName})`,
+  authorName: sql<
+    string | null
+  >`coalesce(${authorsTable.name}, ${mangaTable.authorName})`,
 };
 
 type MangaCardRow = {
@@ -128,8 +134,60 @@ async function attachTagsToMangaRows(rows: MangaCardRow[]) {
   }));
 }
 
+// A single bounded public lookup validates restored browser lists after content withdrawal.
+export const getPublicMangaCardsByIds = unstable_cache(
+  async (ids: string[]) => {
+    if (!ids.length) return [];
+    const rows = await db
+      .select({ ...mangaCardColumns, categoryName: categoriesTable.name })
+      .from(mangaTable)
+      .leftJoin(authorsTable, eq(authorsTable.id, mangaTable.authorId))
+      .leftJoin(categoriesTable, eq(categoriesTable.id, mangaTable.categoryId))
+      .where(and(inArray(mangaTable.id, ids), eq(mangaTable.isHidden, false)));
+    const cards = await attachTagsToMangaRows(rows);
+    const byId = new Map(cards.map((card) => [card.id, card]));
+    return ids.flatMap((id) => (byId.has(id) ? [byId.get(id)!] : []));
+  },
+  ["public-card-restore-v1"],
+  { revalidate: 300, tags: ["manga-list"] },
+);
+
+export const getRelatedManga = unstable_cache(
+  async (id: string) => {
+    const [source] = await db
+      .select({
+        authorId: mangaTable.authorId,
+        authorName: mangaTable.authorName,
+      })
+      .from(mangaTable)
+      .where(and(eq(mangaTable.id, id), eq(mangaTable.isHidden, false)))
+      .limit(1);
+    if (!source) return null;
+    const rows = await db
+      .select({ ...mangaCardColumns, categoryName: categoriesTable.name })
+      .from(mangaTable)
+      .leftJoin(authorsTable, eq(authorsTable.id, mangaTable.authorId))
+      .leftJoin(categoriesTable, eq(categoriesTable.id, mangaTable.categoryId))
+      .where(
+        and(
+          eq(mangaTable.isHidden, false),
+          sql`${mangaTable.id} <> ${id}`,
+          sql`(
+      ${source.authorId ? eq(mangaTable.authorId, source.authorId) : source.authorName ? eq(mangaTable.authorName, source.authorName) : sql`false`}
+      OR EXISTS (SELECT 1 FROM public.manga_tags candidate INNER JOIN public.manga_tags source_tag ON source_tag.tag_id=candidate.tag_id WHERE candidate.manga_id=${mangaTable.id} AND source_tag.manga_id=${id})
+    )`,
+        ),
+      )
+      .orderBy(desc(mangaTable.createdAt), desc(mangaTable.id))
+      .limit(4);
+    return attachTagsToMangaRows(rows);
+  },
+  ["related-manga-v1"],
+  { revalidate: 300, tags: ["manga-list"] },
+);
+
 export const getMangasByCategoryName = unstable_cache(
-  async (categoryName: string) => {
+  async (categoryName: string, page = 1) => {
     const rows = await db
       .select({
         ...mangaCardColumns,
@@ -137,17 +195,16 @@ export const getMangasByCategoryName = unstable_cache(
       })
       .from(mangaTable)
       .leftJoin(authorsTable, eq(authorsTable.id, mangaTable.authorId))
-      .innerJoin(
-        categoriesTable,
-        eq(categoriesTable.id, mangaTable.categoryId)
-      )
+      .innerJoin(categoriesTable, eq(categoriesTable.id, mangaTable.categoryId))
       .where(
         and(
           eq(categoriesTable.name, categoryName),
-          eq(mangaTable.isHidden, false)
-        )
+          eq(mangaTable.isHidden, false),
+        ),
       )
-      .orderBy(desc(mangaTable.createdAt), desc(mangaTable.id));
+      .orderBy(desc(mangaTable.createdAt), desc(mangaTable.id))
+      .offset((Math.min(Math.max(page, 1), 10000) - 1) * 12)
+      .limit(13);
 
     if (!rows.length) {
       const [category] = await db
@@ -156,20 +213,23 @@ export const getMangasByCategoryName = unstable_cache(
         .where(eq(categoriesTable.name, categoryName))
         .limit(1);
 
-      return category ? { name: category.name, mangas: [] } : null;
+      return category
+        ? { name: category.name, mangas: [], hasMore: false }
+        : null;
     }
 
     return {
       name: rows[0].categoryName,
-      mangas: await attachTagsToMangaRows(rows),
+      mangas: await attachTagsToMangaRows(rows.slice(0, 12)),
+      hasMore: rows.length > 12,
     };
   },
   ["manga-list-by-category"],
-  { revalidate: 3600, tags: ["manga-list"] }
+  { revalidate: 3600, tags: ["manga-list"] },
 );
 
 export const getMangasByTagName = unstable_cache(
-  async (tagName: string) => {
+  async (tagName: string, page = 1) => {
     const rows = await db
       .select({
         ...mangaCardColumns,
@@ -177,19 +237,13 @@ export const getMangasByTagName = unstable_cache(
       })
       .from(mangaTable)
       .leftJoin(authorsTable, eq(authorsTable.id, mangaTable.authorId))
-      .innerJoin(
-        mangaTagsTable,
-        eq(mangaTagsTable.mangaId, mangaTable.id)
-      )
+      .innerJoin(mangaTagsTable, eq(mangaTagsTable.mangaId, mangaTable.id))
       .innerJoin(tagsTable, eq(tagsTable.id, mangaTagsTable.tagId))
-      .leftJoin(
-        categoriesTable,
-        eq(categoriesTable.id, mangaTable.categoryId)
-      )
-      .where(
-        and(eq(tagsTable.name, tagName), eq(mangaTable.isHidden, false))
-      )
-      .orderBy(desc(mangaTable.createdAt), desc(mangaTable.id));
+      .leftJoin(categoriesTable, eq(categoriesTable.id, mangaTable.categoryId))
+      .where(and(eq(tagsTable.name, tagName), eq(mangaTable.isHidden, false)))
+      .orderBy(desc(mangaTable.createdAt), desc(mangaTable.id))
+      .offset((Math.min(Math.max(page, 1), 10000) - 1) * 12)
+      .limit(13);
 
     if (!rows.length) {
       const [tag] = await db
@@ -198,16 +252,17 @@ export const getMangasByTagName = unstable_cache(
         .where(eq(tagsTable.name, tagName))
         .limit(1);
 
-      return tag ? { name: tag.name, mangas: [] } : null;
+      return tag ? { name: tag.name, mangas: [], hasMore: false } : null;
     }
 
     return {
       name: tagName,
-      mangas: await attachTagsToMangaRows(rows),
+      mangas: await attachTagsToMangaRows(rows.slice(0, 12)),
+      hasMore: rows.length > 12,
     };
   },
   ["manga-list-by-tag-v2"],
-  { revalidate: 3600, tags: ["manga-list"] }
+  { revalidate: 3600, tags: ["manga-list"] },
 );
 
 const getCachedMangasWithPagination = unstable_cache(
@@ -219,7 +274,7 @@ const getCachedMangasWithPagination = unstable_cache(
     tagNames?: string[],
     sort?: string,
     excludeTagIds?: string[],
-    author?: string
+    author?: string,
   ) => {
     const offset = (page - 1) * pageSize;
     const conditions = [eq(mangaTable.isHidden, false)];
@@ -235,7 +290,7 @@ const getCachedMangasWithPagination = unstable_cache(
           INNER JOIN public.authors ca ON ca.id = mc.author_id
           WHERE mc.manga_id = "manga"."id"
             AND lower(ca.name) = lower(${author.trim()})
-        ))`
+        ))`,
       );
     }
 
@@ -246,7 +301,7 @@ const getCachedMangasWithPagination = unstable_cache(
           INNER JOIN public.authors ca ON ca.id = mc.author_id
           WHERE mc.manga_id = "manga"."id"
             AND ca.name ILIKE ${literalSearchPattern(search)}
-        ))`
+        ))`,
       );
     }
     if (categoryId && categoryId !== "all") {
@@ -291,8 +346,8 @@ const getCachedMangasWithPagination = unstable_cache(
         conditions.push(
           sql`${mangaTable.id} NOT IN (${sql.join(
             excludedMangaIds.map((id) => sql`${id}`),
-            sql`, `
-          )})`
+            sql`, `,
+          )})`,
         );
       }
     }
@@ -306,7 +361,9 @@ const getCachedMangasWithPagination = unstable_cache(
         viewCount: mangaTable.viewCount,
         averageRating: mangaTable.averageRating,
         categoryId: mangaTable.categoryId,
-        authorName: sql<string | null>`coalesce(${authorsTable.name}, ${mangaTable.authorName})`,
+        authorName: sql<
+          string | null
+        >`coalesce(${authorsTable.name}, ${mangaTable.authorName})`,
       })
       .from(mangaTable)
       .leftJoin(authorsTable, eq(authorsTable.id, mangaTable.authorId))
@@ -322,7 +379,7 @@ const getCachedMangasWithPagination = unstable_cache(
       ...new Set(
         visibleRows
           .map((manga) => manga.categoryId)
-          .filter((id): id is string => Boolean(id))
+          .filter((id): id is string => Boolean(id)),
       ),
     ];
 
@@ -346,8 +403,13 @@ const getCachedMangasWithPagination = unstable_cache(
         : Promise.resolve([]),
     ]);
 
-    const categoriesById = new Map(categoryRows.map((category) => [category.id, category]));
-    const tagsByMangaId = new Map<string, Array<{ id: string; name: string }>>();
+    const categoriesById = new Map(
+      categoryRows.map((category) => [category.id, category]),
+    );
+    const tagsByMangaId = new Map<
+      string,
+      Array<{ id: string; name: string }>
+    >();
 
     for (const tag of tagRows) {
       const mangaTags = tagsByMangaId.get(tag.mangaId) ?? [];
@@ -357,7 +419,9 @@ const getCachedMangasWithPagination = unstable_cache(
 
     const mangas = visibleRows.map((manga) => ({
       ...manga,
-      category: manga.categoryId ? categoriesById.get(manga.categoryId) ?? null : null,
+      category: manga.categoryId
+        ? (categoriesById.get(manga.categoryId) ?? null)
+        : null,
       tags: tagsByMangaId.get(manga.id) ?? [],
     }));
     const total = offset + mangas.length + (hasMore ? 1 : 0);
@@ -371,15 +435,38 @@ const getCachedMangasWithPagination = unstable_cache(
     };
   },
   ["manga-list-v3"],
-  { revalidate: 300, tags: ["manga-list"] }
+  { revalidate: 300, tags: ["manga-list"] },
 );
 
 /** Normalize before the cache boundary so equivalent filters share one key. */
 export function getMangasWithPagination(
-  page: number, pageSize: number, search?: string, categoryId?: string,
-  tagNames?: string[], sort?: string, excludeTagIds?: string[], author?: string
+  page: number,
+  pageSize: number,
+  search?: string,
+  categoryId?: string,
+  tagNames?: string[],
+  sort?: string,
+  excludeTagIds?: string[],
+  author?: string,
 ) {
-  const query = normalizeMangaQuery({ page, pageSize, search, categoryId, tagNames, sort, excludeTagIds, author });
-  return getCachedMangasWithPagination(query.page, query.pageSize, query.search, query.categoryId,
-    query.tagNames, query.sort, query.excludeTagIds, query.author);
+  const query = normalizeMangaQuery({
+    page,
+    pageSize,
+    search,
+    categoryId,
+    tagNames,
+    sort,
+    excludeTagIds,
+    author,
+  });
+  return getCachedMangasWithPagination(
+    query.page,
+    query.pageSize,
+    query.search,
+    query.categoryId,
+    query.tagNames,
+    query.sort,
+    query.excludeTagIds,
+    query.author,
+  );
 }

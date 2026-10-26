@@ -82,6 +82,7 @@ export interface VoteCommentInput {
 }
 
 export interface ListCommentsOptions {
+  includeReplies?: boolean;
   mangaId: string;
   imageIndex?: number | null;
   cursor?: string | null;
@@ -117,6 +118,7 @@ export interface CommentItem {
   votes?: CommentVote[];
   replies?: CommentItem[];
   repliesNextCursor?: string | null;
+  replyCount?: number;
 }
 
 export interface CommentVoteResult {

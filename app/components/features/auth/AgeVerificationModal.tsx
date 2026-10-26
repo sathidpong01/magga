@@ -23,6 +23,7 @@ export default function AgeVerificationModal() {
 
   const handleVerify = () => {
     localStorage.setItem("isAgeVerified", "true");
+    window.dispatchEvent(new Event("magga-age-verified"));
     setOpen(false);
   };
 

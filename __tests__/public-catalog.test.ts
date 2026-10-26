@@ -29,7 +29,7 @@ mock.module("next/cache", () => ({
   revalidatePath: (path: string) => { refreshedPaths.push(path); },
 }));
 
-const { getMangasWithPagination, getMangasByTagName, getMangasByCategoryName } = await import("@/lib/manga-list");
+const { getMangasWithPagination, getMangasByTagName, getMangasByCategoryName, getPublicMangaCardsByIds,getRelatedManga } = await import("@/lib/manga-list");
 const { invalidateMangaContent } = await import("@/lib/manga-invalidation");
 const { GET: listGET } = await import("@/app/api/manga/list/route");
 const { GET: searchGET } = await import("@/app/api/search/route");
@@ -65,6 +65,26 @@ beforeEach(async () => {
 afterAll(() => client.close());
 
 describe("public catalog SQL and cache dependencies", () => {
+  it("bounds taxonomy batches and uses stable continuation without hidden works",async()=>{
+    for(let i=10;i<=29;i++){
+      await client.query("INSERT INTO manga(id,slug,title,category_id) VALUES($1,$2,'extra',$3)",[id(i),`extra-${i}`,id(100)]);
+      await client.query("INSERT INTO manga_tags VALUES($1,$2)",[id(i),id(200)]);
+    }
+    for(const lookup of [()=>getMangasByCategoryName("100%ไทย",1),()=>getMangasByTagName("A,B",1)]){
+      const first=await lookup();expect(first?.mangas).toHaveLength(12);expect(first?.hasMore).toBe(true);
+    }
+    const first=await getMangasByCategoryName("100%ไทย",1);const second=await getMangasByCategoryName("100%ไทย",2);
+    expect(new Set([...first!.mangas,...second!.mangas].map(item=>item.id)).size).toBe(24);
+  });
+  it("withdraws restored and related public cards after invalidation",async()=>{
+    expect((await getPublicMangaCardsByIds([id(1),id(9)])).map(item=>item.id)).toEqual([id(1)]);
+    expect(await getRelatedManga(id(9))).toBeNull();
+    expect((await getRelatedManga(id(1)))!.length).toBeLessThanOrEqual(4);
+    await client.query("UPDATE manga SET is_hidden=true WHERE id=$1",[id(1)]);
+    invalidateMangaContent();
+    expect(await getPublicMangaCardsByIds([id(1)])).toEqual([]);
+    expect(await getRelatedManga(id(1))).toBeNull();
+  });
   it("has stable ordering across equal timestamps, with a consistent raw dataset on every page", async () => {
     const first = await getMangasWithPagination(1, 3);
     const second = await getMangasWithPagination(2, 3);

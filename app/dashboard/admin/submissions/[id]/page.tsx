@@ -1,36 +1,11 @@
 "use client";
 
+import { useDashboardReturn } from "@/app/components/dashboard/DashboardListMemory";
 import SubmissionDetailLoading from "./loading";
 
 import { useState, useEffect, useRef, use } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Box,
-  Typography,
-  Paper,
-  Grid,
-  Button,
-  TextField,
-  Chip,
-  Stack,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormControlLabel,
-  Switch,
-  CircularProgress,
-  Alert,
-  Divider,
-  Avatar,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Autocomplete,
-  IconButton,
-  Tooltip,
-} from "@mui/material";
+import { Box, Typography, Paper, Grid, Button, TextField, Chip, Stack, Dialog, DialogTitle, DialogContent, DialogActions, FormControlLabel, Switch, CircularProgress, Alert, Divider, Avatar, Select, MenuItem, FormControl, InputLabel, Autocomplete } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -39,14 +14,11 @@ import PersonIcon from "@mui/icons-material/Person";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import ImageIcon from "@mui/icons-material/Image";
 import DescriptionIcon from "@mui/icons-material/Description";
-import LocalOfferIcon from "@mui/icons-material/LocalOffer";
-import CategoryIcon from "@mui/icons-material/Category";
+
+
 import { authFetch } from "@/lib/auth-fetch";
 import Image from "next/image";
-import {
-  dashboardTokens,
-  dashboardRadii,
-} from "@/app/components/dashboard/system";
+import { dashboardTokens, dashboardRadii } from "@/app/components/dashboard/system";
 
 type Category = { id: string; name: string };
 type Tag = { id: string; name: string };
@@ -60,6 +32,7 @@ export default function SubmissionDetailPage({
   const submissionId = resolvedParams.id;
 
   const router = useRouter();
+  const returnTo = useDashboardReturn("/dashboard/admin/submissions");
   const [submission, setSubmission] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -105,7 +78,9 @@ export default function SubmissionDetailPage({
     const fetchData = async () => {
       try {
         const [subRes, catRes, tagRes] = await Promise.all([
-          authFetch(`/api/admin/submissions/${submissionId}`, { signal: controller.signal }),
+          authFetch(`/api/admin/submissions/${submissionId}`, {
+            signal: controller.signal,
+          }),
           fetch("/api/categories", { signal: controller.signal }),
           fetch("/api/tags", { signal: controller.signal }),
         ]);
@@ -159,7 +134,9 @@ export default function SubmissionDetailPage({
 
       if (controller.signal.aborted) return;
       setIsEditing(false);
-      const subRes = await authFetch(`/api/admin/submissions/${submissionId}`, { signal: controller.signal });
+      const subRes = await authFetch(`/api/admin/submissions/${submissionId}`, {
+        signal: controller.signal,
+      });
       if (subRes.ok) {
         const data = await subRes.json();
         if (!controller.signal.aborted) setSubmission(data);
@@ -187,7 +164,7 @@ export default function SubmissionDetailPage({
           signal: controller.signal,
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ reviewNote, publishImmediately }),
-        }
+        },
       );
 
       if (!res.ok) {
@@ -223,7 +200,7 @@ export default function SubmissionDetailPage({
           signal: controller.signal,
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ rejectionReason, reviewNote }),
-        }
+        },
       );
 
       if (!res.ok) throw new Error("Failed to reject");
@@ -299,25 +276,32 @@ export default function SubmissionDetailPage({
           borderRadius: dashboardRadii.surface,
           border: `1px solid ${dashboardTokens.border}`,
           boxShadow: "none",
-          backgroundImage: "none"
+          backgroundImage: "none",
         }}
       >
         <Button
           startIcon={<ArrowBackIcon />}
-          onClick={() => router.back()}
-          sx={{ 
-            mb: 3, 
+          onClick={() => router.push(returnTo(), { scroll: false })}
+          sx={{
+            mb: 3,
             color: dashboardTokens.textMuted,
             fontWeight: 800,
             fontSize: "0.75rem",
             letterSpacing: "0.05em",
-            "&:hover": { color: dashboardTokens.accent }
+            "&:hover": { color: dashboardTokens.accent },
           }}
         >
           กลับหน้ารายการ
         </Button>
 
-        <Box sx={{ display: "flex", gap: 3, alignItems: "flex-start", flexWrap: { xs: "wrap", md: "nowrap" } }}>
+        <Box
+          sx={{
+            display: "flex",
+            gap: 3,
+            alignItems: "flex-start",
+            flexWrap: { xs: "wrap", md: "nowrap" },
+          }}
+        >
           {/* Cover Thumbnail */}
           <Box
             sx={{
@@ -340,14 +324,21 @@ export default function SubmissionDetailPage({
           </Box>
 
           {/* Title & Meta */}
-          <Box sx={{ flex: 1, minWidth: 0, flexBasis: { xs: "100%", sm: 0 }, overflowWrap: "anywhere" }}>
-            <Typography 
-              variant="h4" 
-              sx={{ 
-                fontWeight: 900, 
+          <Box
+            sx={{
+              flex: 1,
+              minWidth: 0,
+              flexBasis: { xs: "100%", sm: 0 },
+              overflowWrap: "anywhere",
+            }}
+          >
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 900,
                 letterSpacing: "-0.02em",
                 color: dashboardTokens.text,
-                lineHeight: 1.2
+                lineHeight: 1.2,
               }}
             >
               {submission.title}
@@ -360,19 +351,25 @@ export default function SubmissionDetailPage({
                 alignItems: "center",
                 mb: 2,
                 mt: 1,
-              }}>
+              }}
+            >
               <Chip
                 label={submission.status}
-                sx={{ 
-                  fontWeight: 900, 
+                sx={{
+                  fontWeight: 900,
                   fontSize: "0.65rem",
                   letterSpacing: "0.05em",
                   borderRadius: dashboardRadii.compact,
                   bgcolor: statusInfo.bg,
-                  color: statusInfo.color === "success" ? "#4ade80" : 
-                         statusInfo.color === "error" ? "#f87171" :
-                         statusInfo.color === "warning" ? dashboardTokens.accent : dashboardTokens.textMuted,
-                  border: `1px solid ${dashboardTokens.border}`
+                  color:
+                    statusInfo.color === "success"
+                      ? "#4ade80"
+                      : statusInfo.color === "error"
+                        ? "#f87171"
+                        : statusInfo.color === "warning"
+                          ? dashboardTokens.accent
+                          : dashboardTokens.textMuted,
+                  border: `1px solid ${dashboardTokens.border}`,
                 }}
               />
               <Box
@@ -384,20 +381,23 @@ export default function SubmissionDetailPage({
                 }}
               >
                 <CalendarTodayIcon sx={{ fontSize: 16 }} />
-                <Typography 
-                  variant="body2" 
-                  sx={{ 
-                    fontFamily: "monospace", 
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontFamily: "monospace",
                     fontSize: "0.85rem",
                     fontWeight: 700,
-                    color: dashboardTokens.textMuted
+                    color: dashboardTokens.textMuted,
                   }}
                 >
-                  {new Date(submission.submittedAt).toLocaleDateString("th-TH", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric"
-                  })}
+                  {new Date(submission.submittedAt).toLocaleDateString(
+                    "th-TH",
+                    {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    },
+                  )}
                 </Typography>
               </Box>
             </Stack>
@@ -409,11 +409,14 @@ export default function SubmissionDetailPage({
                 display: "flex",
                 alignItems: "center",
                 gap: 1,
-                mb: 3
+                mb: 3,
               }}
             >
               ส่งโดย:{" "}
-              <Box component="span" sx={{ color: dashboardTokens.text, fontWeight: 700 }}>
+              <Box
+                component="span"
+                sx={{ color: dashboardTokens.text, fontWeight: 700 }}
+              >
                 {submission.user.name || submission.user.username}
               </Box>{" "}
               ({submission.user.email})
@@ -428,13 +431,16 @@ export default function SubmissionDetailPage({
                   color="error"
                   startIcon={<CancelIcon />}
                   onClick={() => setRejectOpen(true)}
-                  sx={{ 
-                    borderRadius: dashboardRadii.button, 
+                  sx={{
+                    borderRadius: dashboardRadii.button,
                     px: 3,
                     fontWeight: 800,
                     borderColor: "rgba(239, 68, 68, 0.4)",
                     color: "#f87171",
-                    "&:hover": { borderColor: "#ef4444", bgcolor: "rgba(239, 68, 68, 0.05)" }
+                    "&:hover": {
+                      borderColor: "#ef4444",
+                      bgcolor: "rgba(239, 68, 68, 0.05)",
+                    },
                   }}
                 >
                   ปฏิเสธ
@@ -443,13 +449,13 @@ export default function SubmissionDetailPage({
                   variant="contained"
                   startIcon={<CheckCircleIcon />}
                   onClick={() => setApproveOpen(true)}
-                  sx={{ 
-                    borderRadius: dashboardRadii.button, 
+                  sx={{
+                    borderRadius: dashboardRadii.button,
                     px: 3,
                     fontWeight: 900,
                     bgcolor: dashboardTokens.accent,
                     color: "#000",
-                    "&:hover": { bgcolor: dashboardTokens.accentStrong }
+                    "&:hover": { bgcolor: dashboardTokens.accentStrong },
                   }}
                 >
                   อนุมัติ
@@ -462,7 +468,7 @@ export default function SubmissionDetailPage({
 
       <Grid container spacing={3}>
         {/* Left Column */}
-<Grid   size={{ xs: 12, lg: 8 }}>
+        <Grid size={{ xs: 12, lg: 8 }}>
           {/* Description Card */}
           <Paper
             sx={{
@@ -472,7 +478,7 @@ export default function SubmissionDetailPage({
               borderRadius: dashboardRadii.surface,
               border: `1px solid ${dashboardTokens.border}`,
               boxShadow: "none",
-              backgroundImage: "none"
+              backgroundImage: "none",
             }}
           >
             <Box
@@ -484,14 +490,16 @@ export default function SubmissionDetailPage({
               }}
             >
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <DescriptionIcon sx={{ color: dashboardTokens.accent, fontSize: 20 }} />
-                <Typography 
-                  variant="h6" 
-                  sx={{ 
-                    fontWeight: 900, 
+                <DescriptionIcon
+                  sx={{ color: dashboardTokens.accent, fontSize: 20 }}
+                />
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 900,
                     letterSpacing: "0.02em",
                     fontSize: "0.95rem",
-                    color: dashboardTokens.text
+                    color: dashboardTokens.text,
                   }}
                 >
                   รายละเอียด
@@ -504,7 +512,11 @@ export default function SubmissionDetailPage({
                     size="small"
                     startIcon={<EditIcon />}
                     onClick={() => setIsEditing(true)}
-                    sx={{ fontWeight: 800, color: dashboardTokens.accent, fontSize: "0.75rem" }}
+                    sx={{
+                      fontWeight: 800,
+                      color: dashboardTokens.accent,
+                      fontSize: "0.75rem",
+                    }}
                   >
                     แก้ไข
                   </Button>
@@ -525,7 +537,7 @@ export default function SubmissionDetailPage({
                     input: {
                       disableUnderline: true,
                       sx: { borderRadius: 1 },
-                    }
+                    },
                   }}
                 />
                 <TextField
@@ -540,7 +552,7 @@ export default function SubmissionDetailPage({
                     input: {
                       disableUnderline: true,
                       sx: { borderRadius: 1 },
-                    }
+                    },
                   }}
                 />
                 <TextField
@@ -557,11 +569,11 @@ export default function SubmissionDetailPage({
                     input: {
                       disableUnderline: true,
                       sx: { borderRadius: 1 },
-                    }
+                    },
                   }}
                 />
                 <Grid container spacing={2}>
-<Grid   size={{ xs: 12, md: 6 }}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <FormControl fullWidth variant="filled">
                       <InputLabel>หมวดหมู่</InputLabel>
                       <Select
@@ -586,7 +598,7 @@ export default function SubmissionDetailPage({
                       </Select>
                     </FormControl>
                   </Grid>
-<Grid   size={{ xs: 12, md: 6 }}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <Autocomplete
                       multiple
                       options={tags}
@@ -610,7 +622,7 @@ export default function SubmissionDetailPage({
                               ...params.slotProps.input,
                               disableUnderline: true,
                               sx: { borderRadius: 1 },
-                            }
+                            },
                           }}
                         />
                       )}
@@ -672,15 +684,17 @@ export default function SubmissionDetailPage({
               border: `1px solid ${dashboardTokens.border}`,
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
+            <Box
+              sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}
+            >
               <ImageIcon sx={{ color: dashboardTokens.accent, fontSize: 20 }} />
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  fontWeight: 900, 
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 900,
                   letterSpacing: "0.02em",
                   fontSize: "0.95rem",
-                  color: dashboardTokens.text
+                  color: dashboardTokens.text,
                 }}
               >
                 ตัวอย่างหน้า
@@ -688,8 +702,8 @@ export default function SubmissionDetailPage({
               <Chip
                 label={`${pages.length} หน้า`}
                 size="small"
-                sx={{ 
-                  ml: 1.5, 
+                sx={{
+                  ml: 1.5,
                   bgcolor: dashboardTokens.surfaceMuted,
                   color: dashboardTokens.textMuted,
                   fontWeight: 800,
@@ -725,6 +739,7 @@ export default function SubmissionDetailPage({
                 >
                   <Image
                     src={url}
+                    loading="lazy"
                     alt={`หน้า ${idx + 1}`}
                     fill
                     sizes="120px"
@@ -743,9 +758,12 @@ export default function SubmissionDetailPage({
                       textAlign: "center",
                     }}
                   >
-                    <Typography variant="caption" sx={{
-                      fontWeight: 600
-                    }}>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontWeight: 600,
+                      }}
+                    >
                       {idx + 1}
                     </Typography>
                   </Box>
@@ -754,7 +772,15 @@ export default function SubmissionDetailPage({
             </Box>
 
             {pages.length === 0 && (
-              <Box sx={{ p: 4, textAlign: "center", color: dashboardTokens.textMuted, fontWeight: 700, fontSize: "0.85rem" }}>
+              <Box
+                sx={{
+                  p: 4,
+                  textAlign: "center",
+                  color: dashboardTokens.textMuted,
+                  fontWeight: 700,
+                  fontSize: "0.85rem",
+                }}
+              >
                 ไม่มีตัวอย่างหน้า
               </Box>
             )}
@@ -762,7 +788,10 @@ export default function SubmissionDetailPage({
         </Grid>
 
         {/* Right Column */}
-<Grid   size={{ xs: 12, lg: 4 }}>
+        <Grid
+          size={{ xs: 12, lg: 4 }}
+          sx={{ position: { lg: "sticky" }, top: 24, alignSelf: "start" }}
+        >
           {/* Submitter Card */}
           <Paper
             sx={{
@@ -772,18 +801,22 @@ export default function SubmissionDetailPage({
               borderRadius: dashboardRadii.surface,
               border: `1px solid ${dashboardTokens.border}`,
               boxShadow: "none",
-              backgroundImage: "none"
+              backgroundImage: "none",
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}>
-              <PersonIcon sx={{ color: dashboardTokens.accent, fontSize: 20 }} />
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  fontWeight: 900, 
+            <Box
+              sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}
+            >
+              <PersonIcon
+                sx={{ color: dashboardTokens.accent, fontSize: 20 }}
+              />
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 900,
                   letterSpacing: "0.02em",
                   fontSize: "0.95rem",
-                  color: dashboardTokens.text
+                  color: dashboardTokens.text,
                 }}
               >
                 ข้อมูลผู้ส่ง
@@ -801,16 +834,22 @@ export default function SubmissionDetailPage({
                 }}
               />
               <Box>
-                <Typography variant="subtitle1" sx={{
-                  fontWeight: 600
-                }}>
+                <Typography
+                  variant="subtitle1"
+                  sx={{
+                    fontWeight: 600,
+                  }}
+                >
                   {submission.user.name ||
                     submission.user.username ||
                     "ไม่ระบุชื่อ"}
                 </Typography>
-                <Typography variant="body2" sx={{
-                  color: dashboardTokens.textMuted
-                }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: dashboardTokens.textMuted,
+                  }}
+                >
                   {submission.user.email}
                 </Typography>
               </Box>
@@ -826,15 +865,27 @@ export default function SubmissionDetailPage({
                 color: dashboardTokens.textMuted,
               }}
             >
-              <CalendarTodayIcon sx={{ fontSize: 16, color: dashboardTokens.accent }} />
-              <Typography component="div" variant="body2" sx={{ fontWeight: 600, fontSize: "0.80rem" }}>
+              <CalendarTodayIcon
+                sx={{ fontSize: 16, color: dashboardTokens.accent }}
+              />
+              <Typography
+                component="div"
+                variant="body2"
+                sx={{ fontWeight: 600, fontSize: "0.80rem" }}
+              >
                 สมาชิกตั้งแต่{" "}
-                <Box component="span" sx={{ fontFamily: "monospace", color: dashboardTokens.text }}>
-                  {new Date(submission.user.createdAt).toLocaleDateString("th-TH", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric"
-                  })}
+                <Box
+                  component="span"
+                  sx={{ fontFamily: "monospace", color: dashboardTokens.text }}
+                >
+                  {new Date(submission.user.createdAt).toLocaleDateString(
+                    "th-TH",
+                    {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    },
+                  )}
                 </Box>
               </Typography>
             </Box>
@@ -849,15 +900,17 @@ export default function SubmissionDetailPage({
               border: `1px solid ${dashboardTokens.border}`,
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+            <Box
+              sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}
+            >
               <ImageIcon sx={{ color: dashboardTokens.accent, fontSize: 20 }} />
-              <Typography 
-                variant="h6" 
-                sx={{ 
-                  fontWeight: 900, 
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 900,
                   letterSpacing: "0.02em",
                   fontSize: "0.95rem",
-                  color: dashboardTokens.text
+                  color: dashboardTokens.text,
                 }}
               >
                 ภาพหน้าปก
@@ -893,12 +946,20 @@ export default function SubmissionDetailPage({
         onClose={() => setPreviewImage(null)}
         maxWidth="lg"
         slotProps={{
-          paper: { sx: { bgcolor: "transparent", boxShadow: "none" } }
+          paper: { sx: { bgcolor: "transparent", boxShadow: "none" } },
         }}
       >
         <Box onClick={() => setPreviewImage(null)} sx={{ cursor: "pointer" }}>
           {previewImage && (
-            <Box sx={{ position: "relative", width: "90vw", height: "90vh", maxWidth: "1200px", maxHeight: "1200px" }}>
+            <Box
+              sx={{
+                position: "relative",
+                width: "90vw",
+                height: "90vh",
+                maxWidth: "1200px",
+                maxHeight: "1200px",
+              }}
+            >
               <Image
                 src={previewImage}
                 alt="Preview"
@@ -923,18 +984,28 @@ export default function SubmissionDetailPage({
               borderRadius: dashboardRadii.surface,
               backgroundImage: "none",
               border: `1px solid ${dashboardTokens.border}`,
-            }
-          }
+            },
+          },
         }}
       >
-        <DialogTitle sx={{ fontWeight: 900, letterSpacing: "-0.01em", fontSize: "1.1rem", color: dashboardTokens.text }}>
+        <DialogTitle
+          sx={{
+            fontWeight: 900,
+            letterSpacing: "-0.01em",
+            fontSize: "1.1rem",
+            color: dashboardTokens.text,
+          }}
+        >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
             <CheckCircleIcon sx={{ color: dashboardTokens.accent }} />
             อนุมัติคำขอส่งมังงะ
           </Box>
         </DialogTitle>
         <DialogContent>
-          <Alert severity="info" sx={{ mb: 3, borderRadius: dashboardRadii.surface }}>
+          <Alert
+            severity="info"
+            sx={{ mb: 3, borderRadius: dashboardRadii.surface }}
+          >
             การอนุมัติรายการนี้จะสร้างข้อมูลมังงะเข้าสู่ระบบทันที
           </Alert>
           <FormControlLabel
@@ -943,12 +1014,26 @@ export default function SubmissionDetailPage({
                 checked={publishImmediately}
                 onChange={(e) => setPublishImmediately(e.target.checked)}
                 sx={{
-                  "& .MuiSwitch-switchBase.Mui-checked": { color: dashboardTokens.accent },
-                  "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { bgcolor: dashboardTokens.accent }
+                  "& .MuiSwitch-switchBase.Mui-checked": {
+                    color: dashboardTokens.accent,
+                  },
+                  "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                    bgcolor: dashboardTokens.accent,
+                  },
                 }}
               />
             }
-            label={<Typography sx={{ fontWeight: 700, fontSize: "0.85rem", color: dashboardTokens.textMuted }}>เผยแพร่ทันทีหลังอนุมัติ</Typography>}
+            label={
+              <Typography
+                sx={{
+                  fontWeight: 700,
+                  fontSize: "0.85rem",
+                  color: dashboardTokens.textMuted,
+                }}
+              >
+                เผยแพร่ทันทีหลังอนุมัติ
+              </Typography>
+            }
           />
           <TextField
             label="บันทึกภายใน (ไม่บังคับ)"
@@ -960,14 +1045,24 @@ export default function SubmissionDetailPage({
             sx={{ mt: 2 }}
             variant="filled"
             slotProps={{
-              input: { disableUnderline: true, sx: { borderRadius: dashboardRadii.field, bgcolor: dashboardTokens.surfaceMuted } }
+              input: {
+                disableUnderline: true,
+                sx: {
+                  borderRadius: dashboardRadii.field,
+                  bgcolor: dashboardTokens.surfaceMuted,
+                },
+              },
             }}
           />
         </DialogContent>
         <DialogActions sx={{ p: 2.5, bgcolor: "rgba(0,0,0,0.2)" }}>
           <Button
             onClick={() => setApproveOpen(false)}
-            sx={{ color: dashboardTokens.textMuted, fontWeight: 800, fontSize: "0.85rem" }}
+            sx={{
+              color: dashboardTokens.textMuted,
+              fontWeight: 800,
+              fontSize: "0.85rem",
+            }}
           >
             ยกเลิก
           </Button>
@@ -982,13 +1077,13 @@ export default function SubmissionDetailPage({
                 <CheckCircleIcon />
               )
             }
-            sx={{ 
-              px: 3, 
-              bgcolor: dashboardTokens.accent, 
-              color: "#000", 
+            sx={{
+              px: 3,
+              bgcolor: dashboardTokens.accent,
+              color: "#000",
               fontWeight: 900,
               borderRadius: dashboardRadii.button,
-              "&:hover": { bgcolor: dashboardTokens.accentStrong }
+              "&:hover": { bgcolor: dashboardTokens.accentStrong },
             }}
           >
             ยืนยันการอนุมัติ
@@ -1009,18 +1104,34 @@ export default function SubmissionDetailPage({
               borderRadius: dashboardRadii.surface,
               backgroundImage: "none",
               border: `1px solid ${dashboardTokens.border}`,
-            }
-          }
+            },
+          },
         }}
       >
-        <DialogTitle sx={{ fontWeight: 900, letterSpacing: "-0.01em", fontSize: "1.1rem", color: dashboardTokens.text }}>
+        <DialogTitle
+          sx={{
+            fontWeight: 900,
+            letterSpacing: "-0.01em",
+            fontSize: "1.1rem",
+            color: dashboardTokens.text,
+          }}
+        >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
             <CancelIcon sx={{ color: "#f87171" }} />
             ปฏิเสธคำขอส่งมังงะ
           </Box>
         </DialogTitle>
         <DialogContent>
-          <Alert severity="warning" sx={{ mb: 3, borderRadius: dashboardRadii.surface, bgcolor: dashboardTokens.accentSoft, color: dashboardTokens.accent, "& .MuiAlert-icon": { color: dashboardTokens.accent } }}>
+          <Alert
+            severity="warning"
+            sx={{
+              mb: 3,
+              borderRadius: dashboardRadii.surface,
+              bgcolor: dashboardTokens.accentSoft,
+              color: dashboardTokens.accent,
+              "& .MuiAlert-icon": { color: dashboardTokens.accent },
+            }}
+          >
             ผู้ส่งจะเห็นเหตุผลในการปฏิเสธ โปรดระบุให้ชัดเจนและสุภาพ
           </Alert>
           <TextField
@@ -1034,7 +1145,14 @@ export default function SubmissionDetailPage({
             variant="filled"
             placeholder="เช่น ภาพเบลอ ไม่ได้ขนาด หรือเนื้อหาไม่เหมาะสม..."
             slotProps={{
-              input: { disableUnderline: true, sx: { borderRadius: dashboardRadii.field, bgcolor: dashboardTokens.surfaceMuted, fontWeight: 600 } }
+              input: {
+                disableUnderline: true,
+                sx: {
+                  borderRadius: dashboardRadii.field,
+                  bgcolor: dashboardTokens.surfaceMuted,
+                  fontWeight: 600,
+                },
+              },
             }}
           />
           <TextField
@@ -1047,14 +1165,25 @@ export default function SubmissionDetailPage({
             sx={{ mt: 2 }}
             variant="filled"
             slotProps={{
-              input: { disableUnderline: true, sx: { borderRadius: dashboardRadii.field, bgcolor: dashboardTokens.surfaceMuted, fontWeight: 600 } }
+              input: {
+                disableUnderline: true,
+                sx: {
+                  borderRadius: dashboardRadii.field,
+                  bgcolor: dashboardTokens.surfaceMuted,
+                  fontWeight: 600,
+                },
+              },
             }}
           />
         </DialogContent>
         <DialogActions sx={{ p: 2.5, bgcolor: "rgba(0,0,0,0.2)" }}>
           <Button
             onClick={() => setRejectOpen(false)}
-            sx={{ color: dashboardTokens.textMuted, fontWeight: 800, fontSize: "0.85rem" }}
+            sx={{
+              color: dashboardTokens.textMuted,
+              fontWeight: 800,
+              fontSize: "0.85rem",
+            }}
           >
             ยกเลิก
           </Button>
@@ -1065,13 +1194,13 @@ export default function SubmissionDetailPage({
             startIcon={
               actionLoading ? <CircularProgress size={16} /> : <CancelIcon />
             }
-            sx={{ 
-              px: 3, 
-              bgcolor: "#ef4444", 
-              color: "#fff", 
+            sx={{
+              px: 3,
+              bgcolor: "#ef4444",
+              color: "#fff",
               fontWeight: 900,
               borderRadius: dashboardRadii.button,
-              "&:hover": { bgcolor: "#dc2626" }
+              "&:hover": { bgcolor: "#dc2626" },
             }}
           >
             ยืนยันการปฏิเสธ

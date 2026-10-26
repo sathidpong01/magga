@@ -33,6 +33,14 @@ beforeAll(async()=>{
 afterAll(async()=>pg.close());
 beforeEach(async()=>{await pg.exec(`UPDATE manga SET is_hidden=false; UPDATE comments SET status='published'; UPDATE comments SET manga_id='${mangaId}',image_index=NULL,created_at='2026-10-07T01:00:00.123000Z'::timestamptz+right(id::text,12)::integer*interval '1 microsecond' WHERE parent_id='${rootId}';`);});
 describe('public reply pagination with PostgreSQL ordering and visibility',()=>{
+  it('returns batched reply counts without reply payloads when explicitly requested',async()=>{
+    await pg.exec(`UPDATE comments SET status='pending' WHERE id='${replyId(1)}';`);
+    const page=await listComments({mangaId,limit:10,includeReplies:false});
+    const root=page.comments.find(comment=>comment.id===rootId)!;
+    expect(root.replies).toEqual([]);expect(root.replyCount).toBe(42);
+    expect(root.repliesNextCursor).toBeNull();
+    const replies=await listCommentReplies({commentId:rootId,limit:10});expect(replies.comments).toHaveLength(10);expect(replies.nextCursor).toBeTruthy();
+  });
   it('exposes a continuation when the first twenty replies are displayed and reaches all forty-three without duplicates',async()=>{
     const roots=await listComments({mangaId});
     const root=roots.comments.find(c=>c.id===rootId)!;

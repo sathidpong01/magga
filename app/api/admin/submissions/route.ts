@@ -1,7 +1,8 @@
+import { readAdminSubmissions } from "@/lib/admin-submissions";
 import { NextResponse } from "next/server";
-import { db } from "@/db";
-import { mangaSubmissions as submissionsTable, profiles as profilesTable } from "@/db/schema";
-import { eq, desc, and, ilike, or, count, sql } from "drizzle-orm";
+
+
+
 import { auth } from "@/lib/auth";
 import { requireAdmin } from "@/lib/auth-helpers";
 
@@ -16,58 +17,27 @@ function parsePageParam(value: string | null, fallback: number, max: number) {
 
 export async function GET(req: Request) {
   try {
-    const session = await auth.api.getSession({ headers: req.headers, query: { disableCookieCache: true } });
+    const session = await auth.api.getSession({
+      headers: req.headers,
+      query: { disableCookieCache: true },
+    });
     const authError = requireAdmin(session);
     if (authError) return authError;
 
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status");
-    const page = parsePageParam(searchParams.get("page"), 1, Number.MAX_SAFE_INTEGER);
+    const page = parsePageParam(searchParams.get("page"), 1, 10000);
     const limit = parsePageParam(searchParams.get("limit"), 10, 100);
-    const search = searchParams.get("search")?.trim() || "";
+    const search = (searchParams.get("search")?.trim() || "").slice(0, 120);
 
-    const offset = (page - 1) * limit;
-
-    const conditions = [];
-    if (status && status !== "ALL") {
-      conditions.push(eq(submissionsTable.status, status));
-    }
-
-    if (search) {
-      const searchPattern = `%${search}%`;
-      conditions.push(
-        or(
-          ilike(submissionsTable.title, searchPattern),
-          sql`exists (
-            select 1 from ${profilesTable}
-            where ${profilesTable.id} = ${submissionsTable.userId}
-            and ${profilesTable.username} ilike ${searchPattern}
-          )`
-        )
-      );
-    }
-
-    const where = conditions.length > 0 ? and(...conditions) : undefined;
-
-    const submissions = await db.query.mangaSubmissions.findMany({
-      where,
-      with: {
-        profile: {
-          columns: { name: true, email: true, username: true },
-        },
-      },
-      orderBy: [desc(submissionsTable.submittedAt)],
-      offset,
+    const result = await readAdminSubmissions({
+      status: status ?? "ALL",
+      page,
       limit,
+      search,
     });
-
-    // Count total
-    const [{ total }] = await db
-      .select({ total: count() })
-      .from(submissionsTable)
-      .where(where);
-
-    const totalNum = Number(total);
+    const submissions = result.items,
+      totalNum = result.total;
 
     return NextResponse.json(
       {
@@ -86,13 +56,13 @@ export async function GET(req: Request) {
         headers: {
           "Cache-Control": "private, no-store, no-cache, must-revalidate",
         },
-      }
+      },
     );
   } catch (error) {
     console.error("Admin submissions error:", error);
     return NextResponse.json(
       { error: "Failed to fetch submissions" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

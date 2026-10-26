@@ -4,6 +4,12 @@ html {
   scroll-behavior: smooth;
 }
 
+/* The head bootstrap reserves local-history space before the first paint, only when needed. */
+html[data-magga-resume="true"] .magga-continue-slot {
+  min-height: 72px;
+  margin-bottom: 16px;
+}
+
 body {
   background-color: #141416; /* Charcoal Neutral Dark */
   color: #f4f4f5;

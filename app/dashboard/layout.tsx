@@ -1,3 +1,5 @@
+import DashboardListMemory from "@/app/components/dashboard/DashboardListMemory";
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Box } from "@mui/material";
 import UnifiedDashboardSidebar from "@/app/components/layout/UnifiedDashboardSidebar";
@@ -7,8 +9,14 @@ import DashboardThemeProvider from "@/app/dashboard/DashboardThemeProvider";
 export const metadata: Metadata = {
   title: "แดชบอร์ด - MAGGA",
   description: "จัดการผลงานและกิจกรรมของคุณบน MAGGA",
-  openGraph: { title: "แดชบอร์ด - MAGGA", description: "จัดการผลงานและกิจกรรมของคุณบน MAGGA" },
-  twitter: { title: "แดชบอร์ด - MAGGA", description: "จัดการผลงานและกิจกรรมของคุณบน MAGGA" },
+  openGraph: {
+    title: "แดชบอร์ด - MAGGA",
+    description: "จัดการผลงานและกิจกรรมของคุณบน MAGGA",
+  },
+  twitter: {
+    title: "แดชบอร์ด - MAGGA",
+    description: "จัดการผลงานและกิจกรรมของคุณบน MAGGA",
+  },
 };
 
 export default function DashboardLayout({
@@ -18,6 +26,9 @@ export default function DashboardLayout({
 }) {
   return (
     <DashboardThemeProvider>
+      <Suspense fallback={null}>
+        <DashboardListMemory />
+      </Suspense>
       <Box
         sx={{
           display: "flex",

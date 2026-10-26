@@ -14,19 +14,10 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { getSessionRole } from "@/lib/auth-helpers";
 import LinkChip from "@/app/components/ui/LinkChip";
-import {
-  Box,
-  Typography,
-  Chip,
-  Container,
-  Grid,
-  Paper,
-  Stack,
-} from "@mui/material";
+import { Box, Typography, Chip, Container, Grid } from "@mui/material";
 import Image from "next/image";
 import Link from "next/link";
 import MangaViewRating from "@/app/components/features/manga/MangaViewRating";
-import VisibilityIcon from "@mui/icons-material/Visibility";
 import { maggaColors, maggaRadii } from "@/lib/design-tokens";
 import { SuspendedMangaReader } from "./manga-content";
 import { CommentSectionSkeleton } from "./loading-skeletons";
@@ -35,6 +26,8 @@ import { cache, Suspense } from "react";
 import { AdContainer } from "@/app/components/features/ads";
 import ScrollToTop from "@/app/components/ui/ScrollToTop";
 import ShareButton from "@/app/components/ui/ShareButton";
+import ReaderStartButton from "@/app/components/ui/ReaderStartButton";
+import RelatedManga from "@/app/components/features/manga/RelatedManga";
 import { getSiteUrl } from "@/lib/site-url";
 import { normalizeMangaPages } from "@/lib/manga-pages";
 import SocialLinkIcon from "@/app/components/ui/SocialLinkIcon";
@@ -45,11 +38,15 @@ type MangaPageProps = {
   }>;
 };
 
-function parseSocialLinks(value: string | null): Array<{ url: string; label: string; icon: string }> {
+function parseSocialLinks(
+  value: string | null,
+): Array<{ url: string; label: string; icon: string }> {
   if (!value) return [];
   try {
     const links = JSON.parse(value);
-    return Array.isArray(links) ? links.filter((link) => typeof link.url === "string" && link.url) : [];
+    return Array.isArray(links)
+      ? links.filter((link) => typeof link.url === "string" && link.url)
+      : [];
   } catch {
     return [];
   }
@@ -93,55 +90,61 @@ const getMangaBySlug = cache(async (slug: string) => {
       });
       const role = getSessionRole(session);
       if (
-        !session?.user?.id || session.user.banned || session.user.isBanned ||
+        !session?.user?.id ||
+        session.user.banned ||
+        session.user.isBanned ||
         (role !== "admin" && role !== "moderator")
       ) {
         return null;
       }
     }
 
-    const [authorRows, contributorRows, categoryRows, tagRows] = await Promise.all([
-      manga.authorId
-        ? db
-            .select({
-              id: authorsTable.id,
-              name: authorsTable.name,
-              socialLinks: authorsTable.socialLinks,
-            })
-            .from(authorsTable)
-            .where(eq(authorsTable.id, manga.authorId))
-            .limit(1)
-        : Promise.resolve([]),
-      db
-        .select({
-          id: authorsTable.id,
-          name: authorsTable.name,
-          socialLinks: authorsTable.socialLinks,
-          role: mangaContributorsTable.role,
-        })
-        .from(mangaContributorsTable)
-        .innerJoin(authorsTable, eq(authorsTable.id, mangaContributorsTable.authorId))
-        .where(eq(mangaContributorsTable.mangaId, manga.id))
-        .orderBy(asc(mangaContributorsTable.position)),
-      manga.categoryId
-        ? db
-            .select({
-              id: categoriesTable.id,
-              name: categoriesTable.name,
-            })
-            .from(categoriesTable)
-            .where(eq(categoriesTable.id, manga.categoryId))
-            .limit(1)
-        : Promise.resolve([]),
-      db
-        .select({
-          id: tagsTable.id,
-          name: tagsTable.name,
-        })
-        .from(mangaTagsTable)
-        .innerJoin(tagsTable, eq(tagsTable.id, mangaTagsTable.tagId))
-        .where(eq(mangaTagsTable.mangaId, manga.id)),
-    ]);
+    const [authorRows, contributorRows, categoryRows, tagRows] =
+      await Promise.all([
+        manga.authorId
+          ? db
+              .select({
+                id: authorsTable.id,
+                name: authorsTable.name,
+                socialLinks: authorsTable.socialLinks,
+              })
+              .from(authorsTable)
+              .where(eq(authorsTable.id, manga.authorId))
+              .limit(1)
+          : Promise.resolve([]),
+        db
+          .select({
+            id: authorsTable.id,
+            name: authorsTable.name,
+            socialLinks: authorsTable.socialLinks,
+            role: mangaContributorsTable.role,
+          })
+          .from(mangaContributorsTable)
+          .innerJoin(
+            authorsTable,
+            eq(authorsTable.id, mangaContributorsTable.authorId),
+          )
+          .where(eq(mangaContributorsTable.mangaId, manga.id))
+          .orderBy(asc(mangaContributorsTable.position)),
+        manga.categoryId
+          ? db
+              .select({
+                id: categoriesTable.id,
+                name: categoriesTable.name,
+              })
+              .from(categoriesTable)
+              .where(eq(categoriesTable.id, manga.categoryId))
+              .limit(1)
+          : Promise.resolve([]),
+        db
+          .select({
+            id: tagsTable.id,
+            name: tagsTable.name,
+          })
+          .from(mangaTagsTable)
+          .innerJoin(tagsTable, eq(tagsTable.id, mangaTagsTable.tagId))
+          .where(eq(mangaTagsTable.mangaId, manga.id)),
+      ]);
 
     return {
       ...manga,
@@ -156,7 +159,9 @@ const getMangaBySlug = cache(async (slug: string) => {
   }
 });
 
-export async function generateMetadata({ params }: MangaPageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: MangaPageProps): Promise<Metadata> {
   const { mangaId } = await params;
   let decodedSlug: string;
   try {
@@ -178,21 +183,39 @@ export async function generateMetadata({ params }: MangaPageProps): Promise<Meta
     };
   }
 
-  const tags = mangaData.mangaTags_mangaId?.map((mt: any) => mt.tag_tagId) || [];
+  const tags =
+    mangaData.mangaTags_mangaId?.map((mt: any) => mt.tag_tagId) || [];
 
   const SENSITIVE_KEYWORDS = [
-    "18+", "adult", "hentai", "ecchi", "mature", "smut", "yaoi", "yuri", "doujinshi", "nsfw",
+    "18+",
+    "adult",
+    "hentai",
+    "ecchi",
+    "mature",
+    "smut",
+    "yaoi",
+    "yuri",
+    "doujinshi",
+    "nsfw",
   ];
   const hasSensitiveTag = tags.some((tag: any) =>
-    SENSITIVE_KEYWORDS.includes(tag?.name?.toLowerCase())
+    SENSITIVE_KEYWORDS.includes(tag?.name?.toLowerCase()),
   );
   const hasSensitiveCategory =
-    mangaData.category && SENSITIVE_KEYWORDS.includes(mangaData.category.name.toLowerCase());
+    mangaData.category &&
+    SENSITIVE_KEYWORDS.includes(mangaData.category.name.toLowerCase());
   const isSensitive = hasSensitiveTag || hasSensitiveCategory;
 
-  const authorName = [mangaData.author?.name, ...mangaData.contributors.map((person) => person.name)]
-    .filter(Boolean).join(" & ") || mangaData.authorName;
-  const displayTitle = authorName ? `[${authorName}] - ${mangaData.title}` : mangaData.title;
+  const authorName =
+    [
+      mangaData.author?.name,
+      ...mangaData.contributors.map((person) => person.name),
+    ]
+      .filter(Boolean)
+      .join(" & ") || mangaData.authorName;
+  const displayTitle = authorName
+    ? `[${authorName}] - ${mangaData.title}`
+    : mangaData.title;
   const description = isSensitive
     ? `อ่าน ${mangaData.title} บน MAGGA`
     : mangaData.description?.trim() || `อ่าน ${mangaData.title} บน MAGGA`;
@@ -244,8 +267,10 @@ export default async function MangaPage({ params }: MangaPageProps) {
   const pages = normalizeMangaPages(manga.pages);
 
   const baseUrl = getSiteUrl();
-  const authorName = [manga.author?.name, ...manga.contributors.map((person) => person.name)]
-    .filter(Boolean).join(" & ") || manga.authorName;
+  const authorName =
+    [manga.author?.name, ...manga.contributors.map((person) => person.name)]
+      .filter(Boolean)
+      .join(" & ") || manga.authorName;
   const authorCredits = [
     ...(manga.author ? [{ ...manga.author, role: "ผู้แต่ง" }] : []),
     ...manga.contributors,
@@ -260,12 +285,16 @@ export default async function MangaPage({ params }: MangaPageProps) {
     description: manga.description || undefined,
     author: manga.author
       ? { "@type": "Person", name: manga.author.name }
-      : authorName ? { "@type": "Person", name: authorName } : undefined,
-    contributor: manga.contributors.map((person) => ({ "@type": "Person", name: person.name })),
-    genre: [
-      manga.category?.name,
-      ...manga.tags.map((t: any) => t.name),
-    ].filter(Boolean),
+      : authorName
+        ? { "@type": "Person", name: authorName }
+        : undefined,
+    contributor: manga.contributors.map((person) => ({
+      "@type": "Person",
+      name: person.name,
+    })),
+    genre: [manga.category?.name, ...manga.tags.map((t: any) => t.name)].filter(
+      Boolean,
+    ),
     numberOfPages: pages.length,
     inLanguage: "th",
     isAccessibleForFree: true,
@@ -273,7 +302,10 @@ export default async function MangaPage({ params }: MangaPageProps) {
       "@type": "Organization",
       name: "MAGGA",
       url: baseUrl,
-      logo: { "@type": "ImageObject", url: `${baseUrl}/android-chrome-512x512.png` },
+      logo: {
+        "@type": "ImageObject",
+        url: `${baseUrl}/android-chrome-512x512.png`,
+      },
     },
     aggregateRating:
       Number(manga.ratingCount) > 0
@@ -294,21 +326,26 @@ export default async function MangaPage({ params }: MangaPageProps) {
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: maggaColors.background, pb: 8 }}>
-      {!manga.isHidden && <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
-      />}
-      {/* Hero / Header Section with Blurred Background */}
-      <Box sx={{ position: "relative", overflow: "hidden", mb: -4 }}>
-        {/* Background Image Layer */}
+      {!manga.isHidden && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
+          }}
+        />
+      )}
+      <Box
+        component="section"
+        sx={{ position: "relative", overflow: "hidden" }}
+      >
         <Box
           sx={{
+            display: { xs: "none", md: "block" },
             position: "absolute",
             inset: 0,
-            zIndex: 0,
-            opacity: 0.25,
-            filter: "blur(40px)",
-            transform: "scale(1.1)",
+            opacity: 0.12,
+            filter: "blur(24px)",
+            pointerEvents: "none",
           }}
         >
           <Image
@@ -319,267 +356,225 @@ export default async function MangaPage({ params }: MangaPageProps) {
             loading="lazy"
             style={{ objectFit: "cover" }}
           />
-          <Box
-            sx={{
-              position: "absolute",
-              inset: 0,
-              background: `linear-gradient(to bottom, rgba(20,20,22,0.4) 0%, rgba(20,20,22,0.85) 60%, ${maggaColors.background} 100%)`,
-            }}
-          />
         </Box>
-
         <Container
           maxWidth="lg"
-          sx={{
-            position: "relative",
-            zIndex: 1,
-            pt: { xs: 4, md: 6 },
-            pb: { xs: 4, md: 4 },
-          }}
+          sx={{ position: "relative", py: { xs: 2, md: 4 } }}
         >
-          <Grid container spacing={4}>
-            <Grid
-              sx={{
-                display: "flex",
-                justifyContent: { xs: "center", md: "flex-start" },
-              }}
-              size={{ xs: 12, md: 4, lg: 3 }}
+          {manga.isHidden && (
+            <Typography
+              role="status"
+              sx={{ color: maggaColors.archiveGoldHover, mb: 2 }}
             >
+              ตัวอย่างเรื่องที่ยังไม่เผยแพร่
+            </Typography>
+          )}
+          <Grid
+            container
+            spacing={{ xs: 2, md: 3 }}
+            sx={{ alignItems: "flex-start" }}
+          >
+            <Grid size={{ xs: 4, md: 3 }}>
               <Box
                 sx={{
                   position: "relative",
                   width: "100%",
-                  maxWidth: { xs: "280px", md: "100%" },
-                  aspectRatio: "3/4",
-                  borderRadius: `${maggaRadii.card}px`,
+                  maxWidth: 256,
+                  aspectRatio: "3 / 4",
+                  borderRadius: maggaRadii.card + "px",
                   overflow: "hidden",
-                  boxShadow: "0 20px 40px -10px rgba(0,0,0,0.7)",
-                  border: `1px solid ${maggaColors.border}`,
+                  bgcolor: maggaColors.surface,
                 }}
               >
                 <Image
                   src={manga.coverImage}
-                  alt={`Cover of ${manga.title}`}
+                  alt={"Cover of " + manga.title}
                   fill
-                  sizes="(max-width: 899px) 280px, (max-width: 1199px) 33vw, 256px"
+                  sizes="(max-width: 899px) 30vw, 256px"
                   style={{ objectFit: "cover" }}
-                  priority
-                  placeholder="blur"
-                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAAIAAoDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAAAAUH/8QAIRAAAgIBAwUBAAAAAAAAAAAAAQIDBAAFERITISIxQVH/xAAVAQEBAAAAAAAAAAAAAAAAAAAAAf/EABcRAQEBAQAAAAAAAAAAAAAAAAEAETH/2gAMAwEAAhEDEEA/AM8t6vdmsWJTesSB5GOOTkjbJxR/R9nGMXCu/9k="
+                  preload
                 />
               </Box>
             </Grid>
-
-            <Grid
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "flex-end",
-              }}
-              size={{ xs: 12, md: 8, lg: 9 }}
-            >
-              <Box>
-                {manga.isHidden && (
-                  <Chip
-                    label="ฉบับร่าง"
-                    sx={{ mb: 2, height: 28, bgcolor: maggaColors.archiveGoldSoft, color: maggaColors.archiveGoldHover }}
-                  />
-                )}
-                {/* Category + Tags */}
-                <Box sx={{ mb: 2 }}>
-                  <Typography
-                    variant="caption"
-                    sx={{ color: maggaColors.textSecondary, fontWeight: 600, letterSpacing: 0.5, textTransform: "uppercase", mb: 0.75, display: "block" }}
-                  >
-                    หมวดหมู่ / แท็ก
-                  </Typography>
-                  <Box sx={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 1 }}>
-                    {manga.category && (
-                      <Chip
-                        label={manga.category.name}
-                        component="a"
-                        href={`/category/${encodeURIComponent(manga.category.name)}`}
-                        clickable
-                        sx={{
-                          bgcolor: maggaColors.archiveGold,
-                          color: maggaColors.midnightCanvas,
-                          fontWeight: 700,
-                          fontSize: "0.85rem",
-                          height: 28,
-                          borderRadius: 0.75,
-                          "&:hover": { bgcolor: maggaColors.archiveGoldHover },
-                        }}
-                      />
-                    )}
-                    {manga.tags?.map((tag: any) => (
-                      <LinkChip
-                        key={tag.id}
-                        label={tag.name}
-                        href={`/tag/${encodeURIComponent(tag.name)}`}
-                        size="small"
-                        sx={{
-                          height: 28,
-                          borderRadius: 0.75,
-                          backgroundColor: "rgba(255, 255, 255, 0.06)",
-                          color: maggaColors.textSecondary,
-                          border: "1px solid rgba(255, 255, 255, 0.12)",
-                          fontSize: "0.82rem",
-                          transition: "all 0.2s ease",
-                          "&:hover": {
-                            backgroundColor: "rgba(255, 255, 255, 0.12)",
-                            borderColor: "rgba(255, 255, 255, 0.25)",
-                            color: maggaColors.textPrimary,
-                          },
-                        }}
-                      />
-                    ))}
-                  </Box>
-                </Box>
-
+            <Grid size={{ xs: 8, md: 9 }}>
+              <Typography
+                variant="h2"
+                component="h1"
+                sx={{
+                  fontWeight: 700,
+                  fontSize: { xs: "1.35rem", sm: "1.8rem", md: "2.8rem" },
+                  lineHeight: 1.3,
+                  overflowWrap: "anywhere",
+                  mb: 1,
+                }}
+              >
+                {manga.title}
+              </Typography>
+              {authorCredits.map((person) => (
                 <Typography
-                  variant="h2"
-                  component="h1"
-                  sx={{
-                    fontWeight: 800,
-                    mb: 1,
-                    fontSize: { xs: "2.5rem", md: "3.5rem" },
-                    lineHeight: 1.1,
-                    color: maggaColors.textPrimary,
-                  }}
+                  key={person.id}
+                  variant="body2"
+                  sx={{ mb: 0.5, color: maggaColors.textSecondary }}
                 >
-                  {manga.title}
+                  {person.role}:{" "}
+                  <Link
+                    href={"/?author=" + encodeURIComponent(person.name)}
+                    prefetch={false}
+                    style={{
+                      color: maggaColors.archiveGoldHover,
+                      textDecoration: "none",
+                    }}
+                  >
+                    {person.name}
+                  </Link>
                 </Typography>
-
-                {/* Each credited person keeps their own profile and social links. */}
-                {authorCredits.length > 0 ? authorCredits.map((person) => (
-                  <Box key={person.id} sx={{ mb: 1.5 }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.75, flexWrap: "wrap" }}>
-                      <Typography variant="body2" sx={{ color: maggaColors.textSecondary, fontSize: "0.95rem" }}>
-                        {person.role}:
-                      </Typography>
-                      <Link href={`/?author=${encodeURIComponent(person.name)}`} prefetch={false} style={{ textDecoration: "none" }}>
-                        <Typography component="span" sx={{ color: maggaColors.archiveGold, fontWeight: 700, fontSize: "1.05rem", "&:hover": { textDecoration: "underline" } }}>
-                          {person.name}
-                        </Typography>
-                      </Link>
-                    </Box>
-                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                      {parseSocialLinks(person.socialLinks).map((link) => (
-                        <Chip
-                          key={link.url}
-                          icon={<SocialLinkIcon url={link.url} />}
-                          label={link.label || person.name}
-                          component="a"
-                          href={link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          clickable
-                          variant="outlined"
-                          sx={{ height: 36, borderRadius: 0.75, fontSize: "0.9rem", borderColor: "rgba(255,255,255,0.15)", color: maggaColors.textSecondary, "& .MuiChip-label": { px: 1.5 }, "&:hover": { borderColor: "rgba(255,255,255,0.4)", color: maggaColors.textPrimary, bgcolor: "rgba(255,255,255,0.05)" } }}
-                        />
-                      ))}
-                    </Box>
-                  </Box>
-                )) : authorName && (
-                  <Typography sx={{ mb: 1.5, color: maggaColors.textSecondary }}>ผู้แต่ง: {authorName}</Typography>
-                )}
-
-                {/* Stats row */}
-                <Stack
-                  direction="row"
-                  spacing={3}
-                  sx={{
-                    alignItems: "center",
-                    mb: 2,
-                    color: "text.secondary"
-                  }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                    <VisibilityIcon sx={{ fontSize: 20 }} />
-                    <Typography component="span" variant="subtitle1" sx={{
-                      fontWeight: 500
-                    }}>
-                      {Number(manga.viewCount).toLocaleString()} Views
-                    </Typography>
-                  </Box>
-                  <Box sx={{ ml: "auto !important" }}>
-                    <ShareButton title={manga.title} slug={manga.slug} />
-                  </Box>
-                </Stack>
-
-                {manga.description && (
-                  <Typography
-                    variant="body1"
-                    sx={{
-                      fontSize: "1.1rem",
-                      lineHeight: 1.7,
-                      color: maggaColors.textSecondary,
-                      maxWidth: "800px",
-                      mb: 3,
-                    }}
-                  >
-                    {manga.description}
-                  </Typography>
-                )}
-
-                {/* Rating & Review */}
-                <Box
-                  sx={{
-                    mb: 2,
-                    p: 2,
-                    borderRadius: "10px",
-                    bgcolor: maggaColors.surface,
-                    border: `1px solid ${maggaColors.border}`,
-                    maxWidth: "420px",
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: maggaColors.textSecondary,
-                      fontWeight: 600,
-                      letterSpacing: 0.5,
-                      textTransform: "uppercase",
-                      mb: 0.75,
-                      display: "block",
-                    }}
-                  >
-                    คะแนนและการรีวิว
-                  </Typography>
-                  <MangaViewRating
-                    mangaId={manga.id}
-                    initialViewCount={Number(manga.viewCount)}
-                    initialAverageRating={manga.averageRating}
-                    initialRatingCount={Number(manga.ratingCount)}
-                    hideViewCount={true}
-                    trackViewOnMount={!manga.isHidden}
-                    hideInteractive={manga.isHidden}
-                  />
-                </Box>
-
+              ))}
+              <Typography variant="caption" color="text.secondary">
+                {Number(manga.viewCount).toLocaleString()} ครั้งที่อ่าน
+              </Typography>
+              <MangaViewRating
+                key={manga.id + ":header"}
+                mangaId={manga.id}
+                initialViewCount={Number(manga.viewCount)}
+                initialAverageRating={manga.averageRating}
+                initialRatingCount={Number(manga.ratingCount)}
+                hideInteractive
+                trackViewOnMount={!manga.isHidden}
+              />
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  flexWrap: "wrap",
+                }}
+              >
+                <ReaderStartButton
+                  mangaId={manga.id}
+                  totalPages={pages.length}
+                />
+                <ShareButton title={manga.title} slug={manga.slug} />
               </Box>
             </Grid>
           </Grid>
+          <Box
+            component="details"
+            sx={{
+              mt: 2,
+              color: maggaColors.textSecondary,
+              borderTop: "1px solid " + maggaColors.border,
+            }}
+          >
+            <Box
+              component="summary"
+              sx={{
+                cursor: "pointer",
+                minHeight: 44,
+                py: 1.25,
+                color: maggaColors.textPrimary,
+              }}
+            >
+              เรื่องย่อ หมวดหมู่ และเครดิต
+            </Box>
+            {manga.description && (
+              <Typography
+                sx={{
+                  mb: 2,
+                  lineHeight: 1.7,
+                  whiteSpace: "pre-wrap",
+                  overflowWrap: "anywhere",
+                }}
+              >
+                {manga.description}
+              </Typography>
+            )}
+            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
+              {manga.category && (
+                <LinkChip
+                  label={manga.category.name}
+                  href={"/category/" + encodeURIComponent(manga.category.name)}
+                />
+              )}
+              {manga.mangaTags_mangaId.map(({ tag_tagId: tag }) => (
+                <LinkChip
+                  key={tag.id}
+                  label={tag.name}
+                  href={"/tag/" + encodeURIComponent(tag.name)}
+                />
+              ))}
+            </Box>
+            {authorCredits.map((person) => (
+              <Box key={person.id} sx={{ mb: 2 }}>
+                <Typography variant="body2">
+                  {person.role}: {person.name}
+                </Typography>
+                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 1 }}>
+                  {parseSocialLinks(person.socialLinks).map((link) => (
+                    <Chip
+                      key={link.url}
+                      icon={<SocialLinkIcon url={link.url} />}
+                      label={link.label || person.name}
+                      component="a"
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      clickable
+                      variant="outlined"
+                      sx={{ minHeight: 44 }}
+                    />
+                  ))}
+                </Box>
+              </Box>
+            ))}
+          </Box>
         </Container>
       </Box>
 
-      <Container maxWidth="lg" sx={{ mt: 6, px: { xs: 0, lg: 3 } }}>
+      <Container
+        id="reader-start"
+        maxWidth="lg"
+        sx={{ mt: 2, px: { xs: 0, lg: 3 }, scrollMarginTop: "72px" }}
+      >
         <SuspendedMangaReader
           mangaId={manga.id}
           mangaTitle={manga.title}
+          mangaSlug={manga.slug}
+          remember={!manga.isHidden}
           pages={pages}
         />
       </Container>
       <Container maxWidth="lg">
-        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mt: 4 }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            mt: 4,
+          }}
+        >
           <Box sx={{ width: "100%", maxWidth: "1000px" }}>
             <AdContainer placement="manga-end" />
           </Box>
         </Box>
-        {!manga.isHidden && <Box sx={{ mt: 6, maxWidth: "800px", mx: "auto" }}>
-          <Suspense fallback={<CommentSectionSkeleton />}>
-            <CommentSection mangaId={manga.id} />
-          </Suspense>
-        </Box>}
+        {!manga.isHidden && (
+          <Box sx={{ mt: 3, maxWidth: "800px", mx: "auto" }}>
+            <MangaViewRating
+              key={manga.id + ":rating"}
+              mangaId={manga.id}
+              initialViewCount={Number(manga.viewCount)}
+              initialAverageRating={manga.averageRating}
+              initialRatingCount={Number(manga.ratingCount)}
+            />
+            <RelatedManga key={manga.id} mangaId={manga.id} />
+          </Box>
+        )}
+        {!manga.isHidden && (
+          <Box sx={{ mt: 4, maxWidth: "800px", mx: "auto" }}>
+            <Suspense fallback={<CommentSectionSkeleton />}>
+              <CommentSection mangaId={manga.id} />
+            </Suspense>
+          </Box>
+        )}
       </Container>
 
       <ScrollToTop />

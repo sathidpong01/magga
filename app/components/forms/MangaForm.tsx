@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { InferSelectModel } from "drizzle-orm";
 import type { categories, tags, manga as mangaTable, authors } from "@/db/schema";
@@ -9,28 +9,7 @@ type Category = InferSelectModel<typeof categories>;
 type Tag = InferSelectModel<typeof tags>;
 type Manga = InferSelectModel<typeof mangaTable>;
 type Author = InferSelectModel<typeof authors>;
-import {
-  Box,
-  TextField,
-  Button,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Autocomplete,
-  Chip,
-  createFilterOptions,
-  Stack,
-  Typography,
-  Alert,
-  CircularProgress,
-  Grid,
-  IconButton,
-  InputAdornment,
-  Tooltip,
-  Dialog,
-  DialogContent,
-} from "@mui/material";
+import { Box, TextField, Button, Autocomplete, Chip, createFilterOptions, Stack, Typography, Alert, CircularProgress, Grid, IconButton, InputAdornment, Tooltip, Dialog, DialogContent } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
@@ -40,43 +19,21 @@ import CloseRoundedIcon from "@mui/icons-material/CloseRounded";
 import PublishIcon from "@mui/icons-material/Publish";
 import NotificationModal from "@/app/components/modals/NotificationModal";
 import CacheRefreshNotice from "@/app/components/dashboard/CacheRefreshNotice";
+import { useCatalogOptions } from "@/app/components/dashboard/useCatalogOptions";
+import { useDashboardReturn } from "@/app/components/dashboard/DashboardListMemory";
+import { useUnsavedWork } from "@/app/components/dashboard/useUnsavedWork";
 import { SortableItem } from "@/app/components/ui/SortableItem";
-import UploadProgress, {
-  UploadFileStatus,
-} from "@/app/components/ui/UploadProgress";
+import UploadProgress, { UploadFileStatus } from "@/app/components/ui/UploadProgress";
 import { authFetch } from "@/lib/auth-fetch";
 import { normalizeMangaPages } from "@/lib/manga-pages";
 import { DraftFileUploader } from "@/lib/storage/client-upload";
 import { enrichUnchangedItem } from "@/lib/form-metadata";
-import {
-  DashboardPageHeader,
-  DashboardSectionTitle,
-  DashboardSurface,
-  dashboardGhostButtonSx,
-  dashboardInsetSurfaceSx,
-  dashboardPrimaryButtonSx,
-  dashboardSecondaryButtonSx,
-  dashboardTextFieldSx,
-  dashboardTokens,
-} from "@/app/components/dashboard/system";
+import { DashboardPageHeader, DashboardSectionTitle, DashboardSurface, dashboardGhostButtonSx, dashboardInsetSurfaceSx, dashboardPrimaryButtonSx, dashboardSecondaryButtonSx, dashboardTextFieldSx, dashboardTokens } from "@/app/components/dashboard/system";
 import { getMetadataChipSx } from "@/lib/metadata-chip-tone";
 
 // DnD Kit Imports
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  rectSortingStrategy,
-} from "@dnd-kit/sortable";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from "@dnd-kit/sortable";
 
 type MangaFormProps = {
   manga?: Manga & { tags: Tag[]; author?: Author | null };
@@ -92,6 +49,9 @@ type PageItem = {
 
 export default function MangaForm({ manga, mode }: MangaFormProps) {
   const router = useRouter();
+  const returnTo = useDashboardReturn(
+    mode === "admin" ? "/dashboard/admin/manga" : "/dashboard/submissions",
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const submittingRef = useRef(false);
   const cachePendingRef = useRef(false);
@@ -101,22 +61,32 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
   const uploaderRef = useRef<DraftFileUploader | null>(null);
   const requestController = useRef<AbortController | null>(null);
   const uploader = () => {
-    if (!requestController.current || requestController.current.signal.aborted) throw new Error("ยกเลิกการอัปโหลดแล้ว");
+    if (!requestController.current || requestController.current.signal.aborted)
+      throw new Error("ยกเลิกการอัปโหลดแล้ว");
     return (uploaderRef.current ??= new DraftFileUploader());
   };
-  const formFetch = (url: string, options?: RequestInit) => authFetch(url, {
-    ...options,
-    signal: AbortSignal.any([requestController.current!.signal, AbortSignal.timeout(120_000)]),
-  });
+  const formFetch = (url: string, options?: RequestInit) =>
+    authFetch(url, {
+      ...options,
+      signal: AbortSignal.any([
+        requestController.current!.signal,
+        AbortSignal.timeout(120_000),
+      ]),
+    });
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const formRef = useRef<HTMLFormElement>(null);
   const focusInvalidField = (field: string) => {
     const selectors: Record<string, string> = {
-      title: '[name="title"]', slug: '[name="slug"]', description: '[name="description"]',
-      authorName: '[name="authorName"]', authorId: '#author-autocomplete',
-      categoryId: '#category-autocomplete', tagIds: '#tags-autocomplete',
-      coverImage: '#manga-cover-field', pages: '#manga-pages-field',
+      title: '[name="title"]',
+      slug: '[name="slug"]',
+      description: '[name="description"]',
+      authorName: '[name="authorName"]',
+      authorId: "#author-autocomplete",
+      categoryId: "#category-autocomplete",
+      tagIds: "#tags-autocomplete",
+      coverImage: "#manga-cover-field",
+      pages: "#manga-pages-field",
     };
     const selector = selectors[field];
     if (!selector) return;
@@ -129,70 +99,67 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
   const [uploadedUrls, setUploadedUrls] = useState<Record<string, string>>({});
 
   // Data from API
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [tags, setTags] = useState<Tag[]>([]);
-  const [authors, setAuthors] = useState<Author[]>([]);
 
   // Modal State
   const [notificationOpen, setNotificationOpen] = useState(false);
   const [notificationType, setNotificationType] = useState<"success" | "error">(
-    "success"
+    "success",
   );
   const [notificationTitle, setNotificationTitle] = useState("");
   const [notificationMessage, setNotificationMessage] = useState("");
-  const [previewPage, setPreviewPage] = useState<{ src: string; index: number } | null>(null);
+  const [previewPage, setPreviewPage] = useState<{
+    src: string;
+    index: number;
+  } | null>(null);
   const [previewZoom, setPreviewZoom] = useState(1);
+
+  const unsaved = useUnsavedWork();
 
   // Form State
   const [title, setTitle] = useState(manga?.title || "");
   const [slug, setSlug] = useState(manga?.slug || "");
   const [description, setDescription] = useState(manga?.description || "");
   const [authorName, setAuthorName] = useState(
-    (manga as any)?.authorName || ""
+    (manga as any)?.authorName || "",
   ); // ชื่อผู้แต่ง
   const [categoryId, setCategoryId] = useState(manga?.categoryId || "");
   const [selectedTags, setSelectedTags] = useState<Tag[]>(manga?.tags || []);
 
-  // Local state for options to allow immediate updates
-  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
-  const [availableCategories, setAvailableCategories] = useState<Category[]>(
-    []
-  );
-  const [availableAuthors, setAvailableAuthors] = useState<Author[]>([]);
   const [selectedAuthor, setSelectedAuthor] = useState<Author | null>(
-    manga?.author || null
+    manga?.author || null,
   );
   // Pending author name - will be created on form submit
   const [pendingAuthorName, setPendingAuthorName] = useState<string>("");
 
-  const [optionsLoading, setOptionsLoading] = useState(true);
-  const [optionsErrors, setOptionsErrors] = useState<string[]>([]);
-  const loadOptions = useCallback(async (signal?: AbortSignal) => {
-    setOptionsLoading(true);
-    setOptionsErrors([]);
-    const results = await Promise.allSettled([
-      fetch("/api/categories", { signal }).then(async (r) => { if (!r.ok) throw new Error(); return r.json(); }),
-      fetch("/api/tags", { signal }).then(async (r) => { if (!r.ok) throw new Error(); return r.json(); }),
-      fetch("/api/authors", { signal }).then(async (r) => { if (!r.ok) throw new Error(); return r.json(); }),
-    ]);
-    if (signal?.aborted) return;
-    const labels = ["หมวดหมู่", "แท็ก", "ผู้แต่ง"];
-    const failed: string[] = [];
-    results.forEach((result, index) => {
-      if (result.status !== "fulfilled" || !Array.isArray(result.value)) { failed.push(labels[index]); return; }
-      if (index === 0) { setCategories(result.value); setAvailableCategories(result.value); }
-      if (index === 1) { setTags(result.value); setAvailableTags(result.value); }
-      if (index === 2) { setAuthors(result.value); setAvailableAuthors(result.value); }
-    });
-    setOptionsErrors(failed);
-    setOptionsLoading(false);
-  }, []);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    void loadOptions(controller.signal);
-    return () => controller.abort();
-  }, [loadOptions]);
+  const categoryOptions = useCatalogOptions<Category>("categories", [
+    categoryId,
+  ]);
+  const tagOptions = useCatalogOptions<Tag>(
+    "tags",
+    selectedTags.map((tag) => tag.id),
+  );
+  const authorOptions = useCatalogOptions<Author>(
+    "authors",
+    selectedAuthor ? [selectedAuthor.id] : [],
+  );
+  const availableCategories = categoryOptions.items,
+    setAvailableCategories = categoryOptions.setItems;
+  const availableTags = tagOptions.items,
+    setAvailableTags = tagOptions.setItems;
+  const availableAuthors = authorOptions.items,
+    setAvailableAuthors = authorOptions.setItems;
+  const optionsLoading =
+    categoryOptions.loading || tagOptions.loading || authorOptions.loading;
+  const optionsErrors = [
+    categoryOptions.error ? "หมวดหมู่" : "",
+    tagOptions.error ? "แท็ก" : "",
+    authorOptions.error ? "ผู้แต่ง" : "",
+  ].filter(Boolean);
+  const loadOptions = () => {
+    categoryOptions.refresh();
+    tagOptions.refresh();
+    authorOptions.refresh();
+  };
 
   const filter = createFilterOptions<Tag>();
   const categoryFilter = createFilterOptions<Category>();
@@ -243,7 +210,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   useEffect(() => {
@@ -255,7 +222,13 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
   }, [coverItem]);
 
   const handleDragEnd = (event: DragEndEvent) => {
-    if (submittingRef.current || cachePendingRef.current || retryingFiles.current.size) return;
+    unsaved.markDirty();
+    if (
+      submittingRef.current ||
+      cachePendingRef.current ||
+      retryingFiles.current.size
+    )
+      return;
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
@@ -268,7 +241,12 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
   };
 
   const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (submittingRef.current || cachePendingRef.current || retryingFiles.current.size) return;
+    if (
+      submittingRef.current ||
+      cachePendingRef.current ||
+      retryingFiles.current.size
+    )
+      return;
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -286,7 +264,12 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
   };
 
   const handlePagesUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (submittingRef.current || cachePendingRef.current || retryingFiles.current.size) return;
+    if (
+      submittingRef.current ||
+      cachePendingRef.current ||
+      retryingFiles.current.size
+    )
+      return;
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
@@ -301,7 +284,12 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
   };
 
   const handleRemovePage = (id: string) => {
-    if (submittingRef.current || cachePendingRef.current || retryingFiles.current.size) return;
+    if (
+      submittingRef.current ||
+      cachePendingRef.current ||
+      retryingFiles.current.size
+    )
+      return;
     setPageItems((prev) => {
       const item = prev.find((p) => p.id === id);
       if (item?.type === "file") {
@@ -312,7 +300,12 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
   };
 
   const handleRemoveCover = () => {
-    if (submittingRef.current || cachePendingRef.current || retryingFiles.current.size) return;
+    if (
+      submittingRef.current ||
+      cachePendingRef.current ||
+      retryingFiles.current.size
+    )
+      return;
     if (coverItem?.type === "file") {
       URL.revokeObjectURL(coverItem.preview);
     }
@@ -401,7 +394,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
   const handleCreditChange = (
     index: number,
     field: keyof AuthorCredit,
-    value: string
+    value: string,
   ) => {
     const newCredits = [...credits];
     newCredits[index] = { ...newCredits[index], [field]: value };
@@ -413,11 +406,12 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
     if (!url) return;
     try {
       const res = await authFetch(
-        `/api/metadata?url=${encodeURIComponent(url)}`
+        `/api/metadata?url=${encodeURIComponent(url)}`,
       );
       if (!res.ok) throw new Error("ไม่สามารถดึงข้อมูลลิงก์ได้");
       const data = await res.json();
-      if (!submittingRef.current) setCredits((current) => enrichUnchangedItem(current, original, data));
+      if (!submittingRef.current)
+        setCredits((current) => enrichUnchangedItem(current, original, data));
     } catch (error) {}
   };
 
@@ -467,15 +461,21 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
 
   const handleSubmitWithDraft = async (
     e: React.FormEvent,
-    saveAsDraft?: boolean
+    saveAsDraft?: boolean,
   ) => {
     e.preventDefault();
-    if (submittingRef.current || cachePendingRef.current || retryingFiles.current.size) return;
+    if (
+      submittingRef.current ||
+      cachePendingRef.current ||
+      retryingFiles.current.size
+    )
+      return;
     const nextErrors: Record<string, string> = {};
     if (!title.trim()) nextErrors.title = "กรุณากรอกชื่อเรื่อง";
     if (!slug.trim()) nextErrors.slug = "กรุณาระบุ slug ของเรื่อง";
     if (!coverItem) nextErrors.coverImage = "กรุณาอัปโหลดรูปปก";
-    if (mode === "submission" && pageItems.length === 0) nextErrors.pages = "กรุณาเพิ่มหน้าภาพอย่างน้อย 1 หน้า";
+    if (mode === "submission" && pageItems.length === 0)
+      nextErrors.pages = "กรุณาเพิ่มหน้าภาพอย่างน้อย 1 หน้า";
     setFieldErrors(nextErrors);
     setError("");
     const firstInvalid = Object.keys(nextErrors)[0];
@@ -513,14 +513,20 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
           finalAuthorId = newAuthor.id;
 
           // Update available authors list
-          setAvailableAuthors((prev) => prev.some((author) => author.id === newAuthor.id) ? prev : [...prev, newAuthor]);
+          setAvailableAuthors((prev) =>
+            prev.some((author) => author.id === newAuthor.id)
+              ? prev
+              : [...prev, newAuthor],
+          );
           setSelectedAuthor(newAuthor);
           setPendingAuthorName("");
         } catch (error) {
           throw new Error(
             `ไม่สามารถสร้างข้อมูลผู้แต่งได้: ${
-              error instanceof Error ? error.message : "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ"
-            }`
+              error instanceof Error
+                ? error.message
+                : "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ"
+            }`,
           );
         }
       }
@@ -528,7 +534,10 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
       // 1. Upload Cover if it's a file
       let finalCoverUrl = "";
       if (coverItem.type === "file") {
-        finalCoverUrl = await uploader().upload(coverItem.id, coverItem.content as File);
+        finalCoverUrl = await uploader().upload(
+          coverItem.id,
+          coverItem.content as File,
+        );
       } else {
         finalCoverUrl = coverItem.content as string;
       }
@@ -575,18 +584,43 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
 
         const uploadFile = async (item: PageItem) => {
           try {
-            const url = await uploader().upload(item.id, item.content as File, (progress) => {
-              setUploadFiles((previous) => previous.map((file) => file.id === item.id
-                ? { ...file, progress, status: "uploading" } : file));
-            });
+            const url = await uploader().upload(
+              item.id,
+              item.content as File,
+              (progress) => {
+                setUploadFiles((previous) =>
+                  previous.map((file) =>
+                    file.id === item.id
+                      ? { ...file, progress, status: "uploading" }
+                      : file,
+                  ),
+                );
+              },
+            );
             uploadedUrlMap[item.id] = url;
             setUploadedUrls((previous) => ({ ...previous, [item.id]: url }));
-            setUploadFiles((previous) => previous.map((file) => file.id === item.id
-              ? { ...file, progress: 100, status: "completed", error: undefined } : file));
+            setUploadFiles((previous) =>
+              previous.map((file) =>
+                file.id === item.id
+                  ? {
+                      ...file,
+                      progress: 100,
+                      status: "completed",
+                      error: undefined,
+                    }
+                  : file,
+              ),
+            );
           } catch (error) {
-            const message = error instanceof Error ? error.message : "อัปโหลดไฟล์ไม่สำเร็จ";
-            setUploadFiles((previous) => previous.map((file) => file.id === item.id
-              ? { ...file, status: "error", error: message } : file));
+            const message =
+              error instanceof Error ? error.message : "อัปโหลดไฟล์ไม่สำเร็จ";
+            setUploadFiles((previous) =>
+              previous.map((file) =>
+                file.id === item.id
+                  ? { ...file, status: "error", error: message }
+                  : file,
+              ),
+            );
             throw error;
           }
         };
@@ -681,8 +715,11 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
         if (typeof errorMessage === "object") {
           if (errorMessage.fieldErrors) {
             const nextErrors: Record<string, string> = {};
-            for (const [field, messages] of Object.entries(errorMessage.fieldErrors)) {
-              if (Array.isArray(messages) && typeof messages[0] === "string") nextErrors[field] = messages[0];
+            for (const [field, messages] of Object.entries(
+              errorMessage.fieldErrors,
+            )) {
+              if (Array.isArray(messages) && typeof messages[0] === "string")
+                nextErrors[field] = messages[0];
             }
             setFieldErrors(nextErrors);
             const firstInvalid = Object.keys(nextErrors)[0];
@@ -691,7 +728,8 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
               focusInvalidField(firstInvalid);
               return;
             }
-            errorMessage = errorMessage.formErrors?.[0] || "ข้อมูลไม่ผ่านการตรวจสอบ";
+            errorMessage =
+              errorMessage.formErrors?.[0] || "ข้อมูลไม่ผ่านการตรวจสอบ";
           } else {
             errorMessage = JSON.stringify(errorMessage);
           }
@@ -701,7 +739,11 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
       }
 
       const data = await response.json();
-      const cachePending = mode === "admin" && (data.cache_refresh_pending === true || response.headers?.get("X-Magga-Cache-Refresh") === "pending");
+      unsaved.markSaved();
+      const cachePending =
+        mode === "admin" &&
+        (data.cache_refresh_pending === true ||
+          response.headers?.get("X-Magga-Cache-Refresh") === "pending");
       cachePendingRef.current = cachePending;
       setCacheRefreshPending(cachePending);
 
@@ -713,20 +755,24 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
             : "อัปเดตรายการฝากลงสำเร็จ"
           : mode === "admin"
             ? "สร้างมังงะสำเร็จ"
-            : "ส่งรายการฝากลงสำเร็จ"
+            : "ส่งรายการฝากลงสำเร็จ",
       );
       setNotificationMessage(
-        mode === "admin" && (saveAsDraft === true || (saveAsDraft === undefined && manga?.isHidden))
+        mode === "admin" &&
+          (saveAsDraft === true ||
+            (saveAsDraft === undefined && manga?.isHidden))
           ? `บันทึกฉบับร่าง "${title}" เรียบร้อยแล้ว`
           : manga
-          ? `อัปเดตรายการ "${title}" เรียบร้อยแล้ว`
-          : mode === "admin"
-            ? `สร้างรายการ "${title}" เรียบร้อยแล้ว`
-            : `ส่ง "${title}" เข้าตรวจเรียบร้อยแล้ว`
+            ? `อัปเดตรายการ "${title}" เรียบร้อยแล้ว`
+            : mode === "admin"
+              ? `สร้างรายการ "${title}" เรียบร้อยแล้ว`
+              : `ส่ง "${title}" เข้าตรวจเรียบร้อยแล้ว`,
       );
       if (cachePending) {
         setNotificationTitle("บันทึกแล้ว แคชยังรออัปเดต");
-        setNotificationMessage("ข้อมูลถูกบันทึกแล้ว แต่หน้าเว็บสาธารณะยังอาจแสดงข้อมูลเดิม กรุณากลับไปอัปเดตแคชโดยไม่ต้องบันทึกข้อมูลซ้ำ");
+        setNotificationMessage(
+          "ข้อมูลถูกบันทึกแล้ว แต่หน้าเว็บสาธารณะยังอาจแสดงข้อมูลเดิม กรุณากลับไปอัปเดตแคชโดยไม่ต้องบันทึกข้อมูลซ้ำ",
+        );
       }
       setNotificationOpen(true);
     } catch (err) {
@@ -734,7 +780,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
       setNotificationType("error");
       setNotificationTitle("เกิดข้อผิดพลาด");
       setNotificationMessage(
-        err instanceof Error ? err.message : "เกิดข้อผิดพลาดที่ไม่คาดคิด"
+        err instanceof Error ? err.message : "เกิดข้อผิดพลาดที่ไม่คาดคิด",
       );
       setNotificationOpen(true);
     } finally {
@@ -744,23 +790,58 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
   };
 
   const handleRetryUpload = async (fileId: string) => {
-    if (submittingRef.current || cachePendingRef.current || retryingFiles.current.has(fileId)) return;
+    if (
+      submittingRef.current ||
+      cachePendingRef.current ||
+      retryingFiles.current.has(fileId)
+    )
+      return;
     const item = pageItems.find((page) => page.id === fileId);
     if (!item || item.type !== "file") return;
     retryingFiles.current.add(fileId);
     setRetryCount(retryingFiles.current.size);
-    setUploadFiles((previous) => previous.map((file) => file.id === fileId
-      ? { ...file, status: "uploading", progress: 0, error: undefined } : file));
+    setUploadFiles((previous) =>
+      previous.map((file) =>
+        file.id === fileId
+          ? { ...file, status: "uploading", progress: 0, error: undefined }
+          : file,
+      ),
+    );
     try {
-      const url = await uploader().upload(fileId, item.content as File, (progress) => {
-        setUploadFiles((previous) => previous.map((file) => file.id === fileId ? { ...file, progress } : file));
-      });
+      const url = await uploader().upload(
+        fileId,
+        item.content as File,
+        (progress) => {
+          setUploadFiles((previous) =>
+            previous.map((file) =>
+              file.id === fileId ? { ...file, progress } : file,
+            ),
+          );
+        },
+      );
       setUploadedUrls((previous) => ({ ...previous, [fileId]: url }));
-      setUploadFiles((previous) => previous.map((file) => file.id === fileId
-        ? { ...file, status: "completed", progress: 100, error: undefined } : file));
+      setUploadFiles((previous) =>
+        previous.map((file) =>
+          file.id === fileId
+            ? { ...file, status: "completed", progress: 100, error: undefined }
+            : file,
+        ),
+      );
     } catch (error) {
-      setUploadFiles((previous) => previous.map((file) => file.id === fileId
-        ? { ...file, status: "error", error: error instanceof Error ? error.message : "อัปโหลดไฟล์ไม่สำเร็จ" } : file));
+      setUploadFiles((previous) =>
+        previous.map((file) =>
+          file.id === fileId
+            ? {
+                ...file,
+                status: "error",
+                error:
+                  error instanceof Error
+                    ? error.message
+                    : "อัปโหลดไฟล์ไม่สำเร็จ",
+              }
+            : file,
+        ),
+      );
     } finally {
       retryingFiles.current.delete(fileId);
       setRetryCount(retryingFiles.current.size);
@@ -797,699 +878,993 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
 
   const handleGoToList = () => {
     setNotificationOpen(false);
-    router.push(
-      mode === "admin" ? "/dashboard/admin/manga" : "/dashboard/submissions"
-    );
-    router.refresh();
+    router.push(returnTo(), { scroll: false });
   };
 
   return (
     <>
-      {cacheRefreshPending && <CacheRefreshNotice onRefreshed={() => { cachePendingRef.current = false; setCacheRefreshPending(false); handleGoToList(); }} />}
-      <Box component="form" ref={formRef} onSubmit={(e) => handleSubmitWithDraft(e)}>
-        <Box component="fieldset" disabled={isSubmitting || cacheRefreshPending || retryCount > 0}
-          onClickCapture={(event) => { if (submittingRef.current || cachePendingRef.current || retryingFiles.current.size) event.stopPropagation(); }}
-          sx={{ border: 0, m: 0, p: 0, minWidth: 0 }}>
-        <DashboardPageHeader
-          eyebrow={mode === "admin" ? "CONTENT MANAGER" : "SUBMISSION"}
-          title={pageTitle}
-          description={pageDescription}
+      {cacheRefreshPending && (
+        <CacheRefreshNotice
+          onRefreshed={() => {
+            cachePendingRef.current = false;
+            setCacheRefreshPending(false);
+            handleGoToList();
+          }}
+        />
+      )}
+      <Box
+        component="form"
+        ref={formRef}
+        onChangeCapture={unsaved.markDirty}
+        onSubmit={(e) => handleSubmitWithDraft(e)}
+      >
+        <Box
+          component="fieldset"
+          disabled={isSubmitting || cacheRefreshPending || retryCount > 0}
+          onClickCapture={(event) => {
+            if (
+              submittingRef.current ||
+              cachePendingRef.current ||
+              retryingFiles.current.size
+            )
+              event.stopPropagation();
+          }}
+          sx={{ border: 0, m: 0, p: 0, minWidth: 0 }}
         >
-          <Button
-            variant="text"
-            onClick={() => router.back()}
-            disabled={isSubmitting}
-            sx={headerGhostButtonSx}
+          <Typography
+            role="status"
+            sx={{ mb: 1, color: dashboardTokens.textMuted }}
           >
-            ย้อนกลับ
-          </Button>
-          {!manga && mode === "admin" && (
+            {unsaved.dirty
+              ? "มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก"
+              : "ข้อมูลพร้อมแก้ไข"}
+          </Typography>
+          <DashboardPageHeader
+            eyebrow={mode === "admin" ? "CONTENT MANAGER" : "SUBMISSION"}
+            title={pageTitle}
+            description={pageDescription}
+          >
             <Button
-              variant="outlined"
-              onClick={(e) => {
-                e.preventDefault();
-                handleSubmitWithDraft(e, true);
+              variant="text"
+              onClick={() => {
+                if (unsaved.confirmLeave())
+                  router.push(returnTo(), { scroll: false });
               }}
               disabled={isSubmitting}
-              sx={headerSecondaryButtonSx}
+              sx={headerGhostButtonSx}
             >
-              บันทึกเป็นฉบับร่าง
+              ย้อนกลับ
             </Button>
-          )}
-          {manga?.isHidden && mode === "admin" && (
-            <Button
-              type="button"
-              variant="outlined"
-              startIcon={<PublishIcon />}
-              onClick={(e) => handleSubmitWithDraft(e, false)}
-              disabled={isSubmitting}
-              sx={headerSecondaryButtonSx}
-            >
-              เผยแพร่มังงะ
-            </Button>
-          )}
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={isSubmitting}
-            startIcon={
-              isSubmitting ? (
-                <CircularProgress
-                  size={20}
-                  color="inherit"
-                  aria-label="Saving..."
-                />
-              ) : null
-            }
-            sx={headerPrimaryButtonSx}
-          >
-            {isSubmitting
-              ? "กำลังบันทึก..."
-              : manga
-                ? mode === "admin"
-                  ? manga.isHidden ? "บันทึกฉบับร่าง" : "อัปเดตมังงะ"
-                  : "อัปเดตรายการฝากลง"
-                : mode === "admin"
-                  ? "สร้างมังงะ"
-                  : "ส่งรายการฝากลง"}
-          </Button>
-        </DashboardPageHeader>
-
-        <Grid container spacing={3}>
-          {optionsLoading && <Grid size={12}><Box role="status" sx={{ display: "flex", alignItems: "center", gap: 1 }}><CircularProgress size={18} aria-label="กำลังโหลดตัวเลือก" />กำลังโหลดหมวดหมู่ แท็ก และผู้แต่ง...</Box></Grid>}
-          {optionsErrors.length > 0 && <Grid size={12}><Alert severity="error" action={<Button color="inherit" disabled={optionsLoading} onClick={() => void loadOptions()}>ลองใหม่</Button>}>โหลดข้อมูล{optionsErrors.join(" / ")}ไม่ได้ กรุณาลองใหม่ โดยข้อมูลที่กรอกไว้ยังอยู่</Alert></Grid>}
-          {error && (
-<Grid  size={12}>
-              <Alert
-                severity="error"
-                sx={{
-                  borderRadius: 2,
-                  bgcolor: "rgba(239, 68, 68, 0.08)",
-                  color: "#fecaca",
-                  border: "1px solid rgba(239, 68, 68, 0.18)",
+            {!manga && mode === "admin" && (
+              <Button
+                variant="outlined"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleSubmitWithDraft(e, true);
                 }}
+                disabled={isSubmitting}
+                sx={headerSecondaryButtonSx}
               >
-                {error}
-              </Alert>
-            </Grid>
-          )}
+                บันทึกเป็นฉบับร่าง
+              </Button>
+            )}
+            {manga?.isHidden && mode === "admin" && (
+              <Button
+                type="button"
+                variant="outlined"
+                startIcon={<PublishIcon />}
+                onClick={(e) => handleSubmitWithDraft(e, false)}
+                disabled={isSubmitting}
+                sx={headerSecondaryButtonSx}
+              >
+                เผยแพร่มังงะ
+              </Button>
+            )}
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={isSubmitting}
+              startIcon={
+                isSubmitting ? (
+                  <CircularProgress
+                    size={20}
+                    color="inherit"
+                    aria-label="Saving..."
+                  />
+                ) : null
+              }
+              sx={headerPrimaryButtonSx}
+            >
+              {isSubmitting
+                ? "กำลังบันทึก..."
+                : manga
+                  ? mode === "admin"
+                    ? manga.isHidden
+                      ? "บันทึกฉบับร่าง"
+                      : "อัปเดตมังงะ"
+                    : "อัปเดตรายการฝากลง"
+                  : mode === "admin"
+                    ? "สร้างมังงะ"
+                    : "ส่งรายการฝากลง"}
+            </Button>
+          </DashboardPageHeader>
 
-          {/* Left Column: General Info */}
-<Grid   size={{ xs: 12, md: 7 }}>
-            <DashboardSurface sx={{ minHeight: 600 }}>
-              <DashboardSectionTitle
-                title="ข้อมูลหลักของเรื่อง"
-                description="ระบุชื่อ สลักก์ คำอธิบาย ผู้แต่ง หมวดหมู่ และแท็กให้ครบถ้วนก่อนส่งหรือเผยแพร่"
-              />
+          <Grid container spacing={3}>
+            {optionsLoading && (
+              <Grid size={12}>
+                <Box
+                  role="status"
+                  sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                >
+                  <CircularProgress size={18} aria-label="กำลังโหลดตัวเลือก" />
+                  กำลังโหลดหมวดหมู่ แท็ก และผู้แต่ง...
+                </Box>
+              </Grid>
+            )}
+            {optionsErrors.length > 0 && (
+              <Grid size={12}>
+                <Alert
+                  severity="error"
+                  action={
+                    <Button
+                      color="inherit"
+                      disabled={optionsLoading}
+                      onClick={() => void loadOptions()}
+                    >
+                      ลองใหม่
+                    </Button>
+                  }
+                >
+                  โหลดข้อมูล{optionsErrors.join(" / ")}ไม่ได้ กรุณาลองใหม่
+                  โดยข้อมูลที่กรอกไว้ยังอยู่
+                </Alert>
+              </Grid>
+            )}
+            {error && (
+              <Grid size={12}>
+                <Alert
+                  severity="error"
+                  sx={{
+                    borderRadius: 2,
+                    bgcolor: "rgba(239, 68, 68, 0.08)",
+                    color: "#fecaca",
+                    border: "1px solid rgba(239, 68, 68, 0.18)",
+                  }}
+                >
+                  {error}
+                </Alert>
+              </Grid>
+            )}
+
+            {/* Supporting Column: Story Details */}
+            <Grid size={{ xs: 12, lg: 4 }} sx={{ order: { xs: 1, lg: 2 } }}>
+              <DashboardSurface sx={{ minHeight: 600 }}>
+                <DashboardSectionTitle
+                  title="ข้อมูลเรื่อง"
+                  description="กรอกชื่อเรื่องและรายละเอียดประกอบภาพก่อนบันทึก"
+                />
                 <Grid container spacing={3}>
-<Grid  size={12}>
-                  <TextField
-                    label="ชื่อเรื่อง"
-                    name="title"
-                    error={Boolean(fieldErrors.title)}
-                    helperText={fieldErrors.title}
-                    value={title}
-                    onChange={(e) => { setTitle(e.target.value); setFieldErrors((prev) => ({ ...prev, title: "" })); }}
-                    fullWidth
-                    required
-                    variant="filled"
-                    sx={filledFieldSx}
-                    slotProps={{
-                      input: filledInputProps
-                    }}
-                  />
-                </Grid>
-<Grid  size={12}>
-                  <TextField
-                    label="Slug"
-                    name="slug"
-                    error={Boolean(fieldErrors.slug)}
-                    value={slug}
-                    onChange={(e) => { setSlug(e.target.value); setFieldErrors((prev) => ({ ...prev, slug: "" })); }}
-                    fullWidth
-                    required
-                    variant="filled"
-                    sx={filledFieldSx}
-                    helperText={fieldErrors.slug || `ตัวอย่างลิงก์: /${slug || "your-slug"}`}
-                    slotProps={{
-                      input: {
-                        ...filledInputProps,
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <Tooltip title="สร้างจากชื่อเรื่อง">
-                              <IconButton
-                                aria-label="Generate slug"
-                                onClick={() => {
-                                  const newSlug = title
-                                    .toLowerCase()
-                                    .trim()
-                                    .replace(/[\s]+/g, "-")
-                                    .replace(/[^\w\-\u0E00-\u0E7F]+/g, "")
-                                    .replace(/\-\-+/g, "-");
-                                  setSlug(newSlug);
-                                }}
-                                edge="end"
-                                sx={{
-                                  color: "rgba(255,255,255,0.82)",
-                                  bgcolor: "transparent",
-                                  border: "none",
-                                  boxShadow: "none",
-                                  "&:hover": {
+                  <Grid size={12}>
+                    <TextField
+                      label="ชื่อเรื่อง"
+                      name="title"
+                      error={Boolean(fieldErrors.title)}
+                      helperText={fieldErrors.title}
+                      value={title}
+                      onChange={(e) => {
+                        setTitle(e.target.value);
+                        setFieldErrors((prev) => ({ ...prev, title: "" }));
+                      }}
+                      fullWidth
+                      required
+                      variant="filled"
+                      sx={filledFieldSx}
+                      slotProps={{
+                        input: filledInputProps,
+                      }}
+                    />
+                  </Grid>
+                  <Grid size={12}>
+                    <TextField
+                      label="Slug"
+                      name="slug"
+                      error={Boolean(fieldErrors.slug)}
+                      value={slug}
+                      onChange={(e) => {
+                        setSlug(e.target.value);
+                        setFieldErrors((prev) => ({ ...prev, slug: "" }));
+                      }}
+                      fullWidth
+                      required
+                      variant="filled"
+                      sx={filledFieldSx}
+                      helperText={
+                        fieldErrors.slug ||
+                        `ตัวอย่างลิงก์: /${slug || "your-slug"}`
+                      }
+                      slotProps={{
+                        input: {
+                          ...filledInputProps,
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <Tooltip title="สร้างจากชื่อเรื่อง">
+                                <IconButton
+                                  aria-label="Generate slug"
+                                  onClick={() => {
+                                    const newSlug = title
+                                      .toLowerCase()
+                                      .trim()
+                                      .replace(/[\s]+/g, "-")
+                                      .replace(/[^\w\-\u0E00-\u0E7F]+/g, "")
+                                      .replace(/\-\-+/g, "-");
+                                    setSlug(newSlug);
+                                  }}
+                                  edge="end"
+                                  sx={{
+                                    color: "rgba(255,255,255,0.82)",
                                     bgcolor: "transparent",
-                                    color: "#ffffff",
-                                  },
-                                }}
-                              >
-                                <AutoFixHighIcon />
-                              </IconButton>
-                            </Tooltip>
-                          </InputAdornment>
-                        ),
+                                    border: "none",
+                                    boxShadow: "none",
+                                    "&:hover": {
+                                      bgcolor: "transparent",
+                                      color: "#ffffff",
+                                    },
+                                  }}
+                                >
+                                  <AutoFixHighIcon />
+                                </IconButton>
+                              </Tooltip>
+                            </InputAdornment>
+                          ),
+                        },
+                      }}
+                    />
+                  </Grid>
+                  <Grid size={12}>
+                    <TextField
+                      label="คำอธิบาย"
+                      name="description"
+                      error={Boolean(fieldErrors.description)}
+                      helperText={fieldErrors.description}
+                      value={description ?? ""}
+                      onChange={(e) => {
+                        setDescription(e.target.value);
+                        setFieldErrors((prev) => ({
+                          ...prev,
+                          description: "",
+                        }));
+                      }}
+                      fullWidth
+                      multiline
+                      rows={4}
+                      variant="filled"
+                      sx={filledFieldSx}
+                      slotProps={{
+                        input: filledInputProps,
+                      }}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, xl: 6 }}>
+                    <Autocomplete
+                      value={
+                        pendingAuthorName
+                          ? ({
+                              id: "pending",
+                              name: pendingAuthorName,
+                            } as Author)
+                          : selectedAuthor
                       }
-                    }}
-                  />
-                </Grid>
-<Grid  size={12}>
-                  <TextField
-                    label="คำอธิบาย"
-                    name="description"
-                    error={Boolean(fieldErrors.description)}
-                    helperText={fieldErrors.description}
-                    value={description ?? ""}
-                    onChange={(e) => { setDescription(e.target.value); setFieldErrors((prev) => ({ ...prev, description: "" })); }}
-                    fullWidth
-                    multiline
-                    rows={4}
-                    variant="filled"
-                    sx={filledFieldSx}
-                    slotProps={{
-                      input: filledInputProps
-                    }}
-                  />
-                </Grid>
-<Grid   size={{ xs: 12, md: 6 }}>
-                  <Autocomplete
-                    value={
-                      pendingAuthorName
-                        ? ({ id: "pending", name: pendingAuthorName } as Author)
-                        : selectedAuthor
-                    }
-                    onChange={(event, newValue) => {
-                      if (typeof newValue === "string") {
-                        handleCreateAuthor(newValue);
-                      } else if (newValue && (newValue as any).inputValue) {
-                        handleCreateAuthor((newValue as any).inputValue);
-                      } else {
-                        setSelectedAuthor(newValue);
-                        setPendingAuthorName(""); // Clear pending when selecting existing
-                        // Always auto-fill authorName for OG
-                        if (newValue) {
-                          setAuthorName(newValue.name);
+                      onChange={(event, newValue) => {
+                        unsaved.markDirty();
+                        if (typeof newValue === "string") {
+                          handleCreateAuthor(newValue);
+                        } else if (newValue && (newValue as any).inputValue) {
+                          handleCreateAuthor((newValue as any).inputValue);
                         } else {
-                          setAuthorName(""); // Clear if deselected
+                          setSelectedAuthor(newValue);
+                          setPendingAuthorName(""); // Clear pending when selecting existing
+                          // Always auto-fill authorName for OG
+                          if (newValue) {
+                            setAuthorName(newValue.name);
+                          } else {
+                            setAuthorName(""); // Clear if deselected
+                          }
                         }
+                      }}
+                      filterOptions={(options, params) => {
+                        const filtered = authorFilter(options, params);
+                        const { inputValue } = params;
+                        const isExisting = options.some(
+                          (option) =>
+                            option.name.toLowerCase() ===
+                            inputValue.toLowerCase(),
+                        );
+                        if (
+                          inputValue !== "" &&
+                          !isExisting &&
+                          !optionsLoading
+                        ) {
+                          filtered.push({
+                            inputValue,
+                            name: `เพิ่ม "${inputValue}"`,
+                            id: "new-author",
+                          } as any);
+                        }
+                        return filtered;
+                      }}
+                      selectOnFocus
+                      clearOnBlur
+                      handleHomeEndKeys
+                      id="author-autocomplete"
+                      onInputChange={(_, value, reason) => {
+                        if (reason === "input" || reason === "clear")
+                          authorOptions.setSearch(value);
+                      }}
+                      loading={optionsLoading}
+                      loadingText="กำลังโหลดตัวเลือก..."
+                      noOptionsText={
+                        optionsErrors.length
+                          ? "โหลดตัวเลือกไม่ได้ กรุณากดลองใหม่ด้านบน"
+                          : "ไม่มีตัวเลือก"
                       }
-                    }}
-                    filterOptions={(options, params) => {
-                      const filtered = authorFilter(options, params);
-                      const { inputValue } = params;
-                      const isExisting = options.some(
-                        (option) =>
-                          option.name.toLowerCase() === inputValue.toLowerCase()
-                      );
-                      if (inputValue !== "" && !isExisting) {
-                        filtered.push({
-                          inputValue,
-                          name: `เพิ่ม "${inputValue}"`,
-                          id: "new-author",
-                        } as any);
-                      }
-                      return filtered;
-                    }}
-                    selectOnFocus
-                    clearOnBlur
-                    handleHomeEndKeys
-                    id="author-autocomplete"
-                    loading={optionsLoading}
-                    loadingText="กำลังโหลดตัวเลือก..."
-                    noOptionsText={optionsErrors.length ? "โหลดตัวเลือกไม่ได้ กรุณากดลองใหม่ด้านบน" : "ไม่มีตัวเลือก"}
-                    options={availableAuthors}
-                    getOptionLabel={(option) => {
-                      if (typeof option === "string") return option;
-                      if ((option as any).inputValue)
-                        return (option as any).inputValue;
-                      return option.name;
-                    }}
-                    renderOption={(props, option) => {
-                      const { key, ...optionProps } = props;
-                      return (
-                        <li key={key} {...optionProps}>
-                          {option.name}
-                        </li>
-                      );
-                    }}
-                    freeSolo
-                    slotProps={{
-                      chip: {
-                        sx: {
-                          bgcolor: "rgba(251,191,36,0.14)",
-                          color: "#f7e3a2",
-                          border: "1px solid rgba(251,191,36,0.2)",
-                          fontWeight: 600,
-                          "& .MuiChip-deleteIcon": {
-                            color: "rgba(247,227,162,0.72)",
-                            "&:hover": {
-                              color: dashboardTokens.accent,
+                      options={availableAuthors}
+                      getOptionLabel={(option) => {
+                        if (typeof option === "string") return option;
+                        if ((option as any).inputValue)
+                          return (option as any).inputValue;
+                        return option.name;
+                      }}
+                      renderOption={(props, option) => {
+                        const { key, ...optionProps } = props;
+                        return (
+                          <li key={key} {...optionProps}>
+                            {option.name}
+                          </li>
+                        );
+                      }}
+                      freeSolo
+                      slotProps={{
+                        chip: {
+                          sx: {
+                            bgcolor: "rgba(251,191,36,0.14)",
+                            color: "#f7e3a2",
+                            border: "1px solid rgba(251,191,36,0.2)",
+                            fontWeight: 600,
+                            "& .MuiChip-deleteIcon": {
+                              color: "rgba(247,227,162,0.72)",
+                              "&:hover": {
+                                color: dashboardTokens.accent,
+                              },
                             },
                           },
                         },
-                      },
-                    }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="ผู้แต่ง"
-                        error={Boolean(fieldErrors.authorId)}
-                        helperText={fieldErrors.authorId}
-                        variant="filled"
-                        placeholder="เลือกหรือสร้างผู้แต่ง"
-                        sx={filledFieldSx}
-                        slotProps={{
-                          ...params.slotProps,
-
-                          input: {
-                            ...params.slotProps.input,
-                            ...filledInputProps,
-                          }
-                        }}
-                      />
-                    )}
-                  />
-                </Grid>
-<Grid   size={{ xs: 12, md: 6 }}>
-                  <TextField
-                    label="ชื่อผู้แต่ง (Author Name for OG)"
-                    name="authorName"
-                    value={authorName}
-                    onChange={(e) => { setAuthorName(e.target.value); setFieldErrors((prev) => ({ ...prev, authorName: "" })); }}
-                    fullWidth
-                    variant="filled"
-                    placeholder="เช่น Aokana, Doujin Circle"
-                    error={Boolean(fieldErrors.authorName)}
-                    helperText={fieldErrors.authorName || "สำหรับแสดงใน og:title เมื่อแชร์ลิงก์ (auto-filled from author)"}
-                    sx={filledFieldSx}
-                    slotProps={{
-                      input: filledInputProps
-                    }}
-                  />
-                </Grid>
-
-                {/* Author Credits - Show only when adding new author */}
-                {pendingAuthorName && (
-<Grid  size={12}>
-                    <Box
-                      sx={{
-                        p: 2,
-                        ...dashboardInsetSurfaceSx,
                       }}
-                    >
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="ผู้แต่ง"
+                          error={Boolean(fieldErrors.authorId)}
+                          helperText={fieldErrors.authorId}
+                          variant="filled"
+                          placeholder="เลือกหรือสร้างผู้แต่ง"
+                          sx={filledFieldSx}
+                          slotProps={{
+                            ...params.slotProps,
+
+                            input: {
+                              ...params.slotProps.input,
+                              ...filledInputProps,
+                            },
+                          }}
+                        />
+                      )}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, xl: 6 }}>
+                    <TextField
+                      label="ชื่อผู้แต่ง (Author Name for OG)"
+                      name="authorName"
+                      value={authorName}
+                      onChange={(e) => {
+                        setAuthorName(e.target.value);
+                        setFieldErrors((prev) => ({ ...prev, authorName: "" }));
+                      }}
+                      fullWidth
+                      variant="filled"
+                      placeholder="เช่น Aokana, Doujin Circle"
+                      error={Boolean(fieldErrors.authorName)}
+                      helperText={
+                        fieldErrors.authorName ||
+                        "สำหรับแสดงใน og:title เมื่อแชร์ลิงก์ (auto-filled from author)"
+                      }
+                      sx={filledFieldSx}
+                      slotProps={{
+                        input: filledInputProps,
+                      }}
+                    />
+                  </Grid>
+
+                  {/* Author Credits - Show only when adding new author */}
+                  {pendingAuthorName && (
+                    <Grid size={12}>
                       <Box
                         sx={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          mb: 2,
+                          p: 2,
+                          ...dashboardInsetSurfaceSx,
                         }}
                       >
-                        <Typography
-                          variant="subtitle2"
+                        <Box
                           sx={{
-                            color: dashboardTokens.textMuted,
-                            fontWeight: 700,
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            mb: 2,
                           }}
                         >
-                          เครดิตผู้แต่งและโซเชียลลิงก์
-                        </Typography>
-                        <Button
-                          size="small"
-                          onClick={handleAddCredit}
-                          sx={dashboardGhostButtonSx}
-                        >
-                          เพิ่มเครดิต
-                        </Button>
-                      </Box>
-                      {credits.length === 0 ? (
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            color: dashboardTokens.textSoft,
-                            textAlign: "center",
-                            py: 2,
-                          }}
-                        >
-                          ยังไม่มีเครดิตเพิ่มเติม
-                        </Typography>
-                      ) : (
-                        <Stack spacing={2}>
-                          {credits.map((credit, index) => (
-                            <Box
-                              key={index}
-                              sx={{
-                                p: 2,
-                                ...dashboardInsetSurfaceSx,
-                                bgcolor: "rgba(0,0,0,0.18)",
-                              }}
-                            >
-                              <Grid container spacing={2}>
-<Grid  size={12}>
-                                  <Box
-                                    sx={{
-                                      display: "flex",
-                                      gap: 1,
-                                      alignItems: "center",
-                                    }}
-                                  >
-                                    <TextField
-                                      label="URL"
-                                      value={credit.url}
-                                      onChange={(e) =>
-                                        handleCreditChange(
-                                          index,
-                                          "url",
-                                          e.target.value
-                                        )
-                                      }
-                                      fullWidth
-                                    variant="filled"
-                                    placeholder="https://example.com"
-                                    size="small"
-                                    sx={filledFieldSx}
-                                    slotProps={{
-                                      input: filledInputProps
-                                    }}
-                                  />
-                                    <Tooltip title="ดึงชื่อและไอคอนอัตโนมัติ">
-                                      <span>
+                          <Typography
+                            variant="subtitle2"
+                            sx={{
+                              color: dashboardTokens.textMuted,
+                              fontWeight: 700,
+                            }}
+                          >
+                            เครดิตผู้แต่งและโซเชียลลิงก์
+                          </Typography>
+                          <Button
+                            size="small"
+                            onClick={handleAddCredit}
+                            sx={dashboardGhostButtonSx}
+                          >
+                            เพิ่มเครดิต
+                          </Button>
+                        </Box>
+                        {credits.length === 0 ? (
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              color: dashboardTokens.textSoft,
+                              textAlign: "center",
+                              py: 2,
+                            }}
+                          >
+                            ยังไม่มีเครดิตเพิ่มเติม
+                          </Typography>
+                        ) : (
+                          <Stack spacing={2}>
+                            {credits.map((credit, index) => (
+                              <Box
+                                key={index}
+                                sx={{
+                                  p: 2,
+                                  ...dashboardInsetSurfaceSx,
+                                  bgcolor: "rgba(0,0,0,0.18)",
+                                }}
+                              >
+                                <Grid container spacing={2}>
+                                  <Grid size={12}>
+                                    <Box
+                                      sx={{
+                                        display: "flex",
+                                        gap: 1,
+                                        alignItems: "center",
+                                      }}
+                                    >
+                                      <TextField
+                                        label="URL"
+                                        value={credit.url}
+                                        onChange={(e) =>
+                                          handleCreditChange(
+                                            index,
+                                            "url",
+                                            e.target.value,
+                                          )
+                                        }
+                                        fullWidth
+                                        variant="filled"
+                                        placeholder="https://example.com"
+                                        size="small"
+                                        sx={filledFieldSx}
+                                        slotProps={{
+                                          input: filledInputProps,
+                                        }}
+                                      />
+                                      <Tooltip title="ดึงชื่อและไอคอนอัตโนมัติ">
+                                        <span>
+                                          <IconButton
+                                            size="small"
+                                            onClick={() =>
+                                              handleFetchCreditInfo(index)
+                                            }
+                                            disabled={!credit.url}
+                                            sx={{
+                                              color: "rgba(255,255,255,0.82)",
+                                              bgcolor: "transparent",
+                                              border: "none",
+                                              boxShadow: "none",
+                                              "&:hover": {
+                                                bgcolor: "transparent",
+                                                color: "#ffffff",
+                                              },
+                                            }}
+                                          >
+                                            <AutoFixHighIcon
+                                              sx={{ fontSize: 20 }}
+                                            />
+                                          </IconButton>
+                                        </span>
+                                      </Tooltip>
+                                      <Tooltip title="ลบเครดิต">
                                         <IconButton
                                           size="small"
                                           onClick={() =>
-                                            handleFetchCreditInfo(index)
+                                            handleRemoveCredit(index)
                                           }
-                                          disabled={!credit.url}
                                           sx={{
-                                            color: "rgba(255,255,255,0.82)",
-                                            bgcolor: "transparent",
-                                            border: "none",
-                                            boxShadow: "none",
+                                            bgcolor: "rgba(239,68,68,0.1)",
                                             "&:hover": {
-                                              bgcolor: "transparent",
-                                              color: "#ffffff",
+                                              bgcolor: "rgba(239,68,68,0.2)",
                                             },
                                           }}
                                         >
-                                          <AutoFixHighIcon
-                                            sx={{ fontSize: 20 }}
-                                          />
+                                          <DeleteIcon sx={{ fontSize: 20 }} />
                                         </IconButton>
-                                      </span>
-                                    </Tooltip>
-                                    <Tooltip title="ลบเครดิต">
-                                      <IconButton
-                                        size="small"
-                                        onClick={() =>
-                                          handleRemoveCredit(index)
-                                        }
-                                        sx={{
-                                          bgcolor: "rgba(239,68,68,0.1)",
-                                          "&:hover": {
-                                            bgcolor: "rgba(239,68,68,0.2)",
-                                          },
-                                        }}
-                                      >
-                                        <DeleteIcon sx={{ fontSize: 20 }} />
-                                      </IconButton>
-                                    </Tooltip>
-                                  </Box>
+                                      </Tooltip>
+                                    </Box>
+                                  </Grid>
+                                  <Grid size={{ xs: 12, sm: 6 }}>
+                                    <TextField
+                                      label="ชื่อที่จะแสดง"
+                                      value={credit.label}
+                                      onChange={(e) =>
+                                        handleCreditChange(
+                                          index,
+                                          "label",
+                                          e.target.value,
+                                        )
+                                      }
+                                      fullWidth
+                                      variant="filled"
+                                      placeholder="เช่น Website, Twitter"
+                                      size="small"
+                                      sx={filledFieldSx}
+                                      slotProps={{
+                                        input: filledInputProps,
+                                      }}
+                                    />
+                                  </Grid>
+                                  <Grid size={{ xs: 12, sm: 6 }}>
+                                    <TextField
+                                      label="ลิงก์ไอคอน"
+                                      value={credit.icon}
+                                      onChange={(e) =>
+                                        handleCreditChange(
+                                          index,
+                                          "icon",
+                                          e.target.value,
+                                        )
+                                      }
+                                      fullWidth
+                                      variant="filled"
+                                      placeholder="https://example.com/icon.png"
+                                      size="small"
+                                      sx={filledFieldSx}
+                                      slotProps={{
+                                        input: filledInputProps,
+                                      }}
+                                    />
+                                  </Grid>
                                 </Grid>
-<Grid   size={{ xs: 12, sm: 6 }}>
-                                  <TextField
-                                    label="ชื่อที่จะแสดง"
-                                    value={credit.label}
-                                    onChange={(e) =>
-                                      handleCreditChange(
-                                        index,
-                                        "label",
-                                        e.target.value
-                                      )
-                                    }
-                                    fullWidth
-                                    variant="filled"
-                                    placeholder="เช่น Website, Twitter"
-                                    size="small"
-                                    sx={filledFieldSx}
-                                    slotProps={{
-                                      input: filledInputProps
-                                    }}
-                                  />
-                                </Grid>
-<Grid   size={{ xs: 12, sm: 6 }}>
-                                  <TextField
-                                    label="ลิงก์ไอคอน"
-                                    value={credit.icon}
-                                    onChange={(e) =>
-                                      handleCreditChange(
-                                        index,
-                                        "icon",
-                                        e.target.value
-                                      )
-                                    }
-                                    fullWidth
-                                    variant="filled"
-                                    placeholder="https://example.com/icon.png"
-                                    size="small"
-                                    sx={filledFieldSx}
-                                    slotProps={{
-                                      input: filledInputProps
-                                    }}
-                                  />
-                                </Grid>
-                              </Grid>
-                            </Box>
-                          ))}
-                        </Stack>
-                      )}
-                    </Box>
-                </Grid>
-                )}
+                              </Box>
+                            ))}
+                          </Stack>
+                        )}
+                      </Box>
+                    </Grid>
+                  )}
 
-<Grid   size={{ xs: 12, md: 6 }}>
-                  <Autocomplete
-                    value={
-                      availableCategories.find((c) => c.id === categoryId) ||
-                      null
-                    }
-                    onChange={(event, newValue) => {
-                      if (typeof newValue === "string") {
-                        handleCreateCategory(newValue);
-                      } else if (newValue && (newValue as any).inputValue) {
-                        // Create a new value from the user input
-                        handleCreateCategory((newValue as any).inputValue);
-                      } else {
-                        setCategoryId(newValue?.id || "");
+                  <Grid size={{ xs: 12, xl: 6 }}>
+                    <Autocomplete
+                      value={
+                        availableCategories.find((c) => c.id === categoryId) ||
+                        null
                       }
-                    }}
-                    filterOptions={(options, params) => {
-                      const filtered = categoryFilter(options, params);
-                      const { inputValue } = params;
-                      // Suggest the creation of a new value
-                      const isExisting = options.some(
-                        (option) => option.name === inputValue
-                      );
-                      if (inputValue !== "" && !isExisting) {
-                        filtered.push({
-                          inputValue,
-                          name: `เพิ่ม "${inputValue}"`,
-                          id: "new-category",
-                        } as any);
-                      }
-                      return filtered;
-                    }}
-                    selectOnFocus
-                    clearOnBlur
-                    handleHomeEndKeys
-                    id="category-autocomplete"
-                    loading={optionsLoading}
-                    loadingText="กำลังโหลดตัวเลือก..."
-                    noOptionsText={optionsErrors.length ? "โหลดตัวเลือกไม่ได้ กรุณากดลองใหม่ด้านบน" : "ไม่มีตัวเลือก"}
-                    options={availableCategories}
-                    getOptionLabel={(option) => {
-                      // Value selected with enter, right from the input
-                      if (typeof option === "string") {
-                        return option;
-                      }
-                      // Add "xxx" option created dynamically
-                      if ((option as any).inputValue) {
-                        return (option as any).inputValue;
-                      }
-                      // Regular option
-                      return option.name;
-                    }}
-                    renderOption={(props, option) => {
-                      const { key, ...optionProps } = props;
-                      return (
-                        <li key={key} {...optionProps}>
-                          {option.name}
-                        </li>
-                      );
-                    }}
-                    freeSolo
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="หมวดหมู่"
-                        error={Boolean(fieldErrors.categoryId)}
-                        helperText={fieldErrors.categoryId}
-                        variant="filled"
-                        sx={filledFieldSx}
-                        slotProps={{
-                          ...params.slotProps,
-
-                          input: {
-                            ...params.slotProps.input,
-                            ...filledInputProps,
-                          }
-                        }}
-                      />
-                    )}
-                  />
-                </Grid>
-<Grid   size={{ xs: 12, md: 6 }}>
-                  <Autocomplete
-                    multiple
-                    id="tags-autocomplete"
-                    loading={optionsLoading}
-                    loadingText="กำลังโหลดตัวเลือก..."
-                    noOptionsText={optionsErrors.length ? "โหลดตัวเลือกไม่ได้ กรุณากดลองใหม่ด้านบน" : "ไม่มีตัวเลือก"}
-                    options={availableTags}
-                    getOptionLabel={(option) => {
-                      if (typeof option === "string") return option;
-                      if ((option as any).inputValue)
-                        return (option as any).inputValue;
-                      return option.name;
-                    }}
-                    value={selectedTags}
-                    onChange={(event, newValue) => {
-                      // Filter out any string values or special "Add" options and handle creation
-                      const processedTags: Tag[] = [];
-
-                      newValue.forEach((item) => {
-                        if (typeof item === "string") {
-                          handleCreateTag(item);
-                        } else if ((item as any).inputValue) {
-                          handleCreateTag((item as any).inputValue);
+                      onChange={(event, newValue) => {
+                        unsaved.markDirty();
+                        if (typeof newValue === "string") {
+                          handleCreateCategory(newValue);
+                        } else if (newValue && (newValue as any).inputValue) {
+                          // Create a new value from the user input
+                          handleCreateCategory((newValue as any).inputValue);
                         } else {
-                          processedTags.push(item as Tag);
+                          setCategoryId(newValue?.id || "");
                         }
-                      });
-
-                      // Update state only with valid existing tags
-                      // New tags will be added via handleCreateTag
-                      const validTags = newValue.filter(
-                        (t) => !(t as any).inputValue && typeof t !== "string"
-                      ) as Tag[];
-                      setSelectedTags(validTags);
-                    }}
-                    filterOptions={(options, params) => {
-                      const filtered = filter(options, params);
-                      const { inputValue } = params;
-                      const isExisting = options.some(
-                        (option) =>
-                          option.name.toLowerCase() === inputValue.toLowerCase()
-                      );
-                      if (inputValue !== "" && !isExisting) {
-                        filtered.push({
-                          inputValue,
-                          name: `เพิ่ม "${inputValue}"`,
-                          id: "new-tag",
-                        } as any);
-                      }
-                      return filtered;
-                    }}
-                    isOptionEqualToValue={(option, value) =>
-                      typeof option !== "string" &&
-                      typeof value !== "string" &&
-                      option.id === value.id
-                    }
-                    renderOption={(props, option) => {
-                      const { key, ...optionProps } = props;
-                      return (
-                        <li key={key} {...optionProps}>
-                          {typeof option === "string" ? option : option.name}
-                        </li>
-                      );
-                    }}
-                    renderValue={(value, getItemProps) =>
-                      value.map((option, index) => {
-                        const { key, ...tagProps } = getItemProps({ index });
-
-                        return (
-                          <Chip
-                            key={key ?? (typeof option === "string" ? option : option.id)}
-                            label={typeof option === "string" ? option : option.name}
-                            {...tagProps}
-                            sx={{
-                              ...getMetadataChipSx(typeof option === "string" ? option : option.name),
-                              height: 30,
-                              px: 0.25,
-                              fontSize: "0.82rem",
-                              textTransform: "none",
-                            }}
-                          />
+                      }}
+                      filterOptions={(options, params) => {
+                        const filtered = categoryFilter(options, params);
+                        const { inputValue } = params;
+                        // Suggest the creation of a new value
+                        const isExisting = options.some(
+                          (option) => option.name === inputValue,
                         );
-                      })
-                    }
-                    freeSolo
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        variant="filled"
-                        label="แท็ก"
-                        error={Boolean(fieldErrors.tagIds)}
-                        helperText={fieldErrors.tagIds}
-                        placeholder="เลือกหรือสร้างแท็ก"
-                        sx={filledFieldSx}
-                        slotProps={{
-                          ...params.slotProps,
+                        if (
+                          inputValue !== "" &&
+                          !isExisting &&
+                          !optionsLoading
+                        ) {
+                          filtered.push({
+                            inputValue,
+                            name: `เพิ่ม "${inputValue}"`,
+                            id: "new-category",
+                          } as any);
+                        }
+                        return filtered;
+                      }}
+                      selectOnFocus
+                      clearOnBlur
+                      handleHomeEndKeys
+                      id="category-autocomplete"
+                      onInputChange={(_, value, reason) => {
+                        if (reason === "input" || reason === "clear")
+                          categoryOptions.setSearch(value);
+                      }}
+                      loading={optionsLoading}
+                      loadingText="กำลังโหลดตัวเลือก..."
+                      noOptionsText={
+                        optionsErrors.length
+                          ? "โหลดตัวเลือกไม่ได้ กรุณากดลองใหม่ด้านบน"
+                          : "ไม่มีตัวเลือก"
+                      }
+                      options={availableCategories}
+                      getOptionLabel={(option) => {
+                        // Value selected with enter, right from the input
+                        if (typeof option === "string") {
+                          return option;
+                        }
+                        // Add "xxx" option created dynamically
+                        if ((option as any).inputValue) {
+                          return (option as any).inputValue;
+                        }
+                        // Regular option
+                        return option.name;
+                      }}
+                      renderOption={(props, option) => {
+                        const { key, ...optionProps } = props;
+                        return (
+                          <li key={key} {...optionProps}>
+                            {option.name}
+                          </li>
+                        );
+                      }}
+                      freeSolo
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="หมวดหมู่"
+                          error={Boolean(fieldErrors.categoryId)}
+                          helperText={fieldErrors.categoryId}
+                          variant="filled"
+                          sx={filledFieldSx}
+                          slotProps={{
+                            ...params.slotProps,
 
-                          input: {
-                            ...params.slotProps.input,
-                            ...filledInputProps,
+                            input: {
+                              ...params.slotProps.input,
+                              ...filledInputProps,
+                            },
+                          }}
+                        />
+                      )}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, xl: 6 }}>
+                    <Autocomplete
+                      multiple
+                      id="tags-autocomplete"
+                      onInputChange={(_, value, reason) => {
+                        if (reason === "input" || reason === "clear")
+                          tagOptions.setSearch(value);
+                      }}
+                      loading={optionsLoading}
+                      loadingText="กำลังโหลดตัวเลือก..."
+                      noOptionsText={
+                        optionsErrors.length
+                          ? "โหลดตัวเลือกไม่ได้ กรุณากดลองใหม่ด้านบน"
+                          : "ไม่มีตัวเลือก"
+                      }
+                      options={availableTags}
+                      getOptionLabel={(option) => {
+                        if (typeof option === "string") return option;
+                        if ((option as any).inputValue)
+                          return (option as any).inputValue;
+                        return option.name;
+                      }}
+                      value={selectedTags}
+                      onChange={(event, newValue) => {
+                        unsaved.markDirty();
+                        // Filter out any string values or special "Add" options and handle creation
+                        const processedTags: Tag[] = [];
+
+                        newValue.forEach((item) => {
+                          if (typeof item === "string") {
+                            handleCreateTag(item);
+                          } else if ((item as any).inputValue) {
+                            handleCreateTag((item as any).inputValue);
+                          } else {
+                            processedTags.push(item as Tag);
                           }
-                        }}
-                      />
-                    )}
-                  />
+                        });
+
+                        // Update state only with valid existing tags
+                        // New tags will be added via handleCreateTag
+                        const validTags = newValue.filter(
+                          (t) =>
+                            !(t as any).inputValue && typeof t !== "string",
+                        ) as Tag[];
+                        setSelectedTags(validTags);
+                      }}
+                      filterOptions={(options, params) => {
+                        const filtered = filter(options, params);
+                        const { inputValue } = params;
+                        const isExisting = options.some(
+                          (option) =>
+                            option.name.toLowerCase() ===
+                            inputValue.toLowerCase(),
+                        );
+                        if (
+                          inputValue !== "" &&
+                          !isExisting &&
+                          !optionsLoading
+                        ) {
+                          filtered.push({
+                            inputValue,
+                            name: `เพิ่ม "${inputValue}"`,
+                            id: "new-tag",
+                          } as any);
+                        }
+                        return filtered;
+                      }}
+                      isOptionEqualToValue={(option, value) =>
+                        typeof option !== "string" &&
+                        typeof value !== "string" &&
+                        option.id === value.id
+                      }
+                      renderOption={(props, option) => {
+                        const { key, ...optionProps } = props;
+                        return (
+                          <li key={key} {...optionProps}>
+                            {typeof option === "string" ? option : option.name}
+                          </li>
+                        );
+                      }}
+                      renderValue={(value, getItemProps) =>
+                        value.map((option, index) => {
+                          const { key, ...tagProps } = getItemProps({ index });
+
+                          return (
+                            <Chip
+                              key={
+                                key ??
+                                (typeof option === "string"
+                                  ? option
+                                  : option.id)
+                              }
+                              label={
+                                typeof option === "string"
+                                  ? option
+                                  : option.name
+                              }
+                              {...tagProps}
+                              sx={{
+                                ...getMetadataChipSx(
+                                  typeof option === "string"
+                                    ? option
+                                    : option.name,
+                                ),
+                                height: 30,
+                                px: 0.25,
+                                fontSize: "0.82rem",
+                                textTransform: "none",
+                              }}
+                            />
+                          );
+                        })
+                      }
+                      freeSolo
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          variant="filled"
+                          label="แท็ก"
+                          error={Boolean(fieldErrors.tagIds)}
+                          helperText={fieldErrors.tagIds}
+                          placeholder="เลือกหรือสร้างแท็ก"
+                          sx={filledFieldSx}
+                          slotProps={{
+                            ...params.slotProps,
+
+                            input: {
+                              ...params.slotProps.input,
+                              ...filledInputProps,
+                            },
+                          }}
+                        />
+                      )}
+                    />
+                  </Grid>
                 </Grid>
-              </Grid>
-            </DashboardSurface>
-          </Grid>
+              </DashboardSurface>
+            </Grid>
 
-          {/* Right Column: Media Assets */}
-<Grid   size={{ xs: 12, md: 5 }}>
-            <DashboardSurface sx={{ height: "100%" }}>
-              <DashboardSectionTitle
-                title="ไฟล์ภาพและลำดับหน้า"
-                description="อัปโหลดรูปปก เพิ่มหน้าภาพ และจัดเรียงลำดับก่อนบันทึกหรือส่งตรวจ"
-              />
+            {/* Primary Column: Page Workspace */}
+            <Grid size={{ xs: 12, lg: 8 }} sx={{ order: { xs: 2, lg: 1 } }}>
+              <DashboardSurface sx={{ height: "100%" }}>
+                <DashboardSectionTitle
+                  title="จัดภาพและลำดับหน้า"
+                  description="เพิ่มภาพหน้าอ่าน ตรวจภาพตัวอย่าง และเรียงลำดับก่อนบันทึก"
+                />
 
-              {/* Cover Image */}
-              <Box id="manga-cover-field" tabIndex={-1} aria-describedby={fieldErrors.coverImage ? "manga-cover-error" : undefined} sx={{ mb: 4 }}>
-                {fieldErrors.coverImage && <Typography id="manga-cover-error" role="alert" color="error" variant="body2">{fieldErrors.coverImage}</Typography>}
-                <Typography variant="subtitle1" component="h4" gutterBottom>
-                  รูปปก
-                </Typography>
+                {/* Pages */}
+                <Box
+                  id="manga-pages-field"
+                  tabIndex={-1}
+                  aria-describedby={
+                    fieldErrors.pages ? "manga-pages-error" : undefined
+                  }
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      mb: 1.1,
+                    }}
+                  >
+                    <Typography variant="subtitle1" component="h4">
+                      หน้าอ่าน ({pageItems.length})
+                    </Typography>
+                    <Button
+                      size="small"
+                      startIcon={<AddPhotoAlternateIcon />}
+                      component="label"
+                      sx={{
+                        ...(mediaActionButtonSx as any),
+                        cursor: "pointer",
+                      }}
+                    >
+                      <input
+                        type="file"
+                        hidden
+                        accept="image/*"
+                        multiple
+                        onChange={handlePagesUpload}
+                      />
+                      เพิ่มหน้า
+                    </Button>
+                  </Box>
 
-                {!coverItem ? (
+                  {pageItems.length > 0 && (
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        display: "block",
+                        color: dashboardTokens.textSoft,
+                        mb: 1.8,
+                      }}
+                    >
+                      ลากจากปุ่มย้าย หรือใช้ขึ้น/ลงและเลขหน้า ·
+                      กดรูปตาเพื่อดูภาพเต็ม
+                    </Typography>
+                  )}
+
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <SortableContext
+                      items={pageItems.map((p) => p.id)}
+                      strategy={rectSortingStrategy}
+                    >
+                      <Box
+                        sx={{
+                          p: 1.4,
+                          borderRadius: 2.5,
+                          border: "1px solid rgba(255,255,255,0.08)",
+                          bgcolor: "rgba(255,255,255,0.02)",
+                          display: "grid",
+                          gridTemplateColumns: {
+                            xs: "minmax(0,1fr)",
+                            sm: "repeat(auto-fill,minmax(min(100%,260px),1fr))",
+                          },
+                          gap: 1.6,
+                          alignItems: "start",
+                          maxHeight: {
+                            xs: "none",
+                            lg: "max(580px, calc(100dvh - 280px))",
+                          },
+                          overflowY: { xs: "visible", lg: "auto" },
+                        }}
+                      >
+                        {pageItems.map((item, index) => (
+                          <SortableItem
+                            key={item.id}
+                            id={item.id}
+                            src={item.preview}
+                            index={index}
+                            total={pageItems.length}
+                            onMove={(to) => {
+                              unsaved.markDirty();
+                              setPageItems((items) =>
+                                arrayMove(items, index, to),
+                              );
+                            }}
+                            onRemove={() => {
+                              unsaved.markDirty();
+                              handleRemovePage(item.id);
+                            }}
+                            onPreview={() =>
+                              setPreviewPage({ src: item.preview, index })
+                            }
+                          />
+                        ))}
+                      </Box>
+                    </SortableContext>
+                  </DndContext>
+
+                  {fieldErrors.pages && (
+                    <Typography
+                      id="manga-pages-error"
+                      role="alert"
+                      color="error"
+                      variant="body2"
+                    >
+                      {fieldErrors.pages}
+                    </Typography>
+                  )}
+                  {pageItems.length === 0 && (
+                    <Box
+                      sx={{
+                        p: 4,
+                        border: "1px dashed rgba(255,255,255,0.1)",
+                        borderRadius: 2,
+                        textAlign: "center",
+                        color: dashboardTokens.textMuted,
+                      }}
+                    >
+                      <Typography variant="body2">
+                        เริ่มจากเพิ่มภาพหน้าอ่าน แล้วตรวจและเรียงภาพในพื้นที่นี้
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
+                {/* Cover Image */}
+                <Box
+                  id="manga-cover-field"
+                  tabIndex={-1}
+                  aria-describedby={
+                    fieldErrors.coverImage ? "manga-cover-error" : undefined
+                  }
+                  sx={{
+                    mt: 4,
+                    pt: 3,
+                    borderTop: `1px solid ${dashboardTokens.border}`,
+                  }}
+                >
+                  {fieldErrors.coverImage && (
+                    <Typography
+                      id="manga-cover-error"
+                      role="alert"
+                      color="error"
+                      variant="body2"
+                    >
+                      {fieldErrors.coverImage}
+                    </Typography>
+                  )}
+                  <Typography variant="subtitle1" component="h4" gutterBottom>
+                    รูปปกเรื่อง
+                  </Typography>
+
+                  {!coverItem ? (
                     <Button
                       variant="outlined"
                       fullWidth
@@ -1503,160 +1878,79 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                         cursor: "pointer",
                       }}
                     >
-                    <input
-                      type="file"
-                      hidden
-                      accept="image/*"
-                      onChange={handleCoverUpload}
-                    />
-                    <AddPhotoAlternateIcon
-                      sx={{ fontSize: 40, opacity: 0.5 }}
-                    />
-                    อัปโหลดรูปปก
-                  </Button>
-                ) : (
-                  <Box
-                    sx={{
-                      position: "relative",
-                      width: "100%",
-                      maxWidth: 220,
-                      margin: "0 auto",
-                      borderRadius: 2.5,
-                      overflow: "hidden",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      boxShadow: "0 16px 30px rgba(0,0,0,0.24)",
-                    }}
-                  >
-                    <Box
-                      component="img"
-                      src={coverItem.preview}
-                      alt="Cover preview"
-                      sx={{ width: "100%", height: "auto", display: "block" }}
-                    />
-                    <IconButton
-                      aria-label="Remove cover image"
-                      size="small"
-                      onClick={handleRemoveCover}
-                      sx={{
-                        position: "absolute",
-                        top: 4,
-                        right: 4,
-                        color: "#fff",
-                        bgcolor: "rgba(220,38,38,0.84)",
-                        border: "1px solid rgba(254,202,202,0.22)",
-                        "&:hover": { bgcolor: "rgba(185,28,28,0.96)" },
-                      }}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Box>
-                )}
-              </Box>
-
-              {/* Pages */}
-              <Box id="manga-pages-field" tabIndex={-1} aria-describedby={fieldErrors.pages ? "manga-pages-error" : undefined}>
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    mb: 1.1,
-                  }}
-                >
-                  <Typography variant="subtitle1" component="h4">
-                    หน้าอ่าน ({pageItems.length})
-                  </Typography>
-                  <Button
-                    size="small"
-                    startIcon={<AddPhotoAlternateIcon />}
-                    component="label"
-                    sx={{
-                      ...(mediaActionButtonSx as any),
-                      cursor: "pointer",
-                    }}
-                  >
-                    <input
-                      type="file"
-                      hidden
-                      accept="image/*"
-                      multiple
-                      onChange={handlePagesUpload}
-                    />
-                    เพิ่มหน้า
-                  </Button>
-                </Box>
-
-                {pageItems.length > 0 && (
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      display: "block",
-                      color: dashboardTokens.textSoft,
-                      mb: 1.8,
-                    }}
-                  >
-                    ลากที่ภาพได้โดยตรงเพื่อจัดลำดับใหม่ กดไอคอนรูปตาเพื่อดูภาพเต็ม
-                  </Typography>
-                )}
-
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleDragEnd}
-                >
-                  <SortableContext
-                    items={pageItems.map((p) => p.id)}
-                    strategy={rectSortingStrategy}
-                  >
+                      <input
+                        type="file"
+                        hidden
+                        accept="image/*"
+                        onChange={handleCoverUpload}
+                      />
+                      <AddPhotoAlternateIcon
+                        sx={{ fontSize: 40, opacity: 0.5 }}
+                      />
+                      อัปโหลดรูปปก
+                    </Button>
+                  ) : (
                     <Box
                       sx={{
-                        p: 1.4,
+                        position: "relative",
+                        width: "100%",
+                        maxWidth: 220,
+                        margin: "0 auto",
                         borderRadius: 2.5,
+                        overflow: "hidden",
                         border: "1px solid rgba(255,255,255,0.08)",
-                        bgcolor: "rgba(255,255,255,0.02)",
-                        display: "grid",
-                        gridTemplateColumns:
-                          "repeat(auto-fill, minmax(118px, 1fr))",
-                        gap: 1.6,
-                        alignItems: "start",
-                        maxHeight: { xs: "none", md: 620 },
-                        overflowY: { xs: "visible", md: "auto" },
+                        boxShadow: "0 16px 30px rgba(0,0,0,0.24)",
                       }}
                     >
-                      {pageItems.map((item, index) => (
-                        <SortableItem
-                          key={item.id}
-                          id={item.id}
-                          src={item.preview}
-                          index={index}
-                          onRemove={() => handleRemovePage(item.id)}
-                          onPreview={() =>
-                            setPreviewPage({ src: item.preview, index })
-                          }
-                        />
-                      ))}
+                      <Box
+                        component="img"
+                        src={coverItem.preview}
+                        alt="Cover preview"
+                        sx={{ width: "100%", height: "auto", display: "block" }}
+                      />
+                      <IconButton
+                        aria-label="Remove cover image"
+                        size="small"
+                        onClick={handleRemoveCover}
+                        sx={{
+                          position: "absolute",
+                          top: 4,
+                          right: 4,
+                          color: "#fff",
+                          bgcolor: "rgba(220,38,38,0.84)",
+                          border: "1px solid rgba(254,202,202,0.22)",
+                          "&:hover": { bgcolor: "rgba(185,28,28,0.96)" },
+                        }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
                     </Box>
-                  </SortableContext>
-                </DndContext>
-
-                {fieldErrors.pages && <Typography id="manga-pages-error" role="alert" color="error" variant="body2">{fieldErrors.pages}</Typography>}
-                {pageItems.length === 0 && (
-                  <Box
-                    sx={{
-                      p: 4,
-                      border: "1px dashed rgba(255,255,255,0.1)",
-                      borderRadius: 2,
-                      textAlign: "center",
-                      color: dashboardTokens.textMuted,
-                    }}
-                  >
-                    <Typography variant="body2">ยังไม่มีหน้าภาพในรายการ</Typography>
-                  </Box>
-                )}
-              </Box>
-            </DashboardSurface>
+                  )}
+                </Box>
+              </DashboardSurface>
+            </Grid>
           </Grid>
-        </Grid>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "flex-end",
+              gap: 2,
+              alignItems: "center",
+              minHeight: 64,
+              mt: 3,
+            }}
+          >
+            <Typography variant="body2">
+              {unsaved.dirty ? "มีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก" : ""}
+            </Typography>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={isSubmitting || cacheRefreshPending || retryCount > 0}
+            >
+              {isSubmitting ? "กำลังบันทึก…" : "บันทึกข้อมูล"}
+            </Button>
+          </Box>
         </Box>
       </Box>
 
@@ -1668,17 +1962,17 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
         title={notificationTitle}
         message={notificationMessage}
         primaryAction={
-              cacheRefreshPending
-                ? { label: "กลับไปอัปเดตแคช", onClick: handleCloseNotification }
-                : notificationType === "success"
-                ? {
-                label: "ไปที่รายการ",
-                onClick: handleGoToList,
-              }
-                : {
-                label: "ปิด",
-                onClick: handleCloseNotification,
-              }
+          cacheRefreshPending
+            ? { label: "กลับไปอัปเดตแคช", onClick: handleCloseNotification }
+            : notificationType === "success"
+              ? {
+                  label: "ไปที่รายการ",
+                  onClick: handleGoToList,
+                }
+              : {
+                  label: "ปิด",
+                  onClick: handleCloseNotification,
+                }
         }
       />
 
@@ -1699,8 +1993,9 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
               overflow: "hidden",
               boxShadow: "none",
             },
-          }
-        }}>
+          },
+        }}
+      >
         <DialogContent
           sx={{
             p: 0,
@@ -1726,10 +2021,16 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
               border: "1px solid rgba(255,255,255,0.1)",
             }}
           >
-            <Typography variant="body2" sx={{ color: dashboardTokens.text, fontWeight: 700 }}>
+            <Typography
+              variant="body2"
+              sx={{ color: dashboardTokens.text, fontWeight: 700 }}
+            >
               {previewPage ? `หน้า ${previewPage.index + 1}` : ""}
             </Typography>
-            <Typography variant="caption" sx={{ color: dashboardTokens.textSoft }}>
+            <Typography
+              variant="caption"
+              sx={{ color: dashboardTokens.textSoft }}
+            >
               {Math.round(previewZoom * 100)}%
             </Typography>
           </Box>
@@ -1810,7 +2111,8 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                   maxHeight: previewZoom > 1 ? "none" : "100%",
                   height: "auto",
                   objectFit: "contain",
-                  transform: previewZoom <= 1 ? `scale(${previewZoom})` : "none",
+                  transform:
+                    previewZoom <= 1 ? `scale(${previewZoom})` : "none",
                   transformOrigin: "center center",
                 }}
               />

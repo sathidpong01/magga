@@ -21,16 +21,38 @@ mock.module("next/cache", () => ({
 
 mock.module("@/db", () => ({
   db: {
-    query: { advertisements: { findMany: async () => mocks.active ? [{ id: "ad-1", placement: "manga-end", isActive: true }] : [] } },
-    update: () => ({ set: (data: { isActive: boolean }) => ({ where: () => ({ returning: async () => {
-      mocks.active = data.isActive;
-      return [{ id: "ad-1", ...data }];
-    } }) }) }),
+    query: {
+      advertisements: {
+        findMany: async () =>
+          mocks.active
+            ? [{ id: "ad-1", placement: "manga-end", isActive: true }]
+            : [],
+      },
+    },
+    update: () => ({
+      set: (data: { isActive: boolean }) => ({
+        where: () => ({
+          returning: async () => {
+            mocks.active = data.isActive;
+            return [{ id: "ad-1", ...data }];
+          },
+        }),
+      }),
+    }),
   },
 }));
-mock.module("@/db/schema", () => ({ advertisements: { isActive: "isActive", createdAt: "createdAt", id: "id" } }));
-mock.module("drizzle-orm", () => ({ eq: jest.fn(), desc: jest.fn() }));
-mock.module("@/lib/auth", () => ({ auth: { api: { getSession: mocks.getSession } } }));
+mock.module("@/db/schema", () => ({
+  advertisements: { isActive: "isActive", createdAt: "createdAt", id: "id" },
+}));
+const actualDrizzle = await import("drizzle-orm");
+mock.module("drizzle-orm", () => ({
+  ...actualDrizzle,
+  eq: jest.fn(),
+  desc: jest.fn(),
+}));
+mock.module("@/lib/auth", () => ({
+  auth: { api: { getSession: mocks.getSession } },
+}));
 mock.module("@/lib/auth-helpers", () => ({ requireAdmin: mocks.requireAdmin }));
 
 const { GET } = await import("@/app/api/advertisements/route");
@@ -47,7 +69,9 @@ describe("advertisement activation", () => {
   });
 
   it("makes a newly enabled manga-end ad visible to the public immediately", async () => {
-    const publicRequest = new Request("http://localhost/api/advertisements?placement=manga-end") as NextRequest;
+    const publicRequest = new Request(
+      "http://localhost/api/advertisements?placement=manga-end",
+    ) as NextRequest;
     expect(await (await GET(publicRequest)).json()).toEqual([]);
 
     const update = new Request("http://localhost/api/advertisements/ad-1", {
@@ -55,11 +79,15 @@ describe("advertisement activation", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ isActive: true }),
     }) as NextRequest;
-    expect((await PATCH(update, { params: Promise.resolve({ id: "ad-1" }) })).status).toBe(200);
+    expect(
+      (await PATCH(update, { params: Promise.resolve({ id: "ad-1" }) })).status,
+    ).toBe(200);
 
     expect(await (await GET(publicRequest)).json()).toEqual([
       { id: "ad-1", placement: "manga-end", linkUrls: [] },
     ]);
-    expect(mocks.revalidateTag).toHaveBeenCalledWith("advertisements", { expire: 0 });
+    expect(mocks.revalidateTag).toHaveBeenCalledWith("advertisements", {
+      expire: 0,
+    });
   });
 });

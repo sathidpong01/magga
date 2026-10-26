@@ -1,22 +1,15 @@
+import AdminListControls from "@/app/components/dashboard/AdminListControls";
+import { adminPageQuery, type AdminSearchParams } from "@/lib/admin-pagination";
+import { readAdminManga } from "@/lib/admin-lists";
 import { requireAdminPage } from "@/lib/auth-helpers";
 import type { Metadata } from "next";
-import { db } from "@/db";
-import {
-  authors as authorsTable,
-  categories as categoriesTable,
-  manga as mangaTable,
-  mangaTags as mangaTagsTable,
-  tags as tagsTable,
-} from "@/db/schema";
-import { asc, desc, eq, inArray } from "drizzle-orm";
+
+
+
 import { Box, Button, Chip, Stack, Typography } from "@mui/material";
 import Link from "next/link";
 import MangaDataTable from "../MangaDataTable";
-import {
-  DashboardSurface,
-  dashboardTokens,
-  dashboardPrimaryButtonSx,
-} from "@/app/components/dashboard/system";
+import { DashboardSurface, dashboardTokens, dashboardPrimaryButtonSx } from "@/app/components/dashboard/system";
 
 export const dynamic = "force-dynamic";
 
@@ -26,71 +19,23 @@ const ADMIN_METADATA_LIMIT = 500;
 export const metadata: Metadata = {
   title: "จัดการมังงะ - MAGGA",
   description: "จัดการรายการมังงะบน MAGGA",
-  openGraph: { title: "จัดการมังงะ - MAGGA", description: "จัดการรายการมังงะบน MAGGA" },
-  twitter: { title: "จัดการมังงะ - MAGGA", description: "จัดการรายการมังงะบน MAGGA" },
+  openGraph: {
+    title: "จัดการมังงะ - MAGGA",
+    description: "จัดการรายการมังงะบน MAGGA",
+  },
+  twitter: {
+    title: "จัดการมังงะ - MAGGA",
+    description: "จัดการรายการมังงะบน MAGGA",
+  },
 };
 
-export default async function AdminMangaPage() {
+export default async function AdminMangaPage({
+  searchParams,
+}: { searchParams?: Promise<AdminSearchParams> } = {}) {
   await requireAdminPage();
-  const [mangasQuery, allCategories, allTags, allAuthors] = await Promise.all([
-    db
-      .select({
-        id: mangaTable.id,
-        title: mangaTable.title,
-        slug: mangaTable.slug,
-        coverImage: mangaTable.coverImage,
-        isHidden: mangaTable.isHidden,
-        viewCount: mangaTable.viewCount,
-        categoryId: mangaTable.categoryId,
-        authorId: mangaTable.authorId,
-      })
-      .from(mangaTable)
-      .orderBy(desc(mangaTable.createdAt))
-      .limit(ADMIN_MANGA_LIMIT),
-    db.query.categories.findMany({
-      orderBy: [asc(categoriesTable.name)],
-      limit: ADMIN_METADATA_LIMIT,
-    }),
-    db.query.tags.findMany({
-      orderBy: [asc(tagsTable.name)],
-      limit: ADMIN_METADATA_LIMIT,
-    }),
-    db.query.authors.findMany({
-      orderBy: [asc(authorsTable.name)],
-      limit: ADMIN_METADATA_LIMIT,
-    }),
-  ]);
-
-  const mangaIds = mangasQuery.map((manga) => manga.id);
-  const mangaTagRows = mangaIds.length
-    ? await db
-        .select({
-          mangaId: mangaTagsTable.mangaId,
-          tagId: tagsTable.id,
-          tagName: tagsTable.name,
-        })
-        .from(mangaTagsTable)
-        .innerJoin(tagsTable, eq(tagsTable.id, mangaTagsTable.tagId))
-        .where(inArray(mangaTagsTable.mangaId, mangaIds))
-    : [];
-
-  const categoriesById = new Map(allCategories.map((category) => [category.id, category]));
-  const authorsById = new Map(allAuthors.map((author) => [author.id, author]));
-  const tagsByMangaId = new Map<string, Array<{ id: string; name: string }>>();
-
-  for (const row of mangaTagRows) {
-    const tags = tagsByMangaId.get(row.mangaId) ?? [];
-    tags.push({ id: row.tagId, name: row.tagName });
-    tagsByMangaId.set(row.mangaId, tags);
-  }
-
-  const mangas = mangasQuery.map((manga) => ({
-    ...manga,
-    category: manga.categoryId ? categoriesById.get(manga.categoryId) ?? null : null,
-    author: manga.authorId ? authorsById.get(manga.authorId) ?? null : null,
-    tags: tagsByMangaId.get(manga.id) ?? [],
-  }));
-
+  const query = adminPageQuery(await searchParams);
+  const result = await readAdminManga(query);
+  const mangas = result.items;
   return (
     <Box
       sx={{
@@ -109,8 +54,9 @@ export default async function AdminMangaPage() {
           spacing={2}
           sx={{
             justifyContent: "space-between",
-            alignItems: { xs: "flex-start", md: "center" }
-          }}>
+            alignItems: { xs: "flex-start", md: "center" },
+          }}
+        >
           <Box sx={{ maxWidth: 720 }}>
             <Typography
               variant="overline"
@@ -136,18 +82,24 @@ export default async function AdminMangaPage() {
             >
               จัดการมังงะ
             </Typography>
-            <Typography sx={{ color: dashboardTokens.textMuted, lineHeight: 1.7 }}>
-              ดูรายการมังงะทั้งหมด แก้ quick settings จัดหมวดหมู่ แท็ก และผู้แต่ง
-              ด้วย workspace เดียวกัน
+            <Typography
+              sx={{ color: dashboardTokens.textMuted, lineHeight: 1.7 }}
+            >
+              ค้นหาและจัดการมังงะ แก้ไขข้อมูลหรือสถานะได้จากรายการนี้
             </Typography>
           </Box>
 
-          <Stack direction="row" spacing={1} useFlexGap sx={{
-            flexWrap: "wrap",
-            alignItems: "center",
-          }}>
+          <Stack
+            direction="row"
+            spacing={1}
+            useFlexGap
+            sx={{
+              flexWrap: "wrap",
+              alignItems: "center",
+            }}
+          >
             <Chip
-              label={`ล่าสุด ${mangas.length}`}
+              label={`ในหน้านี้ ${mangas.length}`}
               sx={{
                 bgcolor: dashboardTokens.surfaceMuted,
                 color: dashboardTokens.text,
@@ -155,47 +107,36 @@ export default async function AdminMangaPage() {
                 fontWeight: 700,
               }}
             />
-            <Chip
-              label={`หมวดหมู่ ${allCategories.length}`}
-              sx={{
-                bgcolor: dashboardTokens.accentSoft,
-                color: dashboardTokens.accent,
-                border: `1px solid ${dashboardTokens.accentSoft}`,
-                fontWeight: 700,
-              }}
-            />
-            <Chip
-              label={`แท็ก ${allTags.length}`}
-              sx={{
-                bgcolor: dashboardTokens.surfaceMuted,
-                color: dashboardTokens.textMuted,
-                border: `1px solid ${dashboardTokens.border}`,
-                fontWeight: 700,
-              }}
-            />
-            <Chip
-              label={`ผู้แต่ง ${allAuthors.length}`}
-              sx={{
-                bgcolor: dashboardTokens.surfaceMuted,
-                color: dashboardTokens.textMuted,
-                border: `1px solid ${dashboardTokens.border}`,
-                fontWeight: 700,
-              }}
-            />
-            <Link href="/dashboard/admin/manga/create" style={{ textDecoration: "none" }}>
-              <Button sx={dashboardPrimaryButtonSx}>
-                + เพิ่มมังงะใหม่
-              </Button>
+
+
+
+            <Link
+              href="/dashboard/admin/manga/create"
+              style={{ textDecoration: "none" }}
+            >
+              <Button sx={dashboardPrimaryButtonSx}>+ เพิ่มมังงะใหม่</Button>
             </Link>
           </Stack>
         </Stack>
       </DashboardSurface>
 
+      <AdminListControls
+        query={query}
+        hasMore={result.hasMore}
+        count={mangas.length}
+        sorts={[
+          { value: "", label: "ล่าสุด" },
+          { value: "title", label: "ชื่อเรื่อง" },
+          { value: "views", label: "ยอดอ่าน" },
+        ]}
+        statuses={[
+          { value: "", label: "ทั้งหมด" },
+          { value: "published", label: "เผยแพร่" },
+          { value: "hidden", label: "ซ่อน" },
+        ]}
+      />
       <MangaDataTable
         initialMangas={mangas}
-        allCategories={allCategories}
-        allTags={allTags}
-        allAuthors={allAuthors}
       />
     </Box>
   );

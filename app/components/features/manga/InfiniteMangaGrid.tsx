@@ -11,6 +11,12 @@ import { useSession } from "@/lib/auth-client";
 import { maggaColors, maggaLayout } from "@/lib/design-tokens";
 import { adDeviceDisplay } from "@/lib/advertisements";
 import { appendUniqueMangas, buildMangaPageQuery } from "@/lib/manga-query";
+import {
+  consumeBrowseReturn,
+  getBrowseSnapshot,
+  isBrowseReturn,
+  saveBrowseSnapshot,
+} from "@/lib/browse-restoration";
 
 interface Ad {
   id: string;
@@ -59,27 +65,80 @@ export default function InfiniteMangaGrid({
   const listGeneration = useRef(0);
   const activeListRequest = useRef<AbortController | null>(null);
   const actorId = session?.user?.id;
-  const scope = buildMangaPageQuery({ page: 1, pageSize, search, author, categoryId, tagNames: tags, sort }).toString();
+  const scope = buildMangaPageQuery({
+    page: 1,
+    pageSize,
+    search,
+    author,
+    categoryId,
+    tagNames: tags,
+    sort,
+  }).toString();
+  const snapshot = useRef({ mangas, page, hasMore });
+  snapshot.current = { mangas, page, hasMore };
+  const storageScope = `${actorId || "guest"}:${scope}`;
+
+  useEffect(() => {
+    if (isSessionPending) return;
+    let savedForNavigation = false;
+    const save = () => {
+      if (isBrowseReturn()) return;
+      try {
+        saveBrowseSnapshot(sessionStorage, storageScope, {
+          ...snapshot.current,
+          scrollY: window.scrollY,
+          timestamp: Date.now(),
+        });
+      } catch {
+        /* Optional browser cache. */
+      }
+    };
+    const onClick = (event: MouseEvent) => {
+      if ((event.target as Element)?.closest?.("a[href]")) {
+        save();
+        savedForNavigation = true;
+      }
+    };
+    document.addEventListener("click", onClick, true);
+    window.addEventListener("pagehide", save);
+    return () => {
+      if (!savedForNavigation) save();
+      document.removeEventListener("click", onClick, true);
+      window.removeEventListener("pagehide", save);
+    };
+  }, [storageScope, isSessionPending]);
 
   useEffect(() => {
     const controller = new AbortController();
     setBlockedTagIds([]);
     if (isSessionPending || !actorId) return () => controller.abort();
-    fetch("/api/user/blocked-tags", { signal: controller.signal, cache: "no-store" })
-      .then((response) => response.ok ? response.json() : null)
+    fetch("/api/user/blocked-tags", {
+      signal: controller.signal,
+      cache: "no-store",
+    })
+      .then((response) => (response.ok ? response.json() : null))
       .then((data) => {
         if (controller.signal.aborted) return;
-        setBlockedTagIds(Array.isArray(data?.blockedTags)
-          ? data.blockedTags.flatMap((tag: { tagId?: unknown }) => typeof tag.tagId === "string" ? [tag.tagId] : [])
-          : []);
+        setBlockedTagIds(
+          Array.isArray(data?.blockedTags)
+            ? data.blockedTags.flatMap((tag: { tagId?: unknown }) =>
+                typeof tag.tagId === "string" ? [tag.tagId] : [],
+              )
+            : [],
+        );
       })
-      .catch(() => { if (!controller.signal.aborted) setBlockedTagIds([]); });
+      .catch(() => {
+        if (!controller.signal.aborted) setBlockedTagIds([]);
+      });
     return () => controller.abort();
   }, [isSessionPending, actorId]);
 
-  const filteredMangas = blockedTagIds.length === 0
-    ? mangas
-    : mangas.filter((manga) => !manga.tags.some((tag) => blockedTagIds.includes(tag.id)));
+  const filteredMangas =
+    blockedTagIds.length === 0
+      ? mangas
+      : mangas.filter(
+          (manga) => !manga.tags.some((tag) => blockedTagIds.includes(tag.id)),
+        );
 
   useEffect(() => {
     listGeneration.current++;
@@ -90,16 +149,53 @@ export default function InfiniteMangaGrid({
     setHasMore(initialHasMore);
     setLoadError("");
     setIsLoading(false);
-    return () => { activeListRequest.current?.abort(); };
-  }, [initialMangas, initialHasMore, scope]);
-
-  useEffect(() => {
-    listGeneration.current++;
-    activeListRequest.current?.abort();
-    activeListRequest.current = null;
-    setIsLoading(false);
-    setLoadError("");
-  }, [actorId]);
+    let cancelled = false;
+    if (!isSessionPending && isBrowseReturn()) {
+      let saved;
+      try {
+        saved = getBrowseSnapshot(sessionStorage, storageScope);
+      } catch {
+        /* Disabled storage. */
+      }
+      if (saved) {
+        const restored = saved;
+        const controller = new AbortController();
+        activeListRequest.current = controller;
+        const params = new URLSearchParams();
+        restored.mangas.forEach((item) => params.append("id", item.id));
+        void fetch(`/api/manga/restore?${params}`, {
+          signal: controller.signal,
+          cache: "no-store",
+        })
+          .then((response) => (response.ok ? response.json() : null))
+          .then((data) => {
+            if (cancelled || !Array.isArray(data?.mangas)) return;
+            consumeBrowseReturn();
+            setMangas(data.mangas);
+            setPage(restored.page);
+            setHasMore(restored.hasMore);
+            requestAnimationFrame(() =>
+              requestAnimationFrame(() => {
+                if (!cancelled)
+                  window.scrollTo({
+                    top: restored.scrollY,
+                    behavior: "instant",
+                  });
+              }),
+            );
+          })
+          .catch(() => {})
+          .finally(() => {
+            if (activeListRequest.current === controller)
+              activeListRequest.current = null;
+          });
+      }
+    }
+    return () => {
+      cancelled = true;
+      activeListRequest.current?.abort();
+    };
+  }, [initialMangas, initialHasMore, scope, storageScope, isSessionPending]);
 
   const fetchMore = useCallback(async () => {
     // A synchronous lock also covers double-clicks before React re-renders.
@@ -114,11 +210,16 @@ export default function InfiniteMangaGrid({
       // All pages use the same public dataset; blocked tags are filtered locally.
       const params = new URLSearchParams(scope);
       params.set("page", String(nextPage));
-      const response = await fetch(`/api/manga/list?${params}`, { signal: controller.signal, cache: "no-store" });
+      const response = await fetch(`/api/manga/list?${params}`, {
+        signal: controller.signal,
+        cache: "no-store",
+      });
       if (!response.ok) throw new Error("Failed to fetch");
       const data = await response.json();
-      if (!Array.isArray(data.mangas) || typeof data.hasMore !== "boolean") throw new Error("Invalid list response");
-      if (controller.signal.aborted || generation !== listGeneration.current) return;
+      if (!Array.isArray(data.mangas) || typeof data.hasMore !== "boolean")
+        throw new Error("Invalid list response");
+      if (controller.signal.aborted || generation !== listGeneration.current)
+        return;
       setMangas((previous) => appendUniqueMangas(previous, data.mangas));
       setPage(nextPage);
       setHasMore(data.hasMore);
@@ -127,15 +228,20 @@ export default function InfiniteMangaGrid({
         setLoadError("โหลดรายการเพิ่มเติมไม่ได้ กรุณาลองใหม่อีกครั้ง");
       }
     } finally {
-      if (activeListRequest.current === controller) activeListRequest.current = null;
-      if (!controller.signal.aborted && generation === listGeneration.current) setIsLoading(false);
+      if (activeListRequest.current === controller)
+        activeListRequest.current = null;
+      if (!controller.signal.aborted && generation === listGeneration.current)
+        setIsLoading(false);
     }
   }, [page, hasMore, scope]);
 
   // สร้าง items พร้อม ads แทรก
   const itemsWithAds = (() => {
     if (ads.length === 0) {
-      return filteredMangas.map((manga) => ({ type: "manga" as const, data: manga }));
+      return filteredMangas.map((manga) => ({
+        type: "manga" as const,
+        data: manga,
+      }));
     }
 
     // ขยาย ads ตาม repeatCount
@@ -184,7 +290,14 @@ export default function InfiniteMangaGrid({
     <>
       {filteredMangas.length === 0 && !isLoading && <EmptyState />}
       {/* Add minHeight to prevent CLS when grid content loads */}
-      <Grid container spacing={maggaLayout.mangaGrid.spacing} sx={{ minHeight: filteredMangas.length ? 400 * 3 : 0, alignContent: "start" }}>
+      <Grid
+        container
+        spacing={maggaLayout.mangaGrid.spacing}
+        sx={{
+          minHeight: filteredMangas.length ? 400 * 3 : 0,
+          alignContent: "start",
+        }}
+      >
         {itemsWithAds.map((item, index) => (
           <Grid
             key={
@@ -194,7 +307,10 @@ export default function InfiniteMangaGrid({
             }
             size={{ xs: 6, sm: 6, md: 4, lg: 3 }}
             sx={{
-              display: item.type === "ad" ? adDeviceDisplay(item.data.targetDevice) : undefined,
+              display:
+                item.type === "ad"
+                  ? adDeviceDisplay(item.data.targetDevice)
+                  : undefined,
               ...(index === totalItems - 1
                 ? {
                     mx: {
@@ -217,7 +333,15 @@ export default function InfiniteMangaGrid({
       </Grid>
 
       {loadError && (
-        <Alert severity="error" sx={{ mb: 2 }} action={<Button color="inherit" disabled={isLoading} onClick={fetchMore}>ลองใหม่</Button>}>
+        <Alert
+          severity="error"
+          sx={{ mb: 2 }}
+          action={
+            <Button color="inherit" disabled={isLoading} onClick={fetchMore}>
+              ลองใหม่
+            </Button>
+          }
+        >
           {loadError}
         </Alert>
       )}
@@ -230,7 +354,10 @@ export default function InfiniteMangaGrid({
             disabled={isLoading}
             startIcon={
               isLoading ? (
-                <CircularProgress size={18} sx={{ color: maggaColors.archiveGold }} />
+                <CircularProgress
+                  size={18}
+                  sx={{ color: maggaColors.archiveGold }}
+                />
               ) : (
                 <ExpandMoreIcon />
               )

@@ -1,3 +1,4 @@
+import { readAdminOverview, boundedAdminCount } from "@/lib/admin-overview";
 import { requireAdminPage } from "@/lib/auth-helpers";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -5,16 +6,9 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { isAdminRole } from "@/lib/auth-helpers";
 import { db } from "@/db";
-import {
-  manga as mangaTable,
-  categories as categoriesTable,
-  tags as tagsTable,
-  profiles as usersTable,
-  comments as commentsTable,
-  mangaSubmissions as submissionsTable
-} from "@/db/schema";
+import { manga as mangaTable } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
-import { Box, Typography, Grid, Divider, Stack } from "@mui/material";
+import { Box, Typography, Grid } from "@mui/material";
 import CategoryIcon from "@mui/icons-material/Category";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import PeopleIcon from "@mui/icons-material/People";
@@ -25,14 +19,7 @@ import AssignmentIcon from "@mui/icons-material/Assignment";
 import Link from "next/link";
 import Image from "next/image";
 import { maggaRadii } from "@/lib/design-tokens";
-import {
-  DashboardPageHeader,
-  DashboardSectionTitle,
-  DashboardStat,
-  DashboardSurface,
-  dashboardInsetSurfaceSx,
-  dashboardTokens,
-} from "@/app/components/dashboard/system";
+import { DashboardPageHeader, DashboardSectionTitle, DashboardStat, DashboardSurface, dashboardInsetSurfaceSx, dashboardTokens } from "@/app/components/dashboard/system";
 
 // Dynamic rendering for real-time data
 export const dynamic = "force-dynamic";
@@ -40,48 +27,36 @@ export const dynamic = "force-dynamic";
 const COUNT_SAMPLE_LIMIT = 1000;
 
 function displayBoundedCount(rows: unknown[]) {
-  return rows.length >= COUNT_SAMPLE_LIMIT ? `${COUNT_SAMPLE_LIMIT}+` : rows.length;
+  return rows.length >= COUNT_SAMPLE_LIMIT
+    ? `${COUNT_SAMPLE_LIMIT}+`
+    : rows.length;
 }
 
 export const metadata: Metadata = {
   title: "ภาพรวมผู้ดูแล - MAGGA",
   description: "ภาพรวมการจัดการเนื้อหาและชุมชน MAGGA",
-  openGraph: { title: "ภาพรวมผู้ดูแล - MAGGA", description: "ภาพรวมการจัดการเนื้อหาและชุมชน MAGGA" },
-  twitter: { title: "ภาพรวมผู้ดูแล - MAGGA", description: "ภาพรวมการจัดการเนื้อหาและชุมชน MAGGA" },
+  openGraph: {
+    title: "ภาพรวมผู้ดูแล - MAGGA",
+    description: "ภาพรวมการจัดการเนื้อหาและชุมชน MAGGA",
+  },
+  twitter: {
+    title: "ภาพรวมผู้ดูแล - MAGGA",
+    description: "ภาพรวมการจัดการเนื้อหาและชุมชน MAGGA",
+  },
 };
 
 export default async function AdminPage() {
   await requireAdminPage();
-  const session = await auth.api.getSession({ headers: await headers(), query: { disableCookieCache: true } });
+  const session = await auth.api.getSession({
+    headers: await headers(),
+    query: { disableCookieCache: true },
+  });
   if (!isAdminRole(session)) {
     redirect("/auth/signin?callbackUrl=/dashboard/admin");
   }
 
-  const [
-    totalMangaRows,
-    totalCategoriesRows,
-    totalTagsRows,
-    draftMangaRows,
-    totalUsersRows,
-    totalCommentsRows,
-    pendingSubmissionsRows,
-    topManga,
-  ] = await Promise.all([
-    db.select({ id: mangaTable.id }).from(mangaTable).limit(COUNT_SAMPLE_LIMIT),
-    db.select({ id: categoriesTable.id }).from(categoriesTable).limit(COUNT_SAMPLE_LIMIT),
-    db.select({ id: tagsTable.id }).from(tagsTable).limit(COUNT_SAMPLE_LIMIT),
-    db
-      .select({ id: mangaTable.id })
-      .from(mangaTable)
-      .where(eq(mangaTable.isHidden, true))
-      .limit(COUNT_SAMPLE_LIMIT),
-    db.select({ id: usersTable.id }).from(usersTable).limit(COUNT_SAMPLE_LIMIT),
-    db.select({ id: commentsTable.id }).from(commentsTable).limit(COUNT_SAMPLE_LIMIT),
-    db
-      .select({ id: submissionsTable.id })
-      .from(submissionsTable)
-      .where(eq(submissionsTable.status, "PENDING"))
-      .limit(COUNT_SAMPLE_LIMIT),
+  const [counts, topManga] = await Promise.all([
+    readAdminOverview(),
     db
       .select({
         id: mangaTable.id,
@@ -92,17 +67,16 @@ export default async function AdminPage() {
       })
       .from(mangaTable)
       .where(eq(mangaTable.isHidden, false))
-      .orderBy(desc(mangaTable.viewCount))
+      .orderBy(desc(mangaTable.viewCount), desc(mangaTable.id))
       .limit(10),
   ]);
-
-  const totalManga = displayBoundedCount(totalMangaRows);
-  const totalCategories = displayBoundedCount(totalCategoriesRows);
-  const totalTags = displayBoundedCount(totalTagsRows);
-  const draftManga = displayBoundedCount(draftMangaRows);
-  const totalUsers = displayBoundedCount(totalUsersRows);
-  const totalComments = displayBoundedCount(totalCommentsRows);
-  const pendingSubmissions = displayBoundedCount(pendingSubmissionsRows);
+  const totalManga = boundedAdminCount(counts.manga),
+    totalCategories = boundedAdminCount(counts.categories),
+    totalTags = boundedAdminCount(counts.tags),
+    draftManga = boundedAdminCount(counts.drafts),
+    totalUsers = boundedAdminCount(counts.users),
+    totalComments = boundedAdminCount(counts.comments),
+    pendingSubmissions = boundedAdminCount(counts.pending);
 
   const rankedManga = topManga.map((manga) => ({
     ...manga,
@@ -118,8 +92,46 @@ export default async function AdminPage() {
         sx={{ mb: 2 }}
       />
 
+      <DashboardSectionTitle
+        title="งานที่รอดำเนินการ"
+        description="เปิดรายการที่ต้องตรวจได้โดยตรง"
+      />
+      <Grid container spacing={1.5} sx={{ mb: 3 }}>
+        <Grid size={{ xs: 12, sm: 4 }}>
+          <DashboardStat
+            label="ฝากลงรอตรวจ"
+            value={pendingSubmissions}
+            href="/dashboard/admin/submissions?status=PENDING"
+            icon={<AssignmentIcon />}
+            compact
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 4 }}>
+          <DashboardStat
+            label="รายงานคอมเมนต์"
+            value={boundedAdminCount(counts.reports)}
+            href="/dashboard/admin/comments?reports=open"
+            icon={<CommentIcon />}
+            compact
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 4 }}>
+          <DashboardStat
+            label="ข้อเสนอ MCP"
+            value={boundedAdminCount(counts.proposals)}
+            href="/dashboard/admin/mcp-drafts?status=pending"
+            icon={<EditNoteIcon />}
+            compact
+          />
+        </Grid>
+      </Grid>
       {/* Stats Grid: Single row on desktop (7 columns), responsive on mobile */}
-      <Grid container spacing={1.5} columns={{ xs: 12, sm: 12, md: 12, lg: 7 }} sx={{ mb: 2.5 }}>
+      <Grid
+        container
+        spacing={1.5}
+        columns={{ xs: 12, sm: 12, md: 12, lg: 7 }}
+        sx={{ mb: 2.5 }}
+      >
         <Grid size={{ xs: 6, sm: 3, md: 3, lg: 1 }}>
           <DashboardStat
             label="มังงะทั้งหมด"
@@ -134,7 +146,7 @@ export default async function AdminPage() {
             label="ฉบับร่าง"
             value={draftManga}
             icon={<EditNoteIcon />}
-            href="/dashboard/admin/manga"
+            href="/dashboard/admin/manga?status=hidden"
             compact
           />
         </Grid>
@@ -143,7 +155,7 @@ export default async function AdminPage() {
             label="รายการรอตรวจ"
             value={pendingSubmissions}
             icon={<AssignmentIcon />}
-            href="/dashboard/admin/submissions"
+            href="/dashboard/admin/submissions?status=PENDING"
             compact
           />
         </Grid>
@@ -179,7 +191,7 @@ export default async function AdminPage() {
             label="แท็ก"
             value={totalTags}
             icon={<LocalOfferIcon />}
-            href="/dashboard/admin/metadata"
+            href="/dashboard/admin/metadata?tab=tags"
             compact
           />
         </Grid>
@@ -189,16 +201,35 @@ export default async function AdminPage() {
       <Grid container spacing={2} sx={{ alignItems: "stretch" }}>
         {/* Left: Top 3 Manga */}
         <Grid size={{ xs: 12, lg: 7 }}>
-          <DashboardSurface sx={{ p: { xs: 2, md: 2.25 }, height: "100%", display: "flex", flexDirection: "column" }}>
+          <DashboardSurface
+            sx={{
+              p: { xs: 2, md: 2.25 },
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
             <DashboardSectionTitle
               title="เรื่องยอดนิยม 3 อันดับแรก"
               description="จัดอันดับจากยอดอ่านสะสม"
             />
 
-            <Grid container spacing={1.5} sx={{ flex: 1, alignItems: "stretch" }}>
+            <Grid
+              container
+              spacing={1.5}
+              sx={{ flex: 1, alignItems: "stretch" }}
+            >
               {rankedManga.slice(0, 3).map((manga, index) => (
                 <Grid key={manga.id} size={{ xs: 12, sm: 4 }}>
-                  <Link href={`/${manga.slug || manga.id}`} prefetch={false} style={{ textDecoration: "none", display: "block", height: "100%" }}>
+                  <Link
+                    href={`/${manga.slug || manga.id}`}
+                    prefetch={false}
+                    style={{
+                      textDecoration: "none",
+                      display: "block",
+                      height: "100%",
+                    }}
+                  >
                     <Box
                       sx={{
                         ...dashboardInsetSurfaceSx,
@@ -207,7 +238,8 @@ export default async function AdminPage() {
                         display: "flex",
                         flexDirection: "column",
                         borderRadius: "10px",
-                        transition: "border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease",
+                        transition:
+                          "border-color 0.2s ease, background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease",
                         "&:hover": {
                           transform: "translateY(-2px)",
                           borderColor: "rgba(217, 119, 6, 0.35)",
@@ -227,10 +259,18 @@ export default async function AdminPage() {
                             height: 26,
                             px: 0.75,
                             borderRadius: "5px",
-                            bgcolor: index === 0 ? dashboardTokens.accent : "rgba(20, 20, 22, 0.85)",
-                            backdropFilter: index === 0 ? undefined : "blur(8px)",
-                            color: index === 0 ? "#120d00" : dashboardTokens.text,
-                            border: index === 0 ? "none" : "1px solid rgba(255,255,255,0.12)",
+                            bgcolor:
+                              index === 0
+                                ? dashboardTokens.accent
+                                : "rgba(20, 20, 22, 0.85)",
+                            backdropFilter:
+                              index === 0 ? undefined : "blur(8px)",
+                            color:
+                              index === 0 ? "#120d00" : dashboardTokens.text,
+                            border:
+                              index === 0
+                                ? "none"
+                                : "1px solid rgba(255,255,255,0.12)",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -298,8 +338,15 @@ export default async function AdminPage() {
                       >
                         {manga.viewCount?.toLocaleString() || 0} ครั้ง
                       </Typography>
-                      <Typography sx={{ color: dashboardTokens.textMuted, fontSize: "0.75rem", mt: 0.25 }}>
-                        ผู้ชมไม่ซ้ำ {manga.uniqueVisitors?.toLocaleString() ?? "—"}
+                      <Typography
+                        sx={{
+                          color: dashboardTokens.textMuted,
+                          fontSize: "0.75rem",
+                          mt: 0.25,
+                        }}
+                      >
+                        ผู้ชมไม่ซ้ำ{" "}
+                        {manga.uniqueVisitors?.toLocaleString() ?? "—"}
                       </Typography>
                     </Box>
                   </Link>
@@ -311,13 +358,28 @@ export default async function AdminPage() {
 
         {/* Right: Top 4-10 Manga */}
         <Grid size={{ xs: 12, lg: 5 }}>
-          <DashboardSurface sx={{ p: { xs: 2, md: 2.25 }, height: "100%", display: "flex", flexDirection: "column" }}>
+          <DashboardSurface
+            sx={{
+              p: { xs: 2, md: 2.25 },
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
             <DashboardSectionTitle
               title="อันดับ 4 - 10"
               description="เรื่องที่มีการเข้าชมต่อเนื่อง"
             />
 
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75, flex: 1, justifyContent: "space-between" }}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 0.75,
+                flex: 1,
+                justifyContent: "space-between",
+              }}
+            >
               {rankedManga.slice(3).map((manga, index) => (
                 <Link
                   key={manga.id}
@@ -344,13 +406,24 @@ export default async function AdminPage() {
                       },
                     }}
                   >
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, minWidth: 0, flex: 1 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1.25,
+                        minWidth: 0,
+                        flex: 1,
+                      }}
+                    >
                       <Typography
                         sx={{
                           width: 26,
                           fontWeight: 700,
                           fontSize: "0.82rem",
-                          color: index === 0 ? dashboardTokens.accent : dashboardTokens.textMuted,
+                          color:
+                            index === 0
+                              ? dashboardTokens.accent
+                              : dashboardTokens.textMuted,
                           textAlign: "center",
                           fontVariantNumeric: "tabular-nums",
                           flexShrink: 0,
@@ -395,10 +468,26 @@ export default async function AdminPage() {
                       </Typography>
                     </Box>
                     <Box sx={{ textAlign: "right", flexShrink: 0 }}>
-                      <Typography variant="body2" sx={{ fontWeight: 700, color: dashboardTokens.accent, fontSize: "0.82rem", lineHeight: 1.2, fontVariantNumeric: "tabular-nums" }}>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: 700,
+                          color: dashboardTokens.accent,
+                          fontSize: "0.82rem",
+                          lineHeight: 1.2,
+                          fontVariantNumeric: "tabular-nums",
+                        }}
+                      >
                         {manga.viewCount?.toLocaleString() || 0}
                       </Typography>
-                      <Typography variant="caption" sx={{ color: dashboardTokens.textMuted, fontSize: "0.75rem", display: "block" }}>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: dashboardTokens.textMuted,
+                          fontSize: "0.75rem",
+                          display: "block",
+                        }}
+                      >
                         ผู้ชม {manga.uniqueVisitors?.toLocaleString() ?? "—"}
                       </Typography>
                     </Box>

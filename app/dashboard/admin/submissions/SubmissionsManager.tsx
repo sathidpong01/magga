@@ -2,28 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
-import {
-  Box,
-  Typography,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Chip,
-  IconButton,
-  Button,
-  TextField,
-  InputAdornment,
-  Tabs,
-  Tab,
-  Pagination,
-  CircularProgress,
-  Tooltip,
-  Alert,
-} from "@mui/material";
+import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, IconButton, Button, TextField, InputAdornment, Tabs, Tab, Pagination, CircularProgress, Tooltip, Alert } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import RefreshIcon from "@mui/icons-material/Refresh";
@@ -31,11 +10,7 @@ import Link from "next/link";
 import { authFetch } from "@/lib/auth-fetch";
 import { useSearchParams } from "next/navigation";
 import { normalizeSubmissionStatus } from "@/lib/submission-status";
-import {
-  dashboardTokens,
-  dashboardRadii,
-  dashboardPrimaryButtonSx,
-} from "@/app/components/dashboard/system";
+import { dashboardTokens, dashboardRadii, dashboardPrimaryButtonSx } from "@/app/components/dashboard/system";
 
 export type AdminSubmission = {
   id: string;
@@ -54,32 +29,44 @@ export default function SubmissionsManager({
   initialSubmissions,
   initialTotalPages,
   initialStatus = "ALL",
+  initialPage = 1,
+  initialSearch = "",
 }: {
   initialSubmissions: AdminSubmission[];
   initialTotalPages: number;
   initialStatus?: string;
+  initialPage?: number;
+  initialSearch?: string;
 }) {
   const searchParams = useSearchParams();
   const statusFilter = normalizeSubmissionStatus(searchParams.get("status"));
-  const [submissions, setSubmissions] = useState<AdminSubmission[]>(initialSubmissions);
+  const [submissions, setSubmissions] =
+    useState<AdminSubmission[]>(initialSubmissions);
   const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(initialPage);
   const [totalPages, setTotalPages] = useState(initialTotalPages);
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [search, setSearch] = useState(initialSearch);
+  const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
   const hasMountedRef = useRef(false);
   const activeRequest = useRef<AbortController | null>(null);
   const [fetchError, setFetchError] = useState("");
 
-  useEffect(() => { setPage(1); }, [statusFilter]);
+  const previousStatus = useRef(statusFilter);
+  useEffect(() => {
+    if (previousStatus.current !== statusFilter) {
+      previousStatus.current = statusFilter;
+      setPage(1);
+    }
+  }, [statusFilter]);
 
   useEffect(() => {
+    if (search === debouncedSearch) return;
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
       setPage(1);
     }, 500);
     return () => clearTimeout(timer);
-  }, [search]);
+  }, [search, debouncedSearch]);
 
   const fetchSubmissions = useCallback(async () => {
     activeRequest.current?.abort();
@@ -95,42 +82,69 @@ export default function SubmissionsManager({
       });
       if (debouncedSearch) params.append("search", debouncedSearch);
 
-      const res = await authFetch(`/api/admin/submissions?${params}`, { signal: controller.signal });
+      const res = await authFetch(`/api/admin/submissions?${params}`, {
+        signal: controller.signal,
+      });
       if (!res.ok) throw new Error("Failed to fetch");
       const data = await res.json();
-      if (controller.signal.aborted || activeRequest.current !== controller) return;
+      if (controller.signal.aborted || activeRequest.current !== controller)
+        return;
       setSubmissions(data.submissions);
       setTotalPages(data.pagination.pages);
     } catch (error) {
-      if (!controller.signal.aborted && activeRequest.current === controller) setFetchError("ไม่สามารถโหลดรายการได้ กรุณาลองรีเฟรชอีกครั้ง");
+      if (!controller.signal.aborted && activeRequest.current === controller)
+        setFetchError("ไม่สามารถโหลดรายการได้ กรุณาลองรีเฟรชอีกครั้ง");
     } finally {
-      if (!controller.signal.aborted && activeRequest.current === controller) setLoading(false);
+      if (!controller.signal.aborted && activeRequest.current === controller)
+        setLoading(false);
     }
   }, [page, statusFilter, debouncedSearch]);
 
   useEffect(() => {
     if (!hasMountedRef.current) {
       hasMountedRef.current = true;
-      if (statusFilter === initialStatus) return;
+      if (
+        statusFilter === initialStatus &&
+        page === initialPage &&
+        debouncedSearch === initialSearch
+      )
+        return;
     }
 
     void fetchSubmissions();
     return () => activeRequest.current?.abort();
-  }, [fetchSubmissions, initialStatus, statusFilter]);
+  }, [
+    fetchSubmissions,
+    initialStatus,
+    statusFilter,
+    initialPage,
+    initialSearch,
+    page,
+    debouncedSearch,
+  ]);
 
   useEffect(() => () => activeRequest.current?.abort(), []);
 
-  const handleStatusChange = (
-    _: React.SyntheticEvent,
-    newValue: string
-  ) => {
+  const handleStatusChange = (_: React.SyntheticEvent, newValue: string) => {
     const params = new URLSearchParams(searchParams.toString());
     const status = normalizeSubmissionStatus(newValue);
-    if (status === "ALL") params.delete("status"); else params.set("status", status);
-    window.history.pushState(null, "", `${window.location.pathname}${params.size ? `?${params}` : ""}`);
+    if (status === "ALL") params.delete("status");
+    else params.set("status", status);
+    window.history.pushState(
+      null,
+      "",
+      `${window.location.pathname}${params.size ? `?${params}` : ""}`,
+    );
     setPage(1);
   };
 
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    params.set("page", String(page));
+    if (debouncedSearch) params.set("search", debouncedSearch);
+    else params.delete("search");
+    history.replaceState(history.state, "", location.pathname + "?" + params);
+  }, [page, debouncedSearch]);
   const getStatusLabel = (status: string) => {
     switch (status) {
       case "APPROVED":
@@ -147,8 +161,12 @@ export default function SubmissionsManager({
   };
 
   return (
-    <Box>
-      {fetchError && <Alert severity="error" sx={{ mb: 2 }}>{fetchError}</Alert>}
+    <Box data-admin-list-ready>
+      {fetchError && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {fetchError}
+        </Alert>
+      )}
       <Box
         sx={{
           display: "flex",
@@ -220,7 +238,13 @@ export default function SubmissionsManager({
             },
           }}
           slotProps={{
-            indicator: { sx: { bgcolor: dashboardTokens.accent, height: 3, borderRadius: "3px 3px 0 0" } }
+            indicator: {
+              sx: {
+                bgcolor: dashboardTokens.accent,
+                height: 3,
+                borderRadius: "3px 3px 0 0",
+              },
+            },
           }}
         >
           <Tab label="ทั้งหมด" value="ALL" />
@@ -244,8 +268,12 @@ export default function SubmissionsManager({
                 fontWeight: 600,
                 fontSize: "0.9rem",
                 "& fieldset": { borderColor: dashboardTokens.border },
-                "&:hover fieldset": { borderColor: dashboardTokens.borderStrong },
-                "&.Mui-focused fieldset": { borderColor: dashboardTokens.accent },
+                "&:hover fieldset": {
+                  borderColor: dashboardTokens.borderStrong,
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: dashboardTokens.accent,
+                },
               },
             }}
             size="medium"
@@ -253,10 +281,12 @@ export default function SubmissionsManager({
               input: {
                 startAdornment: (
                   <InputAdornment position="start">
-                    <SearchIcon sx={{ color: dashboardTokens.accent, fontSize: 20 }} />
+                    <SearchIcon
+                      sx={{ color: dashboardTokens.accent, fontSize: 20 }}
+                    />
                   </InputAdornment>
                 ),
-              }
+              },
             }}
           />
         </Box>
@@ -273,15 +303,88 @@ export default function SubmissionsManager({
           overflow: "hidden",
         }}
       >
-        <Table>
+        <Table className="admin-work-table" aria-label="รายการฝากลง">
           <TableHead>
             <TableRow sx={{ bgcolor: "rgba(255,255,255,0.02)" }}>
-              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "none", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>ปก</TableCell>
-              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "none", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>ชื่อเรื่อง</TableCell>
-              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "none", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>ผู้ส่ง</TableCell>
-              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "none", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>สถานะ</TableCell>
-              <TableCell sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "none", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>วันที่ส่ง</TableCell>
-              <TableCell align="right" sx={{ py: 2.5, fontWeight: 900, color: "#a3a3a3", fontSize: "0.7rem", letterSpacing: "0.08em", textTransform: "none", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>จัดการ</TableCell>
+              <TableCell
+                sx={{
+                  py: 2.5,
+                  fontWeight: 900,
+                  color: "#a3a3a3",
+                  fontSize: "0.7rem",
+                  letterSpacing: "0.08em",
+                  textTransform: "none",
+                  borderBottom: "1px solid rgba(255,255,255,0.04)",
+                }}
+              >
+                ปก
+              </TableCell>
+              <TableCell
+                sx={{
+                  py: 2.5,
+                  fontWeight: 900,
+                  color: "#a3a3a3",
+                  fontSize: "0.7rem",
+                  letterSpacing: "0.08em",
+                  textTransform: "none",
+                  borderBottom: "1px solid rgba(255,255,255,0.04)",
+                }}
+              >
+                ชื่อเรื่อง
+              </TableCell>
+              <TableCell
+                sx={{
+                  py: 2.5,
+                  fontWeight: 900,
+                  color: "#a3a3a3",
+                  fontSize: "0.7rem",
+                  letterSpacing: "0.08em",
+                  textTransform: "none",
+                  borderBottom: "1px solid rgba(255,255,255,0.04)",
+                }}
+              >
+                ผู้ส่ง
+              </TableCell>
+              <TableCell
+                sx={{
+                  py: 2.5,
+                  fontWeight: 900,
+                  color: "#a3a3a3",
+                  fontSize: "0.7rem",
+                  letterSpacing: "0.08em",
+                  textTransform: "none",
+                  borderBottom: "1px solid rgba(255,255,255,0.04)",
+                }}
+              >
+                สถานะ
+              </TableCell>
+              <TableCell
+                sx={{
+                  py: 2.5,
+                  fontWeight: 900,
+                  color: "#a3a3a3",
+                  fontSize: "0.7rem",
+                  letterSpacing: "0.08em",
+                  textTransform: "none",
+                  borderBottom: "1px solid rgba(255,255,255,0.04)",
+                }}
+              >
+                วันที่ส่ง
+              </TableCell>
+              <TableCell
+                align="right"
+                sx={{
+                  py: 2.5,
+                  fontWeight: 900,
+                  color: "#a3a3a3",
+                  fontSize: "0.7rem",
+                  letterSpacing: "0.08em",
+                  textTransform: "none",
+                  borderBottom: "1px solid rgba(255,255,255,0.04)",
+                }}
+              >
+                จัดการ
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -294,7 +397,13 @@ export default function SubmissionsManager({
             ) : submissions.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
-                  <Typography sx={{ color: "#a3a3a3", fontWeight: 700, letterSpacing: "0.03em" }}>
+                  <Typography
+                    sx={{
+                      color: "#a3a3a3",
+                      fontWeight: 700,
+                      letterSpacing: "0.03em",
+                    }}
+                  >
                     ไม่พบรายการฝากส่ง
                   </Typography>
                 </TableCell>
@@ -306,10 +415,12 @@ export default function SubmissionsManager({
                   hover
                   sx={{
                     "&:hover": { bgcolor: "rgba(255,255,255,0.02) !important" },
-                    "& td": { borderBottom: "1px solid rgba(255,255,255,0.04)" },
+                    "& td": {
+                      borderBottom: "1px solid rgba(255,255,255,0.04)",
+                    },
                   }}
                 >
-                  <TableCell sx={{ py: 2 }}>
+                  <TableCell data-label="ปก" sx={{ py: 2 }}>
                     <Box
                       sx={{
                         width: 48,
@@ -330,15 +441,29 @@ export default function SubmissionsManager({
                       />
                     </Box>
                   </TableCell>
-                  <TableCell>
-                    <Typography sx={{ fontWeight: 800, color: "#fff", fontSize: "0.95rem" }}>{sub.title}</Typography>
+                  <TableCell data-label="ชื่อเรื่อง">
+                    <Typography
+                      sx={{
+                        fontWeight: 800,
+                        color: "#fff",
+                        fontSize: "0.95rem",
+                      }}
+                    >
+                      {sub.title}
+                    </Typography>
                   </TableCell>
-                  <TableCell>
-                    <Typography sx={{ fontWeight: 600, color: "#a3a3a3", fontSize: "0.85rem" }}>
+                  <TableCell data-label="ผู้ส่ง">
+                    <Typography
+                      sx={{
+                        fontWeight: 600,
+                        color: "#a3a3a3",
+                        fontSize: "0.85rem",
+                      }}
+                    >
                       {sub.user.username || sub.user.name || sub.user.email}
                     </Typography>
                   </TableCell>
-                  <TableCell>
+                  <TableCell data-label="สถานะ">
                     <Chip
                       label={getStatusLabel(sub.status)}
                       size="small"
@@ -347,26 +472,35 @@ export default function SubmissionsManager({
                         fontSize: "0.65rem",
                         letterSpacing: "0",
                         borderRadius: 1,
-                        bgcolor: sub.status === "APPROVED"
-                          ? "rgba(34, 197, 94, 0.15)"
-                          : sub.status === "REJECTED"
-                            ? "rgba(239, 68, 68, 0.15)"
-                            : sub.status === "PENDING"
-                              ? "rgba(250, 191, 6, 0.15)"
-                              : "rgba(255,255,255,0.05)",
-                        color: sub.status === "APPROVED"
-                          ? "#4ade80"
-                          : sub.status === "REJECTED"
-                            ? "#f87171"
-                            : sub.status === "PENDING"
-                              ? dashboardTokens.accent
-                              : dashboardTokens.textMuted,
+                        bgcolor:
+                          sub.status === "APPROVED"
+                            ? "rgba(34, 197, 94, 0.15)"
+                            : sub.status === "REJECTED"
+                              ? "rgba(239, 68, 68, 0.15)"
+                              : sub.status === "PENDING"
+                                ? "rgba(250, 191, 6, 0.15)"
+                                : "rgba(255,255,255,0.05)",
+                        color:
+                          sub.status === "APPROVED"
+                            ? "#4ade80"
+                            : sub.status === "REJECTED"
+                              ? "#f87171"
+                              : sub.status === "PENDING"
+                                ? dashboardTokens.accent
+                                : dashboardTokens.textMuted,
                         border: `1px solid ${dashboardTokens.border}`,
                       }}
                     />
                   </TableCell>
-                  <TableCell>
-                    <Typography sx={{ fontFamily: "monospace", fontSize: "0.85rem", color: dashboardTokens.textMuted, fontWeight: 600 }}>
+                  <TableCell data-label="ส่งเมื่อ">
+                    <Typography
+                      sx={{
+                        fontFamily: "monospace",
+                        fontSize: "0.85rem",
+                        color: dashboardTokens.textMuted,
+                        fontWeight: 600,
+                      }}
+                    >
                       {new Date(sub.submittedAt).toLocaleDateString("th-TH", {
                         day: "2-digit",
                         month: "short",
@@ -374,7 +508,7 @@ export default function SubmissionsManager({
                       })}
                     </Typography>
                   </TableCell>
-                  <TableCell align="right">
+                  <TableCell data-label="จัดการ" align="right">
                     <Tooltip title="ดูรายการ">
                       <IconButton
                         component={Link}

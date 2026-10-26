@@ -41,14 +41,17 @@ export { commentRequest } from "./request";
 export function GuestVerification({
   siteKey,
   onToken,
+  requested=0,
 }: {
   siteKey: string | null;
   onToken: (token: string | null) => void;
+  requested?:number;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [error, setError] = useState("");
+  useEffect(()=>{if(requested>0){setError("");setActive(true);setAttempt(value=>value+1);}},[requested]);
   const tokenCallback = useRef(onToken);
   useEffect(() => {
     tokenCallback.current = onToken;

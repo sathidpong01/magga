@@ -1,52 +1,37 @@
+import AdminListControls from "@/app/components/dashboard/AdminListControls";
+import { adminPageQuery, type AdminSearchParams } from "@/lib/admin-pagination";
+import { readAdminUsers } from "@/lib/admin-lists";
 import { requireAdminPage } from "@/lib/auth-helpers";
 import type { Metadata } from "next";
-import { db } from "@/db";
-import { profiles as usersTable, comments as commentsTable, mangaSubmissions as submissionsTable } from "@/db/schema";
+
+
 import UserManager from "./UserManager";
 import { alpha, Box, Chip, Stack, Typography } from "@mui/material";
-import { eq, sql, desc } from "drizzle-orm";
-import {
-  DashboardSurface,
-  dashboardTokens,
-} from "@/app/components/dashboard/system";
+
+import { DashboardSurface, dashboardTokens } from "@/app/components/dashboard/system";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "จัดการผู้ใช้ - MAGGA",
   description: "จัดการผู้ใช้และสิทธิ์บน MAGGA",
-  openGraph: { title: "จัดการผู้ใช้ - MAGGA", description: "จัดการผู้ใช้และสิทธิ์บน MAGGA" },
-  twitter: { title: "จัดการผู้ใช้ - MAGGA", description: "จัดการผู้ใช้และสิทธิ์บน MAGGA" },
+  openGraph: {
+    title: "จัดการผู้ใช้ - MAGGA",
+    description: "จัดการผู้ใช้และสิทธิ์บน MAGGA",
+  },
+  twitter: {
+    title: "จัดการผู้ใช้ - MAGGA",
+    description: "จัดการผู้ใช้และสิทธิ์บน MAGGA",
+  },
 };
 
-export default async function UsersPage() {
+export default async function UsersPage({
+  searchParams,
+}: { searchParams?: Promise<AdminSearchParams> } = {}) {
   await requireAdminPage();
-  const usersQuery = await db.select({
-    id: usersTable.id,
-    name: usersTable.name,
-    email: usersTable.email,
-    username: usersTable.username,
-    image: usersTable.image,
-    role: usersTable.role,
-    banned: sql<boolean>`(coalesce(${usersTable.banned}, false) OR ${usersTable.isBanned})`,
-    banReason: usersTable.banReason,
-    createdAt: usersTable.createdAt,
-    commentsCount: sql<number>`count(distinct ${commentsTable.id})::int`,
-    submissionsCount: sql<number>`count(distinct ${submissionsTable.id})::int`,
-  })
-    .from(usersTable)
-    .leftJoin(commentsTable, eq(usersTable.id, commentsTable.userId))
-    .leftJoin(submissionsTable, eq(usersTable.id, submissionsTable.userId))
-    .groupBy(usersTable.id)
-    .orderBy(desc(usersTable.createdAt));
-
-  const users = usersQuery.map(user => ({
-    ...user,
-    _count: {
-      comments: user.commentsCount,
-      submissions: user.submissionsCount
-    }
-  }));
+  const query = adminPageQuery(await searchParams);
+  const result = await readAdminUsers(query);
+  const users = result.items;
 
   const admins = users.filter((user) => user.role === "admin").length;
   const suspended = users.filter((user) => user.banned).length;
@@ -69,8 +54,9 @@ export default async function UsersPage() {
           spacing={2}
           sx={{
             justifyContent: "space-between",
-            alignItems: { xs: "flex-start", md: "center" }
-          }}>
+            alignItems: { xs: "flex-start", md: "center" },
+          }}
+        >
           <Box sx={{ maxWidth: 720 }}>
             <Typography
               variant="overline"
@@ -96,18 +82,25 @@ export default async function UsersPage() {
             >
               จัดการผู้ใช้
             </Typography>
-            <Typography sx={{ color: dashboardTokens.textMuted, lineHeight: 1.7 }}>
+            <Typography
+              sx={{ color: dashboardTokens.textMuted, lineHeight: 1.7 }}
+            >
               ดูสถานะผู้ใช้ แยกบทบาท จัดการการระงับบัญชี และไล่ตรวจ activity
               ได้ในมุมเดียวกับส่วนอื่นของ MAGGA
             </Typography>
           </Box>
 
-          <Stack direction="row" spacing={1} useFlexGap sx={{
-            flexWrap: "wrap",
-            alignItems: "center",
-          }}>
+          <Stack
+            direction="row"
+            spacing={1}
+            useFlexGap
+            sx={{
+              flexWrap: "wrap",
+              alignItems: "center",
+            }}
+          >
             <Chip
-              label={`ทั้งหมด ${users.length}`}
+              label={`ในหน้านี้ ${users.length}`}
               sx={{
                 bgcolor: dashboardTokens.surfaceMuted,
                 color: dashboardTokens.text,
@@ -137,6 +130,21 @@ export default async function UsersPage() {
         </Stack>
       </DashboardSurface>
 
+      <AdminListControls
+        query={query}
+        hasMore={result.hasMore}
+        count={users.length}
+        sorts={[
+          { value: "", label: "ล่าสุด" },
+          { value: "name", label: "ชื่อ" },
+        ]}
+        statuses={[
+          { value: "", label: "ทั้งหมด" },
+          { value: "admin", label: "แอดมิน" },
+          { value: "user", label: "สมาชิก" },
+          { value: "banned", label: "ระงับ" },
+        ]}
+      />
       <UserManager initialUsers={users as any} />
     </Box>
   );

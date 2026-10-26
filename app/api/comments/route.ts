@@ -24,6 +24,7 @@ export async function GET(request: Request) {
       imageIndex,
       cursor,
       limit,
+      includeReplies: searchParams.get("includeReplies") !== "false",
     });
 
     return NextResponse.json(result, {

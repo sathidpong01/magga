@@ -7,8 +7,10 @@ import { getMangasByTagName } from "@/lib/manga-list";
 import { decodeTaxonomyPageParam } from "@/lib/taxonomy-route-param";
 import { maggaColors, maggaLayout } from "@/lib/design-tokens";
 import type { Metadata } from "next";
+import { normalizeMangaQuery } from "@/lib/manga-query";
 
 type TagPageProps = {
+  searchParams?: Promise<{ page?: string | string[] }>;
   params: Promise<{
     tagName: string;
   }>;
@@ -17,9 +19,15 @@ type TagPageProps = {
 // ISR: Revalidate every 1 hour
 export const revalidate = 3600;
 
-export async function generateMetadata({ params }: TagPageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+  searchParams,
+}: TagPageProps): Promise<Metadata> {
   const { tagName } = await params;
   const tag = await getMangasByTagName(tagName);
+  const currentPage = normalizeMangaQuery({
+    page: Number((await searchParams)?.page || 1),
+  }).page;
   const title = `แท็ก: ${tagName} - MAGGA`;
   const description = `รวมการ์ตูนแท็ก ${tagName} ที่อ่านได้บน MAGGA`;
   const canonical = `/tag/${encodeURIComponent(tagName)}`;
@@ -27,16 +35,22 @@ export async function generateMetadata({ params }: TagPageProps): Promise<Metada
     title,
     description,
     alternates: { canonical },
-    robots: { index: Boolean(tag?.mangas.length), follow: true },
+    robots: {
+      index: currentPage === 1 && Boolean(tag?.mangas.length),
+      follow: true,
+    },
     openGraph: { title, description, url: canonical },
     twitter: { title, description },
   };
 }
 
-export default async function TagPage({ params }: TagPageProps) {
+export default async function TagPage({ params, searchParams }: TagPageProps) {
   const tagName = decodeTaxonomyPageParam((await params).tagName);
 
-  const tag = await getMangasByTagName(tagName);
+  const page = normalizeMangaQuery({
+    page: Number((await searchParams)?.page || 1),
+  }).page;
+  const tag = await getMangasByTagName(tagName, page);
 
   if (!tag) {
     notFound();
@@ -67,7 +81,11 @@ export default async function TagPage({ params }: TagPageProps) {
         </Link>
         <Typography
           component="span"
-          sx={{ color: maggaColors.textMuted, fontSize: "0.85rem", userSelect: "none" }}
+          sx={{
+            color: maggaColors.textMuted,
+            fontSize: "0.85rem",
+            userSelect: "none",
+          }}
         >
           &gt;
         </Typography>
@@ -79,13 +97,21 @@ export default async function TagPage({ params }: TagPageProps) {
         </Typography>
         <Typography
           component="span"
-          sx={{ color: maggaColors.textMuted, fontSize: "0.85rem", userSelect: "none" }}
+          sx={{
+            color: maggaColors.textMuted,
+            fontSize: "0.85rem",
+            userSelect: "none",
+          }}
         >
           &gt;
         </Typography>
         <Typography
           component="span"
-          sx={{ color: maggaColors.textPrimary, fontWeight: 600, fontSize: "0.88rem" }}
+          sx={{
+            color: maggaColors.textPrimary,
+            fontWeight: 600,
+            fontSize: "0.88rem",
+          }}
         >
           {tag.name}
         </Typography>
@@ -111,7 +137,14 @@ export default async function TagPage({ params }: TagPageProps) {
             gap: 1.5,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1.5 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: 1.5,
+            }}
+          >
             <Typography
               variant="h1"
               sx={{
@@ -174,9 +207,12 @@ export default async function TagPage({ params }: TagPageProps) {
             mt: 1,
           }}
         >
-          พบทั้งหมด {tag.mangas.length} เรื่อง ที่ติดแท็กนี้
+          แสดง {tag.mangas.length} เรื่อง ที่ติดแท็กนี้
         </Typography>
-        <Typography variant="body2" sx={{ color: maggaColors.textSecondary, mt: 0.5 }}>
+        <Typography
+          variant="body2"
+          sx={{ color: maggaColors.textSecondary, mt: 0.5 }}
+        >
           รวมการ์ตูนแท็ก {tag.name} ที่อ่านได้บน MAGGA
         </Typography>
       </Box>
@@ -189,6 +225,41 @@ export default async function TagPage({ params }: TagPageProps) {
           </Grid>
         ))}
       </Grid>
+      <Box
+        component="nav"
+        aria-label="หน้ารายการ"
+        sx={{ display: "flex", gap: 3, alignItems: "center", mt: 3 }}
+      >
+        {page > 1 && (
+          <Link
+            href={`/tag/${encodeURIComponent(tagName)}?page=${page - 1}`}
+            prefetch={false}
+            style={{
+              minHeight: 44,
+              display: "inline-flex",
+              alignItems: "center",
+              color: maggaColors.archiveGoldHover,
+            }}
+          >
+            ก่อนหน้า
+          </Link>
+        )}
+        <Typography color="text.secondary">หน้า {page}</Typography>
+        {tag.hasMore && (
+          <Link
+            href={`/tag/${encodeURIComponent(tagName)}?page=${page + 1}`}
+            prefetch={false}
+            style={{
+              minHeight: 44,
+              display: "inline-flex",
+              alignItems: "center",
+              color: maggaColors.archiveGoldHover,
+            }}
+          >
+            ถัดไป
+          </Link>
+        )}
+      </Box>
     </Container>
   );
 }

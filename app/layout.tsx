@@ -65,18 +65,20 @@ export default async function RootLayout({
   return (
     <html lang="th" suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `addEventListener('popstate',function(){try{sessionStorage.setItem('magga_browse_return',location.pathname+location.search)}catch(e){}},true);try{var p=JSON.parse(localStorage.getItem('magga_reading_progress')||'{}');document.documentElement.dataset.maggaResume=Object.values(p).some(function(v){return v&&Number.isInteger(v.page)&&v.page>0&&v.page<v.totalPages-1&&typeof v.title==='string'&&typeof v.slug==='string'&&v.slug.length>0;})?'true':'false'}catch(e){}`,
+          }}
+        />
         <meta name="theme-color" content="#141416" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta
+          name="apple-mobile-web-app-status-bar-style"
+          content="black-translucent"
+        />
         {/* Preconnect to R2 CDN for faster image loading */}
-        <link
-          rel="preconnect"
-          href={r2PublicUrl}
-        />
-        <link
-          rel="dns-prefetch"
-          href={r2PublicUrl}
-        />
+        <link rel="preconnect" href={r2PublicUrl} />
+        <link rel="dns-prefetch" href={r2PublicUrl} />
       </head>
       <body className={kanit.className}>
         <ErrorBoundary>

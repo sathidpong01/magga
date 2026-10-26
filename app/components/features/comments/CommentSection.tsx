@@ -48,7 +48,11 @@ export default function CommentSection({
           setIsLoading(true);
         }
 
-        const params = new URLSearchParams({ mangaId });
+        const params = new URLSearchParams({
+          mangaId,
+          limit: "10",
+          includeReplies: "false",
+        });
         if (imageIndex !== null) {
           params.append("imageIndex", String(imageIndex));
         }
@@ -56,7 +60,9 @@ export default function CommentSection({
           params.append("cursor", cursor);
         }
 
-        const res = await fetch(`/api/comments?${params}`, { signal: controller.signal });
+        const res = await fetch(`/api/comments?${params}`, {
+          signal: controller.signal,
+        });
         if (!res.ok) throw new Error("Failed to fetch");
 
         const data = await res.json();
@@ -64,7 +70,13 @@ export default function CommentSection({
 
         if (loadingMore) {
           // Append to existing comments
-          setComments((prev) => [...new Map([...prev, ...(data.comments || [])].map((comment: PublicComment) => [comment.id, comment])).values()]);
+          setComments((prev) => [
+            ...new Map(
+              [...prev, ...(data.comments || [])].map(
+                (comment: PublicComment) => [comment.id, comment],
+              ),
+            ).values(),
+          ]);
         } else {
           // Replace comments
           setComments(data.comments || []);
@@ -83,7 +95,10 @@ export default function CommentSection({
         setFailedCursor(cursor);
         setLoadError("โหลดความคิดเห็นไม่ได้ กรุณาลองใหม่อีกครั้ง");
       } finally {
-        if (!controller.signal.aborted) { setIsLoading(false); setIsLoadingMore(false); }
+        if (!controller.signal.aborted) {
+          setIsLoading(false);
+          setIsLoadingMore(false);
+        }
       }
     },
     [mangaId, imageIndex],
@@ -102,10 +117,28 @@ export default function CommentSection({
     }
   };
 
-  const handleRefresh = () => {
-    // Reset and reload from beginning
-    setNextCursor(null);
-    fetchComments();
+  const handleRefresh = (updated?: PublicComment, created = false) => {
+    if (!updated) return;
+    setComments((previous) =>
+      previous.map((root) => {
+        if (root.id === updated.id) return { ...root, ...updated };
+        if (updated.parentId === root.id) {
+          const children = root.replies || [];
+          const exists = children.some((child) => child.id === updated.id);
+          if (!exists && !created) return root;
+          return {
+            ...root,
+            replies: exists
+              ? children.map((child) =>
+                  child.id === updated.id ? updated : child,
+                )
+              : [...children, updated],
+            replyCount: (root.replyCount || children.length) + (exists ? 0 : 1),
+          };
+        }
+        return root;
+      }),
+    );
   };
 
   return (
@@ -143,7 +176,7 @@ export default function CommentSection({
               comment,
               ...previous.filter((item) => item.id !== comment.id),
             ]);
-          handleRefresh();
+          if (comment) setTotalCount((previous) => previous + 1);
         }}
       />
 

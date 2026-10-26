@@ -1,7 +1,8 @@
 "use client";
+import GlobalStyles from "@mui/material/GlobalStyles";
 
 import { ThemeProvider, createTheme } from "@mui/material/styles";
-import { maggaColors, maggaRadii } from "@/lib/design-tokens";
+import { maggaColors } from "@/lib/design-tokens";
 
 const dashboardTheme = createTheme({
   typography: {
@@ -217,5 +218,75 @@ export default function DashboardThemeProvider({
 }: {
   children: React.ReactNode;
 }) {
-  return <ThemeProvider theme={dashboardTheme}>{children}</ThemeProvider>;
+  return (
+    <ThemeProvider theme={dashboardTheme}>
+      <GlobalStyles
+        styles={{
+          ".MuiIconButton-root": { minWidth: 44, minHeight: 44 },
+          ".MuiButton-root": { minHeight: 44 },
+          ".MuiPagination-root .MuiPaginationItem-root": {
+            minWidth: 44,
+            minHeight: 44,
+          },
+          ".admin-work-table": { tableLayout: "fixed", minWidth: 760 },
+          ".admin-work-table th": {
+            minWidth: "0 !important",
+            width: "auto !important",
+          },
+          ".admin-work-table td": {
+            overflowWrap: "anywhere",
+            padding: "10px 8px",
+          },
+          ".admin-work-table td:last-child": {
+            position: "sticky",
+            right: 0,
+            background: maggaColors.surface,
+            zIndex: 1,
+          },
+          ".admin-work-table td:last-child .MuiStack-root": {
+            flexWrap: "wrap",
+            gap: 2,
+          },
+          ".admin-work-table th:first-child, .admin-work-table td:first-child":
+            { width: 64 },
+          "@media(max-width:899.95px)": {
+            ".admin-work-table": {
+              display: "block",
+              minWidth: "0 !important",
+              width: "100%",
+            },
+            ".admin-work-table colgroup": { display: "none" },
+            ".admin-work-table thead": {position:"absolute",width:1,height:1,overflow:"hidden",clipPath:"inset(50%)",whiteSpace:"nowrap"},
+            ".admin-work-table tbody": { display: "block" },
+            ".admin-work-table tbody tr": {
+              display: "block",
+              padding: "12px",
+              borderBottom: `1px solid ${maggaColors.border}`,
+            },
+            ".admin-work-table tbody td": {
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              padding: "4px 0 !important",
+              border: "0 !important",
+              width: "100% !important",
+              minWidth: 0,
+            },
+            ".admin-work-table td[data-label]::before": {
+              content: "attr(data-label)",
+              color: maggaColors.textSecondary,
+              fontSize: ".8rem",
+              minWidth: 64,
+              flexShrink: 0,
+            },
+            ".admin-work-table td:last-child": {
+              position: "static",
+              background: "transparent",
+            },
+          },
+        }}
+      />
+      {children}
+    </ThemeProvider>
+  );
 }

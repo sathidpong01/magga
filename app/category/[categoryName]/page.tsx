@@ -7,8 +7,10 @@ import { getMangasByCategoryName } from "@/lib/manga-list";
 import { decodeTaxonomyPageParam } from "@/lib/taxonomy-route-param";
 import { maggaColors, maggaLayout } from "@/lib/design-tokens";
 import type { Metadata } from "next";
+import { normalizeMangaQuery } from "@/lib/manga-query";
 
 type CategoryPageProps = {
+  searchParams?: Promise<{ page?: string | string[] }>;
   params: Promise<{
     categoryName: string;
   }>;
@@ -17,9 +19,15 @@ type CategoryPageProps = {
 // ISR: Revalidate every 1 hour
 export const revalidate = 3600;
 
-export async function generateMetadata({ params }: CategoryPageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+  searchParams,
+}: CategoryPageProps): Promise<Metadata> {
   const { categoryName } = await params;
   const category = await getMangasByCategoryName(categoryName);
+  const currentPage = normalizeMangaQuery({
+    page: Number((await searchParams)?.page || 1),
+  }).page;
   const title = `หมวดหมู่: ${categoryName} - MAGGA`;
   const description = `รวมการ์ตูนหมวด ${categoryName} ที่อ่านได้บน MAGGA`;
   const canonical = `/category/${encodeURIComponent(categoryName)}`;
@@ -27,16 +35,25 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
     title,
     description,
     alternates: { canonical },
-    robots: { index: Boolean(category?.mangas.length), follow: true },
+    robots: {
+      index: currentPage === 1 && Boolean(category?.mangas.length),
+      follow: true,
+    },
     openGraph: { title, description, url: canonical },
     twitter: { title, description },
   };
 }
 
-export default async function CategoryPage({ params }: CategoryPageProps) {
+export default async function CategoryPage({
+  params,
+  searchParams,
+}: CategoryPageProps) {
   const categoryName = decodeTaxonomyPageParam((await params).categoryName);
 
-  const category = await getMangasByCategoryName(categoryName);
+  const page = normalizeMangaQuery({
+    page: Number((await searchParams)?.page || 1),
+  }).page;
+  const category = await getMangasByCategoryName(categoryName, page);
 
   if (!category) {
     notFound();
@@ -67,7 +84,11 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         </Link>
         <Typography
           component="span"
-          sx={{ color: maggaColors.textMuted, fontSize: "0.85rem", userSelect: "none" }}
+          sx={{
+            color: maggaColors.textMuted,
+            fontSize: "0.85rem",
+            userSelect: "none",
+          }}
         >
           &gt;
         </Typography>
@@ -79,13 +100,21 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
         </Typography>
         <Typography
           component="span"
-          sx={{ color: maggaColors.textMuted, fontSize: "0.85rem", userSelect: "none" }}
+          sx={{
+            color: maggaColors.textMuted,
+            fontSize: "0.85rem",
+            userSelect: "none",
+          }}
         >
           &gt;
         </Typography>
         <Typography
           component="span"
-          sx={{ color: maggaColors.textPrimary, fontWeight: 600, fontSize: "0.88rem" }}
+          sx={{
+            color: maggaColors.textPrimary,
+            fontWeight: 600,
+            fontSize: "0.88rem",
+          }}
         >
           {category.name}
         </Typography>
@@ -111,7 +140,14 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             gap: 1.5,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", gap: 1.5 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              flexWrap: "wrap",
+              gap: 1.5,
+            }}
+          >
             <Typography
               variant="h1"
               sx={{
@@ -174,9 +210,12 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             mt: 1,
           }}
         >
-          พบทั้งหมด {category.mangas.length} เรื่อง ในหมวดหมู่นี้
+          แสดง {category.mangas.length} เรื่อง ในหมวดหมู่นี้
         </Typography>
-        <Typography variant="body2" sx={{ color: maggaColors.textSecondary, mt: 0.5 }}>
+        <Typography
+          variant="body2"
+          sx={{ color: maggaColors.textSecondary, mt: 0.5 }}
+        >
           รวมการ์ตูนหมวด {category.name} ที่อ่านได้บน MAGGA
         </Typography>
       </Box>
@@ -189,6 +228,41 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
           </Grid>
         ))}
       </Grid>
+      <Box
+        component="nav"
+        aria-label="หน้ารายการ"
+        sx={{ display: "flex", gap: 3, alignItems: "center", mt: 3 }}
+      >
+        {page > 1 && (
+          <Link
+            href={`/category/${encodeURIComponent(categoryName)}?page=${page - 1}`}
+            prefetch={false}
+            style={{
+              minHeight: 44,
+              display: "inline-flex",
+              alignItems: "center",
+              color: maggaColors.archiveGoldHover,
+            }}
+          >
+            ก่อนหน้า
+          </Link>
+        )}
+        <Typography color="text.secondary">หน้า {page}</Typography>
+        {category.hasMore && (
+          <Link
+            href={`/category/${encodeURIComponent(categoryName)}?page=${page + 1}`}
+            prefetch={false}
+            style={{
+              minHeight: 44,
+              display: "inline-flex",
+              alignItems: "center",
+              color: maggaColors.archiveGoldHover,
+            }}
+          >
+            ถัดไป
+          </Link>
+        )}
+      </Box>
     </Container>
   );
 }

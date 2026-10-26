@@ -436,3 +436,29 @@
   opacity: 0.7;
   margin-bottom: 0.5rem;
 }
+
+/* Preserve the desktop review workspace; wrap long submitted values safely. */
+.detail {
+  min-width: 0;
+  scroll-margin-top: 72px;
+}
+.compareRow > *,
+.detailTitle > * {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.button,
+.pagination a,
+.existing summary {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+@media (min-width: 1001px) {
+  .list {
+    position: sticky;
+    top: 24px;
+    max-height: calc(100dvh - 48px);
+    overflow-y: auto;
+  }
+}

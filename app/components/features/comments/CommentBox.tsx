@@ -27,6 +27,7 @@ import {
 } from "./guest-client";
 import { useSession } from "@/lib/auth-client";
 import type { PublicComment } from "./CommentList";
+import { getCommentDraft, setCommentDraft } from "@/lib/reader-storage";
 interface Props {
   mangaId: string;
   imageIndex?: number | null;
@@ -62,10 +63,66 @@ export default function CommentBox({
   const [error, setError] = useState("");
   const [identityError, setIdentityError] = useState("");
   const [notice, setNotice] = useState("");
+  const [verificationRequest, setVerificationRequest] = useState(0);
+  const [hydratedDraft, setHydratedDraft] = useState<string | null>(null);
+  const draftKey = identityLoaded
+    ? `${actorId ? `member:${actorId}` : actor?.publicCode ? `guest:${actor.publicCode}` : "unverified"}:${mangaId}:${imageIndex ?? "all"}:${parentId || "root"}`
+    : null;
+  const latestDraft = useRef<{
+    key: string;
+    content: string;
+    name: string;
+  } | null>(null);
+  if (draftKey && hydratedDraft === draftKey)
+    latestDraft.current = { key: draftKey, content, name };
   const input = useRef<HTMLInputElement>(null);
   const submission = useRef<{ fingerprint: string; key: string } | null>(null);
   const submitting = useRef(false);
   const identityGeneration = useRef(0);
+  useEffect(() => {
+    if (!draftKey || hydratedDraft === draftKey) return;
+    if (submitting.current) {
+      setHydratedDraft(draftKey);
+      return;
+    }
+    let saved;
+    try {
+      saved = getCommentDraft(sessionStorage, draftKey);
+    } catch {
+      /* Optional browser state. */
+    }
+    setContent(saved?.content || "");
+    setName(saved?.name || "");
+    if (saved?.content) setNotice("กู้คืนร่างแล้ว");
+    setHydratedDraft(draftKey);
+  }, [draftKey, hydratedDraft]);
+  useEffect(() => {
+    if (!draftKey || hydratedDraft !== draftKey) return;
+    const timer = setTimeout(() => {
+      try {
+        setCommentDraft(sessionStorage, draftKey, content, name);
+      } catch {
+        /* Disabled storage. */
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [content, name, draftKey, hydratedDraft]);
+  useEffect(() => {
+    const save = () => {
+      const draft = latestDraft.current;
+      if (draft)
+        try {
+          setCommentDraft(sessionStorage, draft.key, draft.content, draft.name);
+        } catch {
+          /* Disabled storage. */
+        }
+    };
+    window.addEventListener("pagehide", save);
+    return () => {
+      save();
+      window.removeEventListener("pagehide", save);
+    };
+  }, []);
   const loadIdentity = useCallback(async () => {
     const generation = ++identityGeneration.current;
     setIdentityLoaded(false);
@@ -117,7 +174,8 @@ export default function CommentBox({
       return;
     }
     if ((!actor || actor.requiresVerification) && !token) {
-      setError("กรุณายืนยันก่อนส่งครั้งแรก ข้อความและรูปของคุณยังอยู่");
+      setVerificationRequest((value) => value + 1);
+      setError("ยืนยันด้านล่างแล้วกดส่งอีกครั้ง ข้อความและรูปของคุณยังอยู่");
       return;
     }
     submitting.current = true;
@@ -179,6 +237,14 @@ export default function CommentBox({
         },
       );
       setContent("");
+      setName("");
+      latestDraft.current = null;
+      if (draftKey)
+        try {
+          setCommentDraft(sessionStorage, draftKey, "", "");
+        } catch {
+          /* Optional draft. */
+        }
       setFile(null);
       setAssetId(null);
       submission.current = null;
@@ -399,7 +465,11 @@ export default function CommentBox({
             </Button>
           </Box>
           {(!actor || actor.requiresVerification) && (
-            <GuestVerification siteKey={siteKey} onToken={setToken} />
+            <GuestVerification
+              siteKey={siteKey}
+              onToken={setToken}
+              requested={verificationRequest}
+            />
           )}
         </Paper>
         {(!actor || actor.kind === "guest") && (
@@ -407,7 +477,8 @@ export default function CommentBox({
             variant="caption"
             sx={{ display: "block", mt: 1, color: maggaColors.textSecondary }}
           >
-            จำสิทธิ์ด้วยคุกกี้ในเบราว์เซอร์นี้ ล้างคุกกี้แล้วจะจัดการข้อความเดิมไม่ได้
+            จำสิทธิ์ด้วยคุกกี้ในเบราว์เซอร์นี้
+            ล้างคุกกี้แล้วจะจัดการข้อความเดิมไม่ได้
           </Typography>
         )}
         <Box sx={{ minHeight: 28, mt: 1 }} aria-live="polite">
@@ -424,6 +495,18 @@ export default function CommentBox({
             </Alert>
           )}
           {notice && <Typography color="success.main">{notice}</Typography>}
+          {notice === "กู้คืนร่างแล้ว" && (
+            <Button
+              onClick={() => {
+                setContent("");
+                setName("");
+                setNotice("");
+              }}
+              sx={{ minHeight: 44 }}
+            >
+              ทิ้งร่าง
+            </Button>
+          )}
         </Box>
       </Box>
     </Box>

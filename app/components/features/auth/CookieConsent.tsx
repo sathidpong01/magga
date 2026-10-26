@@ -7,11 +7,10 @@ export default function CookieConsent() {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    const hasConsented = localStorage.getItem("cookieConsent");
-    if (!hasConsented) {
-      const timer = setTimeout(() => setIsVisible(true), 1500);
-      return () => clearTimeout(timer);
-    }
+    let timer:ReturnType<typeof setTimeout>;
+    const check=()=>{try{if(localStorage.getItem("isAgeVerified")&&!localStorage.getItem("cookieConsent"))timer=setTimeout(()=>setIsVisible(true),1500);}catch{/* Consent remains off when storage is unavailable. */}};
+    check();window.addEventListener("magga-age-verified",check);
+    return ()=>{clearTimeout(timer);window.removeEventListener("magga-age-verified",check);};
   }, []);
 
   const handleAccept = () => {

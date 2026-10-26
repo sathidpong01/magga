@@ -1,39 +1,11 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useMediaQuery, useTheme } from "@mui/material";
-import {
-  Button,
-  TextField,
-  Typography,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  IconButton,
-  Stack,
-  Alert,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Chip,
-  Avatar,
-  Box,
-  Tooltip,
-  InputAdornment,
-} from "@mui/material";
+import { Button, TextField, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Stack, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Select, MenuItem, Chip, Avatar, Box, Tooltip } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-import SearchIcon from "@mui/icons-material/Search";
+
 import PersonIcon from "@mui/icons-material/Person";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import CommentIcon from "@mui/icons-material/Comment";
@@ -42,11 +14,7 @@ import BlockIcon from "@mui/icons-material/Block";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { authFetch } from "@/lib/auth-fetch";
 import { useToast } from "@/app/contexts/ToastContext";
-import {
-  dashboardTokens,
-  dashboardRadii,
-  dashboardPrimaryButtonSx,
-} from "@/app/components/dashboard/system";
+import { dashboardTokens, dashboardRadii, dashboardPrimaryButtonSx } from "@/app/components/dashboard/system";
 
 type UserWithCounts = {
   id: string;
@@ -121,12 +89,9 @@ const dangerButtonSx = {
 
 export default function UserManager({ initialUsers }: UserManagerProps) {
   const router = useRouter();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const { showSuccess, showError } = useToast();
   const [users, setUsers] = useState<UserWithCounts[]>(initialUsers);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [roleFilter, setRoleFilter] = useState<string>("all");
+
   const [isLoading, setIsLoading] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<UserWithCounts | null>(null);
@@ -140,30 +105,17 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
     setUsers(initialUsers);
   }, [initialUsers]);
 
-  // Filter users
-  const filteredUsers = useMemo(() => {
-    return users.filter((user) => {
-      const matchesSearch =
-        searchQuery === "" ||
-        user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.username?.toLowerCase().includes(searchQuery.toLowerCase());
-
-      const matchesRole = roleFilter === "all" || user.role === roleFilter;
-
-      return matchesSearch && matchesRole;
-    });
-  }, [users, searchQuery, roleFilter]);
+  const filteredUsers = users;
 
   const totalAdmins = users.filter((user) => user.role === "admin").length;
   const suspendedUsers = users.filter((user) => user.banned).length;
   const totalComments = users.reduce(
     (sum, user) => sum + user._count.comments,
-    0
+    0,
   );
   const totalSubmissions = users.reduce(
     (sum, user) => sum + user._count.submissions,
-    0
+    0,
   );
 
   // Handle role change
@@ -283,77 +235,18 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
 
   return (
     <>
-      <Paper
-        sx={{ ...shellSx, p: { xs: 2, md: 2.5 }, mb: 2.5 }}
-      >
-        <Stack
-          direction={{ xs: "column", md: "row" }}
-          spacing={2}
-          sx={{
-            alignItems: { xs: "stretch", md: "center" }
-          }}
-        >
-          <TextField
-            id="search-users"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="ค้นหาชื่อ อีเมล หรือชื่อผู้ใช้..."
-            size="small"
-            sx={{
-              flex: 1,
-              ...inputSx,
-            }}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon sx={{ color: "#a3a3a3", fontSize: 20 }} />
-                  </InputAdornment>
-                ),
-              }
-            }}
-          />
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel
-              id="role-filter-label"
-              sx={{
-                color: "#a3a3a3",
-                fontWeight: 700,
-                fontSize: "0.8rem",
-                "&.Mui-focused, &.MuiInputLabel-shrink": {
-                  color: "#fbbf24",
-                },
-              }}
-            >
-              บทบาท
-            </InputLabel>
-            <Select
-              labelId="role-filter-label"
-              id="role-filter"
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-              label="บทบาท"
-              sx={{ 
-                minWidth: 150,
-                ...inputSx,
-              }}
-            >
-              <MenuItem value="all">ทั้งหมด</MenuItem>
-              <MenuItem value="admin">แอดมิน</MenuItem>
-              <MenuItem value="user">ผู้ใช้</MenuItem>
-            </Select>
-          </FormControl>
-        </Stack>
-      </Paper>
-
+      <Typography variant="body2" sx={{ mb: 1 }}>
+        สรุปเฉพาะผู้ใช้ในหน้านี้
+      </Typography>
       <Stack
         direction="row"
         spacing={1}
         useFlexGap
         sx={{
           flexWrap: "wrap",
-          mb: 2
-        }}>
+          mb: 2,
+        }}
+      >
         <Chip
           label={`แอดมิน ${totalAdmins}`}
           sx={{
@@ -418,27 +311,68 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
           </Typography>
         </Box>
         <TableContainer sx={{ overflowX: "auto" }}>
-          <Table sx={{ minWidth: isMobile ? 880 : 960 }}>
+          <Table className="admin-work-table" aria-label="รายการผู้ใช้">
             <TableHead>
               <TableRow sx={{ bgcolor: "rgba(0,0,0,0.2)" }}>
-                <TableCell sx={{ fontWeight: 800, color: "#a3a3a3", fontSize: "0.75rem", letterSpacing: "0.05em" }}>
+                <TableCell
+                  sx={{
+                    fontWeight: 800,
+                    color: "#a3a3a3",
+                    fontSize: "0.75rem",
+                    letterSpacing: "0.05em",
+                  }}
+                >
                   ผู้ใช้
                 </TableCell>
-                <TableCell sx={{ fontWeight: 800, color: "#a3a3a3", fontSize: "0.75rem", letterSpacing: "0.05em" }}>
+                <TableCell
+                  sx={{
+                    fontWeight: 800,
+                    color: "#a3a3a3",
+                    fontSize: "0.75rem",
+                    letterSpacing: "0.05em",
+                  }}
+                >
                   อีเมล
                 </TableCell>
-                <TableCell sx={{ fontWeight: 800, color: "#a3a3a3", fontSize: "0.75rem", letterSpacing: "0.05em" }}>
+                <TableCell
+                  sx={{
+                    fontWeight: 800,
+                    color: "#a3a3a3",
+                    fontSize: "0.75rem",
+                    letterSpacing: "0.05em",
+                  }}
+                >
                   บทบาท
                 </TableCell>
-                <TableCell sx={{ fontWeight: 800, color: "#a3a3a3", fontSize: "0.75rem", letterSpacing: "0.05em" }}>
+                <TableCell
+                  sx={{
+                    fontWeight: 800,
+                    color: "#a3a3a3",
+                    fontSize: "0.75rem",
+                    letterSpacing: "0.05em",
+                  }}
+                >
                   สถิติ
                 </TableCell>
-                <TableCell sx={{ fontWeight: 800, color: "#a3a3a3", fontSize: "0.75rem", letterSpacing: "0.05em" }}>
+                <TableCell
+                  sx={{
+                    fontWeight: 800,
+                    color: "#a3a3a3",
+                    fontSize: "0.75rem",
+                    letterSpacing: "0.05em",
+                  }}
+                >
                   เข้าร่วมเมื่อ
                 </TableCell>
                 <TableCell
                   align="right"
-                  sx={{ fontWeight: 800, color: "#a3a3a3", fontSize: "0.75rem", letterSpacing: "0.05em", width: 80 }}
+                  sx={{
+                    fontWeight: 800,
+                    color: "#a3a3a3",
+                    fontSize: "0.75rem",
+                    letterSpacing: "0.05em",
+                    width: 80,
+                  }}
                 >
                   จัดการ
                 </TableCell>
@@ -450,14 +384,20 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                   key={user.id}
                   sx={{
                     "&:last-child td": { border: 0 },
-                    "& td": { borderBottom: "1px solid rgba(255,255,255,0.04)" },
+                    "& td": {
+                      borderBottom: "1px solid rgba(255,255,255,0.04)",
+                    },
                     "&:hover": { bgcolor: "rgba(255,255,255,0.02)" },
                   }}
                 >
-                  <TableCell>
-                    <Stack direction="row" spacing={1.5} sx={{
-                      alignItems: "center"
-                    }}>
+                  <TableCell data-label="ผู้ใช้">
+                    <Stack
+                      direction="row"
+                      spacing={1.5}
+                      sx={{
+                        alignItems: "center",
+                      }}
+                    >
                       <Avatar
                         src={user.image || undefined}
                         sx={{ width: 36, height: 36, bgcolor: "#404040" }}
@@ -465,7 +405,14 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                         {user.name?.[0] || user.email?.[0] || "?"}
                       </Avatar>
                       <Box>
-                        <Typography sx={{ fontWeight: 800, color: "#fafafa", fontSize: "0.95rem", letterSpacing: "0.01em" }}>
+                        <Typography
+                          sx={{
+                            fontWeight: 800,
+                            color: "#fafafa",
+                            fontSize: "0.95rem",
+                            letterSpacing: "0.01em",
+                          }}
+                        >
                           {user.name || "ไม่ระบุชื่อ"}
                         </Typography>
                         {user.username && (
@@ -496,12 +443,12 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                       </Box>
                     </Stack>
                   </TableCell>
-                  <TableCell>
-                      <Typography sx={{ color: "#a3a3a3" }}>
-                        {user.email || "-"}
-                      </Typography>
-                    </TableCell>
-                  <TableCell>
+                  <TableCell data-label="อีเมล">
+                    <Typography sx={{ color: "#a3a3a3" }}>
+                      {user.email || "-"}
+                    </Typography>
+                  </TableCell>
+                  <TableCell data-label="บทบาท">
                     <Select
                       id={`user-role-${user.id}`}
                       value={user.role}
@@ -510,22 +457,22 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                       }
                       size="small"
                       disabled={isLoading}
-                        sx={{
-                          minWidth: 100,
-                          bgcolor:
+                      sx={{
+                        minWidth: 100,
+                        bgcolor:
                           user.role?.toLowerCase() === "admin"
                             ? dashboardTokens.accentSoft
                             : dashboardTokens.surfaceMuted,
-                          borderRadius: dashboardRadii.field,
+                        borderRadius: dashboardRadii.field,
                         "& .MuiSelect-select": { py: 0.5 },
                       }}
                     >
                       <MenuItem value="user">
-                          <Stack
+                        <Stack
                           direction="row"
                           spacing={0.5}
                           sx={{
-                            alignItems: "center"
+                            alignItems: "center",
                           }}
                         >
                           <PersonIcon sx={{ fontSize: 16, color: "#a3a3a3" }} />
@@ -537,7 +484,7 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                           direction="row"
                           spacing={0.5}
                           sx={{
-                            alignItems: "center"
+                            alignItems: "center",
                           }}
                         >
                           <AdminPanelSettingsIcon
@@ -548,11 +495,18 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                       </MenuItem>
                     </Select>
                   </TableCell>
-                  <TableCell>
+                  <TableCell data-label="สถิติ">
                     <Stack direction="row" spacing={1}>
                       <Tooltip title="ความคิดเห็น">
                         <Chip
-                          icon={<CommentIcon sx={{ fontSize: 14, color: `${dashboardTokens.accent} !important` }} />}
+                          icon={
+                            <CommentIcon
+                              sx={{
+                                fontSize: 14,
+                                color: `${dashboardTokens.accent} !important`,
+                              }}
+                            />
+                          }
                           label={user._count.comments}
                           size="small"
                           sx={{
@@ -562,39 +516,51 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                             border: `1px solid ${dashboardTokens.accentSoft}`,
                             fontWeight: 700,
                             fontFamily: "monospace",
-                            "& .MuiChip-label": { px: 1 }
+                            "& .MuiChip-label": { px: 1 },
                           }}
                         />
                       </Tooltip>
-                        <Tooltip title="การฝากลง">
-                          <Chip
-                            icon={<UploadFileIcon sx={{ fontSize: 14, color: "#a5b4fc !important" }} />}
-                            label={user._count.submissions}
-                            size="small"
-                            sx={{
-                              bgcolor: "rgba(99, 102, 241, 0.05)",
-                              color: "#a5b4fc",
-                              borderRadius: 0.75,
-                              border: "1px solid rgba(99, 102, 241, 0.2)",
-                              fontWeight: 700,
-                              fontFamily: "monospace",
-                              "& .MuiChip-label": { px: 1 }
-                            }}
-                          />
+                      <Tooltip title="การฝากลง">
+                        <Chip
+                          icon={
+                            <UploadFileIcon
+                              sx={{ fontSize: 14, color: dashboardTokens.info }}
+                            />
+                          }
+                          label={user._count.submissions}
+                          size="small"
+                          sx={{
+                            bgcolor: "rgba(56, 189, 248, 0.05)",
+                            color: dashboardTokens.info,
+                            borderRadius: 0.75,
+                            border: "1px solid rgba(56, 189, 248, 0.2)",
+                            fontWeight: 700,
+                            fontFamily: "monospace",
+                            "& .MuiChip-label": { px: 1 },
+                          }}
+                        />
                       </Tooltip>
                     </Stack>
                   </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" sx={{ color: "#737373", fontFamily: "monospace", fontSize: "0.8rem", fontWeight: 600 }}>
+                  <TableCell data-label="สมัครเมื่อ">
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: "#737373",
+                        fontFamily: "monospace",
+                        fontSize: "0.8rem",
+                        fontWeight: 600,
+                      }}
+                    >
                       {formatDate(user.createdAt)}
                     </Typography>
                   </TableCell>
-                  <TableCell align="right">
+                  <TableCell data-label="จัดการ" align="right">
                     <Stack
                       direction="row"
                       spacing={1}
                       sx={{
-                        justifyContent: "flex-end"
+                        justifyContent: "flex-end",
                       }}
                     >
                       {user.banned ? (
@@ -655,9 +621,7 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                     colSpan={6}
                     sx={{ textAlign: "center", py: 6, color: "#525252" }}
                   >
-                    {searchQuery || roleFilter !== "all"
-                      ? "ไม่พบผู้ใช้ตามเงื่อนไขที่เลือก"
-                      : "ยังไม่มีผู้ใช้ในระบบ"}
+                    ไม่พบผู้ใช้ในหน้านี้
                   </TableCell>
                 </TableRow>
               )}
@@ -676,17 +640,21 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
               ...surfaceSx,
               color: "#fafafa",
             },
-          }
+          },
         }}
       >
-        <DialogTitle sx={{ fontWeight: 900, letterSpacing: "0.02em", fontSize: "1rem" }}>
+        <DialogTitle
+          sx={{ fontWeight: 900, letterSpacing: "0.02em", fontSize: "1rem" }}
+        >
           ระงับบัญชีผู้ใช้นี้?
         </DialogTitle>
         <DialogContent>
-          <DialogContentText sx={{ color: "#a3a3a3", mb: 2, fontWeight: 500, lineHeight: 1.7 }}>
-            ระบุเหตุผลสำหรับการระงับบัญชีของ
-            &quot;{userToBan?.name || userToBan?.email}&quot; เพื่อให้ตรวจสอบย้อนหลังได้
-            ชัดเจน
+          <DialogContentText
+            sx={{ color: "#a3a3a3", mb: 2, fontWeight: 500, lineHeight: 1.7 }}
+          >
+            ระบุเหตุผลสำหรับการระงับบัญชีของ &quot;
+            {userToBan?.name || userToBan?.email}&quot;
+            เพื่อให้ตรวจสอบย้อนหลังได้ ชัดเจน
           </DialogContentText>
           <TextField
             autoFocus
@@ -739,18 +707,25 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
               ...surfaceSx,
               color: "#fafafa",
             },
-          }
+          },
         }}
       >
-        <DialogTitle sx={{ fontWeight: 900, letterSpacing: "0.02em", fontSize: "1rem" }}>
+        <DialogTitle
+          sx={{ fontWeight: 900, letterSpacing: "0.02em", fontSize: "1rem" }}
+        >
           ยืนยันการลบ?
         </DialogTitle>
         <DialogContent>
-          <DialogContentText sx={{ color: "#a3a3a3", fontWeight: 500, mb: 1, lineHeight: 1.7 }}>
+          <DialogContentText
+            sx={{ color: "#a3a3a3", fontWeight: 500, mb: 1, lineHeight: 1.7 }}
+          >
             คุณต้องการลบผู้ใช้ &quot;{userToDelete?.name || userToDelete?.email}
             &quot; ใช่หรือไม่
           </DialogContentText>
-          <Typography variant="caption" sx={{ color: "#ef4444", fontWeight: 800, letterSpacing: "0.02em" }}>
+          <Typography
+            variant="caption"
+            sx={{ color: "#ef4444", fontWeight: 800, letterSpacing: "0.02em" }}
+          >
             การกระทำนี้จะลบข้อมูลที่เกี่ยวข้องทั้งหมดถาวร
           </Typography>
         </DialogContent>

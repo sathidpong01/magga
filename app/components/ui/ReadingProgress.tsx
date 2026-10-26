@@ -3,45 +3,22 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { Box, Typography, LinearProgress, Button, Portal } from "@mui/material";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import { readingEntries, saveReadingEntry } from "@/lib/reader-storage";
+import { maggaColors } from "@/lib/design-tokens";
 
-const STORAGE_KEY = "magga_reading_progress";
-
-interface SavedProgress {
-  page: number;
-  totalPages: number;
-  timestamp: number;
-}
-
-function getSavedProgress(mangaId: string): SavedProgress | null {
+function getSavedProgress(mangaId: string) {
   try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    if (!data) return null;
-    const all = JSON.parse(data) as Record<string, SavedProgress>;
-    return all[mangaId] || null;
+    return readingEntries(localStorage)[mangaId] || null;
   } catch {
     return null;
   }
 }
 
-function saveProgress(mangaId: string, page: number, totalPages: number) {
-  try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    const all: Record<string, SavedProgress> = data ? JSON.parse(data) : {};
-    all[mangaId] = { page, totalPages, timestamp: Date.now() };
-    // Keep only last 100 entries to avoid bloating localStorage
-    const keys = Object.keys(all);
-    if (keys.length > 100) {
-      const sorted = keys.sort((a, b) => all[a].timestamp - all[b].timestamp);
-      sorted.slice(0, keys.length - 100).forEach((k) => delete all[k]);
-    }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
-  } catch {
-    // localStorage full or unavailable
-  }
-}
-
 interface ReadingProgressProps {
   mangaId: string;
+  mangaTitle: string;
+  mangaSlug: string;
+  remember?: boolean;
   currentPage: number;
   totalPages: number;
   pageRefs?: React.RefObject<(HTMLDivElement | null)[]>;
@@ -49,6 +26,9 @@ interface ReadingProgressProps {
 
 export default function ReadingProgress({
   mangaId,
+  mangaTitle,
+  mangaSlug,
+  remember = true,
   currentPage,
   totalPages,
   pageRefs,
@@ -61,6 +41,7 @@ export default function ReadingProgress({
 
   // Check for saved progress on mount
   useEffect(() => {
+    if (!remember) return;
     const saved = getSavedProgress(mangaId);
     if (saved && saved.page > 0 && saved.page < totalPages - 1) {
       setSavedPage(saved.page);
@@ -69,14 +50,32 @@ export default function ReadingProgress({
       const timer = setTimeout(() => setShowResume(false), 8000);
       return () => clearTimeout(timer);
     }
-  }, [mangaId, totalPages]);
+  }, [mangaId, totalPages, remember]);
 
   // Save progress as user reads
   useEffect(() => {
-    if (currentPage > 0) {
-      saveProgress(mangaId, currentPage, totalPages);
+    if (remember && currentPage > 0) {
+      try {
+        saveReadingEntry(localStorage, mangaId, {
+          page: currentPage,
+          totalPages,
+          timestamp: Date.now(),
+          title: mangaTitle,
+          slug: mangaSlug,
+        });
+        document.documentElement.dataset.maggaResume = Object.values(
+          readingEntries(localStorage),
+        ).some(
+          (entry) =>
+            entry.page > 0 && entry.page < entry.totalPages - 1 && entry.slug,
+        )
+          ? "true"
+          : "false";
+      } catch {
+        /* Optional local history. */
+      }
     }
-  }, [mangaId, currentPage, totalPages]);
+  }, [mangaId, mangaTitle, mangaSlug, currentPage, totalPages, remember]);
 
   // Scroll visibility
   useEffect(() => {
@@ -99,10 +98,14 @@ export default function ReadingProgress({
   const handleResume = useCallback(() => {
     setShowResume(false);
     if (pageRefs?.current?.[savedPage]) {
-      pageRefs.current[savedPage]?.scrollIntoView({ behavior: "smooth", block: "center" });
+      pageRefs.current[savedPage]?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
     } else {
       // Fallback: scroll by estimated position
-      const estimatedPosition = (savedPage / totalPages) * document.documentElement.scrollHeight;
+      const estimatedPosition =
+        (savedPage / totalPages) * document.documentElement.scrollHeight;
       window.scrollTo({ top: estimatedPosition, behavior: "smooth" });
     }
   }, [savedPage, totalPages, pageRefs]);
@@ -114,13 +117,13 @@ export default function ReadingProgress({
         <Box
           sx={{
             position: "fixed",
-            bottom: 60,
+            bottom: "calc(60px + env(safe-area-inset-bottom, 0px))",
             left: "50%",
             transform: "translateX(-50%)",
             zIndex: 1200,
-            bgcolor: "rgba(23, 23, 23, 0.95)",
+            bgcolor: maggaColors.surface,
             backdropFilter: "blur(8px)",
-            border: "1px solid rgba(251, 191, 36, 0.3)",
+            border: `1px solid ${maggaColors.archiveGoldBorder}`,
             borderRadius: 2,
             px: 2.5,
             py: 1.5,
@@ -130,12 +133,18 @@ export default function ReadingProgress({
             boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
             animation: "slideUp 0.3s ease-out",
             "@keyframes slideUp": {
-              from: { opacity: 0, transform: "translateX(-50%) translateY(20px)" },
+              from: {
+                opacity: 0,
+                transform: "translateX(-50%) translateY(20px)",
+              },
               to: { opacity: 1, transform: "translateX(-50%) translateY(0)" },
             },
           }}
         >
-          <Typography variant="body2" sx={{ color: "#d4d4d4", whiteSpace: "nowrap" }}>
+          <Typography
+            variant="body2"
+            sx={{ color: maggaColors.textSecondary, whiteSpace: "nowrap" }}
+          >
             อ่านค้างไว้หน้า {savedPage + 1}/{totalPages}
           </Typography>
           <Button
@@ -144,8 +153,8 @@ export default function ReadingProgress({
             startIcon={<PlayArrowIcon />}
             onClick={handleResume}
             sx={{
-              bgcolor: "#fbbf24",
-              color: "#000",
+              bgcolor: maggaColors.archiveGold,
+              color: maggaColors.textPrimary,
               fontWeight: 600,
               whiteSpace: "nowrap",
               "&:hover": { bgcolor: "#f59e0b" },
@@ -157,7 +166,7 @@ export default function ReadingProgress({
             size="small"
             onClick={() => setShowResume(false)}
             aria-label="ปิดการแจ้งเตือนอ่านต่อ"
-            sx={{ color: "#737373", minWidth: "auto", px: 1 }}
+            sx={{ color: maggaColors.textSecondary, minWidth: "auto", px: 1 }}
           >
             ✕
           </Button>
@@ -172,12 +181,13 @@ export default function ReadingProgress({
           left: 0,
           right: 0,
           zIndex: 1100,
-          bgcolor: "rgba(10, 10, 10, 0.95)",
+          bgcolor: maggaColors.background,
           backdropFilter: "blur(8px)",
           borderTop: "1px solid rgba(255,255,255,0.08)",
           transform: isVisible ? "translateY(0)" : "translateY(100%)",
           transition: "transform 0.3s ease-in-out",
-          py: 0.75,
+          pt: 0.75,
+          pb: "max(6px, env(safe-area-inset-bottom, 0px))",
           px: 2,
         }}
       >
@@ -190,7 +200,10 @@ export default function ReadingProgress({
             mx: "auto",
           }}
         >
-          <Typography variant="caption" sx={{ color: "#fbbf24", fontWeight: 600 }}>
+          <Typography
+            variant="caption"
+            sx={{ color: maggaColors.archiveGoldHover, fontWeight: 600 }}
+          >
             หน้า {currentPage + 1}/{totalPages}
           </Typography>
           <Box sx={{ flex: 1, mx: 2, maxWidth: 200 }}>
@@ -203,15 +216,18 @@ export default function ReadingProgress({
                 borderRadius: 1,
                 bgcolor: "rgba(255,255,255,0.1)",
                 "& .MuiLinearProgress-bar": {
-                  bgcolor: "#fbbf24",
+                  bgcolor: maggaColors.archiveGoldHover,
                   borderRadius: 1,
                 },
               }}
             />
           </Box>
-          <Typography variant="caption" sx={{
-            color: "text.secondary"
-          }}>
+          <Typography
+            variant="caption"
+            sx={{
+              color: "text.secondary",
+            }}
+          >
             {Math.round(progress)}%
           </Typography>
         </Box>

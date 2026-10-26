@@ -2,39 +2,17 @@
 
 import SubmissionsLoading from "./loading";
 
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState, useEffect, useCallback, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSession, isUserBanned } from "@/lib/auth-client";
-import {
-  Box,
-  Grid,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  CircularProgress,
-  Divider,
-  Typography,
-} from "@mui/material";
+import { Alert, Box, Grid, IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button, CircularProgress, Divider, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import LinkButton from "@/app/components/ui/LinkButton";
 import Image from "next/image";
 import BanNoticeModal from "@/app/components/modals/BanNoticeModal";
-import {
-  DashboardEmptyState,
-  DashboardPageHeader,
-  DashboardStatusBadge,
-  DashboardSurface,
-  dashboardDialogPaperSx,
-  dashboardGhostButtonSx,
-  dashboardInsetSurfaceSx,
-  dashboardSecondaryButtonSx,
-  dashboardTokens,
-} from "@/app/components/dashboard/system";
+import { DashboardEmptyState, DashboardPageHeader, DashboardStatusBadge, DashboardSurface, dashboardDialogPaperSx, dashboardGhostButtonSx, dashboardInsetSurfaceSx, dashboardSecondaryButtonSx, dashboardTokens } from "@/app/components/dashboard/system";
 
 type Submission = {
   id: string;
@@ -48,7 +26,23 @@ type Submission = {
 };
 
 export default function MySubmissionsPage() {
+  return (
+    <Suspense fallback={<SubmissionsLoading />}>
+      <MySubmissionsContent />
+    </Suspense>
+  );
+}
+function MySubmissionsContent() {
   const router = useRouter();
+  const params = useSearchParams();
+  const parsedPage = Number(params.get("page") ?? 1);
+  const page =
+    Number.isSafeInteger(parsedPage) && parsedPage > 0
+      ? Math.min(parsedPage, 10000)
+      : 1;
+  const [hasMore, setHasMore] = useState(false),
+    [fetchError, setFetchError] = useState("");
+  const activeRequest = useRef<AbortController | null>(null);
   const { data: session, isPending: authLoading } = useSession();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,18 +55,32 @@ export default function MySubmissionsPage() {
   const banned = isUserBanned(session);
 
   const fetchSubmissions = useCallback(async () => {
+    activeRequest.current?.abort();
+    const controller = new AbortController();
+    activeRequest.current = controller;
+    setLoading(true);
+    setFetchError("");
     try {
-      const res = await fetch("/api/user/submissions");
-      if (res.ok) {
-        const data = await res.json();
-        setSubmissions(data);
+      const res = await fetch(`/api/user/submissions?paged=true&page=${page}`, {
+        signal: controller.signal,
+        cache: "no-store",
+      });
+      if (!res.ok) throw Error("โหลดรายการฝากลงไม่ได้ กรุณาลองใหม่");
+      const data = await res.json();
+      if (!controller.signal.aborted) {
+        setSubmissions(data.items);
+        setHasMore(data.hasMore);
       }
-    } catch (error) {
-      console.error("Failed to fetch submissions:", error);
+    } catch (cause) {
+      if (!controller.signal.aborted)
+        setFetchError(
+          cause instanceof Error ? cause.message : "โหลดรายการไม่ได้",
+        );
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
     }
-  }, []);
+  }, [page]);
+  useEffect(() => () => activeRequest.current?.abort(), []);
 
   useEffect(() => {
     if (!authLoading && !session) {
@@ -100,7 +108,7 @@ export default function MySubmissionsPage() {
 
       if (res.ok) {
         setSubmissions((prev) =>
-          prev.filter((s) => s.id !== selectedSubmission.id)
+          prev.filter((s) => s.id !== selectedSubmission.id),
         );
         setDeleteDialogOpen(false);
         setSelectedSubmission(null);
@@ -122,7 +130,8 @@ export default function MySubmissionsPage() {
   const canDelete = (status: string) =>
     status === "PENDING" || status === "REJECTED";
 
-  if (authLoading || (!authLoading && session && !banned && loading)) return <SubmissionsLoading />;
+  if (authLoading || (!authLoading && session && !banned && loading))
+    return <SubmissionsLoading />;
 
   if (banned) {
     return (
@@ -145,7 +154,7 @@ export default function MySubmissionsPage() {
   }
 
   return (
-    <Box>
+    <Box data-admin-list-ready>
       <DashboardPageHeader
         eyebrow="MY SUBMISSIONS"
         title="รายการฝากลงของฉัน"
@@ -160,7 +169,40 @@ export default function MySubmissionsPage() {
         </LinkButton>
       </DashboardPageHeader>
 
-      {submissions.length === 0 ? (
+      {fetchError && (
+        <Alert
+          severity="error"
+          action={
+            <Button onClick={() => void fetchSubmissions()}>ลองใหม่</Button>
+          }
+        >
+          {fetchError}
+        </Alert>
+      )}
+      <Box sx={{ display: "flex", gap: 1, alignItems: "center", my: 2 }}>
+        <Button
+          disabled={loading || page <= 1}
+          onClick={() =>
+            router.push(`/dashboard/submissions?page=${page - 1}`, {
+              scroll: false,
+            })
+          }
+        >
+          ก่อนหน้า
+        </Button>
+        <Typography>หน้า {page}</Typography>
+        <Button
+          disabled={loading || !hasMore}
+          onClick={() =>
+            router.push(`/dashboard/submissions?page=${page + 1}`, {
+              scroll: false,
+            })
+          }
+        >
+          ถัดไป
+        </Button>
+      </Box>
+      {submissions.length === 0 && !fetchError ? (
         <DashboardEmptyState
           title="ยังไม่มีรายการฝากลง"
           description="เมื่อคุณส่งมังงะเข้ามา รายการทั้งหมดจะปรากฏที่นี่พร้อมสถานะล่าสุดและปุ่มจัดการที่เกี่ยวข้อง"
@@ -228,7 +270,11 @@ export default function MySubmissionsPage() {
                       </Typography>
                       <Typography
                         variant="body2"
-                        sx={{ color: dashboardTokens.textMuted, mt: 0.5, fontSize: "0.85rem" }}
+                        sx={{
+                          color: dashboardTokens.textMuted,
+                          mt: 0.5,
+                          fontSize: "0.85rem",
+                        }}
                       >
                         ส่งเมื่อ{" "}
                         {new Date(submission.submittedAt).toLocaleDateString(
@@ -237,7 +283,7 @@ export default function MySubmissionsPage() {
                             year: "numeric",
                             month: "short",
                             day: "numeric",
-                          }
+                          },
                         )}
                       </Typography>
                     </Box>
@@ -284,7 +330,9 @@ export default function MySubmissionsPage() {
                     </Box>
                   </Box>
 
-                  <Divider sx={{ my: 1.75, borderColor: dashboardTokens.border }} />
+                  <Divider
+                    sx={{ my: 1.75, borderColor: dashboardTokens.border }}
+                  />
 
                   {submission.rejectionReason ? (
                     <Box
@@ -306,7 +354,10 @@ export default function MySubmissionsPage() {
                       >
                         เหตุผลที่ไม่ผ่าน
                       </Typography>
-                      <Typography variant="body2" sx={{ color: dashboardTokens.textSoft }}>
+                      <Typography
+                        variant="body2"
+                        sx={{ color: dashboardTokens.textSoft }}
+                      >
                         {submission.rejectionReason}
                       </Typography>
                     </Box>
@@ -334,13 +385,14 @@ export default function MySubmissionsPage() {
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
         slotProps={{
-          paper: { sx: dashboardDialogPaperSx }
+          paper: { sx: dashboardDialogPaperSx },
         }}
       >
         <DialogTitle sx={{ fontWeight: 800 }}>ยืนยันการลบ</DialogTitle>
         <DialogContent>
           <Typography sx={{ color: dashboardTokens.text }}>
-            คุณต้องการลบ <strong>{selectedSubmission?.title}</strong> ใช่หรือไม่?
+            คุณต้องการลบ <strong>{selectedSubmission?.title}</strong>{" "}
+            ใช่หรือไม่?
           </Typography>
           <Typography
             variant="body2"
@@ -361,7 +413,9 @@ export default function MySubmissionsPage() {
             onClick={handleDeleteConfirm}
             disabled={isDeleting}
             startIcon={
-              isDeleting ? <CircularProgress size={16} sx={{ color: "inherit" }} /> : null
+              isDeleting ? (
+                <CircularProgress size={16} sx={{ color: "inherit" }} />
+              ) : null
             }
             sx={{
               ...(dashboardSecondaryButtonSx as any),

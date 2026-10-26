@@ -14,6 +14,7 @@ import { getAuthorProfile } from "@/lib/manga-list";
 import { maggaColors } from "@/lib/design-tokens";
 import { getPublicAds } from "@/lib/advertisements-server";
 import { EMPTY_CATEGORY_ID, normalizeHomeFilters } from "@/lib/manga-query";
+import ContinueReading from "@/app/components/ui/ContinueReading";
 
 const SearchFilters = dynamic(
   () => import("@/app/components/features/search/SearchFilters"),
@@ -128,6 +129,7 @@ async function HomeContent({ params }: { params: ReturnType<typeof normalizeHome
         )}
 
         {/* Reserve space for SearchFilters to prevent CLS */}
+        {!search && !author && !categoryName && !tagNames.length && <ContinueReading />}
         <Suspense fallback={<Box sx={{ minHeight: 56 }} />}>
           <SearchFilters categories={categories} tags={tags} />
         </Suspense>

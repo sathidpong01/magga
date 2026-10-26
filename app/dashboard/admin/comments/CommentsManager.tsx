@@ -1,24 +1,6 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
-import {
-  Alert,
-  Avatar,
-  Box,
-  Button,
-  Checkbox,
-  Chip,
-  MenuItem,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TablePagination,
-  TableRow,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Alert, Avatar, Box, Button, Checkbox, Chip, MenuItem, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, TextField, Typography } from "@mui/material";
 import Link from "next/link";
 import { authFetch } from "@/lib/auth-fetch";
 import { maggaColors, maggaRadii } from "@/lib/design-tokens";
@@ -74,6 +56,11 @@ export default function CommentsManager({
   initialComments: AdminComment[];
   initialPagination: AdminCommentsPagination;
 }) {
+  const activeRequest = useRef<AbortController | null>(null);
+  const mutationLock=useRef(false);
+  const loadedKey = useRef(
+    JSON.stringify([initialPagination.page, initialPagination.limit, "", ""]),
+  );
   const [comments, setComments] = useState(initialComments);
   const [pagination, setPagination] = useState(initialPagination);
   const [search, setSearch] = useState("");
@@ -87,13 +74,16 @@ export default function CommentsManager({
   const [reports, setReports] = useState<Report[]>([]);
   const [reportsOpen, setReportsOpen] = useState(false);
   const [deleteIds, setDeleteIds] = useState<string[]>([]);
-  const request = async (url: string, init?: RequestInit) => {
+  const request = useCallback(async (url: string, init?: RequestInit) => {
     const response = await authFetch(url, init);
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "ทำรายการไม่ได้");
     return data;
-  };
+  }, []);
   const load = useCallback(async () => {
+    activeRequest.current?.abort();
+    const controller = new AbortController();
+    activeRequest.current = controller;
     setBusy(true);
     setError("");
     try {
@@ -103,22 +93,62 @@ export default function CommentsManager({
         search: query,
         status,
       });
-      const data = await request(`/api/admin/comments?${params}`);
+      const data = await request(`/api/admin/comments?${params}`, {
+        signal: controller.signal,
+      });
+      if (controller.signal.aborted || activeRequest.current !== controller)
+        return;
+      loadedKey.current = JSON.stringify([
+        pagination.page,
+        pagination.limit,
+        query,
+        status,
+      ]);
       setComments(data.comments);
       setPagination(data.pagination);
       setSelected([]);
       setDeleteIds([]);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "โหลดไม่ได้");
+      if (!controller.signal.aborted && activeRequest.current === controller)
+        setError(cause instanceof Error ? cause.message : "โหลดไม่ได้");
     } finally {
-      setBusy(false);
+      if (!controller.signal.aborted && activeRequest.current === controller)
+        setBusy(false);
     }
-  }, [pagination.page, pagination.limit, query, status]);
+  }, [pagination.page, pagination.limit, query, status,request]);
   useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    setSearch(params.get("search") ?? "");
+    setQuery(params.get("search") ?? "");
+    setStatus(params.get("status") ?? "");
+    const page = Number(params.get("page")),
+      limit = Number(params.get("limit"));
+    if (Number.isSafeInteger(page) && page > 0)
+      setPagination((p) => ({ ...p, page, limit: limit === 50 ? 50 : 20 }));
+    return () => activeRequest.current?.abort();
+  }, []);
+  useEffect(() => {
+    const key = JSON.stringify([
+      pagination.page,
+      pagination.limit,
+      query,
+      status,
+    ]);
+    if (key === loadedKey.current) return;
+    const params = new URLSearchParams(location.search);
+    params.set("page", String(pagination.page));
+    params.set("limit", String(pagination.limit));
+    if (query) params.set("search", query);
+    else params.delete("search");
+    if (status) params.set("status", status);
+    else params.delete("status");
+    history.replaceState(history.state, "", location.pathname + "?" + params);
+    setSelected([]);
     void load();
-  }, [load]);
+  }, [load, pagination.page, pagination.limit, query, status]);
   const moderate = async (action: string, ids = selected) => {
-    if (!ids.length) return;
+    if (!ids.length||mutationLock.current) return;
+    mutationLock.current=true;activeRequest.current?.abort();
     setBusy(true);
     setError("");
     try {
@@ -141,10 +171,11 @@ export default function CommentsManager({
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "จัดการไม่ได้");
     } finally {
+      mutationLock.current=false;
       setBusy(false);
     }
   };
-  const loadReports = async () => {
+  const loadReports = useCallback(async () => {
     setReportsOpen(true);
     setBusy(true);
     setError("");
@@ -156,8 +187,13 @@ export default function CommentsManager({
     } finally {
       setBusy(false);
     }
-  };
+  }, [request]);
+  useEffect(() => {
+    if (new URLSearchParams(location.search).get("reports") === "open")
+      void loadReports();
+  }, [loadReports]);
   const resolveReport = async (id: string, reportStatus: string) => {
+    if(mutationLock.current)return;mutationLock.current=true;
     setBusy(true);
     setError("");
     try {
@@ -170,11 +206,12 @@ export default function CommentsManager({
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "บันทึกรายงานไม่ได้");
     } finally {
+      mutationLock.current=false;
       setBusy(false);
     }
   };
   return (
-    <Box>
+    <Box data-admin-list-ready>
       <Typography
         variant="h4"
         sx={{ fontWeight: 700, color: maggaColors.textPrimary, mb: 1 }}
@@ -292,7 +329,11 @@ export default function CommentsManager({
         component={Paper}
         sx={{ bgcolor: maggaColors.surface, backgroundImage: "none" }}
       >
-        <Table size="small" aria-label="รายการความคิดเห็น">
+        <Table
+          className="admin-work-table"
+          size="small"
+          aria-label="รายการความคิดเห็น"
+        >
           <TableHead>
             <TableRow>
               <TableCell>
@@ -330,7 +371,7 @@ export default function CommentsManager({
             )}
             {comments.map((comment) => (
               <TableRow key={comment.id}>
-                <TableCell>
+                <TableCell data-label="เลือก">
                   <Checkbox
                     aria-label={`เลือกความคิดเห็นของ ${comment.authorName || comment.user.name || "ผู้ใช้"}`}
                     checked={selected.includes(comment.id)}
@@ -343,7 +384,7 @@ export default function CommentsManager({
                     }
                   />
                 </TableCell>
-                <TableCell>
+                <TableCell data-label="ผู้เขียน">
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <Avatar
                       src={comment.user.image || undefined}
@@ -362,6 +403,7 @@ export default function CommentsManager({
                   )}
                 </TableCell>
                 <TableCell
+                  data-label="ความคิดเห็น"
                   sx={{
                     minWidth: 180,
                     maxWidth: 420,
@@ -405,12 +447,12 @@ export default function CommentsManager({
                     </Box>
                   )}
                 </TableCell>
-                <TableCell>
+                <TableCell data-label="มังงะ">
                   <Link href={`/${comment.manga.slug || comment.manga.id}`}>
                     {comment.manga.title}
                   </Link>
                 </TableCell>
-                <TableCell>
+                <TableCell data-label="สถานะ">
                   <Chip
                     size="small"
                     label={statusNames[comment.status || "published"]}
@@ -419,7 +461,7 @@ export default function CommentsManager({
                     {new Date(comment.createdAt).toLocaleString("th-TH")}
                   </Typography>
                 </TableCell>
-                <TableCell>
+                <TableCell data-label="จัดการ">
                   {comment.status !== "deleted" && (
                     <Button
                       disabled={busy}
@@ -468,7 +510,7 @@ export default function CommentsManager({
         labelRowsPerPage="ต่อหน้า"
       />
       {reportsOpen && (
-        <Box sx={{ mt: 3 }}>
+        <Box id="admin-reports" sx={{ mt: 3 }}>
           <Typography variant="h6">รายงานที่รอตรวจ</Typography>
           {!reports.length && (
             <Typography sx={{ py: 3 }}>ไม่มีรายงานที่รอตรวจ</Typography>

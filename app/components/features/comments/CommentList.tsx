@@ -48,6 +48,7 @@ export interface PublicComment {
   } | null;
   replies?: PublicComment[];
   repliesNextCursor?: string | null;
+  replyCount?: number;
 }
 type Capability = {
   canEdit: boolean;
@@ -66,7 +67,7 @@ function CommentItem({
   comment: PublicComment;
   mangaId: string;
   imageIndex?: number | null;
-  onRefresh: () => void;
+  onRefresh: (updated?: PublicComment, created?: boolean) => void;
   capability?: Capability;
   capabilities: Record<string, Capability>;
   isReply?: boolean;
@@ -77,6 +78,11 @@ function CommentItem({
     comment.repliesNextCursor || null,
   );
   const [replyLoading, setReplyLoading] = useState(false);
+  const [repliesOpen, setRepliesOpen] = useState(false);
+  const [repliesLoaded, setRepliesLoaded] = useState(
+    Boolean(comment.replies?.length),
+  );
+  const [ownVote, setOwnVote] = useState<number | null | undefined>();
   const [replyError, setReplyError] = useState("");
   const [extraCapabilities, setExtraCapabilities] = useState<
     Record<string, Capability>
@@ -85,17 +91,24 @@ function CommentItem({
     setExtraReplies([]);
     setExtraCapabilities({});
     setReplyCursor(comment.repliesNextCursor || null);
-  }, [comment.repliesNextCursor, comment.replies]);
+  }, [comment.id, comment.repliesNextCursor]);
   const replyGeneration = useRef(0);
   useEffect(() => {
     const requestGeneration = replyGeneration;
-    const clear = () => { ++requestGeneration.current; setExtraCapabilities({}); setReplyLoading(false); };
+    const clear = () => {
+      ++requestGeneration.current;
+      setExtraCapabilities({});
+      setReplyLoading(false);
+    };
     clear();
     window.addEventListener("magga-comment-identity", clear);
-    return () => { ++requestGeneration.current; window.removeEventListener("magga-comment-identity", clear); };
+    return () => {
+      ++requestGeneration.current;
+      window.removeEventListener("magga-comment-identity", clear);
+    };
   }, [session?.user?.id, comment.id, mangaId, imageIndex]);
   const loadReplies = async () => {
-    if (!replyCursor || replyLoading) return;
+    if (replyLoading || (repliesLoaded && !replyCursor)) return;
     const generation = ++replyGeneration.current;
     setReplyLoading(true);
     setReplyError("");
@@ -104,7 +117,7 @@ function CommentItem({
         comments: PublicComment[];
         nextCursor: string | null;
       }>(
-        `/api/comments/${comment.id}/replies?cursor=${encodeURIComponent(replyCursor)}`,
+        `/api/comments/${comment.id}/replies?limit=10${replyCursor ? `&cursor=${encodeURIComponent(replyCursor)}` : ""}`,
       );
       const ids = data.comments.map((reply) => reply.id).join(",");
       const personal = await commentRequest<{
@@ -122,6 +135,7 @@ function CommentItem({
         ...personal.capabilities,
       }));
       setReplyCursor(data.nextCursor);
+      setRepliesLoaded(true);
     } catch (cause) {
       if (generation !== replyGeneration.current) return;
       setReplyError(cause instanceof Error ? cause.message : "โหลดคำตอบไม่ได้");
@@ -134,7 +148,9 @@ function CommentItem({
   const [draft, setDraft] = useState(comment.content);
   const [reply, setReply] = useState(false);
   const [replyMounted, setReplyMounted] = useState(false);
-  useEffect(() => { if (reply) setReplyMounted(true); }, [reply]);
+  useEffect(() => {
+    if (reply) setReplyMounted(true);
+  }, [reply]);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [report, setReport] = useState(false);
   const [reason, setReason] = useState("spam");
@@ -183,14 +199,29 @@ function CommentItem({
         setReportActor(identity.actor);
         setReportToken(null);
       }
-      await commentRequest(url, {
+      const result = await commentRequest<{
+        comment?: PublicComment;
+        voteScore?: number;
+        userVote?: number | null;
+      }>(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: body === undefined ? undefined : JSON.stringify(body),
       });
       setEditing(false);
       setConfirmDelete(false);
-      onRefresh();
+      if (method === "PATCH" && result.comment) onRefresh(result.comment);
+      else if (method === "DELETE")
+        onRefresh({
+          ...comment,
+          status: "deleted",
+          content: "ความคิดเห็นนี้ถูกลบแล้ว",
+          imageUrl: null,
+        });
+      else if (typeof result.voteScore === "number") {
+        setOwnVote(result.userVote ?? null);
+        onRefresh({ ...comment, voteScore: result.voteScore });
+      }
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "ทำรายการไม่ได้");
     } finally {
@@ -358,7 +389,7 @@ function CommentItem({
                 width: 44,
                 height: 44,
                 color:
-                  capability?.userVote === 1
+                  (ownVote === undefined ? capability?.userVote : ownVote) === 1
                     ? maggaColors.archiveGold
                     : maggaColors.textSecondary,
               }}
@@ -383,7 +414,8 @@ function CommentItem({
                 width: 44,
                 height: 44,
                 color:
-                  capability?.userVote === -1
+                  (ownVote === undefined ? capability?.userVote : ownVote) ===
+                  -1
                     ? maggaColors.archiveGold
                     : maggaColors.textSecondary,
               }}
@@ -560,52 +592,81 @@ function CommentItem({
           {error && <Alert severity="error">{error}</Alert>}
           {notice && <Typography color="success.main">{notice}</Typography>}
         </Box>
-        {!isReply && replyMounted && <Collapse in={reply}>
-          <Box sx={{ mt: 2 }}>
-            <CommentBox
+        {!isReply && replyMounted && (
+          <Collapse in={reply}>
+            <Box sx={{ mt: 2 }}>
+              <CommentBox
+                mangaId={mangaId}
+                imageIndex={imageIndex}
+                parentId={comment.id}
+                placeholder="ตอบกลับ..."
+                onCommentCreated={(created) => {
+                  setReply(false);
+                  setRepliesOpen(true);
+                  if (created) onRefresh(created, true);
+                }}
+              />
+            </Box>
+          </Collapse>
+        )}
+        {!isReply &&
+          ((comment.replyCount || 0) > 0 ||
+            (comment.replies?.length || 0) > 0) && (
+            <Button
+              onClick={() => {
+                const open = !repliesOpen;
+                setRepliesOpen(open);
+                if (open && !repliesLoaded) void loadReplies();
+              }}
+              sx={{ minHeight: 44 }}
+            >
+              {repliesOpen
+                ? "ซ่อนคำตอบ"
+                : `ดูคำตอบ ${comment.replyCount ?? comment.replies?.length ?? 0} รายการ`}
+            </Button>
+          )}
+        {repliesOpen &&
+          [
+            ...(comment.replies || []),
+            ...extraReplies.filter(
+              (item) =>
+                !(comment.replies || []).some((reply) => reply.id === item.id),
+            ),
+          ].map((child) => (
+            <CommentItem
+              key={child.id}
+              comment={child}
               mangaId={mangaId}
               imageIndex={imageIndex}
-              parentId={comment.id}
-              placeholder="ตอบกลับ..."
-              onCommentCreated={() => {
-                setReply(false);
-                onRefresh();
+              onRefresh={(updated, created) => {
+                if (updated)
+                  setExtraReplies((previous) =>
+                    previous.map((item) =>
+                      item.id === updated.id ? updated : item,
+                    ),
+                  );
+                onRefresh(updated, created);
               }}
+              capabilities={childCapabilities}
+              capability={childCapabilities[child.id]}
+              isReply
             />
-          </Box>
-        </Collapse>}
-        {[
-          ...(comment.replies || []),
-          ...extraReplies.filter(
-            (item) =>
-              !(comment.replies || []).some((reply) => reply.id === item.id),
-          ),
-        ].map((child) => (
-          <CommentItem
-            key={child.id}
-            comment={child}
-            mangaId={mangaId}
-            imageIndex={imageIndex}
-            onRefresh={onRefresh}
-            capabilities={childCapabilities}
-            capability={childCapabilities[child.id]}
-            isReply
-          />
-        ))}
+          ))}
         {replyError && <Alert severity="error">{replyError}</Alert>}
-        {replyCursor && (
-          <Button
-            disabled={replyLoading}
-            onClick={() => void loadReplies()}
-            sx={{ minHeight: 44 }}
-          >
-            {replyLoading
-              ? "กำลังโหลดคำตอบ..."
-              : replyError
-                ? "ลองโหลดคำตอบอีกครั้ง"
-                : "โหลดคำตอบเพิ่มเติม"}
-          </Button>
-        )}
+        {repliesOpen &&
+          (replyCursor || replyLoading || (replyError && !repliesLoaded)) && (
+            <Button
+              disabled={replyLoading}
+              onClick={() => void loadReplies()}
+              sx={{ minHeight: 44 }}
+            >
+              {replyLoading
+                ? "กำลังโหลดคำตอบ..."
+                : replyError
+                  ? "ลองโหลดคำตอบอีกครั้ง"
+                  : "โหลดคำตอบเพิ่มเติม"}
+            </Button>
+          )}
         <Dialog
           open={lightbox}
           onClose={() => setLightbox(false)}
@@ -646,7 +707,7 @@ function ScopedCommentList({
   comments: PublicComment[];
   mangaId: string;
   imageIndex?: number | null;
-  onRefresh: () => void;
+  onRefresh: (updated?: PublicComment, created?: boolean) => void;
 }) {
   const { data: session } = useSession();
   const [capabilities, setCapabilities] = useState<Record<string, Capability>>(
@@ -703,12 +764,22 @@ function ScopedCommentList({
     const requestGeneration = generationRef;
     void load();
     window.addEventListener("magga-comment-identity", load);
-    return () => { ++requestGeneration.current; window.removeEventListener("magga-comment-identity", load); };
+    return () => {
+      ++requestGeneration.current;
+      window.removeEventListener("magga-comment-identity", load);
+    };
   }, [load, session?.user?.id]);
   const ownRoots = personalComments.filter(
     (item) =>
       !item.parentId && !comments.some((comment) => comment.id === item.id),
   );
+  const updateComment = (updated?: PublicComment, created?: boolean) => {
+    if (updated)
+      setPersonalComments((previous) =>
+        previous.map((item) => (item.id === updated.id ? updated : item)),
+      );
+    onRefresh(updated, created);
+  };
   const all = [...ownRoots, ...comments].map((comment) => ({
     ...comment,
     replies: [
@@ -743,7 +814,7 @@ function ScopedCommentList({
           comment={comment}
           mangaId={mangaId}
           imageIndex={imageIndex}
-          onRefresh={onRefresh}
+          onRefresh={updateComment}
           capabilities={capabilities}
           capability={capabilities[comment.id]}
         />
@@ -752,7 +823,17 @@ function ScopedCommentList({
   );
 }
 
-export default function CommentList(props: { comments: PublicComment[]; mangaId: string; imageIndex?: number | null; onRefresh: () => void }) {
+export default function CommentList(props: {
+  comments: PublicComment[];
+  mangaId: string;
+  imageIndex?: number | null;
+  onRefresh: (updated?: PublicComment, created?: boolean) => void;
+}) {
   const { data: session } = useSession();
-  return <ScopedCommentList key={`${session?.user?.id || "guest"}:${props.mangaId}:${props.imageIndex ?? "all"}`} {...props} />;
+  return (
+    <ScopedCommentList
+      key={`${session?.user?.id || "guest"}:${props.mangaId}:${props.imageIndex ?? "all"}`}
+      {...props}
+    />
+  );
 }

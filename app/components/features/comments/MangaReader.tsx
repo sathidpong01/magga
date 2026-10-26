@@ -2,7 +2,8 @@
 
 import { useRef, useEffect, useState, forwardRef, useMemo } from "react";
 import Image from "next/image";
-import { Box } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
+import { readingEntries } from "@/lib/reader-storage";
 import ReadingProgress from "@/app/components/ui/ReadingProgress";
 import { maggaColors, maggaLayout } from "@/lib/design-tokens";
 
@@ -16,16 +17,39 @@ interface PageData {
 interface MangaReaderProps {
   mangaId: string;
   mangaTitle: string;
+  mangaSlug?: string;
+  remember?: boolean;
   pages: string[] | PageData[]; // Support both legacy and new format
 }
 
 export default function MangaReader({
   mangaId,
   mangaTitle,
+  mangaSlug = "",
+  remember = true,
   pages,
 }: MangaReaderProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const pageRefs = useRef<(HTMLDivElement | null)[]>([]);
+  useEffect(() => {
+    if (
+      typeof window === "undefined" ||
+      window.location.hash !== "#reader-resume"
+    )
+      return;
+    try {
+      const saved = readingEntries(localStorage)[mangaId];
+      const page = saved && saved.page < pages.length - 1 ? saved.page : 0;
+      requestAnimationFrame(() =>
+        pageRefs.current[page]?.scrollIntoView({
+          block: "start",
+          behavior: "instant",
+        }),
+      );
+    } catch {
+      /* Reading still works without storage. */
+    }
+  }, [mangaId, pages.length]);
 
   // Normalize pages to PageData format (support both legacy string[] and new object[])
   const normalizedPages: PageData[] = useMemo(() => {
@@ -69,6 +93,9 @@ export default function MangaReader({
       {/* Reading Progress Indicator */}
       <ReadingProgress
         mangaId={mangaId}
+        mangaTitle={mangaTitle}
+        mangaSlug={mangaSlug}
+        remember={remember}
         currentPage={currentPage}
         totalPages={pages.length}
         pageRefs={pageRefs}
@@ -84,7 +111,7 @@ export default function MangaReader({
       >
         {normalizedPages.map((pageData, index) => (
           <ReaderPage
-            key={index}
+            key={`${index}:${pageData.url}`}
             ref={(el: HTMLDivElement | null) => {
               pageRefs.current[index] = el;
             }}
@@ -107,6 +134,8 @@ interface ReaderPageProps {
 const ReaderPage = forwardRef<HTMLDivElement, ReaderPageProps>(
   function ReaderPage({ mangaTitle, pageData, imageIndex }, ref) {
     const [imageLoading, setImageLoading] = useState(true);
+    const [imageFailed, setImageFailed] = useState(false);
+    const [attempt, setAttempt] = useState(0);
     const imageRef = useRef<HTMLImageElement | null>(null);
 
     useEffect(() => {
@@ -114,20 +143,29 @@ const ReaderPage = forwardRef<HTMLDivElement, ReaderPageProps>(
       if (image?.complete && image.naturalWidth > 0) {
         setImageLoading(false);
       }
-    }, [pageData.url]);
+    }, [pageData.url, attempt]);
 
     return (
       <Box
         ref={ref}
+        id={`reader-page-${imageIndex}`}
         sx={{
           position: "relative",
           width: "100%",
           maxWidth: maggaLayout.reader.maxWidth,
           lineHeight: 0,
+          scrollMarginTop: "72px",
         }}
       >
         {/* Image with Skeleton Loading */}
-        <Box sx={{ position: "relative" }}>
+        <Box
+          sx={{
+            position: "relative",
+            ...(imageFailed && {
+              aspectRatio: `${pageData.width || 900} / ${pageData.height || 1273}`,
+            }),
+          }}
+        >
           {/* Skeleton Placeholder - stays behind until image loads */}
           <Box
             sx={{
@@ -153,6 +191,7 @@ const ReaderPage = forwardRef<HTMLDivElement, ReaderPageProps>(
             }}
           />
           <Image
+            key={`${pageData.url}:${attempt}`}
             ref={imageRef}
             src={pageData.url}
             alt={`Page ${imageIndex + 1} of ${mangaTitle}`}
@@ -166,13 +205,47 @@ const ReaderPage = forwardRef<HTMLDivElement, ReaderPageProps>(
               zIndex: 1,
               width: "100%",
               height: "auto",
-              display: "block",
+              display: imageFailed ? "none" : "block",
             }}
             preload={imageIndex === 0}
             loading={imageIndex === 0 ? undefined : "lazy"}
             onLoad={() => setImageLoading(false)}
-            onError={() => setImageLoading(false)}
+            onError={() => {
+              setImageLoading(false);
+              setImageFailed(true);
+            }}
           />
+          {imageFailed && (
+            <Box
+              role="alert"
+              sx={{
+                position: "absolute",
+                inset: 0,
+                bgcolor: maggaColors.surface,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 1,
+                lineHeight: 1.5,
+                p: 2,
+              }}
+            >
+              <Typography color="text.secondary">
+                โหลดภาพหน้า {imageIndex + 1} ไม่สำเร็จ
+              </Typography>
+              <Button
+                onClick={() => {
+                  setImageFailed(false);
+                  setImageLoading(true);
+                  setAttempt((value) => value + 1);
+                }}
+                sx={{ minHeight: 44 }}
+              >
+                โหลดภาพนี้อีกครั้ง
+              </Button>
+            </Box>
+          )}
         </Box>
       </Box>
     );
