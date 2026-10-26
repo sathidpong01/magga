@@ -44,6 +44,7 @@ export default function CommentBox({
   autoFocus = false,
 }: Props) {
   const { data: session } = useSession();
+  const actorId = session?.user?.id;
   const [actor, setActor] = useState<CommentActor | null>(null);
   const [siteKey, setSiteKey] = useState<string | null>(null);
   const [identityLoaded, setIdentityLoaded] = useState(false);
@@ -70,7 +71,7 @@ export default function CommentBox({
     setIdentityLoaded(false);
     setActor(null);
     try {
-      const result = await requestCommentIdentity(session?.user?.id || "guest");
+      const result = await requestCommentIdentity(actorId || "guest");
       if (generation !== identityGeneration.current) return;
       setActor(result.actor);
       setSiteKey(result.turnstileSiteKey);
@@ -82,7 +83,7 @@ export default function CommentBox({
         cause instanceof Error ? cause.message : "ตรวจตัวตนไม่ได้",
       );
     }
-  }, [session?.user?.id]);
+  }, [actorId]);
   useEffect(() => {
     const generation = identityGeneration;
     void loadIdentity();
@@ -94,7 +95,7 @@ export default function CommentBox({
       ++generation.current;
       window.removeEventListener("magga-comment-identity", refreshIdentity);
     };
-  }, [loadIdentity, session?.user?.id]);
+  }, [loadIdentity, actorId]);
   useEffect(() => {
     if (!file) {
       setPreview(null);

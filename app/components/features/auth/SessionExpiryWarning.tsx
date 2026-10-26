@@ -24,11 +24,12 @@ export default function SessionExpiryWarning() {
   const [showWarning, setShowWarning] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const [isExtending, setIsExtending] = useState(false);
+  const sessionExpiresAt = session?.session?.expiresAt;
 
   const checkSessionExpiry = useCallback(() => {
-    if (!session?.session?.expiresAt) return;
+    if (!sessionExpiresAt) return;
 
-    const expiresAt = new Date(session.session.expiresAt).getTime();
+    const expiresAt = new Date(sessionExpiresAt).getTime();
     const now = Date.now();
     const remaining = expiresAt - now;
 
@@ -44,7 +45,7 @@ export default function SessionExpiryWarning() {
     } else {
       setShowWarning(false);
     }
-  }, [session?.session?.expiresAt]);
+  }, [sessionExpiresAt]);
 
   useEffect(() => {
     if (isPending || !session) return;

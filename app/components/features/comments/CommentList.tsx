@@ -142,6 +142,7 @@ function CommentItem({
   const [reportActor, setReportActor] = useState<CommentActor | null>(null);
   const [reportSiteKey, setReportSiteKey] = useState<string | null>(null);
   const [reportToken, setReportToken] = useState<string | null>(null);
+  const [error, setError] = useState("");
   useEffect(() => {
     if (!report && !editing) return;
     commentRequest<{
@@ -154,7 +155,6 @@ function CommentItem({
       })
       .catch(() => setError("ตรวจตัวตนรายงานไม่ได้ กรุณาลองใหม่"));
   }, [report, editing]);
-  const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
   const [lightbox, setLightbox] = useState(false);
