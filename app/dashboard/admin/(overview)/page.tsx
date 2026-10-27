@@ -1,4 +1,6 @@
 import { readAdminOverview, boundedAdminCount } from "@/lib/admin-overview";
+import { readViewSummaries } from "@/lib/admin-view-history";
+import MangaViewHistory from "@/app/components/dashboard/MangaViewHistory";
 import { requireAdminPage } from "@/lib/auth-helpers";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
@@ -70,6 +72,7 @@ export default async function AdminPage() {
       .orderBy(desc(mangaTable.viewCount), desc(mangaTable.id))
       .limit(10),
   ]);
+  const viewHistory = await readViewSummaries(topManga.map(manga => manga.id));
   const totalManga = boundedAdminCount(counts.manga),
     totalCategories = boundedAdminCount(counts.categories),
     totalTags = boundedAdminCount(counts.tags),
@@ -221,15 +224,6 @@ export default async function AdminPage() {
             >
               {rankedManga.slice(0, 3).map((manga, index) => (
                 <Grid key={manga.id} size={{ xs: 12, sm: 4 }}>
-                  <Link
-                    href={`/${manga.slug || manga.id}`}
-                    prefetch={false}
-                    style={{
-                      textDecoration: "none",
-                      display: "block",
-                      height: "100%",
-                    }}
-                  >
                     <Box
                       sx={{
                         ...dashboardInsetSurfaceSx,
@@ -248,6 +242,7 @@ export default async function AdminPage() {
                         },
                       }}
                     >
+                      <Link href={`/${manga.slug || manga.id}`} prefetch={false} style={{ textDecoration: "none", display: "block" }}>
                       <Box sx={{ position: "relative", mb: 1 }}>
                         <Box
                           sx={{
@@ -348,8 +343,9 @@ export default async function AdminPage() {
                         ผู้ชมไม่ซ้ำ{" "}
                         {manga.uniqueVisitors?.toLocaleString() ?? "—"}
                       </Typography>
+                      </Link>
+                      <MangaViewHistory id={manga.id} title={manga.title} initial={viewHistory[manga.id]} />
                     </Box>
-                  </Link>
                 </Grid>
               ))}
             </Grid>
@@ -381,13 +377,8 @@ export default async function AdminPage() {
               }}
             >
               {rankedManga.slice(3).map((manga, index) => (
-                <Link
-                  key={manga.id}
-                  href={`/${manga.slug || manga.id}`}
-                  prefetch={false}
-                  style={{ textDecoration: "none", display: "block" }}
-                >
                   <Box
+                    key={manga.id}
                     sx={{
                       display: "flex",
                       alignItems: "center",
@@ -407,7 +398,11 @@ export default async function AdminPage() {
                     }}
                   >
                     <Box
+                      component={Link}
+                      href={`/${manga.slug || manga.id}`}
+                      prefetch={false}
                       sx={{
+                        textDecoration: "none",
                         display: "flex",
                         alignItems: "center",
                         gap: 1.25,
@@ -467,7 +462,7 @@ export default async function AdminPage() {
                         {manga.title}
                       </Typography>
                     </Box>
-                    <Box sx={{ textAlign: "right", flexShrink: 0 }}>
+                    <Box sx={{ textAlign: "right", flexShrink: 0, width: 105 }}>
                       <Typography
                         variant="body2"
                         sx={{
@@ -490,9 +485,9 @@ export default async function AdminPage() {
                       >
                         ผู้ชม {manga.uniqueVisitors?.toLocaleString() ?? "—"}
                       </Typography>
+                      <MangaViewHistory id={manga.id} title={manga.title} initial={viewHistory[manga.id]} />
                     </Box>
                   </Box>
-                </Link>
               ))}
             </Box>
           </DashboardSurface>

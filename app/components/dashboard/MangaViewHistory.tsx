@@ -71,7 +71,7 @@ function HistoryDialog({ id, title, close }: { id: string; title: string; close:
 export default function MangaViewHistory({ id, title, initial }: { id: string; title: string; initial?: ViewSummary | null }) {
   const [open, setOpen] = useState(false);
   return <>
-    <Button onClick={() => setOpen(true)} aria-label={`ดูสถิติยอดอ่าน ${title}`} sx={{ display: "flex", flexDirection: "column", minHeight: 44, minWidth: 0, width: "100%", p: 0.5, color: maggaColors.archiveGoldHover }}>
+    <Button onClick={() => setOpen(true)} aria-label={`ดูสถิติยอดอ่าน ${title}`} sx={{ display: "flex", flexDirection: "column", height: 48, minWidth: 0, width: "100%", p: 0.5, color: maggaColors.archiveGoldHover }}>
       {initial ? <><LineChart points={initial.points} small /><Typography component="span" sx={{ fontSize: "0.65rem", lineHeight: 1.2 }}>7 วัน · ดูสถิติ</Typography></> : <Typography component="span" variant="caption">ดูสถิติ</Typography>}
     </Button>
     {open && <HistoryDialog id={id} title={title} close={() => setOpen(false)} />}

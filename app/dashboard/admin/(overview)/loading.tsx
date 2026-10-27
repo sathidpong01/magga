@@ -76,6 +76,7 @@ export default function AdminDashboardLoading() {
                       height={14}
                       sx={{ bgcolor: "rgba(255,255,255,0.05)", mt: 0.25, borderRadius: "4px" }}
                     />
+                    <Skeleton variant="rectangular" width="100%" height={48} />
                   </Box>
                 </Grid>
               ))}
@@ -136,7 +137,7 @@ export default function AdminDashboardLoading() {
                       sx={{ bgcolor: "rgba(255,255,255,0.08)", borderRadius: "4px" }}
                     />
                   </Box>
-                  <Box sx={{ textAlign: "right", flexShrink: 0 }}>
+                  <Box sx={{ textAlign: "right", flexShrink: 0, width: 105 }}>
                     <Skeleton
                       variant="text"
                       width={40}
@@ -149,6 +150,7 @@ export default function AdminDashboardLoading() {
                       height={12}
                       sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: "3px" }}
                     />
+                    <Skeleton variant="rectangular" width="100%" height={48} />
                   </Box>
                 </Box>
               ))}

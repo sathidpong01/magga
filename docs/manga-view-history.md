@@ -1,4 +1,4 @@
-# Manga view history (2.28.0)
+# Manga view history (2.29.0)
 
 The admin manga list shows a seven-day sparkline beneath each lifetime view count. Selecting it opens a keyboard-accessible dialog with today's hourly totals, 7/30/90/365-day ranges, or the period since publication. Exact values are available in an expandable table. Daily peak selection remains exact even when the lifetime chart groups several days into each plotted point.
 
@@ -22,7 +22,11 @@ Before applying to a deployed database, prove the intended project/database and 
 
 After applying, verify that the trigger is enabled, the number of coverage rows matches the existing manga count, and a controlled accepted-view increment increases the daily/hourly total once while a deduplicated repeat leaves it unchanged. Retain the baseline totals. A safe rollback can disable the new trigger while preserving its collected data and the existing lifetime counter; a destructive table rollback is unnecessary.
 
-The application tolerates deployment before the migration: normal views/rating behavior remains independent of the new tables. Admin lists still load, and the history dialog explains that collection has not been enabled. Database failure unrelated to a missing table is not disguised as an empty history. This implementation has not applied the migration to production or deployed the change.
+The application tolerates deployment before the migration: normal views/rating behavior remains independent of the new tables. Admin lists still load, and the history dialog explains that collection has not been enabled. Database failure unrelated to a missing table is not disguised as an empty history.
+
+On 2026-10-27, the migration was applied to `magga-db` (`ssgsxrdobafxkiuigoqw`) after confirming both tables, the function and the trigger were absent. All 36 existing manga received coverage metadata with their original lifetime totals preserved. A transaction verified daily/hourly capture and unchanged counters on a no-increment update, then rolled back all probe changes. Collection starts at migration time; older daily totals remain unknown.
+
+The admin overview also loads seven-day summaries for its ten popular manga with one bounded query. Each ranking offers the same history dialog as the manga list, outside the link to the work. Rankings continue to use lifetime views. Loading placeholders reserve space for the added charts; detail requests run only when a dialog opens.
 
 ## Layout and validation
 
