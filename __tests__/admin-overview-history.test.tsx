@@ -40,10 +40,17 @@ it("shows history for all ten ranked works without nesting controls in manga lin
   expect(firstChart.textContent).toContain("ยังไม่มีข้อมูล");
   expect(root.textContent).toContain("7 วัน · 1 ครั้ง");
   for (const [index, button] of buttons.entries()) {
-    expect(button.getAttribute("aria-label")).toBe(`ดูสถิติยอดอ่าน Work ${index + 1}`);
+    expect(button.getAttribute("aria-label")).toBe(`ดูสถิติยอดอ่าน Work ${index + 1} · 7 วัน · ${index + 1} ครั้ง`);
+    expect(button.getAttribute("aria-label")).toContain(button.querySelectorAll("span")[0].textContent);
     expect(button.closest("a")).toBeNull();
     expect(root.querySelector(`a[href="/work-${index + 1}"]`)).not.toBeNull();
   }
+});
+
+it("includes the visible fallback text in the history button's accessible name", () => {
+  const root = parse(renderToStaticMarkup(<MangaViewHistory id={works[0].id} title="No history" />));
+  const button = root.querySelectorAll("button")[0];
+  expect(button.getAttribute("aria-label")).toContain("ยังไม่เริ่มเก็บ · ดูสถิติ");
 });
 
 it("keeps component props serializable across the overview's server/client boundary", async () => {

@@ -22,6 +22,7 @@ export const maggaColors = {
   fandomViolet: "#d97706",
   trustEmerald: "#10b981",
   dangerRed: "#ef4444",
+  dangerRedText: "#f87171",
 } as const;
 
 export const maggaRadii = {

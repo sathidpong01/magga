@@ -92,9 +92,10 @@ function HistoryDialog({ id, title, close }: { id: string; title: string; close:
 
 export default function MangaViewHistory({ id, title, initial }: { id: string; title: string; initial?: ViewSummary | null }) {
   const [open, setOpen] = useState(false);
+  const label = initial ? `7 วัน · ${initial.points.reduce((sum, point) => sum + (point.views ?? 0), 0).toLocaleString()} ครั้ง` : "ยังไม่เริ่มเก็บ · ดูสถิติ";
   return <>
-    <Button onClick={() => setOpen(true)} title="กดกราฟเพื่อเลือกช่วงเวลาและดูรายละเอียด" aria-label={`ดูสถิติยอดอ่าน ${title}`} sx={{ display: "flex", flexDirection: "column", gap: 0.25, height: 48, minWidth: 0, width: "100%", p: 0.25, borderRadius: 1, color: maggaColors.archiveGoldHover, "&:hover": { bgcolor: maggaColors.archiveGoldSoft }, "&.Mui-focusVisible": { outline: `2px solid ${maggaColors.archiveGoldHover}`, outlineOffset: 2 } }}>
-      {initial ? <><Typography component="span" noWrap sx={{ fontSize: "0.75rem", lineHeight: "14px", width: "100%", textAlign: "left", fontVariantNumeric: "tabular-nums" }}>7 วัน · {initial.points.reduce((sum, point) => sum + (point.views ?? 0), 0).toLocaleString()} ครั้ง</Typography><LineChart points={initial.points} small /></> : <Typography component="span" variant="caption">ยังไม่เริ่มเก็บ · ดูสถิติ</Typography>}
+    <Button onClick={() => setOpen(true)} title="กดกราฟเพื่อเลือกช่วงเวลาและดูรายละเอียด" aria-label={`ดูสถิติยอดอ่าน ${title} · ${label}`} sx={{ display: "flex", flexDirection: "column", gap: 0.25, height: 48, minWidth: 0, width: "100%", p: 0.25, borderRadius: 1, color: maggaColors.archiveGoldHover, "&:hover": { bgcolor: maggaColors.archiveGoldSoft }, "&.Mui-focusVisible": { outline: `2px solid ${maggaColors.archiveGoldHover}`, outlineOffset: 2 } }}>
+      {initial ? <><Typography component="span" noWrap sx={{ fontSize: "0.75rem", lineHeight: "14px", width: "100%", textAlign: "left", fontVariantNumeric: "tabular-nums" }}>{label}</Typography><LineChart points={initial.points} small /></> : <Typography component="span" variant="caption">{label}</Typography>}
     </Button>
     {open && <HistoryDialog id={id} title={title} close={() => setOpen(false)} />}
   </>;

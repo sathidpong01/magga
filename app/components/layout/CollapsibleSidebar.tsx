@@ -16,6 +16,7 @@ import {
 import Link from "next/link";
 import { signOutAndSync } from "@/lib/auth-client";
 import { dashboardTokens } from "@/app/components/dashboard/system";
+import { maggaColors } from "@/lib/design-tokens";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import MenuIcon from "@mui/icons-material/Menu";
@@ -451,7 +452,7 @@ export default function CollapsibleSidebar({
               onClick={handleSignOut}
               sx={{
                 width: "100%",
-                color: dashboardTokens.danger,
+                color: maggaColors.dangerRedText,
                 bgcolor: "rgba(239, 68, 68, 0.08)",
                 borderRadius: "10px",
                 "&:hover": { bgcolor: "rgba(239, 68, 68, 0.15)" },
@@ -474,7 +475,7 @@ export default function CollapsibleSidebar({
               border: "none",
               borderRadius: "10px",
               bgcolor: "rgba(239, 68, 68, 0.08)",
-              color: dashboardTokens.danger,
+              color: maggaColors.dangerRedText,
               cursor: "pointer",
               transition: "all 0.15s ease",
               "&:hover": { bgcolor: "rgba(239, 68, 68, 0.15)" },
