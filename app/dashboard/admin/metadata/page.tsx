@@ -1,18 +1,19 @@
 import AdminListControls from "@/app/components/dashboard/AdminListControls";
-import { adminPageQuery, type AdminSearchParams } from "@/lib/admin-pagination";
+import { adminPageQuery,type AdminSearchParams } from "@/lib/admin-pagination";
 import { readAdminOptions } from "@/lib/admin-lists";
 import { requireAdminPage } from "@/lib/auth-helpers";
 import type { Metadata } from "next";
 
 
 
-import { Box, Stack, Typography } from "@mui/material";
+import MetadataHeader from "@/app/components/dashboard/MetadataHeader";
+import { Box } from "@mui/material";
 import MetadataManager from "./MetadataManager";
-import { dashboardTokens } from "@/app/components/dashboard/system";
 
-export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
+export const dynamic="force-dynamic";
+
+export const metadata: Metadata={
   title: "จัดการหมวดหมู่และแท็ก - MAGGA",
   description: "จัดการหมวดหมู่และแท็กบน MAGGA",
   openGraph: {
@@ -27,56 +28,31 @@ export const metadata: Metadata = {
 
 export default async function MetadataPage({
   searchParams,
-}: { searchParams?: Promise<AdminSearchParams> } = {}) {
+}: { searchParams?: Promise<AdminSearchParams> }={}) {
   await requireAdminPage();
-  const params = await searchParams;
-  const tab = params?.tab === "tags" ? "tags" : "categories";
-  const query = adminPageQuery(params);
-  const result = await readAdminOptions(tab, query);
-  const categories = tab === "categories" ? result.items : [],
-    tags = tab === "tags" ? result.items : [];
+  const params=await searchParams;
+  const tab=params?.tab==="tags"? "tags":"categories";
+  const query=adminPageQuery(params);
+  const result=await readAdminOptions(tab,query);
+  const categories=tab==="categories"? result.items:[],
+    tags=tab==="tags"? result.items:[];
   return (
     <Box
       sx={{
         maxWidth: 1600,
         mx: "auto",
-        px: { xs: 0, md: 0.5 },
-        py: { xs: 1, md: 0.5 },
+        px: { xs: 0,md: 0.5 },
+        py: { xs: 1,md: 0.5 },
       }}
     >
-      <Stack spacing={0.75} sx={{ mb: 3 }}>
-        <Typography
-          variant="overline"
-          sx={{
-            color: dashboardTokens.accent,
-            fontWeight: 800,
-            letterSpacing: "0.18em",
-            lineHeight: 1,
-          }}
-        >
-          WORKSPACE
-        </Typography>
-        <Typography
-          variant="h4"
-          sx={{
-            color: dashboardTokens.text,
-            fontWeight: 900,
-            letterSpacing: "-0.03em",
-          }}
-        >
-          จัดการเมตาดาต้า
-        </Typography>
-        <Typography sx={{ color: dashboardTokens.textMuted, maxWidth: 720 }}>
-          จัดระเบียบหมวดหมู่และแท็กจากพื้นที่ทำงานเดียวให้สอดคล้องกับหน้าผู้ดูแลอื่น
-        </Typography>
-      </Stack>
+      <MetadataHeader />
       <AdminListControls
         query={query}
         hasMore={result.hasMore}
         count={result.items.length}
       />
       <MetadataManager
-        initialTab={tab === "tags" ? 1 : 0}
+        initialTab={tab==="tags"? 1:0}
         initialCategories={categories}
         initialTags={tags}
       />

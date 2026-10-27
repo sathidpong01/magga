@@ -1,71 +1,76 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Stack, Tab, Tabs, TextField, Typography } from "@mui/material";
+import { useEffect,useRef,useState } from "react";
+import { useRouter,useSearchParams } from "next/navigation";
+import { Alert,Box,Button,Dialog,DialogActions,DialogContent,DialogTitle,IconButton,Stack,Tab,Tabs,TextField,Typography } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { authFetch } from "@/lib/auth-fetch";
 import { dashboardTokens } from "@/app/components/dashboard/system";
-type Item = { id: string; name: string };
+import { Skeleton } from "@mui/material";
+type Item={ id: string; name: string };
 export default function MetadataManager({
   initialCategories,
   initialTags,
-  initialTab = 0,
+  initialTab=0,
+  loading=false,
+  loadingCount=20,
 }: {
   initialCategories: Item[];
   initialTags: Item[];
   initialTab?: number;
+  loading?: boolean;
+  loadingCount?: number;
 }) {
-  const router = useRouter(),
-    params = useSearchParams();
-  const [items, setItems] = useState(
-      initialTab === 0 ? initialCategories : initialTags,
-    ),
-    [adding, setAdding] = useState(false),
-    [removing, setRemoving] = useState<Item | null>(null),
-    [name, setName] = useState(""),
-    [busy, setBusy] = useState(false),
-    [error, setError] = useState("");
-  const lock = useRef(false);
-  const kind = initialTab === 0 ? "categories" : "tags";
+  const router=useRouter(),
+    params=useSearchParams();
+  const [items,setItems]=useState(
+    initialTab===0? initialCategories:initialTags,
+  ),
+    [adding,setAdding]=useState(false),
+    [removing,setRemoving]=useState<Item|null>(null),
+    [name,setName]=useState(""),
+    [busy,setBusy]=useState(false),
+    [error,setError]=useState("");
+  const lock=useRef(false);
+  const kind=initialTab===0? "categories":"tags";
   useEffect(
-    () => setItems(initialTab === 0 ? initialCategories : initialTags),
-    [initialCategories, initialTags, initialTab],
+    () => setItems(initialTab===0? initialCategories:initialTags),
+    [initialCategories,initialTags,initialTab],
   );
   async function save(remove?: Item) {
-    if (lock.current || (!remove && !name.trim())) return;
-    lock.current = true;
+    if(lock.current||(!remove&&!name.trim())) return;
+    lock.current=true;
     setBusy(true);
     setError("");
     try {
-      const response = await authFetch(
-        `/api/${kind}${remove ? `/${remove.id}` : ""}`,
+      const response=await authFetch(
+        `/api/${kind}${remove? `/${remove.id}`:""}`,
         {
-          method: remove ? "DELETE" : "POST",
+          method: remove? "DELETE":"POST",
           ...(!remove
             ? {
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name: name.trim() }),
-              }
-            : {}),
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ name: name.trim() }),
+            }
+            :{}),
         },
       );
-      if (!response.ok) {
-        const data = await response.json();
-        throw Error(data.error || "บันทึกไม่ได้");
+      if(!response.ok) {
+        const data=await response.json();
+        throw Error(data.error||"บันทึกไม่ได้");
       }
       setAdding(false);
       setRemoving(null);
       setName("");
       router.refresh();
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "บันทึกไม่ได้");
+    } catch(cause) {
+      setError(cause instanceof Error? cause.message:"บันทึกไม่ได้");
     } finally {
-      lock.current = false;
+      lock.current=false;
       setBusy(false);
     }
   }
   return (
-    <Box>
+    <Box data-admin-list-ready={loading? undefined:true} aria-busy={loading}>
       <Stack
         direction="row"
         sx={{
@@ -78,37 +83,39 @@ export default function MetadataManager({
       >
         <Tabs
           value={initialTab}
-          onChange={(_, value) => {
-            const next = new URLSearchParams(params.toString());
-            next.set("tab", value === 1 ? "tags" : "categories");
+          onChange={(_,value) => {
+            const next=new URLSearchParams(params.toString());
+            next.set("tab",value===1? "tags":"categories");
             next.delete("page");
             next.delete("search");
-            router.push(`/dashboard/admin/metadata?${next}`, { scroll: false });
+            router.push(`/dashboard/admin/metadata?${next}`,{ scroll: false });
           }}
           aria-label="ประเภทเมตาดาต้า"
         >
-          <Tab label="หมวดหมู่" />
-          <Tab label="แท็ก" />
+          <Tab label="หมวดหมู่" disabled={loading} />
+          <Tab label="แท็ก" disabled={loading} />
         </Tabs>
         <Button
+          disabled={loading}
           onClick={() => {
             setError("");
             setAdding(true);
           }}
         >
-          เพิ่ม{initialTab === 0 ? "หมวดหมู่" : "แท็ก"}
+          เพิ่ม{initialTab===0? "หมวดหมู่":"แท็ก"}
         </Button>
       </Stack>
-      {!items.length && (
+      {!loading&&!items.length&&(
         <Typography sx={{ py: 3 }}>ไม่พบรายการในตัวกรองนี้</Typography>
       )}
       <Box
         sx={{
           display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "repeat(2,minmax(0,1fr))" },
+          gridTemplateColumns: { xs: "1fr",md: "repeat(2,minmax(0,1fr))" },
           gap: 1,
         }}
       >
+        {loading&&Array.from({ length: loadingCount },(_,index) => <Stack key={index} direction="row" sx={{ p: 1,bgcolor: dashboardTokens.surface,borderRadius: 1,gap: 1,alignItems: "center",minHeight: 60 }}><Skeleton width="70%" height={24} sx={{ flex: 1 }} /><Skeleton variant="rounded" width={44} height={44} /></Stack>)}
         {items.map((item) => (
           <Stack
             key={item.id}
@@ -121,7 +128,7 @@ export default function MetadataManager({
               gap: 1,
             }}
           >
-            <Typography sx={{ flex: 1, overflowWrap: "anywhere" }}>
+            <Typography sx={{ flex: 1,overflowWrap: "anywhere" }}>
               {item.name}
             </Typography>
             <IconButton
@@ -137,9 +144,9 @@ export default function MetadataManager({
         ))}
       </Box>
       <Dialog
-        open={adding || Boolean(removing)}
+        open={adding||Boolean(removing)}
         onClose={() => {
-          if (!busy) {
+          if(!busy) {
             setAdding(false);
             setRemoving(null);
           }
@@ -147,17 +154,19 @@ export default function MetadataManager({
         fullWidth
         maxWidth="sm"
         aria-labelledby="metadata-dialog-title"
+        disableAutoFocus
+        slotProps={{ transition: { onEntering: (element: HTMLElement) => queueMicrotask(() => element.querySelector<HTMLInputElement>("#metadata-name")?.focus({ preventScroll: true })) } }}
       >
         <DialogTitle id="metadata-dialog-title">
-          {removing ? `ลบ ${removing.name}` : "เพิ่มรายการ"}
+          {removing? `ลบ ${removing.name}`:"เพิ่มรายการ"}
         </DialogTitle>
         <DialogContent>
-          {error && <Alert severity="error">{error}</Alert>}
-          {removing ? (
+          {error&&<Alert severity="error">{error}</Alert>}
+          {removing? (
             <Typography>ยืนยันลบรายการนี้และนำออกจากผลงานที่ใช้อยู่</Typography>
-          ) : (
+          ):(
             <TextField
-              autoFocus
+              id="metadata-name"
               fullWidth
               label="ชื่อ"
               value={name}
@@ -178,11 +187,11 @@ export default function MetadataManager({
             ยกเลิก
           </Button>
           <Button
-            disabled={busy || (!removing && !name.trim())}
-            color={removing ? "error" : "primary"}
-            onClick={() => void save(removing ?? undefined)}
+            disabled={busy||(!removing&&!name.trim())}
+            color={removing? "error":"primary"}
+            onClick={() => void save(removing??undefined)}
           >
-            {busy ? "กำลังบันทึก…" : removing ? "ยืนยันลบ" : "เพิ่ม"}
+            {busy? "กำลังบันทึก…":removing? "ยืนยันลบ":"เพิ่ม"}
           </Button>
         </DialogActions>
       </Dialog>

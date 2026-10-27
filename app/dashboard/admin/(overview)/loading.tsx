@@ -15,7 +15,7 @@ export default function AdminDashboardLoading() {
         {["มังงะทั้งหมด","ฉบับร่าง","รายการรอตรวจ","ผู้ใช้ทั้งหมด","คอมเมนต์","หมวดหมู่","แท็ก"].map((label,i)=><Grid key={label} size={{xs:i===6?12:6,sm:i>=4?4:3,md:i>=4?4:3,lg:1}}><DashboardStat label={label} value={<Skeleton width={45} height="1.1em" />} icon={<Skeleton variant="rectangular" width={18} height={18} />} compact /></Grid>)}
       </Grid>
       {/* Popular Manga: Side-by-side Top 3 (Left 7) & Top 4-10 (Right 5) */}
-      <Grid container spacing={2} sx={{ alignItems: "stretch" }}>
+      <Grid container spacing={2} sx={{ alignItems: "flex-start" }}>
         {/* Left: Top 3 Manga Skeleton */}
         <Grid size={{ xs: 12, lg: 7 }}>
           <DashboardSurface sx={{ p: { xs: 2, md: 2.25 }, height: "100%", display: "flex", flexDirection: "column" }}>
@@ -34,7 +34,7 @@ export default function AdminDashboardLoading() {
               />
             </Box>
 
-            <Grid container spacing={1.5} sx={{ flex: 1, alignItems: "stretch" }}>
+            <Grid container spacing={1.5} sx={{ alignItems: "flex-start" }}>
               {[1, 2, 3].map((i) => (
                 <Grid key={i} size={{ xs: 12, sm: 4 }}>
                   <Box

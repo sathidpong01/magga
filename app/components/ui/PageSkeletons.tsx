@@ -6,7 +6,7 @@ export function SkeletonLine({ width = "100%", height = 20 }: { width?: number |
   return <Skeleton variant="rectangular" width={width} height={height} sx={{ maxWidth: "100%", borderRadius: "4px", bgcolor: maggaColors.border }} />;
 }
 
-export function HomeSkeleton({ author }: { author?: string }) {
+export function HomeSkeleton({ author, resume = true }: { author?: string; resume?: boolean }) {
   return <Container maxWidth="xl"><Box sx={{ my: 1 }} data-skeleton="home">
     {author ? <Box sx={{ mb: 3.5 }}>
       <SkeletonLine width={220} height={21} />
@@ -19,6 +19,7 @@ export function HomeSkeleton({ author }: { author?: string }) {
       <SkeletonLine width={200} height={32} />
       <Box sx={{ height: { xs: 40, sm: 20 } }}><Skeleton variant="rectangular" width="100%" height="100%" sx={{ maxWidth: 450 }} /></Box>
     </Box>}
+    {!author && resume && <Box className="magga-continue-slot" aria-hidden />}
     <Box sx={{ mb: 3.5, maxWidth: 680, mx: "auto", height: { xs: 62, sm: 66 } }}><Skeleton variant="rectangular" width="100%" height="100%" sx={{ borderRadius: "12px" }} /></Box>
     <MangaGridSkeleton />
   </Box></Container>;
@@ -56,20 +57,21 @@ export function AccountSkeleton({ profile = false }: { profile?: boolean }) {
 }
 
 export function ReaderHeroSkeleton() {
-  return <Box sx={{ position: "relative", overflow: "hidden", mb: -4 }} data-skeleton="reader-hero">
-    <Container maxWidth="lg" sx={{ pt: { xs: 4, md: 6 }, pb: 4 }}>
-      <Grid container spacing={4}>
-        <Grid size={{ xs: 12, md: 4, lg: 3 }} sx={{ display: "flex", justifyContent: { xs: "center", md: "flex-start" } }}>
-          <Box sx={{ width: "100%", maxWidth: { xs: "280px", md: "100%" }, aspectRatio: "3/4", borderRadius: `${maggaRadii.card}px`, overflow: "hidden", border: `1px solid ${maggaColors.border}` }}><Skeleton variant="rectangular" width="100%" height="100%" /></Box>
+  return <Box sx={{ position: "relative", overflow: "hidden" }} data-skeleton="reader-hero">
+    <Container maxWidth="lg" sx={{ py: { xs: 2, md: 4 } }}>
+      <Grid container spacing={{ xs: 2, md: 3 }} sx={{ alignItems: "flex-start" }}>
+        <Grid size={{ xs: 4, md: 3 }}>
+          <Box sx={{ width: "100%", maxWidth: 256, aspectRatio: "3/4", borderRadius: `${maggaRadii.card}px`, overflow: "hidden", bgcolor: maggaColors.surface }}><Skeleton variant="rectangular" width="100%" height="100%" /></Box>
         </Grid>
-        <Grid size={{ xs: 12, md: 8, lg: 9 }} sx={{ display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-          <Stack spacing={2}>
-            <SkeletonLine width={160} height={28} /><SkeletonLine width="80%" height={58} />
-            <SkeletonLine width={240} height={25} /><SkeletonLine width={260} height={36} /><SkeletonLine width={150} height={28} />
-            <Box sx={{ p: 2, maxWidth: 420, height: 100, bgcolor: maggaColors.surface, borderRadius: `${maggaRadii.card}px`, border: `1px solid ${maggaColors.border}` }}><SkeletonLine width={150} height={20} /><Box sx={{ mt: 1 }}><SkeletonLine width={200} height={24} /></Box></Box>
-          </Stack>
+        <Grid size={{ xs: 8, md: 9 }}>
+          <Box sx={{ height: { xs: 56.16, sm: 74.88, md: 58.24 }, mb: 1 }}><Skeleton variant="rectangular" width="90%" height="100%" /></Box>
+          <Box sx={{ mb: 0.5 }}><SkeletonLine width="65%" height={20} /></Box>
+          <SkeletonLine width={110} height={18} />
+          <SkeletonLine width={190} height={24} />
+          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", my: 1 }}><SkeletonLine width={128} height={44} /><SkeletonLine width={44} height={44} /></Box>
         </Grid>
       </Grid>
+      <Box sx={{ mt: 2, borderTop: `1px solid ${maggaColors.border}`, minHeight: 44, py: 1.25 }}><SkeletonLine width={230} height={24} /></Box>
     </Container>
   </Box>;
 }

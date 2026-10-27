@@ -989,18 +989,13 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
             </Button>
           </DashboardPageHeader>
 
+          <Box sx={{ minHeight: 28, mb: 3 }} aria-live="polite">
+            {optionsLoading && <Box role="status" sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <CircularProgress size={18} aria-label="กำลังโหลดตัวเลือก" />
+              กำลังโหลดหมวดหมู่ แท็ก และผู้แต่ง...
+            </Box>}
+          </Box>
           <Grid container spacing={3}>
-            {optionsLoading && (
-              <Grid size={12}>
-                <Box
-                  role="status"
-                  sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                >
-                  <CircularProgress size={18} aria-label="กำลังโหลดตัวเลือก" />
-                  กำลังโหลดหมวดหมู่ แท็ก และผู้แต่ง...
-                </Box>
-              </Grid>
-            )}
             {optionsErrors.length > 0 && (
               <Grid size={12}>
                 <Alert

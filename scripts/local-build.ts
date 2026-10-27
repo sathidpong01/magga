@@ -92,6 +92,10 @@ try {
   console.log('Disposable socket ready at 127.0.0.1:55433/postgres; applying current Drizzle schema.');
   await run('db:push', '--config', './scripts/disposable-db.config.ts', '--force');
   await verifyDisposableSchema((sql, parameters) => db.query(sql, parameters));
+  // Schema push creates tables, not triggers. Install the same production trigger
+  // only inside this newly-created disposable database.
+  const historyMigration = readFileSync(join(root, 'db/migrations/0015_manga_view_history.sql'), 'utf8');
+  await db.exec(historyMigration.slice(historyMigration.indexOf('CREATE FUNCTION public.capture_manga_view_history()')));
   // All content is synthetic. No user accounts, credentials, or production rows.
   await db.exec(`
     INSERT INTO categories(id,name) VALUES('10000000-0000-4000-8000-000000000001','Test category');

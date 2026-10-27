@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState,useEffect,useCallback,useRef } from "react";
 import Image from "next/image";
-import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Chip, IconButton, Button, TextField, InputAdornment, Tabs, Tab, Pagination, CircularProgress, Tooltip, Alert } from "@mui/material";
+import { Box,Typography,Paper,Table,TableBody,TableCell,TableContainer,TableHead,TableRow,Chip,IconButton,Button,TextField,InputAdornment,Tabs,Tab,Pagination,CircularProgress,Tooltip,Alert } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import RefreshIcon from "@mui/icons-material/Refresh";
@@ -10,112 +10,118 @@ import Link from "next/link";
 import { authFetch } from "@/lib/auth-fetch";
 import { useSearchParams } from "next/navigation";
 import { normalizeSubmissionStatus } from "@/lib/submission-status";
-import { dashboardTokens, dashboardRadii, dashboardPrimaryButtonSx } from "@/app/components/dashboard/system";
+import { dashboardTokens,dashboardRadii,dashboardPrimaryButtonSx } from "@/app/components/dashboard/system";
+import { Skeleton } from "@mui/material";
+import { submissionsColumns,moderationTableSx } from "@/app/components/dashboard/moderation-list-layout";
 
-export type AdminSubmission = {
+export type AdminSubmission={
   id: string;
   title: string;
   status: string;
   submittedAt: string;
   coverImage: string;
   user: {
-    name: string | null;
-    username: string | null;
-    email: string | null;
+    name: string|null;
+    username: string|null;
+    email: string|null;
   };
 };
 
 export default function SubmissionsManager({
   initialSubmissions,
   initialTotalPages,
-  initialStatus = "ALL",
-  initialPage = 1,
-  initialSearch = "",
+  initialStatus="ALL",
+  initialPage=1,
+  initialSearch="",
+  initialLoading=false,
 }: {
   initialSubmissions: AdminSubmission[];
   initialTotalPages: number;
   initialStatus?: string;
   initialPage?: number;
   initialSearch?: string;
+  initialLoading?: boolean;
 }) {
-  const searchParams = useSearchParams();
-  const statusFilter = normalizeSubmissionStatus(searchParams.get("status"));
-  const [submissions, setSubmissions] =
+  const searchParams=useSearchParams();
+  const statusFilter=normalizeSubmissionStatus(searchParams.get("status"));
+  const [submissions,setSubmissions]=
     useState<AdminSubmission[]>(initialSubmissions);
-  const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(initialPage);
-  const [totalPages, setTotalPages] = useState(initialTotalPages);
-  const [search, setSearch] = useState(initialSearch);
-  const [debouncedSearch, setDebouncedSearch] = useState(initialSearch);
-  const hasMountedRef = useRef(false);
-  const activeRequest = useRef<AbortController | null>(null);
-  const [fetchError, setFetchError] = useState("");
+  const [loading,setLoading]=useState(initialLoading);
+  const [page,setPage]=useState(initialPage);
+  const [totalPages,setTotalPages]=useState(initialTotalPages);
+  const [search,setSearch]=useState(initialSearch);
+  const [debouncedSearch,setDebouncedSearch]=useState(initialSearch);
+  const hasMountedRef=useRef(false);
+  const activeRequest=useRef<AbortController|null>(null);
+  const [fetchError,setFetchError]=useState("");
 
-  const previousStatus = useRef(statusFilter);
+  const previousStatus=useRef(statusFilter);
   useEffect(() => {
-    if (previousStatus.current !== statusFilter) {
-      previousStatus.current = statusFilter;
+    if(previousStatus.current!==statusFilter) {
+      previousStatus.current=statusFilter;
       setPage(1);
     }
-  }, [statusFilter]);
+  },[statusFilter]);
 
   useEffect(() => {
-    if (search === debouncedSearch) return;
-    const timer = setTimeout(() => {
+    if(search===debouncedSearch) return;
+    const timer=setTimeout(() => {
       setDebouncedSearch(search);
       setPage(1);
-    }, 500);
+    },500);
     return () => clearTimeout(timer);
-  }, [search, debouncedSearch]);
+  },[search,debouncedSearch]);
 
-  const fetchSubmissions = useCallback(async () => {
+  const fetchSubmissions=useCallback(async () => {
     activeRequest.current?.abort();
-    const controller = new AbortController();
-    activeRequest.current = controller;
+    const controller=new AbortController();
+    activeRequest.current=controller;
     setLoading(true);
     setFetchError("");
     try {
-      const params = new URLSearchParams({
+      const params=new URLSearchParams({
         page: page.toString(),
         limit: "10",
         status: statusFilter,
       });
-      if (debouncedSearch) params.append("search", debouncedSearch);
+      if(debouncedSearch) params.append("search",debouncedSearch);
 
-      const res = await authFetch(`/api/admin/submissions?${params}`, {
+      const res=await authFetch(`/api/admin/submissions?${params}`,{
         signal: controller.signal,
       });
-      if (!res.ok) throw new Error("Failed to fetch");
-      const data = await res.json();
-      if (controller.signal.aborted || activeRequest.current !== controller)
+      if(!res.ok) throw new Error("Failed to fetch");
+      const data=await res.json();
+      if(controller.signal.aborted||activeRequest.current!==controller)
         return;
       setSubmissions(data.submissions);
       setTotalPages(data.pagination.pages);
-    } catch (error) {
-      if (!controller.signal.aborted && activeRequest.current === controller)
+    } catch(error) {
+      if(!controller.signal.aborted&&activeRequest.current===controller)
         setFetchError("ไม่สามารถโหลดรายการได้ กรุณาลองรีเฟรชอีกครั้ง");
     } finally {
-      if (!controller.signal.aborted && activeRequest.current === controller)
+      if(!controller.signal.aborted&&activeRequest.current===controller)
         setLoading(false);
     }
-  }, [page, statusFilter, debouncedSearch]);
+  },[page,statusFilter,debouncedSearch]);
 
   useEffect(() => {
-    if (!hasMountedRef.current) {
-      hasMountedRef.current = true;
-      if (
-        statusFilter === initialStatus &&
-        page === initialPage &&
-        debouncedSearch === initialSearch
+    if(initialLoading) return;
+    if(!hasMountedRef.current) {
+      hasMountedRef.current=true;
+      if(
+        statusFilter===initialStatus&&
+        page===initialPage&&
+        debouncedSearch===initialSearch
       )
         return;
     }
 
     void fetchSubmissions();
     return () => activeRequest.current?.abort();
-  }, [
+  },[
     fetchSubmissions,
     initialStatus,
+    initialLoading,
     statusFilter,
     initialPage,
     initialSearch,
@@ -123,30 +129,31 @@ export default function SubmissionsManager({
     debouncedSearch,
   ]);
 
-  useEffect(() => () => activeRequest.current?.abort(), []);
+  useEffect(() => () => activeRequest.current?.abort(),[]);
 
-  const handleStatusChange = (_: React.SyntheticEvent, newValue: string) => {
-    const params = new URLSearchParams(searchParams.toString());
-    const status = normalizeSubmissionStatus(newValue);
-    if (status === "ALL") params.delete("status");
-    else params.set("status", status);
+  const handleStatusChange=(_: React.SyntheticEvent,newValue: string) => {
+    const params=new URLSearchParams(searchParams.toString());
+    const status=normalizeSubmissionStatus(newValue);
+    if(status==="ALL") params.delete("status");
+    else params.set("status",status);
     window.history.pushState(
       null,
       "",
-      `${window.location.pathname}${params.size ? `?${params}` : ""}`,
+      `${window.location.pathname}${params.size? `?${params}`:""}`,
     );
     setPage(1);
   };
 
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    params.set("page", String(page));
-    if (debouncedSearch) params.set("search", debouncedSearch);
+    if(initialLoading) return;
+    const params=new URLSearchParams(location.search);
+    params.set("page",String(page));
+    if(debouncedSearch) params.set("search",debouncedSearch);
     else params.delete("search");
-    history.replaceState(history.state, "", location.pathname + "?" + params);
-  }, [page, debouncedSearch]);
-  const getStatusLabel = (status: string) => {
-    switch (status) {
+    history.replaceState(history.state,"",location.pathname+"?"+params);
+  },[initialLoading,page,debouncedSearch]);
+  const getStatusLabel=(status: string) => {
+    switch(status) {
       case "APPROVED":
         return "อนุมัติแล้ว";
       case "REJECTED":
@@ -161,404 +168,407 @@ export default function SubmissionsManager({
   };
 
   return (
-    <Box data-admin-list-ready>
-      {fetchError && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {fetchError}
-        </Alert>
-      )}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 4,
-        }}
-      >
-        <Box>
-          <Typography
-            variant="h4"
+    <Box data-admin-list-ready={initialLoading? undefined:true} aria-busy={loading}>
+      <Box component="fieldset" disabled={initialLoading} sx={{ border: 0,m: 0,p: 0,minWidth: 0 }}>
+        {fetchError&&(
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {fetchError}
+          </Alert>
+        )}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 4,
+            gap: 2,
+            flexWrap: "wrap",
+          }}
+        >
+          <Box>
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 900,
+                letterSpacing: "-0.03em",
+                color: "#fafafa",
+              }}
+            >
+              จัดการการฝากส่ง
+            </Typography>
+            <Typography sx={{ color: "#a3a3a3",mt: 0.75 }}>
+              ตรวจสอบรายการฝากส่งทั้งหมดในมุมมองเดียว
+            </Typography>
+          </Box>
+          <Button
+            startIcon={<RefreshIcon />}
+            onClick={fetchSubmissions}
+            variant="contained"
             sx={{
-              fontWeight: 900,
-              letterSpacing: "-0.03em",
-              color: "#fafafa",
+              ...dashboardPrimaryButtonSx,
+              borderRadius: dashboardRadii.button,
+              px: 3,
             }}
           >
-            จัดการการฝากส่ง
-          </Typography>
-          <Typography sx={{ color: "#a3a3a3", mt: 0.75 }}>
-            ตรวจสอบรายการฝากส่งทั้งหมดในมุมมองเดียว
-          </Typography>
+            รีเฟรช
+          </Button>
         </Box>
-        <Button
-          startIcon={<RefreshIcon />}
-          onClick={fetchSubmissions}
-          variant="contained"
+
+        <Paper
           sx={{
-            ...dashboardPrimaryButtonSx,
-            borderRadius: dashboardRadii.button,
-            px: 3,
+            mb: 4,
+            bgcolor: dashboardTokens.surface,
+            borderRadius: dashboardRadii.surface,
+            border: `1px solid ${dashboardTokens.border}`,
+            overflow: "hidden",
+            backgroundImage: "none",
+            boxShadow: "none",
           }}
         >
-          รีเฟรช
-        </Button>
-      </Box>
-
-      <Paper
-        sx={{
-          mb: 4,
-          bgcolor: dashboardTokens.surface,
-          borderRadius: dashboardRadii.surface,
-          border: `1px solid ${dashboardTokens.border}`,
-          overflow: "hidden",
-          backgroundImage: "none",
-          boxShadow: "none",
-        }}
-      >
-        <Tabs
-          value={statusFilter}
-          onChange={handleStatusChange}
-          textColor="inherit"
-          sx={{
-            borderBottom: 1,
-            borderColor: dashboardTokens.border,
-            minHeight: 56,
-            "& .MuiTab-root": {
-              fontWeight: 800,
-              color: dashboardTokens.textMuted,
-              fontSize: "0.85rem",
-              letterSpacing: "0",
-              textTransform: "none",
-              minHeight: 56,
-              opacity: 0.7,
-              "&.Mui-selected": {
-                color: `${dashboardTokens.accent} !important`,
-                opacity: 1,
-              },
-            },
-          }}
-          slotProps={{
-            indicator: {
-              sx: {
-                bgcolor: dashboardTokens.accent,
-                height: 3,
-                borderRadius: "3px 3px 0 0",
-              },
-            },
-          }}
-        >
-          <Tab label="ทั้งหมด" value="ALL" />
-          <Tab label="รอพิจารณา" value="PENDING" />
-          <Tab label="กำลังตรวจสอบ" value="UNDER_REVIEW" />
-          <Tab label="อนุมัติแล้ว" value="APPROVED" />
-          <Tab label="ปฏิเสธ" value="REJECTED" />
-        </Tabs>
-
-        <Box sx={{ p: 2.5, bgcolor: "rgba(0,0,0,0.2)" }}>
-          <TextField
-            fullWidth
-            variant="outlined"
-            placeholder="ค้นหาตามชื่อเรื่องหรือชื่อผู้ส่ง"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+          <Tabs
+            variant="scrollable"
+            scrollButtons="auto"
+            value={statusFilter}
+            onChange={handleStatusChange}
+            textColor="inherit"
             sx={{
-              "& .MuiOutlinedInput-root": {
-                bgcolor: dashboardTokens.surfaceMuted,
-                borderRadius: dashboardRadii.field,
-                fontWeight: 600,
-                fontSize: "0.9rem",
-                "& fieldset": { borderColor: dashboardTokens.border },
-                "&:hover fieldset": {
-                  borderColor: dashboardTokens.borderStrong,
-                },
-                "&.Mui-focused fieldset": {
-                  borderColor: dashboardTokens.accent,
+              borderBottom: 1,
+              borderColor: dashboardTokens.border,
+              minHeight: 56,
+              "& .MuiTab-root": {
+                fontWeight: 800,
+                color: dashboardTokens.textMuted,
+                fontSize: "0.85rem",
+                letterSpacing: "0",
+                textTransform: "none",
+                minHeight: 56,
+                opacity: 1,
+                "&.Mui-selected": {
+                  color: `${dashboardTokens.accentStrong} !important`,
+                  opacity: 1,
                 },
               },
             }}
-            size="medium"
             slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon
-                      sx={{ color: dashboardTokens.accent, fontSize: 20 }}
-                    />
-                  </InputAdornment>
-                ),
+              indicator: {
+                sx: {
+                  bgcolor: dashboardTokens.accent,
+                  height: 3,
+                  borderRadius: "3px 3px 0 0",
+                },
+              },
+            }}
+          >
+            <Tab label="ทั้งหมด" value="ALL" />
+            <Tab label="รอพิจารณา" value="PENDING" />
+            <Tab label="กำลังตรวจสอบ" value="UNDER_REVIEW" />
+            <Tab label="อนุมัติแล้ว" value="APPROVED" />
+            <Tab label="ปฏิเสธ" value="REJECTED" />
+          </Tabs>
+
+          <Box sx={{ p: 2.5,bgcolor: "rgba(0,0,0,0.2)" }}>
+            <TextField
+              fullWidth
+              variant="outlined"
+              placeholder="ค้นหาตามชื่อเรื่องหรือชื่อผู้ส่ง"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  bgcolor: dashboardTokens.surfaceMuted,
+                  borderRadius: dashboardRadii.field,
+                  fontWeight: 600,
+                  fontSize: "0.9rem",
+                  "& fieldset": { borderColor: dashboardTokens.border },
+                  "&:hover fieldset": {
+                    borderColor: dashboardTokens.borderStrong,
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: dashboardTokens.accent,
+                  },
+                },
+              }}
+              size="medium"
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon
+                        sx={{ color: dashboardTokens.accent,fontSize: 20 }}
+                      />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+          </Box>
+        </Paper>
+
+        <TableContainer
+          component={Paper}
+          sx={{
+            bgcolor: dashboardTokens.surface,
+            borderRadius: 1.25,
+            border: `1px solid ${dashboardTokens.border}`,
+            boxShadow: "none",
+            backgroundImage: "none",
+            overflow: "auto",
+          }}
+        >
+          <Table className="admin-work-table" aria-label="รายการฝากลง" sx={moderationTableSx}>
+            <colgroup>{submissionsColumns.map((width,index) => <col key={index} style={{ width }} />)}</colgroup>
+            <TableHead>
+              <TableRow sx={{ bgcolor: "rgba(255,255,255,0.02)" }}>
+                <TableCell
+                  sx={{
+                    py: 2.5,
+                    fontWeight: 900,
+                    color: "#a3a3a3",
+                    fontSize: "0.7rem",
+                    letterSpacing: "0.08em",
+                    textTransform: "none",
+                    borderBottom: "1px solid rgba(255,255,255,0.04)",
+                  }}
+                >
+                  ปก
+                </TableCell>
+                <TableCell
+                  sx={{
+                    py: 2.5,
+                    fontWeight: 900,
+                    color: "#a3a3a3",
+                    fontSize: "0.7rem",
+                    letterSpacing: "0.08em",
+                    textTransform: "none",
+                    borderBottom: "1px solid rgba(255,255,255,0.04)",
+                  }}
+                >
+                  ชื่อเรื่อง
+                </TableCell>
+                <TableCell
+                  sx={{
+                    py: 2.5,
+                    fontWeight: 900,
+                    color: "#a3a3a3",
+                    fontSize: "0.7rem",
+                    letterSpacing: "0.08em",
+                    textTransform: "none",
+                    borderBottom: "1px solid rgba(255,255,255,0.04)",
+                  }}
+                >
+                  ผู้ส่ง
+                </TableCell>
+                <TableCell
+                  sx={{
+                    py: 2.5,
+                    fontWeight: 900,
+                    color: "#a3a3a3",
+                    fontSize: "0.7rem",
+                    letterSpacing: "0.08em",
+                    textTransform: "none",
+                    borderBottom: "1px solid rgba(255,255,255,0.04)",
+                  }}
+                >
+                  สถานะ
+                </TableCell>
+                <TableCell
+                  sx={{
+                    py: 2.5,
+                    fontWeight: 900,
+                    color: "#a3a3a3",
+                    fontSize: "0.7rem",
+                    letterSpacing: "0.08em",
+                    textTransform: "none",
+                    borderBottom: "1px solid rgba(255,255,255,0.04)",
+                  }}
+                >
+                  วันที่ส่ง
+                </TableCell>
+                <TableCell
+                  align="right"
+                  sx={{
+                    py: 2.5,
+                    fontWeight: 900,
+                    color: "#a3a3a3",
+                    fontSize: "0.7rem",
+                    letterSpacing: "0.08em",
+                    textTransform: "none",
+                    borderBottom: "1px solid rgba(255,255,255,0.04)",
+                  }}
+                >
+                  จัดการ
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {loading? (
+                Array.from({ length: 10 },(_,index) => <TableRow key={index}>{["ปก","ชื่อเรื่อง","ผู้ส่ง","สถานะ","วันที่ส่ง","จัดการ"].map((label) => <TableCell key={label} data-label={label} sx={{ py: 2,height: 100 }}><Skeleton variant="rounded" height={label==="ปก"? 68:24} width={label==="ปก"? 48:"80%"} /></TableCell>)}</TableRow>)
+              ):submissions.length===0? (
+                <TableRow>
+                  <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
+                    <Typography
+                      sx={{
+                        color: "#a3a3a3",
+                        fontWeight: 700,
+                        letterSpacing: "0.03em",
+                      }}
+                    >
+                      ไม่พบรายการฝากส่ง
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ):(
+                submissions.map((sub) => (
+                  <TableRow
+                    key={sub.id}
+                    hover
+                    sx={{
+                      "&:hover": { bgcolor: "rgba(255,255,255,0.02) !important" },
+                      "& td": {
+                        borderBottom: "1px solid rgba(255,255,255,0.04)",
+                      },
+                    }}
+                  >
+                    <TableCell data-label="ปก" sx={{ py: 2 }}>
+                      <Box
+                        sx={{
+                          width: 48,
+                          height: 68,
+                          position: "relative",
+                          borderRadius: 1,
+                          overflow: "hidden",
+                          boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+                          border: "1px solid rgba(255,255,255,0.04)",
+                        }}
+                      >
+                        <Image
+                          src={sub.coverImage}
+                          alt={sub.title}
+                          fill
+                          sizes="48px"
+                          style={{ objectFit: "cover" }}
+                        />
+                      </Box>
+                    </TableCell>
+                    <TableCell data-label="ชื่อเรื่อง">
+                      <Typography
+                        sx={{
+                          fontWeight: 800,
+                          color: "#fff",
+                          fontSize: "0.95rem",
+                        }}
+                      >
+                        {sub.title}
+                      </Typography>
+                    </TableCell>
+                    <TableCell data-label="ผู้ส่ง">
+                      <Typography
+                        sx={{
+                          fontWeight: 600,
+                          color: "#a3a3a3",
+                          fontSize: "0.85rem",
+                        }}
+                      >
+                        {sub.user.username||sub.user.name||sub.user.email}
+                      </Typography>
+                    </TableCell>
+                    <TableCell data-label="สถานะ">
+                      <Chip
+                        label={getStatusLabel(sub.status)}
+                        size="small"
+                        sx={{
+                          fontWeight: 900,
+                          fontSize: "0.65rem",
+                          letterSpacing: "0",
+                          borderRadius: 1,
+                          bgcolor:
+                            sub.status==="APPROVED"
+                              ? "rgba(34, 197, 94, 0.15)"
+                              :sub.status==="REJECTED"
+                                ? "rgba(239, 68, 68, 0.15)"
+                                :sub.status==="PENDING"
+                                  ? "rgba(250, 191, 6, 0.15)"
+                                  :"rgba(255,255,255,0.05)",
+                          color:
+                            sub.status==="APPROVED"
+                              ? "#4ade80"
+                              :sub.status==="REJECTED"
+                                ? "#f87171"
+                                :sub.status==="PENDING"
+                                  ? dashboardTokens.accent
+                                  :dashboardTokens.textMuted,
+                          border: `1px solid ${dashboardTokens.border}`,
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell data-label="ส่งเมื่อ">
+                      <Typography
+                        sx={{
+                          fontFamily: "monospace",
+                          fontSize: "0.85rem",
+                          color: dashboardTokens.textMuted,
+                          fontWeight: 600,
+                        }}
+                      >
+                        {new Date(sub.submittedAt).toLocaleDateString("th-TH",{
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </Typography>
+                    </TableCell>
+                    <TableCell data-label="จัดการ" align="right">
+                      <Tooltip title="ดูรายการ">
+                        <IconButton
+                          component={Link}
+                          href={`/dashboard/admin/submissions/${sub.id}`}
+                          sx={{
+                            color: dashboardTokens.accent,
+                            bgcolor: dashboardTokens.accentSoft,
+                            borderRadius: dashboardRadii.compact,
+                            width: 36,
+                            height: 36,
+                            "&:hover": {
+                              bgcolor: "rgba(217, 119, 6, 0.25)",
+                              transform: "scale(1.05)",
+                            },
+                            transition: "all 0.2s",
+                          }}
+                          aria-label="ดูรายละเอียด"
+                        >
+                          <VisibilityIcon sx={{ fontSize: 18 }} />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        <Box sx={{ display: "flex",justifyContent: "center",mt: 5 }}>
+          <Pagination
+            count={totalPages}
+            page={page}
+            onChange={(_,p) => setPage(p)}
+            sx={{
+              "& .MuiPaginationItem-root": {
+                color: dashboardTokens.textMuted,
+                fontWeight: 800,
+                fontSize: "0.75rem",
+                fontFamily: "monospace",
+                borderRadius: dashboardRadii.compact,
+                "&:hover": { bgcolor: "rgba(255,255,255,0.05)" },
+              },
+              "& .Mui-selected": {
+                bgcolor: `${dashboardTokens.accent} !important`,
+                color: "#0f0f14 !important",
+                boxShadow: "0 0 15px rgba(217, 119, 6, 0.3)",
               },
             }}
           />
         </Box>
-      </Paper>
-
-      <TableContainer
-        component={Paper}
-        sx={{
-          bgcolor: dashboardTokens.surface,
-          borderRadius: 1.25,
-          border: `1px solid ${dashboardTokens.border}`,
-          boxShadow: "none",
-          backgroundImage: "none",
-          overflow: "hidden",
-        }}
-      >
-        <Table className="admin-work-table" aria-label="รายการฝากลง">
-          <TableHead>
-            <TableRow sx={{ bgcolor: "rgba(255,255,255,0.02)" }}>
-              <TableCell
-                sx={{
-                  py: 2.5,
-                  fontWeight: 900,
-                  color: "#a3a3a3",
-                  fontSize: "0.7rem",
-                  letterSpacing: "0.08em",
-                  textTransform: "none",
-                  borderBottom: "1px solid rgba(255,255,255,0.04)",
-                }}
-              >
-                ปก
-              </TableCell>
-              <TableCell
-                sx={{
-                  py: 2.5,
-                  fontWeight: 900,
-                  color: "#a3a3a3",
-                  fontSize: "0.7rem",
-                  letterSpacing: "0.08em",
-                  textTransform: "none",
-                  borderBottom: "1px solid rgba(255,255,255,0.04)",
-                }}
-              >
-                ชื่อเรื่อง
-              </TableCell>
-              <TableCell
-                sx={{
-                  py: 2.5,
-                  fontWeight: 900,
-                  color: "#a3a3a3",
-                  fontSize: "0.7rem",
-                  letterSpacing: "0.08em",
-                  textTransform: "none",
-                  borderBottom: "1px solid rgba(255,255,255,0.04)",
-                }}
-              >
-                ผู้ส่ง
-              </TableCell>
-              <TableCell
-                sx={{
-                  py: 2.5,
-                  fontWeight: 900,
-                  color: "#a3a3a3",
-                  fontSize: "0.7rem",
-                  letterSpacing: "0.08em",
-                  textTransform: "none",
-                  borderBottom: "1px solid rgba(255,255,255,0.04)",
-                }}
-              >
-                สถานะ
-              </TableCell>
-              <TableCell
-                sx={{
-                  py: 2.5,
-                  fontWeight: 900,
-                  color: "#a3a3a3",
-                  fontSize: "0.7rem",
-                  letterSpacing: "0.08em",
-                  textTransform: "none",
-                  borderBottom: "1px solid rgba(255,255,255,0.04)",
-                }}
-              >
-                วันที่ส่ง
-              </TableCell>
-              <TableCell
-                align="right"
-                sx={{
-                  py: 2.5,
-                  fontWeight: 900,
-                  color: "#a3a3a3",
-                  fontSize: "0.7rem",
-                  letterSpacing: "0.08em",
-                  textTransform: "none",
-                  borderBottom: "1px solid rgba(255,255,255,0.04)",
-                }}
-              >
-                จัดการ
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
-                  <CircularProgress sx={{ color: dashboardTokens.accent }} />
-                </TableCell>
-              </TableRow>
-            ) : submissions.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 8 }}>
-                  <Typography
-                    sx={{
-                      color: "#a3a3a3",
-                      fontWeight: 700,
-                      letterSpacing: "0.03em",
-                    }}
-                  >
-                    ไม่พบรายการฝากส่ง
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            ) : (
-              submissions.map((sub) => (
-                <TableRow
-                  key={sub.id}
-                  hover
-                  sx={{
-                    "&:hover": { bgcolor: "rgba(255,255,255,0.02) !important" },
-                    "& td": {
-                      borderBottom: "1px solid rgba(255,255,255,0.04)",
-                    },
-                  }}
-                >
-                  <TableCell data-label="ปก" sx={{ py: 2 }}>
-                    <Box
-                      sx={{
-                        width: 48,
-                        height: 68,
-                        position: "relative",
-                        borderRadius: 1,
-                        overflow: "hidden",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-                        border: "1px solid rgba(255,255,255,0.04)",
-                      }}
-                    >
-                      <Image
-                        src={sub.coverImage}
-                        alt={sub.title}
-                        fill
-                        sizes="48px"
-                        style={{ objectFit: "cover" }}
-                      />
-                    </Box>
-                  </TableCell>
-                  <TableCell data-label="ชื่อเรื่อง">
-                    <Typography
-                      sx={{
-                        fontWeight: 800,
-                        color: "#fff",
-                        fontSize: "0.95rem",
-                      }}
-                    >
-                      {sub.title}
-                    </Typography>
-                  </TableCell>
-                  <TableCell data-label="ผู้ส่ง">
-                    <Typography
-                      sx={{
-                        fontWeight: 600,
-                        color: "#a3a3a3",
-                        fontSize: "0.85rem",
-                      }}
-                    >
-                      {sub.user.username || sub.user.name || sub.user.email}
-                    </Typography>
-                  </TableCell>
-                  <TableCell data-label="สถานะ">
-                    <Chip
-                      label={getStatusLabel(sub.status)}
-                      size="small"
-                      sx={{
-                        fontWeight: 900,
-                        fontSize: "0.65rem",
-                        letterSpacing: "0",
-                        borderRadius: 1,
-                        bgcolor:
-                          sub.status === "APPROVED"
-                            ? "rgba(34, 197, 94, 0.15)"
-                            : sub.status === "REJECTED"
-                              ? "rgba(239, 68, 68, 0.15)"
-                              : sub.status === "PENDING"
-                                ? "rgba(250, 191, 6, 0.15)"
-                                : "rgba(255,255,255,0.05)",
-                        color:
-                          sub.status === "APPROVED"
-                            ? "#4ade80"
-                            : sub.status === "REJECTED"
-                              ? "#f87171"
-                              : sub.status === "PENDING"
-                                ? dashboardTokens.accent
-                                : dashboardTokens.textMuted,
-                        border: `1px solid ${dashboardTokens.border}`,
-                      }}
-                    />
-                  </TableCell>
-                  <TableCell data-label="ส่งเมื่อ">
-                    <Typography
-                      sx={{
-                        fontFamily: "monospace",
-                        fontSize: "0.85rem",
-                        color: dashboardTokens.textMuted,
-                        fontWeight: 600,
-                      }}
-                    >
-                      {new Date(sub.submittedAt).toLocaleDateString("th-TH", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </Typography>
-                  </TableCell>
-                  <TableCell data-label="จัดการ" align="right">
-                    <Tooltip title="ดูรายการ">
-                      <IconButton
-                        component={Link}
-                        href={`/dashboard/admin/submissions/${sub.id}`}
-                        sx={{
-                          color: dashboardTokens.accent,
-                          bgcolor: dashboardTokens.accentSoft,
-                          borderRadius: dashboardRadii.compact,
-                          width: 36,
-                          height: 36,
-                          "&:hover": {
-                            bgcolor: "rgba(217, 119, 6, 0.25)",
-                            transform: "scale(1.05)",
-                          },
-                          transition: "all 0.2s",
-                        }}
-                        aria-label="ดูรายละเอียด"
-                      >
-                        <VisibilityIcon sx={{ fontSize: 18 }} />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 5 }}>
-        <Pagination
-          count={totalPages}
-          page={page}
-          onChange={(_, p) => setPage(p)}
-          sx={{
-            "& .MuiPaginationItem-root": {
-              color: dashboardTokens.textMuted,
-              fontWeight: 800,
-              fontSize: "0.75rem",
-              fontFamily: "monospace",
-              borderRadius: dashboardRadii.compact,
-              "&:hover": { bgcolor: "rgba(255,255,255,0.05)" },
-            },
-            "& .Mui-selected": {
-              bgcolor: `${dashboardTokens.accent} !important`,
-              color: "#0f0f14 !important",
-              boxShadow: "0 0 15px rgba(217, 119, 6, 0.3)",
-            },
-          }}
-        />
       </Box>
     </Box>
   );

@@ -91,6 +91,7 @@ config.local.ts
 
 !db/migrations/0013_guest_comments.sql
 !db/migrations/0014_advertisement_links.sql
+!db/migrations/0015_manga_view_history.sql
 
 # Browser verification artifacts (may contain fixture identifiers)
 .playwright-cli/

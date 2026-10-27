@@ -1,0 +1,73 @@
+import { afterAll, beforeAll, expect, it, mock } from "bun:test";
+import { readFileSync } from "node:fs";
+import { PGlite } from "@electric-sql/pglite";
+import { drizzle } from "drizzle-orm/pglite";
+import type { SQL } from "drizzle-orm";
+const pg = new PGlite();
+const database = drizzle(pg);
+mock.module("@/db", () => ({ db: { execute: async (query: SQL) => (await database.execute(query)).rows } }));
+let admin = true;
+mock.module("@/lib/auth-helpers", () => ({ authenticateRequest: async () => admin ? { ok: true } : { ok: false, response: Response.json({ error: "Forbidden" }, { status: 403 }) } }));
+const { recordMangaView } = await import("@/lib/manga-statistics");
+const { readViewHistory, readViewSummaries } = await import("@/lib/admin-view-history");
+const { bangkokDay, historyWindow } = await import("@/lib/view-history");
+const { GET } = await import("@/app/api/admin/manga/[id]/view-history/route");
+const id = "10000000-0000-4000-8000-000000000001";
+const now = new Date("2026-10-27T05:00:00Z");
+beforeAll(async () => {
+  await pg.exec(`CREATE TABLE manga(id uuid PRIMARY KEY,is_hidden boolean DEFAULT false,view_count bigint DEFAULT 0,created_at timestamptz DEFAULT now());
+    CREATE TABLE manga_views(manga_id uuid REFERENCES manga(id),ip_hash text,viewed_at timestamptz,PRIMARY KEY(manga_id,ip_hash));
+    INSERT INTO manga(id,view_count) VALUES('${id}',50);`);
+  await pg.exec(readFileSync(new URL("../db/migrations/0015_manga_view_history.sql", import.meta.url), "utf8"));
+}, 30000);
+afterAll(() => pg.close());
+it("captures only accepted views, preserves the historical baseline and rolls back atomically", async () => {
+  const target = database as unknown as Parameters<typeof recordMangaView>[0];
+  expect(await recordMangaView(target, id, "one")).toEqual({ viewCount: 51, deduplicated: false });
+  expect(await recordMangaView(target, id, "one")).toEqual({ viewCount: 51, deduplicated: true });
+  const result = await pg.query<{ views: number; hours: Record<string, number> }>("SELECT views::int,hours FROM manga_view_daily");
+  expect(result.rows[0].views).toBe(1);
+  expect(Object.values(result.rows[0].hours).reduce((sum, value) => sum + value, 0)).toBe(1);
+  expect((await pg.query("SELECT baseline_views::int AS baseline FROM manga_view_tracking")).rows).toEqual([{ baseline: 50 }]);
+  await pg.exec(`CREATE FUNCTION reject_history() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'history failure'; END $$; CREATE TRIGGER fail_history BEFORE UPDATE ON manga_view_daily FOR EACH ROW EXECUTE FUNCTION reject_history();`);
+  await expect(recordMangaView(target, id, "two")).rejects.toThrow();
+  expect((await pg.query("SELECT view_count::int AS views FROM manga")).rows).toEqual([{ views: 51 }]);
+  expect((await pg.query("SELECT * FROM manga_views WHERE ip_hash='two'")).rows).toHaveLength(0);
+  await pg.exec("DROP TRIGGER fail_history ON manga_view_daily");
+});
+it("returns unknown before coverage, real zero after coverage, hourly detail and correct daily peaks", async () => {
+  await pg.exec(`DELETE FROM manga_view_daily; UPDATE manga_view_tracking SET started_at='2026-10-25T01:00:00Z';
+    INSERT INTO manga_view_daily VALUES('${id}','2026-10-25',4,'{"8":4}'),('${id}','2026-10-27',7,'{"9":7}');`);
+  const summary = (await readViewSummaries([id], now))[id];
+  expect(summary.points.map(point => point.views)).toEqual([null, null, null, null, 4, 0, 7]);
+  const history = await readViewHistory(id, "7", now);
+  expect(history?.total).toBe(11);
+  expect(history?.peak).toEqual({ date: "2026-10-27", views: 7 });
+  const hourly = await readViewHistory(id, "1", now);
+  expect(hourly?.points).toHaveLength(24);
+  expect(hourly?.points[9].views).toBe(7);
+  expect(hourly?.points[23].views).toBeNull();
+});
+it("bounds lifetime output while retaining totals and the exact peak day", async () => {
+  await pg.exec(`DELETE FROM manga_view_daily; UPDATE manga_view_tracking SET started_at='2020-01-01T00:00:00+07'; UPDATE manga SET created_at='2020-01-01T00:00:00+07';
+    INSERT INTO manga_view_daily SELECT '${id}',day::date,1,'{"9":1}' FROM generate_series('2020-01-01'::timestamp,'2026-10-27',interval '1 day') day;`);
+  const history = await readViewHistory(id, "all", now);
+  expect(history!.points.length).toBeLessThanOrEqual(366);
+  expect(history!.total).toBe(historyWindow("all", "2020-01-01T00:00:00+07:00", now).days);
+  expect(history!.points.reduce((sum, point) => sum + (point.views ?? 0), 0)).toBe(history!.total);
+  expect(bangkokDay(new Date("2026-10-26T17:00:00Z"))).toBe("2026-10-27");
+});
+it("protects the endpoint and rejects unsupported periods", async () => {
+  admin = false;
+  expect((await GET(new Request("http://localhost/api?period=all"), { params: Promise.resolve({ id }) })).status).toBe(403);
+  admin = true;
+  expect((await GET(new Request("http://localhost/api?period=99999"), { params: Promise.resolve({ id }) })).status).toBe(400);
+  const response = await GET(new Request("http://localhost/api?period=7"), { params: Promise.resolve({ id }) });
+  expect(response.status).toBe(200);
+  expect(response.headers.get("Cache-Control")).toBe("private, no-store");
+});
+it("fails gracefully before migration without disabling the existing manga list", async () => {
+  await pg.exec("DROP TABLE manga_view_daily");
+  expect(await readViewSummaries([id], now)).toEqual({});
+  expect((await GET(new Request("http://localhost/api?period=7"), { params: Promise.resolve({ id }) })).status).toBe(503);
+});

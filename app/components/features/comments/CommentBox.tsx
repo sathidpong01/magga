@@ -290,11 +290,12 @@ export default function CommentBox({
         anchorEl={emojiAnchor}
         onClose={() => setEmojiAnchor(null)}
         anchorOrigin={{ vertical: "top", horizontal: "left" }}
+        slotProps={{ paper: { role: "dialog", "aria-label": "เลือกอีโมจิ", sx: { width: 280, height: 340, maxWidth: "calc(100vw - 32px)", maxHeight: "calc(100dvh - 32px)" } } }}
       >
         <EmojiPicker
           theme={Theme.DARK}
-          width={280}
-          height={340}
+          width="100%"
+          height="100%"
           onEmojiClick={(data) => {
             setContent((previous) => previous + data.emoji);
             setEmojiAnchor(null);
@@ -318,7 +319,7 @@ export default function CommentBox({
             onChange={(event) => setName(event.target.value)}
             disabled={busy}
             slotProps={{ htmlInput: { maxLength: 40 } }}
-            sx={{ mb: 1, width: "100%" }}
+            sx={{ mb: 1, width: "100%", "& .MuiInputBase-root": { minHeight: 44 } }}
           />
         )}
         <Paper

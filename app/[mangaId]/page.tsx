@@ -31,6 +31,7 @@ import RelatedManga from "@/app/components/features/manga/RelatedManga";
 import { getSiteUrl } from "@/lib/site-url";
 import { normalizeMangaPages } from "@/lib/manga-pages";
 import SocialLinkIcon from "@/app/components/ui/SocialLinkIcon";
+import { authorSocialLinks } from "@/lib/author-social-links";
 
 type MangaPageProps = {
   params: Promise<{
@@ -41,15 +42,7 @@ type MangaPageProps = {
 function parseSocialLinks(
   value: string | null,
 ): Array<{ url: string; label: string; icon: string }> {
-  if (!value) return [];
-  try {
-    const links = JSON.parse(value);
-    return Array.isArray(links)
-      ? links.filter((link) => typeof link.url === "string" && link.url)
-      : [];
-  } catch {
-    return [];
-  }
+  return authorSocialLinks({ socialLinks: value, profileUrl: null });
 }
 
 // Draft previews depend on the current viewer and must never enter the shared page cache.
@@ -414,7 +407,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
                 <Typography
                   key={person.id}
                   variant="body2"
-                  sx={{ mb: 0.5, color: maggaColors.textSecondary }}
+                  sx={{ mb: 0.5, color: maggaColors.textSecondary, overflowWrap: "anywhere" }}
                 >
                   {person.role}:{" "}
                   <Link
@@ -504,7 +497,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
               ))}
             </Box>
             {authorCredits.map((person) => (
-              <Box key={person.id} sx={{ mb: 2 }}>
+              <Box key={person.id} sx={{ mb: 2, overflowWrap: "anywhere" }}>
                 <Typography variant="body2">
                   {person.role}: {person.name}
                 </Typography>

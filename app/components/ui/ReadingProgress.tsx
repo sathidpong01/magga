@@ -127,9 +127,13 @@ export default function ReadingProgress({
             borderRadius: 2,
             px: 2.5,
             py: 1.5,
+            width: "max-content",
+            maxWidth: "calc(100vw - 24px)",
+            boxSizing: "border-box",
             display: "flex",
             alignItems: "center",
-            gap: 2,
+            gap: 1,
+            flexWrap: "nowrap",
             boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
             animation: "slideUp 0.3s ease-out",
             "@keyframes slideUp": {
@@ -143,7 +147,7 @@ export default function ReadingProgress({
         >
           <Typography
             variant="body2"
-            sx={{ color: maggaColors.textSecondary, whiteSpace: "nowrap" }}
+            sx={{ color: maggaColors.textSecondary, flex: "1 1 auto", minWidth: 0, overflowWrap: "anywhere" }}
           >
             อ่านค้างไว้หน้า {savedPage + 1}/{totalPages}
           </Typography>
@@ -154,10 +158,12 @@ export default function ReadingProgress({
             onClick={handleResume}
             sx={{
               bgcolor: maggaColors.archiveGold,
-              color: maggaColors.textPrimary,
+              color: maggaColors.background,
+              minHeight: 44,
+              flexShrink: 0,
               fontWeight: 600,
               whiteSpace: "nowrap",
-              "&:hover": { bgcolor: "#f59e0b" },
+              "&:hover": { bgcolor: maggaColors.archiveGoldHover },
             }}
           >
             อ่านต่อ
@@ -166,7 +172,7 @@ export default function ReadingProgress({
             size="small"
             onClick={() => setShowResume(false)}
             aria-label="ปิดการแจ้งเตือนอ่านต่อ"
-            sx={{ color: maggaColors.textSecondary, minWidth: "auto", px: 1 }}
+            sx={{ color: maggaColors.textSecondary, minWidth: 44, minHeight: 44, flexShrink: 0, px: 1 }}
           >
             ✕
           </Button>

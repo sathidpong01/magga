@@ -57,17 +57,17 @@ export default function MangaCardSkeleton() {
         />
 
         {/* Stats Skeleton */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 0.15 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 0.15, minHeight: "1.2rem" }}>
           <Skeleton
             variant="text"
             width={35}
-            height={16}
+            height={19.2}
             sx={{ bgcolor: "rgba(217, 119, 6, 0.15)" }}
           />
           <Skeleton
             variant="text"
             width={45}
-            height={16}
+            height={19.2}
             sx={{ bgcolor: "rgba(255, 255, 255, 0.06)" }}
           />
         </Box>

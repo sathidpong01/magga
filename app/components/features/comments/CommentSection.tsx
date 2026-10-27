@@ -148,6 +148,7 @@ export default function CommentSection({
         <ChatBubbleOutlineIcon sx={{ color: "text.secondary" }} />
         <Typography
           variant="h5"
+          component="h2"
           sx={{
             fontWeight: 600,
             color: "white",

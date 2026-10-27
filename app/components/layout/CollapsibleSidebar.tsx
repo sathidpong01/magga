@@ -109,7 +109,8 @@ export default function CollapsibleSidebar({
     return (
       <Box
         sx={{
-          width: { xs: 0, md: EXPANDED_WIDTH },
+          width: { xs: 0, md: EXPANDED_WIDTH + 24 },
+          flexShrink: 0,
           minHeight: { xs: 0, md: "100vh" },
           bgcolor: dashboardTokens.bg,
         }}
@@ -372,10 +373,11 @@ export default function CollapsibleSidebar({
 
       {/* User Section & Sign Out */}
       <Box sx={{ p: (isMobile || !isCollapsed) ? 1.5 : 1 }}>
-        {session?.user && (
+        {(
           <Box
             sx={{
               display: "flex",
+              minHeight: 40,
               alignItems: "center",
               gap: 1.5,
               mb: 1.25,
@@ -383,7 +385,7 @@ export default function CollapsibleSidebar({
               justifyContent: (isMobile || !isCollapsed) ? "flex-start" : "center",
             }}
           >
-            <Avatar
+            {session?.user && <><Avatar
               src={session.user.image || undefined}
               alt={session.user.name || "User"}
               sx={{ width: 34, height: 34, bgcolor: dashboardTokens.accent, color: "#000", fontWeight: 700, fontSize: "0.9rem" }}
@@ -439,7 +441,7 @@ export default function CollapsibleSidebar({
                   </Box>
                 )}
               </Box>
-            )}
+            )}</>}
           </Box>
         )}
         {/* Sign Out Button */}
@@ -553,6 +555,7 @@ export default function CollapsibleSidebar({
     <Box
       sx={{
         height: "100vh",
+        flexShrink: 0,
         position: "sticky",
         top: 0,
         zIndex: 100,

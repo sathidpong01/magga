@@ -260,14 +260,14 @@ function CommentItem({
               href={`/profile/${encodeURIComponent(author.username)}`}
               prefetch={false}
               variant="subtitle2"
-              sx={{ color: maggaColors.textPrimary }}
+              sx={{ color: maggaColors.textPrimary, overflowWrap: "anywhere", minWidth: 0 }}
             >
               {author.name}
             </Typography>
           ) : (
             <Typography
               variant="subtitle2"
-              sx={{ color: maggaColors.textPrimary }}
+              sx={{ color: maggaColors.textPrimary, overflowWrap: "anywhere", minWidth: 0 }}
             >
               {author.name || "ผู้เยี่ยมชม"}
             </Typography>
@@ -480,6 +480,7 @@ function CommentItem({
             <TextField
               select
               label="เหตุผลที่รายงาน"
+              sx={{ "& .MuiSelect-select.MuiInputBase-input": { minHeight: 44, boxSizing: "border-box" } }}
               value={reason}
               onChange={(event) => setReason(event.target.value)}
               fullWidth
@@ -669,6 +670,7 @@ function CommentItem({
           )}
         <Dialog
           open={lightbox}
+          slotProps={{ paper: { "aria-label": "รูปแนบความคิดเห็น" } }}
           onClose={() => setLightbox(false)}
           maxWidth="lg"
         >

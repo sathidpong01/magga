@@ -60,6 +60,7 @@ export default function SearchFilters({ categories, tags }: Props) {
   const currentAuthor = searchParams.get("author");
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const [category, setCategory] = useState(searchParams.get("category") || "all");
+  const categoryUnavailable = category !== "all" && !categories.some(item => item.name === category);
   const [sort, setSort] = useState<string>(normalizeMangaSort(searchParams.get("sort")));
   const [selectedTags, setSelectedTags] = useState<Tag[]>(() => tags.filter((tag) => searchParams.getAll("tags").includes(tag.name)));
   const [searchResults, setSearchResults] = useState<SearchItem[]>([]);
@@ -234,7 +235,7 @@ export default function SearchFilters({ categories, tags }: Props) {
                         secondary: {
                           variant: "caption",
                           noWrap: true,
-                          sx: { color: maggaColors.textMuted },
+                          sx: { color: maggaColors.textSecondary },
                         },
                       }}
                     />
@@ -250,7 +251,7 @@ export default function SearchFilters({ categories, tags }: Props) {
                   placeholder={
                     currentAuthor
                       ? `ค้นหาในผลงานของ ${currentAuthor}...`
-                      : "ค้นหาชื่อเรื่องหรือนักวาด..."
+                      : "ค้นหาเรื่อง / ผู้แต่ง"
                   }
                   variant="standard"
                   sx={{
@@ -269,7 +270,7 @@ export default function SearchFilters({ categories, tags }: Props) {
                       },
                     },
                     "& .MuiAutocomplete-inputRoot": {
-                      minHeight: "38px",
+                      minHeight: 44,
                       display: "flex",
                       alignItems: "center",
                     },
@@ -279,19 +280,11 @@ export default function SearchFilters({ categories, tags }: Props) {
                     input: {
                       ...params.slotProps.input,
                       disableUnderline: true,
-                      startAdornment: (
-                        <SearchIcon
-                          sx={{
-                            color: maggaColors.textMuted,
-                            fontSize: "1.15rem",
-                            mr: 1,
-                          }}
-                        />
-                      ),
                     },
                     htmlInput: {
                       ...params.slotProps.htmlInput,
                       id: searchInputId,
+                      "aria-label": currentAuthor ? `ค้นหาในผลงานของ ${currentAuthor}` : "ค้นหาชื่อเรื่องหรือผู้แต่ง",
                     },
                   }}
                 />
@@ -315,6 +308,7 @@ export default function SearchFilters({ categories, tags }: Props) {
             onClick={handleExpandClick}
             sx={{
               minHeight: 44,
+              minWidth: 44,
               "&.Mui-focusVisible": {
                 outline: `2px solid ${maggaColors.archiveGoldHover}`,
                 outlineOffset: "3px",
@@ -328,7 +322,7 @@ export default function SearchFilters({ categories, tags }: Props) {
               bgcolor: expanded ? maggaColors.archiveGoldSoft : "rgba(255, 255, 255, 0.04)",
               border: "1px solid",
               borderColor: expanded ? maggaColors.archiveGoldBorder : "rgba(255, 255, 255, 0.08)",
-              color: expanded ? maggaColors.archiveGold : maggaColors.textSecondary,
+              color: expanded ? maggaColors.archiveGoldHover : maggaColors.textSecondary,
               fontSize: "0.825rem",
               fontWeight: 500,
               whiteSpace: "nowrap",
@@ -336,7 +330,7 @@ export default function SearchFilters({ categories, tags }: Props) {
               "&:hover": {
                 bgcolor: maggaColors.archiveGoldSoft,
                 borderColor: maggaColors.archiveGoldBorder,
-                color: maggaColors.archiveGold,
+                color: maggaColors.archiveGoldHover,
               },
             }}
           >
@@ -365,6 +359,7 @@ export default function SearchFilters({ categories, tags }: Props) {
             )}
             <ExpandMoreIcon
               sx={{
+                display: { xs: "none", sm: "inline-block" },
                 fontSize: "1.1rem",
                 transition: "transform 0.2s ease",
                 transform: expanded ? "rotate(180deg)" : "rotate(0deg)",
@@ -380,6 +375,7 @@ export default function SearchFilters({ categories, tags }: Props) {
               {/* Category */}
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography
+                  id={`${categorySelectId}-label`}
                   variant="subtitle2"
                   gutterBottom
                   sx={{ color: maggaColors.textSecondary, fontSize: "0.8rem", fontWeight: 500 }}
@@ -391,10 +387,15 @@ export default function SearchFilters({ categories, tags }: Props) {
                   fullWidth
                   id={categorySelectId}
                   value={category}
+                  helperText={categoryUnavailable ? "หมวดหมู่นี้ไม่พร้อมใช้งาน เลือกหมวดหมู่อื่นหรือล้างตัวกรอง" : undefined}
                   onChange={(e) => { setCategory(e.target.value); applyFilters({ category: e.target.value }); }}
                   variant="standard"
                   sx={{
-                    "& .MuiSelect-select": {
+                    "& .MuiSelect-select.MuiInputBase-input": {
+                      minHeight: 44,
+                      boxSizing: "border-box",
+                      display: "flex",
+                      alignItems: "center",
                       py: 0.65,
                       fontSize: "0.85rem",
                       fontWeight: 500,
@@ -405,10 +406,11 @@ export default function SearchFilters({ categories, tags }: Props) {
                   }}
                   slotProps={{
                     input: { disableUnderline: true },
-                    select: { id: `${categorySelectId}-select` },
+                    select: { id: `${categorySelectId}-select`, labelId: `${categorySelectId}-label` },
                   }}
                 >
                   <MenuItem value="all">ทั้งหมด (All)</MenuItem>
+                  {categoryUnavailable && <MenuItem value={category} disabled>ไม่พบหมวดหมู่: {category}</MenuItem>}
                   {categories.map((cat) => (
                     <MenuItem key={cat.id} value={cat.name}>
                       {cat.name}
@@ -420,6 +422,7 @@ export default function SearchFilters({ categories, tags }: Props) {
               {/* Sorting */}
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Typography
+                  id={`${sortSelectId}-label`}
                   variant="subtitle2"
                   gutterBottom
                   sx={{ color: maggaColors.textSecondary, fontSize: "0.8rem", fontWeight: 500 }}
@@ -434,7 +437,11 @@ export default function SearchFilters({ categories, tags }: Props) {
                   onChange={(e) => { setSort(e.target.value); applyFilters({ sort: e.target.value }); }}
                   variant="standard"
                   sx={{
-                    "& .MuiSelect-select": {
+                    "& .MuiSelect-select.MuiInputBase-input": {
+                      minHeight: 44,
+                      boxSizing: "border-box",
+                      display: "flex",
+                      alignItems: "center",
                       py: 0.65,
                       fontSize: "0.85rem",
                       fontWeight: 500,
@@ -445,7 +452,7 @@ export default function SearchFilters({ categories, tags }: Props) {
                   }}
                   slotProps={{
                     input: { disableUnderline: true },
-                    select: { id: `${sortSelectId}-select` },
+                    select: { id: `${sortSelectId}-select`, labelId: `${sortSelectId}-label` },
                   }}
                 >
                   <MenuItem value="updated">อัปเดตล่าสุด (Updated)</MenuItem>
@@ -457,6 +464,7 @@ export default function SearchFilters({ categories, tags }: Props) {
               {/* Tags */}
               <Grid size={12}>
                 <Typography
+                  id={`${tagsInputId}-label`}
                   variant="subtitle2"
                   gutterBottom
                   sx={{ color: maggaColors.textSecondary, fontSize: "0.8rem", fontWeight: 500 }}
@@ -485,6 +493,7 @@ export default function SearchFilters({ categories, tags }: Props) {
                         htmlInput: {
                           ...params.slotProps.htmlInput,
                           id: tagsInputId,
+                          "aria-labelledby": `${tagsInputId}-label`,
                         },
                       }}
                     />
@@ -496,7 +505,7 @@ export default function SearchFilters({ categories, tags }: Props) {
                       py: 0.5,
                       flexWrap: "wrap",
                       gap: 0.5,
-                      minHeight: "38px",
+                      minHeight: 44,
                       color: maggaColors.textPrimary,
                     },
                     "& .MuiAutocomplete-tag": {
@@ -506,6 +515,7 @@ export default function SearchFilters({ categories, tags }: Props) {
                       color: maggaColors.textPrimary,
                       border: "1px solid rgba(255, 255, 255, 0.1)",
                     },
+                    "& .MuiAutocomplete-popupIndicator, & .MuiAutocomplete-clearIndicator": { minWidth: 44, minHeight: 44 },
                   }}
                 />
               </Grid>

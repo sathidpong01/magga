@@ -6,10 +6,10 @@ import type { Metadata } from "next";
 
 
 
-import { Box, Button, Chip, Stack, Typography } from "@mui/material";
-import Link from "next/link";
+import { Box } from "@mui/material";
+import MangaListHeader from "@/app/components/dashboard/MangaListHeader";
 import MangaDataTable from "../MangaDataTable";
-import { DashboardSurface, dashboardTokens, dashboardPrimaryButtonSx } from "@/app/components/dashboard/system";
+import { mangaListPageSx, mangaSorts, mangaStatuses } from "@/app/components/dashboard/manga-list-layout";
 
 export const dynamic = "force-dynamic";
 
@@ -38,102 +38,15 @@ export default async function AdminMangaPage({
   const mangas = result.items;
   return (
     <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 2.5,
-      }}
+      sx={mangaListPageSx}
     >
-      <DashboardSurface
-        sx={{
-          p: { xs: 2.25, md: 3 },
-        }}
-      >
-        <Stack
-          direction={{ xs: "column", md: "row" }}
-          spacing={2}
-          sx={{
-            justifyContent: "space-between",
-            alignItems: { xs: "flex-start", md: "center" },
-          }}
-        >
-          <Box sx={{ maxWidth: 720 }}>
-            <Typography
-              variant="overline"
-              sx={{
-                color: dashboardTokens.accent,
-                fontWeight: 800,
-                letterSpacing: "0.14em",
-                display: "block",
-                mb: 0.5,
-              }}
-            >
-              DASHBOARD / MANGA
-            </Typography>
-            <Typography
-              variant="h4"
-              sx={{
-                fontWeight: 900,
-                letterSpacing: "-0.03em",
-                color: dashboardTokens.text,
-                mb: 0.75,
-                fontSize: { xs: "1.8rem", md: "2.25rem" },
-              }}
-            >
-              จัดการมังงะ
-            </Typography>
-            <Typography
-              sx={{ color: dashboardTokens.textMuted, lineHeight: 1.7 }}
-            >
-              ค้นหาและจัดการมังงะ แก้ไขข้อมูลหรือสถานะได้จากรายการนี้
-            </Typography>
-          </Box>
-
-          <Stack
-            direction="row"
-            spacing={1}
-            useFlexGap
-            sx={{
-              flexWrap: "wrap",
-              alignItems: "center",
-            }}
-          >
-            <Chip
-              label={`ในหน้านี้ ${mangas.length}`}
-              sx={{
-                bgcolor: dashboardTokens.surfaceMuted,
-                color: dashboardTokens.text,
-                border: `1px solid ${dashboardTokens.border}`,
-                fontWeight: 700,
-              }}
-            />
-
-
-
-            <Link
-              href="/dashboard/admin/manga/create"
-              style={{ textDecoration: "none" }}
-            >
-              <Button sx={dashboardPrimaryButtonSx}>+ เพิ่มมังงะใหม่</Button>
-            </Link>
-          </Stack>
-        </Stack>
-      </DashboardSurface>
-
-      <AdminListControls
+      <MangaListHeader count={mangas.length} />
+      <AdminListControls compactSpacing
         query={query}
         hasMore={result.hasMore}
         count={mangas.length}
-        sorts={[
-          { value: "", label: "ล่าสุด" },
-          { value: "title", label: "ชื่อเรื่อง" },
-          { value: "views", label: "ยอดอ่าน" },
-        ]}
-        statuses={[
-          { value: "", label: "ทั้งหมด" },
-          { value: "published", label: "เผยแพร่" },
-          { value: "hidden", label: "ซ่อน" },
-        ]}
+        sorts={mangaSorts}
+        statuses={mangaStatuses}
       />
       <MangaDataTable
         initialMangas={mangas}

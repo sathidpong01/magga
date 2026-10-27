@@ -12,7 +12,7 @@ if (target.hostname !== '127.0.0.1' || (!localFixture && !ciFixture)
 }
 
 const disposableConfig = {
-  schema: ['./db/schema.ts', './db/mcp-schema.ts', './db/comment-schema.ts', './scripts/disposable-schema.ts'],
+  schema: ['./db/schema.ts', './db/mcp-schema.ts', './db/comment-schema.ts', './db/view-history-schema.ts', './scripts/disposable-schema.ts'],
   dialect: 'postgresql',
   schemaFilter: ['public', 'private'],
   dbCredentials: { url },

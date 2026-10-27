@@ -3,9 +3,9 @@
 import { useDashboardReturn } from "@/app/components/dashboard/DashboardListMemory";
 import SubmissionDetailLoading from "./loading";
 
-import { useState, useEffect, useRef, use } from "react";
+import { useState,useEffect,useRef,use } from "react";
 import { useRouter } from "next/navigation";
-import { Box, Typography, Paper, Grid, Button, TextField, Chip, Stack, Dialog, DialogTitle, DialogContent, DialogActions, FormControlLabel, Switch, CircularProgress, Alert, Divider, Avatar, Select, MenuItem, FormControl, InputLabel, Autocomplete } from "@mui/material";
+import { Box,Typography,Paper,Grid,Button,TextField,Chip,Stack,Dialog,DialogTitle,DialogContent,DialogActions,FormControlLabel,Switch,CircularProgress,Alert,Divider,Avatar,Select,MenuItem,FormControl,InputLabel,Autocomplete } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -18,208 +18,208 @@ import DescriptionIcon from "@mui/icons-material/Description";
 
 import { authFetch } from "@/lib/auth-fetch";
 import Image from "next/image";
-import { dashboardTokens, dashboardRadii } from "@/app/components/dashboard/system";
+import { dashboardTokens,dashboardRadii } from "@/app/components/dashboard/system";
 
-type Category = { id: string; name: string };
-type Tag = { id: string; name: string };
+type Category={ id: string; name: string };
+type Tag={ id: string; name: string };
 
 export default function SubmissionDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const resolvedParams = use(params);
-  const submissionId = resolvedParams.id;
+  const resolvedParams=use(params);
+  const submissionId=resolvedParams.id;
 
-  const router = useRouter();
-  const returnTo = useDashboardReturn("/dashboard/admin/submissions");
-  const [submission, setSubmission] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const router=useRouter();
+  const returnTo=useDashboardReturn("/dashboard/admin/submissions");
+  const [submission,setSubmission]=useState<any>(null);
+  const [loading,setLoading]=useState(true);
+  const [error,setError]=useState("");
 
   // Edit State
-  const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState({
+  const [isEditing,setIsEditing]=useState(false);
+  const [editForm,setEditForm]=useState({
     title: "",
     slug: "",
     description: "",
     categoryId: "",
     tagIds: [] as string[],
   });
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [tags, setTags] = useState<Tag[]>([]);
+  const [categories,setCategories]=useState<Category[]>([]);
+  const [tags,setTags]=useState<Tag[]>([]);
 
   // Action State
-  const [approveOpen, setApproveOpen] = useState(false);
-  const [rejectOpen, setRejectOpen] = useState(false);
-  const [actionLoading, setActionLoading] = useState(false);
+  const [approveOpen,setApproveOpen]=useState(false);
+  const [rejectOpen,setRejectOpen]=useState(false);
+  const [actionLoading,setActionLoading]=useState(false);
 
   // Approve Form
-  const [publishImmediately, setPublishImmediately] = useState(true);
-  const [reviewNote, setReviewNote] = useState("");
+  const [publishImmediately,setPublishImmediately]=useState(true);
+  const [reviewNote,setReviewNote]=useState("");
 
   // Reject Form
-  const [rejectionReason, setRejectionReason] = useState("");
+  const [rejectionReason,setRejectionReason]=useState("");
 
   // Image Preview
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [previewImage,setPreviewImage]=useState<string|null>(null);
 
-  const actionPending = useRef(false);
-  const actionController = useRef<AbortController | null>(null);
+  const actionPending=useRef(false);
+  const actionController=useRef<AbortController|null>(null);
   useEffect(() => {
-    const controller = new AbortController();
-    actionController.current = controller;
+    const controller=new AbortController();
+    actionController.current=controller;
     setLoading(true);
     setError("");
     setSubmission(null);
     setIsEditing(false);
     setApproveOpen(false);
     setRejectOpen(false);
-    const fetchData = async () => {
+    const fetchData=async () => {
       try {
-        const [subRes, catRes, tagRes] = await Promise.all([
-          authFetch(`/api/admin/submissions/${submissionId}`, {
+        const [subRes,catRes,tagRes]=await Promise.all([
+          authFetch(`/api/admin/submissions/${submissionId}`,{
             signal: controller.signal,
           }),
-          fetch("/api/categories", { signal: controller.signal }),
-          fetch("/api/tags", { signal: controller.signal }),
+          fetch("/api/categories",{ signal: controller.signal }),
+          fetch("/api/tags",{ signal: controller.signal }),
         ]);
 
-        if (!subRes.ok) throw new Error("Failed to fetch submission");
+        if(!subRes.ok) throw new Error("Failed to fetch submission");
 
-        const subData = await subRes.json();
-        const categoryData = catRes.ok ? await catRes.json() : [];
-        const tagData = tagRes.ok ? await tagRes.json() : [];
-        if (controller.signal.aborted) return;
+        const subData=await subRes.json();
+        const categoryData=catRes.ok? await catRes.json():[];
+        const tagData=tagRes.ok? await tagRes.json():[];
+        if(controller.signal.aborted) return;
         setSubmission(subData);
 
         // Init edit form
         setEditForm({
           title: subData.title,
-          slug: subData.slug || "",
-          description: subData.description || "",
-          categoryId: subData.categoryId || "",
+          slug: subData.slug||"",
+          description: subData.description||"",
+          categoryId: subData.categoryId||"",
           tagIds: subData.tags.map((t: any) => t.tagId),
         });
 
         setCategories(categoryData);
         setTags(tagData);
-      } catch (err) {
-        if (controller.signal.aborted) return;
+      } catch(err) {
+        if(controller.signal.aborted) return;
         setError("Failed to load data");
         console.error(err);
       } finally {
-        if (!controller.signal.aborted) setLoading(false);
+        if(!controller.signal.aborted) setLoading(false);
       }
     };
     fetchData();
     return () => controller.abort();
-  }, [submissionId]);
+  },[submissionId]);
 
-  const handleSaveEdit = async () => {
-    if (actionPending.current) return;
-    const controller = actionController.current;
-    if (!controller || controller.signal.aborted) return;
-    actionPending.current = true;
+  const handleSaveEdit=async () => {
+    if(actionPending.current) return;
+    const controller=actionController.current;
+    if(!controller||controller.signal.aborted) return;
+    actionPending.current=true;
     setActionLoading(true);
     try {
-      const res = await authFetch(`/api/admin/submissions/${submissionId}`, {
+      const res=await authFetch(`/api/admin/submissions/${submissionId}`,{
         method: "PUT",
         signal: controller.signal,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editForm),
       });
 
-      if (!res.ok) throw new Error("Failed to update");
+      if(!res.ok) throw new Error("Failed to update");
 
-      if (controller.signal.aborted) return;
+      if(controller.signal.aborted) return;
       setIsEditing(false);
-      const subRes = await authFetch(`/api/admin/submissions/${submissionId}`, {
+      const subRes=await authFetch(`/api/admin/submissions/${submissionId}`,{
         signal: controller.signal,
       });
-      if (subRes.ok) {
-        const data = await subRes.json();
-        if (!controller.signal.aborted) setSubmission(data);
+      if(subRes.ok) {
+        const data=await subRes.json();
+        if(!controller.signal.aborted) setSubmission(data);
       }
-    } catch (err) {
-      if (controller.signal.aborted) return;
+    } catch(err) {
+      if(controller.signal.aborted) return;
       alert("Failed to save changes");
     } finally {
-      actionPending.current = false;
-      if (!controller.signal.aborted) setActionLoading(false);
+      actionPending.current=false;
+      if(!controller.signal.aborted) setActionLoading(false);
     }
   };
 
-  const handleApprove = async () => {
-    if (actionPending.current) return;
-    const controller = actionController.current;
-    if (!controller || controller.signal.aborted) return;
-    actionPending.current = true;
+  const handleApprove=async () => {
+    if(actionPending.current) return;
+    const controller=actionController.current;
+    if(!controller||controller.signal.aborted) return;
+    actionPending.current=true;
     setActionLoading(true);
     try {
-      const res = await authFetch(
+      const res=await authFetch(
         `/api/admin/submissions/${submissionId}/approve`,
         {
           method: "POST",
           signal: controller.signal,
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ reviewNote, publishImmediately }),
+          body: JSON.stringify({ reviewNote,publishImmediately }),
         },
       );
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to approve");
+      if(!res.ok) {
+        const data=await res.json();
+        throw new Error(data.error||"Failed to approve");
       }
 
-      if (controller.signal.aborted) return;
+      if(controller.signal.aborted) return;
       router.push(`/dashboard/admin/submissions?status=APPROVED`);
       router.refresh();
-    } catch (err) {
-      if (controller.signal.aborted) return;
-      alert(err instanceof Error ? err.message : "Error approving");
+    } catch(err) {
+      if(controller.signal.aborted) return;
+      alert(err instanceof Error? err.message:"Error approving");
     } finally {
-      actionPending.current = false;
-      if (!controller.signal.aborted) setActionLoading(false);
+      actionPending.current=false;
+      if(!controller.signal.aborted) setActionLoading(false);
       setApproveOpen(false);
     }
   };
 
-  const handleReject = async () => {
-    if (actionPending.current) return;
-    const controller = actionController.current;
-    if (!controller || controller.signal.aborted) return;
-    if (!rejectionReason) return;
-    actionPending.current = true;
+  const handleReject=async () => {
+    if(actionPending.current) return;
+    const controller=actionController.current;
+    if(!controller||controller.signal.aborted) return;
+    if(!rejectionReason) return;
+    actionPending.current=true;
     setActionLoading(true);
     try {
-      const res = await authFetch(
+      const res=await authFetch(
         `/api/admin/submissions/${submissionId}/reject`,
         {
           method: "POST",
           signal: controller.signal,
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ rejectionReason, reviewNote }),
+          body: JSON.stringify({ rejectionReason,reviewNote }),
         },
       );
 
-      if (!res.ok) throw new Error("Failed to reject");
+      if(!res.ok) throw new Error("Failed to reject");
 
-      if (controller.signal.aborted) return;
+      if(controller.signal.aborted) return;
       router.push(`/dashboard/admin/submissions?status=REJECTED`);
       router.refresh();
-    } catch (err) {
-      if (controller.signal.aborted) return;
+    } catch(err) {
+      if(controller.signal.aborted) return;
       alert("Error rejecting");
     } finally {
-      actionPending.current = false;
-      if (!controller.signal.aborted) setActionLoading(false);
+      actionPending.current=false;
+      if(!controller.signal.aborted) setActionLoading(false);
       setRejectOpen(false);
     }
   };
 
-  const getStatusInfo = (status: string) => {
-    switch (status) {
+  const getStatusInfo=(status: string) => {
+    switch(status) {
       case "APPROVED":
         return {
           color: "success",
@@ -253,20 +253,20 @@ export default function SubmissionDetailPage({
     }
   };
 
-  if (loading) return <SubmissionDetailLoading />;
+  if(loading) return <SubmissionDetailLoading />;
 
-  if (error || !submission)
+  if(error||!submission)
     return (
       <Box sx={{ p: 4 }}>
-        <Alert severity="error">{error || "ไม่พบข้อมูล"}</Alert>
+        <Alert severity="error">{error||"ไม่พบข้อมูล"}</Alert>
       </Box>
     );
 
-  const statusInfo = getStatusInfo(submission.status);
-  const pages = Array.isArray(submission.pages) ? submission.pages : [];
+  const statusInfo=getStatusInfo(submission.status);
+  const pages=Array.isArray(submission.pages)? submission.pages:[];
 
   return (
-    <Box sx={{ maxWidth: 1400, mx: "auto" }}>
+    <Box sx={{ maxWidth: 1400,mx: "auto" }}>
       {/* Header / Summary Card */}
       <Paper
         sx={{
@@ -281,7 +281,7 @@ export default function SubmissionDetailPage({
       >
         <Button
           startIcon={<ArrowBackIcon />}
-          onClick={() => router.push(returnTo(), { scroll: false })}
+          onClick={() => router.push(returnTo(),{ scroll: false })}
           sx={{
             mb: 3,
             color: dashboardTokens.textMuted,
@@ -299,7 +299,7 @@ export default function SubmissionDetailPage({
             display: "flex",
             gap: 3,
             alignItems: "flex-start",
-            flexWrap: { xs: "wrap", md: "nowrap" },
+            flexWrap: { xs: "wrap",md: "nowrap" },
           }}
         >
           {/* Cover Thumbnail */}
@@ -328,7 +328,7 @@ export default function SubmissionDetailPage({
             sx={{
               flex: 1,
               minWidth: 0,
-              flexBasis: { xs: "100%", sm: 0 },
+              flexBasis: { xs: "100%",sm: 0 },
               overflowWrap: "anywhere",
             }}
           >
@@ -362,13 +362,13 @@ export default function SubmissionDetailPage({
                   borderRadius: dashboardRadii.compact,
                   bgcolor: statusInfo.bg,
                   color:
-                    statusInfo.color === "success"
+                    statusInfo.color==="success"
                       ? "#4ade80"
-                      : statusInfo.color === "error"
+                      :statusInfo.color==="error"
                         ? "#f87171"
-                        : statusInfo.color === "warning"
+                        :statusInfo.color==="warning"
                           ? dashboardTokens.accent
-                          : dashboardTokens.textMuted,
+                          :dashboardTokens.textMuted,
                   border: `1px solid ${dashboardTokens.border}`,
                 }}
               />
@@ -407,6 +407,8 @@ export default function SubmissionDetailPage({
               sx={{
                 color: dashboardTokens.textMuted,
                 display: "flex",
+                flexWrap: "wrap",
+                overflowWrap: "anywhere",
                 alignItems: "center",
                 gap: 1,
                 mb: 3,
@@ -415,60 +417,60 @@ export default function SubmissionDetailPage({
               ส่งโดย:{" "}
               <Box
                 component="span"
-                sx={{ color: dashboardTokens.text, fontWeight: 700 }}
+                sx={{ color: dashboardTokens.text,fontWeight: 700 }}
               >
-                {submission.user.name || submission.user.username}
+                {submission.user.name||submission.user.username}
               </Box>{" "}
               ({submission.user.email})
             </Typography>
 
             {/* Actions for Pending */}
-            {(submission.status === "PENDING" ||
-              submission.status === "UNDER_REVIEW") && (
-              <Stack direction="row" spacing={2}>
-                <Button
-                  variant="outlined"
-                  color="error"
-                  startIcon={<CancelIcon />}
-                  onClick={() => setRejectOpen(true)}
-                  sx={{
-                    borderRadius: dashboardRadii.button,
-                    px: 3,
-                    fontWeight: 800,
-                    borderColor: "rgba(239, 68, 68, 0.4)",
-                    color: "#f87171",
-                    "&:hover": {
-                      borderColor: "#ef4444",
-                      bgcolor: "rgba(239, 68, 68, 0.05)",
-                    },
-                  }}
-                >
-                  ปฏิเสธ
-                </Button>
-                <Button
-                  variant="contained"
-                  startIcon={<CheckCircleIcon />}
-                  onClick={() => setApproveOpen(true)}
-                  sx={{
-                    borderRadius: dashboardRadii.button,
-                    px: 3,
-                    fontWeight: 900,
-                    bgcolor: dashboardTokens.accent,
-                    color: "#000",
-                    "&:hover": { bgcolor: dashboardTokens.accentStrong },
-                  }}
-                >
-                  อนุมัติ
-                </Button>
-              </Stack>
-            )}
+            {(submission.status==="PENDING"||
+              submission.status==="UNDER_REVIEW")&&(
+                <Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: "wrap" }}>
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    startIcon={<CancelIcon />}
+                    onClick={() => setRejectOpen(true)}
+                    sx={{
+                      borderRadius: dashboardRadii.button,
+                      px: 3,
+                      fontWeight: 800,
+                      borderColor: "rgba(239, 68, 68, 0.4)",
+                      color: "#f87171",
+                      "&:hover": {
+                        borderColor: "#ef4444",
+                        bgcolor: "rgba(239, 68, 68, 0.05)",
+                      },
+                    }}
+                  >
+                    ปฏิเสธ
+                  </Button>
+                  <Button
+                    variant="contained"
+                    startIcon={<CheckCircleIcon />}
+                    onClick={() => setApproveOpen(true)}
+                    sx={{
+                      borderRadius: dashboardRadii.button,
+                      px: 3,
+                      fontWeight: 900,
+                      bgcolor: dashboardTokens.accent,
+                      color: "#000",
+                      "&:hover": { bgcolor: dashboardTokens.accentStrong },
+                    }}
+                  >
+                    อนุมัติ
+                  </Button>
+                </Stack>
+              )}
           </Box>
         </Box>
       </Paper>
 
       <Grid container spacing={3}>
         {/* Left Column */}
-        <Grid size={{ xs: 12, lg: 8 }}>
+        <Grid size={{ xs: 12,lg: 8 }}>
           {/* Description Card */}
           <Paper
             sx={{
@@ -489,9 +491,9 @@ export default function SubmissionDetailPage({
                 mb: 2,
               }}
             >
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Box sx={{ display: "flex",alignItems: "center",gap: 1.5 }}>
                 <DescriptionIcon
-                  sx={{ color: dashboardTokens.accent, fontSize: 20 }}
+                  sx={{ color: dashboardTokens.accent,fontSize: 20 }}
                 />
                 <Typography
                   variant="h6"
@@ -505,9 +507,9 @@ export default function SubmissionDetailPage({
                   รายละเอียด
                 </Typography>
               </Box>
-              {!isEditing &&
-                (submission.status === "PENDING" ||
-                  submission.status === "UNDER_REVIEW") && (
+              {!isEditing&&
+                (submission.status==="PENDING"||
+                  submission.status==="UNDER_REVIEW")&&(
                   <Button
                     size="small"
                     startIcon={<EditIcon />}
@@ -523,14 +525,14 @@ export default function SubmissionDetailPage({
                 )}
             </Box>
 
-            {isEditing ? (
+            {isEditing? (
               <Stack spacing={2.5}>
                 <TextField
                   label="ชื่อเรื่อง"
                   fullWidth
                   value={editForm.title}
                   onChange={(e) =>
-                    setEditForm({ ...editForm, title: e.target.value })
+                    setEditForm({ ...editForm,title: e.target.value })
                   }
                   variant="filled"
                   slotProps={{
@@ -545,7 +547,7 @@ export default function SubmissionDetailPage({
                   fullWidth
                   value={editForm.slug}
                   onChange={(e) =>
-                    setEditForm({ ...editForm, slug: e.target.value })
+                    setEditForm({ ...editForm,slug: e.target.value })
                   }
                   variant="filled"
                   slotProps={{
@@ -562,7 +564,7 @@ export default function SubmissionDetailPage({
                   rows={3}
                   value={editForm.description}
                   onChange={(e) =>
-                    setEditForm({ ...editForm, description: e.target.value })
+                    setEditForm({ ...editForm,description: e.target.value })
                   }
                   variant="filled"
                   slotProps={{
@@ -573,10 +575,12 @@ export default function SubmissionDetailPage({
                   }}
                 />
                 <Grid container spacing={2}>
-                  <Grid size={{ xs: 12, md: 6 }}>
+                  <Grid size={{ xs: 12,md: 6 }}>
                     <FormControl fullWidth variant="filled">
-                      <InputLabel>หมวดหมู่</InputLabel>
+                      <InputLabel id="submission-category-label" shrink>หมวดหมู่</InputLabel>
                       <Select
+                        labelId="submission-category-label"
+                        displayEmpty
                         value={editForm.categoryId}
                         onChange={(e) =>
                           setEditForm({
@@ -598,13 +602,13 @@ export default function SubmissionDetailPage({
                       </Select>
                     </FormControl>
                   </Grid>
-                  <Grid size={{ xs: 12, md: 6 }}>
+                  <Grid size={{ xs: 12,md: 6 }}>
                     <Autocomplete
                       multiple
                       options={tags}
                       getOptionLabel={(option) => option.name}
                       value={tags.filter((t) => editForm.tagIds.includes(t.id))}
-                      onChange={(e, newValue) =>
+                      onChange={(e,newValue) =>
                         setEditForm({
                           ...editForm,
                           tagIds: newValue.map((v) => v.id),
@@ -659,17 +663,17 @@ export default function SubmissionDetailPage({
                   </Button>
                 </Box>
               </Stack>
-            ) : (
+            ):(
               <Box>
                 <Typography
                   sx={{
                     color: submission.description
                       ? "text.primary"
-                      : "text.secondary",
+                      :"text.secondary",
                     lineHeight: 1.8,
                   }}
                 >
-                  {submission.description || "ไม่มีคำอธิบาย"}
+                  {submission.description||"ไม่มีคำอธิบาย"}
                 </Typography>
               </Box>
             )}
@@ -685,9 +689,9 @@ export default function SubmissionDetailPage({
             }}
           >
             <Box
-              sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}
+              sx={{ display: "flex",alignItems: "center",gap: 1.5,mb: 3 }}
             >
-              <ImageIcon sx={{ color: dashboardTokens.accent, fontSize: 20 }} />
+              <ImageIcon sx={{ color: dashboardTokens.accent,fontSize: 20 }} />
               <Typography
                 variant="h6"
                 sx={{
@@ -720,7 +724,7 @@ export default function SubmissionDetailPage({
                 gap: 2,
               }}
             >
-              {pages.map((url: string, idx: number) => (
+              {pages.map((url: string,idx: number) => (
                 <Box
                   key={idx}
                   onClick={() => setPreviewImage(url)}
@@ -740,7 +744,7 @@ export default function SubmissionDetailPage({
                   <Image
                     src={url}
                     loading="lazy"
-                    alt={`หน้า ${idx + 1}`}
+                    alt={`หน้า ${idx+1}`}
                     fill
                     sizes="120px"
                     style={{
@@ -764,14 +768,14 @@ export default function SubmissionDetailPage({
                         fontWeight: 600,
                       }}
                     >
-                      {idx + 1}
+                      {idx+1}
                     </Typography>
                   </Box>
                 </Box>
               ))}
             </Box>
 
-            {pages.length === 0 && (
+            {pages.length===0&&(
               <Box
                 sx={{
                   p: 4,
@@ -789,8 +793,8 @@ export default function SubmissionDetailPage({
 
         {/* Right Column */}
         <Grid
-          size={{ xs: 12, lg: 4 }}
-          sx={{ position: { lg: "sticky" }, top: 24, alignSelf: "start" }}
+          size={{ xs: 12,lg: 4 }}
+          sx={{ position: { lg: "sticky" },top: 24,alignSelf: "start" }}
         >
           {/* Submitter Card */}
           <Paper
@@ -805,10 +809,10 @@ export default function SubmissionDetailPage({
             }}
           >
             <Box
-              sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 3 }}
+              sx={{ display: "flex",alignItems: "center",gap: 1.5,mb: 3 }}
             >
               <PersonIcon
-                sx={{ color: dashboardTokens.accent, fontSize: 20 }}
+                sx={{ color: dashboardTokens.accent,fontSize: 20 }}
               />
               <Typography
                 variant="h6"
@@ -823,25 +827,25 @@ export default function SubmissionDetailPage({
               </Typography>
             </Box>
 
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+            <Box sx={{ display: "flex",alignItems: "center",gap: 2,mb: 2,minWidth: 0 }}>
               <Avatar
                 src={submission.user.image}
-                alt={submission.user.name || ""}
+                alt={submission.user.name||""}
                 sx={{
                   width: 56,
                   height: 56,
                   border: `2px solid ${dashboardTokens.border}`,
                 }}
               />
-              <Box>
+              <Box sx={{ minWidth: 0,overflowWrap: "anywhere" }}>
                 <Typography
                   variant="subtitle1"
                   sx={{
                     fontWeight: 600,
                   }}
                 >
-                  {submission.user.name ||
-                    submission.user.username ||
+                  {submission.user.name||
+                    submission.user.username||
                     "ไม่ระบุชื่อ"}
                 </Typography>
                 <Typography
@@ -855,7 +859,7 @@ export default function SubmissionDetailPage({
               </Box>
             </Box>
 
-            <Divider sx={{ my: 2, borderColor: dashboardTokens.border }} />
+            <Divider sx={{ my: 2,borderColor: dashboardTokens.border }} />
 
             <Box
               sx={{
@@ -866,17 +870,17 @@ export default function SubmissionDetailPage({
               }}
             >
               <CalendarTodayIcon
-                sx={{ fontSize: 16, color: dashboardTokens.accent }}
+                sx={{ fontSize: 16,color: dashboardTokens.accent }}
               />
               <Typography
                 component="div"
                 variant="body2"
-                sx={{ fontWeight: 600, fontSize: "0.80rem" }}
+                sx={{ fontWeight: 600,fontSize: "0.80rem" }}
               >
                 สมาชิกตั้งแต่{" "}
                 <Box
                   component="span"
-                  sx={{ fontFamily: "monospace", color: dashboardTokens.text }}
+                  sx={{ fontFamily: "monospace",color: dashboardTokens.text }}
                 >
                   {new Date(submission.user.createdAt).toLocaleDateString(
                     "th-TH",
@@ -901,9 +905,9 @@ export default function SubmissionDetailPage({
             }}
           >
             <Box
-              sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}
+              sx={{ display: "flex",alignItems: "center",gap: 1.5,mb: 2 }}
             >
-              <ImageIcon sx={{ color: dashboardTokens.accent, fontSize: 20 }} />
+              <ImageIcon sx={{ color: dashboardTokens.accent,fontSize: 20 }} />
               <Typography
                 variant="h6"
                 sx={{
@@ -946,11 +950,11 @@ export default function SubmissionDetailPage({
         onClose={() => setPreviewImage(null)}
         maxWidth="lg"
         slotProps={{
-          paper: { sx: { bgcolor: "transparent", boxShadow: "none" } },
+          paper: { sx: { bgcolor: "transparent",boxShadow: "none" } },
         }}
       >
         <Box onClick={() => setPreviewImage(null)} sx={{ cursor: "pointer" }}>
-          {previewImage && (
+          {previewImage&&(
             <Box
               sx={{
                 position: "relative",
@@ -964,7 +968,7 @@ export default function SubmissionDetailPage({
                 src={previewImage}
                 alt="Preview"
                 fill
-                style={{ objectFit: "contain", borderRadius: 8 }}
+                style={{ objectFit: "contain",borderRadius: 8 }}
               />
             </Box>
           )}
@@ -996,7 +1000,7 @@ export default function SubmissionDetailPage({
             color: dashboardTokens.text,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box sx={{ display: "flex",alignItems: "center",gap: 1.5 }}>
             <CheckCircleIcon sx={{ color: dashboardTokens.accent }} />
             อนุมัติคำขอส่งมังงะ
           </Box>
@@ -1004,7 +1008,7 @@ export default function SubmissionDetailPage({
         <DialogContent>
           <Alert
             severity="info"
-            sx={{ mb: 3, borderRadius: dashboardRadii.surface }}
+            sx={{ mb: 3,borderRadius: dashboardRadii.surface }}
           >
             การอนุมัติรายการนี้จะสร้างข้อมูลมังงะเข้าสู่ระบบทันที
           </Alert>
@@ -1055,7 +1059,7 @@ export default function SubmissionDetailPage({
             }}
           />
         </DialogContent>
-        <DialogActions sx={{ p: 2.5, bgcolor: "rgba(0,0,0,0.2)" }}>
+        <DialogActions sx={{ p: 2.5,bgcolor: "rgba(0,0,0,0.2)" }}>
           <Button
             onClick={() => setApproveOpen(false)}
             sx={{
@@ -1071,9 +1075,9 @@ export default function SubmissionDetailPage({
             variant="contained"
             disabled={actionLoading}
             startIcon={
-              actionLoading ? (
+              actionLoading? (
                 <CircularProgress size={16} />
-              ) : (
+              ):(
                 <CheckCircleIcon />
               )
             }
@@ -1116,7 +1120,7 @@ export default function SubmissionDetailPage({
             color: dashboardTokens.text,
           }}
         >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Box sx={{ display: "flex",alignItems: "center",gap: 1.5 }}>
             <CancelIcon sx={{ color: "#f87171" }} />
             ปฏิเสธคำขอส่งมังงะ
           </Box>
@@ -1176,7 +1180,7 @@ export default function SubmissionDetailPage({
             }}
           />
         </DialogContent>
-        <DialogActions sx={{ p: 2.5, bgcolor: "rgba(0,0,0,0.2)" }}>
+        <DialogActions sx={{ p: 2.5,bgcolor: "rgba(0,0,0,0.2)" }}>
           <Button
             onClick={() => setRejectOpen(false)}
             sx={{
@@ -1190,9 +1194,9 @@ export default function SubmissionDetailPage({
           <Button
             onClick={handleReject}
             variant="contained"
-            disabled={actionLoading || !rejectionReason}
+            disabled={actionLoading||!rejectionReason}
             startIcon={
-              actionLoading ? <CircularProgress size={16} /> : <CancelIcon />
+              actionLoading? <CircularProgress size={16} />:<CancelIcon />
             }
             sx={{
               px: 3,

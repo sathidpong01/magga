@@ -2,28 +2,29 @@
 
 import AdvertisementsLoading from "./loading";
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import { Box, Typography, Button, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Switch, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Select, MenuItem, FormControl, InputLabel, Chip, Alert, CircularProgress, Card, Skeleton, Pagination, useMediaQuery, useTheme, Tooltip, FormControlLabel } from "@mui/material";
+import { useState,useEffect,useCallback,useRef } from "react";
+import { Box,Typography,Button,Paper,Table,TableBody,TableCell,TableContainer,TableHead,TableRow,IconButton,Switch,Dialog,DialogTitle,DialogContent,DialogActions,TextField,Select,MenuItem,FormControl,InputLabel,Chip,Alert,CircularProgress,Card,Skeleton,Pagination,useMediaQuery,useTheme,Tooltip,FormControlLabel } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import RefreshIcon from "@mui/icons-material/Refresh";
-import { adCtr, getAdvertisementLinks, maxAdvertisementLinks, normalizeAdvertisementLink } from "@/lib/advertisements";
+import { adCtr,getAdvertisementLinks,maxAdvertisementLinks,normalizeAdvertisementLink } from "@/lib/advertisements";
 import { maggaColors } from "@/lib/design-tokens";
+import { advertisementsColumns } from "@/app/components/dashboard/moderation-list-layout";
 import Image from "next/image";
 import { authFetch } from "@/lib/auth-fetch";
-import { dashboardTokens, dashboardRadii, dashboardPrimaryButtonSx } from "@/app/components/dashboard/system";
+import { dashboardTokens,dashboardRadii,dashboardPrimaryButtonSx } from "@/app/components/dashboard/system";
 
 interface Advertisement {
   id: string;
   type: string;
   title: string;
   imageUrl: string;
-  linkUrl: string | null;
-  linkUrls?: string[] | null;
-  content: string | null;
+  linkUrl: string|null;
+  linkUrls?: string[]|null;
+  content: string|null;
   placement: string;
   repeatCount: number;
   isActive: boolean;
@@ -32,21 +33,21 @@ interface Advertisement {
   clicks: number;
 }
 
-const PLACEMENTS = [
-  { value: "grid", label: "แทรกในกริด" },
-  { value: "header", label: "ใต้หัวเว็บ" },
-  { value: "footer", label: "เหนือท้ายเว็บ" },
-  { value: "manga-end", label: "ท้ายตอน" },
-  { value: "floating", label: "ปุ่มลอย" },
-  { value: "modal", label: "โมดัล" },
+const PLACEMENTS=[
+  { value: "grid",label: "แทรกในกริด" },
+  { value: "header",label: "ใต้หัวเว็บ" },
+  { value: "footer",label: "เหนือท้ายเว็บ" },
+  { value: "manga-end",label: "ท้ายตอน" },
+  { value: "floating",label: "ปุ่มลอย" },
+  { value: "modal",label: "โมดัล" },
 ];
 
-const TYPES = [
-  { value: "affiliate", label: "ลิงก์แนะนำ" },
-  { value: "promptpay", label: "พร้อมเพย์" },
+const TYPES=[
+  { value: "affiliate",label: "ลิงก์แนะนำ" },
+  { value: "promptpay",label: "พร้อมเพย์" },
 ];
 
-const adDialogFieldSx = {
+const adDialogFieldSx={
   "& .MuiOutlinedInput-root": {
     bgcolor: "rgba(255,255,255,0.025)",
     borderRadius: 1.25,
@@ -98,14 +99,14 @@ const adDialogFieldSx = {
   },
 };
 
-const adDialogPanelSx = {
+const adDialogPanelSx={
   bgcolor: "rgba(255,255,255,0.02)",
   border: "1px solid rgba(255,255,255,0.06)",
   borderRadius: 1.5,
   boxShadow: "inset 0 1px 0 rgba(255,255,255,0.025)",
 };
 
-const adDialogSelectMenuProps = {
+const adDialogSelectMenuProps={
   slotProps: {
     paper: {
       sx: {
@@ -149,14 +150,14 @@ function PlacementPreview({
   imageUrl?: string;
   title?: string;
 }) {
-  const previewImage = imageUrl || null;
+  const previewImage=imageUrl||null;
 
-  const renderPreview = () => {
-    switch (placement) {
+  const renderPreview=() => {
+    switch(placement) {
       // Grid: เหมือน MangaCard - รูปเต็มเฟรม height 400px
       case "grid":
         return (
-          <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
+          <Box sx={{ display: "flex",gap: 1,justifyContent: "center" }}>
             <Skeleton
               variant="rectangular"
               width={70}
@@ -174,7 +175,7 @@ function PlacementPreview({
                 border: "1px solid rgba(255,255,255,0.08)",
               }}
             >
-              {previewImage ? (
+              {previewImage? (
                 <Image
                   src={previewImage}
                   alt=""
@@ -182,7 +183,7 @@ function PlacementPreview({
                   sizes="70px"
                   style={{ objectFit: "cover" }}
                 />
-              ) : (
+              ):(
                 <Box
                   sx={{
                     height: "100%",
@@ -220,7 +221,7 @@ function PlacementPreview({
             <Skeleton
               variant="rectangular"
               height={30}
-              sx={{ mb: 1, borderRadius: 0.5 }}
+              sx={{ mb: 1,borderRadius: 0.5 }}
             />
             <Box
               sx={{
@@ -230,7 +231,7 @@ function PlacementPreview({
                 mb: 1,
               }}
             >
-              {previewImage ? (
+              {previewImage? (
                 <Box
                   component="img"
                   src={previewImage}
@@ -243,7 +244,7 @@ function PlacementPreview({
                     borderRadius: 0.5,
                   }}
                 />
-              ) : (
+              ):(
                 <Skeleton
                   variant="rectangular"
                   width="100%"
@@ -267,7 +268,7 @@ function PlacementPreview({
             <Skeleton
               variant="rectangular"
               height={80}
-              sx={{ mb: 1, borderRadius: 0.5 }}
+              sx={{ mb: 1,borderRadius: 0.5 }}
             />
             <Box
               sx={{
@@ -277,7 +278,7 @@ function PlacementPreview({
                 mb: 1,
               }}
             >
-              {previewImage ? (
+              {previewImage? (
                 <Box
                   component="img"
                   src={previewImage}
@@ -290,7 +291,7 @@ function PlacementPreview({
                     borderRadius: 0.5,
                   }}
                 />
-              ) : (
+              ):(
                 <Skeleton
                   variant="rectangular"
                   width="100%"
@@ -314,7 +315,7 @@ function PlacementPreview({
             <Skeleton
               variant="rectangular"
               height={60}
-              sx={{ mb: 1, borderRadius: 0.5 }}
+              sx={{ mb: 1,borderRadius: 0.5 }}
             />
             <Typography
               variant="caption"
@@ -334,7 +335,7 @@ function PlacementPreview({
                 justifyContent: "center",
               }}
             >
-              {previewImage ? (
+              {previewImage? (
                 <Box
                   component="img"
                   src={previewImage}
@@ -347,7 +348,7 @@ function PlacementPreview({
                     borderRadius: 0.5,
                   }}
                 />
-              ) : (
+              ):(
                 <Skeleton
                   variant="rectangular"
                   width="80%"
@@ -395,7 +396,7 @@ function PlacementPreview({
                 border: "1px solid rgba(255,255,255,0.08)",
               }}
             >
-              {previewImage ? (
+              {previewImage? (
                 <Box
                   component="img"
                   src={previewImage}
@@ -406,7 +407,7 @@ function PlacementPreview({
                     display: "block",
                   }}
                 />
-              ) : (
+              ):(
                 <Skeleton variant="rectangular" width="100%" height={100} />
               )}
             </Paper>
@@ -437,7 +438,7 @@ function PlacementPreview({
                 boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
               }}
             >
-              {previewImage ? (
+              {previewImage? (
                 <Box
                   component="img"
                   src={previewImage}
@@ -449,7 +450,7 @@ function PlacementPreview({
                     display: "block",
                   }}
                 />
-              ) : (
+              ):(
                 <Skeleton variant="rectangular" width={120} height={90} />
               )}
             </Paper>
@@ -503,7 +504,7 @@ function PlacementPreview({
         <Chip
           size="small"
           label={
-            PLACEMENTS.find((p) => p.value === placement)?.label ||
+            PLACEMENTS.find((p) => p.value===placement)?.label||
             "เลือกตำแหน่ง"
           }
           sx={{
@@ -545,36 +546,36 @@ function PlacementPreview({
   );
 }
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE=10;
 
 export default function AdvertisementsPage() {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const [ads, setAds] = useState<Advertisement[]>([]);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingAd, setEditingAd] = useState<Advertisement | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(false),
-    [query, setQuery] = useState("");
-  const activeRequest = useRef<AbortController | null>(null);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [placementFilter, setPlacementFilter] = useState("all");
-  const [deviceFilter, setDeviceFilter] = useState("all");
-  const [saving, setSaving] = useState(false);
-  const [linkErrors, setLinkErrors] = useState<Record<number, string>>({});
-  const [busyId, setBusyId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const theme=useTheme();
+  const isMobile=useMediaQuery(theme.breakpoints.down("md"));
+  const [ads,setAds]=useState<Advertisement[]>([]);
+  const [dialogOpen,setDialogOpen]=useState(false);
+  const [editingAd,setEditingAd]=useState<Advertisement|null>(null);
+  const [error,setError]=useState<string|null>(null);
+  const [uploading,setUploading]=useState(false);
+  const [previewUrl,setPreviewUrl]=useState<string|null>(null);
+  const [page,setPage]=useState(1);
+  const [hasMore,setHasMore]=useState(false),
+    [query,setQuery]=useState("");
+  const activeRequest=useRef<AbortController|null>(null);
+  const [search,setSearch]=useState("");
+  const [statusFilter,setStatusFilter]=useState("all");
+  const [placementFilter,setPlacementFilter]=useState("all");
+  const [deviceFilter,setDeviceFilter]=useState("all");
+  const [saving,setSaving]=useState(false);
+  const [linkErrors,setLinkErrors]=useState<Record<number,string>>({});
+  const [busyId,setBusyId]=useState<string|null>(null);
+  const [loading,setLoading]=useState(true);
+  const fileInputRef=useRef<HTMLInputElement>(null);
 
   // Delete confirmation modal
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deletingAd, setDeletingAd] = useState<Advertisement | null>(null);
+  const [deleteDialogOpen,setDeleteDialogOpen]=useState(false);
+  const [deletingAd,setDeletingAd]=useState<Advertisement|null>(null);
 
-  const [formData, setFormData] = useState({
+  const [formData,setFormData]=useState({
     type: "affiliate",
     title: "",
     imageUrl: "",
@@ -586,58 +587,58 @@ export default function AdvertisementsPage() {
     targetDevice: "all",
   });
 
-  const fetchAds = useCallback(async () => {
+  const fetchAds=useCallback(async () => {
     activeRequest.current?.abort();
-    const controller = new AbortController();
-    activeRequest.current = controller;
+    const controller=new AbortController();
+    activeRequest.current=controller;
     setLoading(true);
     setError(null);
     try {
-      const res = await authFetch(
-        `/api/advertisements?${new URLSearchParams({ all: "true", paged: "true", page: String(page), search: query, status: statusFilter, placement: placementFilter, device: deviceFilter })}`,
+      const res=await authFetch(
+        `/api/advertisements?${new URLSearchParams({ all: "true",paged: "true",page: String(page),search: query,status: statusFilter,placement: placementFilter,device: deviceFilter })}`,
         { signal: controller.signal },
       );
-      if (!res.ok) throw new Error("โหลดโฆษณาไม่สำเร็จ");
-      const data = await res.json();
-      if (!controller.signal.aborted) {
+      if(!res.ok) throw new Error("โหลดโฆษณาไม่สำเร็จ");
+      const data=await res.json();
+      if(!controller.signal.aborted) {
         setAds(data.items);
         setHasMore(data.hasMore);
       }
-    } catch (err) {
-      if (!controller.signal.aborted)
+    } catch(err) {
+      if(!controller.signal.aborted)
         setError("โหลดโฆษณาไม่สำเร็จ กรุณาลองอีกครั้ง");
     } finally {
-      if (!controller.signal.aborted) setLoading(false);
+      if(!controller.signal.aborted) setLoading(false);
     }
-  }, [page, query, statusFilter, placementFilter, deviceFilter]);
+  },[page,query,statusFilter,placementFilter,deviceFilter]);
 
   useEffect(() => {
     fetchAds();
-  }, [fetchAds]);
+  },[fetchAds]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const timer=setTimeout(() => {
       setQuery(search.trim());
       setPage(1);
-    }, 400);
+    },400);
     return () => clearTimeout(timer);
-  }, [search]);
-  useEffect(() => () => activeRequest.current?.abort(), []);
+  },[search]);
+  useEffect(() => () => activeRequest.current?.abort(),[]);
 
   // Pagination
-  const filteredAds = ads;
-  const totalPages = page + (hasMore ? 1 : 0);
-  const paginatedAds = ads;
-  useEffect(() => setPage(1), [statusFilter, placementFilter, deviceFilter]);
+  const filteredAds=ads;
+  const totalPages=page+(hasMore? 1:0);
+  const paginatedAds=ads;
+  useEffect(() => setPage(1),[statusFilter,placementFilter,deviceFilter]);
 
-  const handlePageChange = (_: React.ChangeEvent<unknown>, newPage: number) => {
+  const handlePageChange=(_: React.ChangeEvent<unknown>,newPage: number) => {
     setPage(newPage);
   };
 
-  const handleOpenDialog = (ad?: Advertisement) => {
+  const handleOpenDialog=(ad?: Advertisement) => {
     setLinkErrors({});
     setError(null);
-    if (ad) {
+    if(ad) {
       setEditingAd(ad);
       setFormData({
         type: ad.type,
@@ -645,12 +646,12 @@ export default function AdvertisementsPage() {
         imageUrl: ad.imageUrl,
         linkUrls: getAdvertisementLinks(ad).length
           ? getAdvertisementLinks(ad)
-          : [""],
-        content: ad.content || "",
+          :[""],
+        content: ad.content||"",
         placement: ad.placement,
-        repeatCount: ad.repeatCount || 1,
+        repeatCount: ad.repeatCount||1,
         isActive: ad.isActive,
-        targetDevice: ad.targetDevice || "all",
+        targetDevice: ad.targetDevice||"all",
       });
       setPreviewUrl(ad.imageUrl);
     } else {
@@ -671,15 +672,15 @@ export default function AdvertisementsPage() {
     setDialogOpen(true);
   };
 
-  const handleCloseDialog = () => {
-    if (saving || uploading) return;
+  const handleCloseDialog=() => {
+    if(saving||uploading) return;
     setDialogOpen(false);
     setEditingAd(null);
     setError(null);
     setPreviewUrl(null);
   };
 
-  const handleDuplicate = (ad: Advertisement) => {
+  const handleDuplicate=(ad: Advertisement) => {
     handleOpenDialog(ad);
     setEditingAd(null);
     setFormData((current) => ({
@@ -689,9 +690,9 @@ export default function AdvertisementsPage() {
     }));
   };
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleFileSelect=async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file=e.target.files?.[0];
+    if(!file) return;
 
     // Show local preview immediately
     setPreviewUrl(null);
@@ -701,81 +702,81 @@ export default function AdvertisementsPage() {
     setError(null);
 
     try {
-      const formDataUpload = new FormData();
-      formDataUpload.append("file", file);
+      const formDataUpload=new FormData();
+      formDataUpload.append("file",file);
 
-      const res = await authFetch("/api/advertisements/upload", {
+      const res=await authFetch("/api/advertisements/upload",{
         method: "POST",
         body: formDataUpload,
       });
 
       // Check if response is JSON
-      const contentType = res.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
+      const contentType=res.headers.get("content-type");
+      if(!contentType||!contentType.includes("application/json")) {
         throw new Error("เซสชันหมดอายุ กรุณารีเฟรชหน้าแล้วลองใหม่");
       }
 
-      const data = await res.json();
+      const data=await res.json();
 
-      if (!res.ok) {
-        throw new Error(data.error || data.debug || "Upload failed");
+      if(!res.ok) {
+        throw new Error(data.error||data.debug||"Upload failed");
       }
 
-      setFormData((prev) => ({ ...prev, imageUrl: data.imageUrl }));
+      setFormData((prev) => ({ ...prev,imageUrl: data.imageUrl }));
       setPreviewUrl(data.imageUrl);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed");
+    } catch(err) {
+      setError(err instanceof Error? err.message:"Upload failed");
       setPreviewUrl(null);
     } finally {
       setUploading(false);
     }
   };
 
-  const handleSubmit = async () => {
-    if (saving || uploading) return;
-    if (!formData.imageUrl) {
+  const handleSubmit=async () => {
+    if(saving||uploading) return;
+    if(!formData.imageUrl) {
       setError("กรุณาอัพโหลดรูปภาพ");
       return;
     }
 
-    const linkUrls = formData.linkUrls
+    const linkUrls=formData.linkUrls
       .map((link) => link.trim())
       .filter(Boolean);
-    const invalidLinks: Record<number, string> = {};
-    formData.linkUrls.forEach((link, index) => {
-      if (link.trim() && !normalizeAdvertisementLink(link))
-        invalidLinks[index] =
+    const invalidLinks: Record<number,string>={};
+    formData.linkUrls.forEach((link,index) => {
+      if(link.trim()&&!normalizeAdvertisementLink(link))
+        invalidLinks[index]=
           "ใช้ URL ที่ขึ้นต้นด้วย https:// หรือ http:// และไม่มีช่องว่าง";
     });
     setLinkErrors(invalidLinks);
-    if (Object.keys(invalidLinks).length) {
+    if(Object.keys(invalidLinks).length) {
       setError("กรุณาตรวจสอบลิงก์ปลายทางก่อนบันทึก");
       return;
     }
     setError(null);
     setSaving(true);
     try {
-      const url = editingAd
+      const url=editingAd
         ? `/api/advertisements/${editingAd.id}`
-        : "/api/advertisements";
-      const method = editingAd ? "PATCH" : "POST";
+        :"/api/advertisements";
+      const method=editingAd? "PATCH":"POST";
 
-      const res = await authFetch(url, {
+      const res=await authFetch(url,{
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, linkUrls }),
+        body: JSON.stringify({ ...formData,linkUrls }),
       });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "บันทึกโฆษณาไม่สำเร็จ");
+      if(!res.ok) {
+        const data=await res.json();
+        throw new Error(data.error||"บันทึกโฆษณาไม่สำเร็จ");
       }
       setDialogOpen(false);
       setError(null);
       fetchAds();
-    } catch (err) {
+    } catch(err) {
       setError(
-        err instanceof Error ? err.message : "เกิดข้อผิดพลาดในการบันทึก",
+        err instanceof Error? err.message:"เกิดข้อผิดพลาดในการบันทึก",
       );
       console.error(err);
     } finally {
@@ -783,17 +784,17 @@ export default function AdvertisementsPage() {
     }
   };
 
-  const handleToggleActive = async (ad: Advertisement) => {
+  const handleToggleActive=async (ad: Advertisement) => {
     setBusyId(ad.id);
     try {
-      const res = await authFetch(`/api/advertisements/${ad.id}`, {
+      const res=await authFetch(`/api/advertisements/${ad.id}`,{
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive: !ad.isActive }),
       });
-      if (!res.ok) throw new Error("เปลี่ยนสถานะไม่สำเร็จ");
+      if(!res.ok) throw new Error("เปลี่ยนสถานะไม่สำเร็จ");
       fetchAds();
-    } catch (err) {
+    } catch(err) {
       console.error(err);
       setError("เปลี่ยนสถานะโฆษณาไม่สำเร็จ");
     } finally {
@@ -801,27 +802,27 @@ export default function AdvertisementsPage() {
     }
   };
 
-  const handleOpenDeleteDialog = (ad: Advertisement) => {
+  const handleOpenDeleteDialog=(ad: Advertisement) => {
     setDeletingAd(ad);
     setDeleteDialogOpen(true);
   };
 
-  const handleCloseDeleteDialog = () => {
+  const handleCloseDeleteDialog=() => {
     setDeleteDialogOpen(false);
     setDeletingAd(null);
   };
 
-  const handleConfirmDelete = async () => {
-    if (!deletingAd) return;
+  const handleConfirmDelete=async () => {
+    if(!deletingAd) return;
     setBusyId(deletingAd.id);
     try {
-      const res = await authFetch(`/api/advertisements/${deletingAd.id}`, {
+      const res=await authFetch(`/api/advertisements/${deletingAd.id}`,{
         method: "DELETE",
       });
-      if (!res.ok) throw new Error("ลบโฆษณาไม่สำเร็จ");
+      if(!res.ok) throw new Error("ลบโฆษณาไม่สำเร็จ");
       fetchAds();
       handleCloseDeleteDialog();
-    } catch (err) {
+    } catch(err) {
       console.error(err);
       setError("ลบโฆษณาไม่สำเร็จ");
     } finally {
@@ -829,7 +830,7 @@ export default function AdvertisementsPage() {
     }
   };
 
-  if (loading) return <AdvertisementsLoading />;
+  if(loading) return <AdvertisementsLoading />;
 
   return (
     <Box>
@@ -858,7 +859,7 @@ export default function AdvertisementsPage() {
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => handleOpenDialog()}
-          size={isMobile ? "small" : "medium"}
+          size={isMobile? "small":"medium"}
           sx={{
             ...dashboardPrimaryButtonSx,
             borderRadius: dashboardRadii.button,
@@ -868,11 +869,11 @@ export default function AdvertisementsPage() {
             letterSpacing: "0",
           }}
         >
-          {isMobile ? "เพิ่ม" : "สร้างโฆษณา"}
+          {isMobile? "เพิ่ม":"สร้างโฆษณา"}
         </Button>
       </Box>
 
-      {error && !dialogOpen && (
+      {error&&!dialogOpen&&(
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
@@ -892,7 +893,7 @@ export default function AdvertisementsPage() {
             onClick={fetchAds}
             disabled={loading}
           >
-            {loading ? <CircularProgress size={20} /> : <RefreshIcon />}
+            {loading? <CircularProgress size={20} />:<RefreshIcon />}
           </IconButton>
         </Tooltip>
         <TextField
@@ -943,8 +944,8 @@ export default function AdvertisementsPage() {
         </FormControl>
       </Box>
       {/* Mobile: Card layout */}
-      {isMobile ? (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+      {isMobile? (
+        <Box sx={{ display: "flex",flexDirection: "column",gap: 1.5 }}>
           {paginatedAds.map((ad) => (
             <Paper
               key={ad.id}
@@ -955,7 +956,7 @@ export default function AdvertisementsPage() {
                 overflow: "hidden",
               }}
             >
-              <Box sx={{ display: "flex", gap: 1.5, p: 1.5 }}>
+              <Box sx={{ display: "flex",gap: 1.5,p: 1.5 }}>
                 <Box
                   sx={{
                     width: 64,
@@ -974,7 +975,7 @@ export default function AdvertisementsPage() {
                     style={{ objectFit: "cover" }}
                   />
                 </Box>
-                <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Box sx={{ flex: 1,minWidth: 0 }}>
                   <Typography
                     variant="body2"
                     sx={{
@@ -989,24 +990,24 @@ export default function AdvertisementsPage() {
                     {ad.title}
                   </Typography>
                   <Box
-                    sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", mb: 1 }}
+                    sx={{ display: "flex",gap: 0.5,flexWrap: "wrap",mb: 1 }}
                   >
                     <Chip
                       label={
-                        TYPES.find((t) => t.value === ad.type)?.label || ad.type
+                        TYPES.find((t) => t.value===ad.type)?.label||ad.type
                       }
                       size="small"
-                      sx={{ height: 20, fontSize: "0.7rem" }}
+                      sx={{ height: 20,fontSize: "0.7rem" }}
                     />
                     <Chip
                       label={
-                        PLACEMENTS.find((p) => p.value === ad.placement)
-                          ?.label || ad.placement
+                        PLACEMENTS.find((p) => p.value===ad.placement)
+                          ?.label||ad.placement
                       }
                       size="small"
                       color="primary"
                       variant="outlined"
-                      sx={{ height: 20, fontSize: "0.7rem" }}
+                      sx={{ height: 20,fontSize: "0.7rem" }}
                     />
                   </Box>
                   <Box
@@ -1017,8 +1018,9 @@ export default function AdvertisementsPage() {
                     }}
                   >
                     <Switch
+                      slotProps={{ input: { "aria-label": `เปิดใช้งานโฆษณา ${ad.title}` } }}
                       checked={ad.isActive}
-                      disabled={busyId === ad.id}
+                      disabled={busyId===ad.id}
                       onChange={() => handleToggleActive(ad)}
                       size="small"
                     />
@@ -1033,17 +1035,17 @@ export default function AdvertisementsPage() {
                         </IconButton>
                       </Tooltip>
                       <IconButton
+                        aria-label={`แก้ไขโฆษณา ${ad.title}`}
                         onClick={() => handleOpenDialog(ad)}
                         size="small"
-                        aria-label="แก้ไข"
                       >
                         <EditIcon fontSize="small" />
                       </IconButton>
                       <IconButton
+                        aria-label={`ลบโฆษณา ${ad.title}`}
                         onClick={() => handleOpenDeleteDialog(ad)}
                         size="small"
                         color="error"
-                        aria-label="ลบ"
                       >
                         <DeleteIcon fontSize="small" />
                       </IconButton>
@@ -1051,28 +1053,28 @@ export default function AdvertisementsPage() {
                   </Box>
                   <Typography
                     variant="caption"
-                    sx={{ display: "block", color: maggaColors.textSecondary }}
+                    sx={{ display: "block",color: maggaColors.textSecondary }}
                   >
-                    {ad.isActive ? "เปิดใช้งาน" : "ฉบับร่าง"} ·{" "}
-                    {ad.targetDevice === "mobile"
+                    {ad.isActive? "เปิดใช้งาน":"ฉบับร่าง"} ·{" "}
+                    {ad.targetDevice==="mobile"
                       ? "มือถือ"
-                      : ad.targetDevice === "desktop"
+                      :ad.targetDevice==="desktop"
                         ? "Desktop"
-                        : "ทุกอุปกรณ์"}
+                        :"ทุกอุปกรณ์"}
                   </Typography>
                   <Typography
                     variant="caption"
-                    sx={{ display: "block", color: maggaColors.textSecondary }}
+                    sx={{ display: "block",color: maggaColors.textSecondary }}
                   >
-                    เห็น {(ad.impressions || 0).toLocaleString()} · คลิก{" "}
-                    {(ad.clicks || 0).toLocaleString()} · CTR{" "}
-                    {adCtr(ad.impressions || 0, ad.clicks || 0)}%
+                    เห็น {(ad.impressions||0).toLocaleString()} · คลิก{" "}
+                    {(ad.clicks||0).toLocaleString()} · CTR{" "}
+                    {adCtr(ad.impressions||0,ad.clicks||0)}%
                   </Typography>
                 </Box>
               </Box>
             </Paper>
           ))}
-          {filteredAds.length === 0 && (
+          {filteredAds.length===0&&(
             <Box
               sx={{
                 py: 8,
@@ -1085,7 +1087,7 @@ export default function AdvertisementsPage() {
               <Typography
                 sx={{
                   fontWeight: 700,
-                  color: "#737373",
+                  color: maggaColors.textSecondary,
                   textTransform: "none",
                   letterSpacing: "0",
                 }}
@@ -1095,7 +1097,7 @@ export default function AdvertisementsPage() {
             </Box>
           )}
         </Box>
-      ) : (
+      ):(
         /* Desktop: Table layout */
         <TableContainer
           component={Paper}
@@ -1105,10 +1107,11 @@ export default function AdvertisementsPage() {
             border: "1px solid rgba(255,255,255,0.06)",
             boxShadow: "none",
             backgroundImage: "none",
-            overflow: "hidden",
+            overflow: "auto",
           }}
         >
-          <Table>
+          <Table sx={{ tableLayout: "fixed",minWidth: 920,"& td": { overflowWrap: "anywhere" } }}>
+            <colgroup>{advertisementsColumns.map((width,index) => <col key={index} style={{ width }} />)}</colgroup>
             <TableHead>
               <TableRow sx={{ bgcolor: "rgba(255,255,255,0.02)" }}>
                 <TableCell
@@ -1223,12 +1226,12 @@ export default function AdvertisementsPage() {
                         color: maggaColors.textSecondary,
                       }}
                     >
-                      {ad.isActive ? "เปิดใช้งาน" : "ฉบับร่าง"} ·{" "}
-                      {ad.targetDevice === "mobile"
+                      {ad.isActive? "เปิดใช้งาน":"ฉบับร่าง"} ·{" "}
+                      {ad.targetDevice==="mobile"
                         ? "มือถือ"
-                        : ad.targetDevice === "desktop"
+                        :ad.targetDevice==="desktop"
                           ? "Desktop"
-                          : "ทุกอุปกรณ์"}
+                          :"ทุกอุปกรณ์"}
                     </Typography>
                     <Typography
                       variant="caption"
@@ -1237,15 +1240,15 @@ export default function AdvertisementsPage() {
                         color: maggaColors.textSecondary,
                       }}
                     >
-                      เห็น {(ad.impressions || 0).toLocaleString()} · คลิก{" "}
-                      {(ad.clicks || 0).toLocaleString()} · CTR{" "}
-                      {adCtr(ad.impressions || 0, ad.clicks || 0)}%
+                      เห็น {(ad.impressions||0).toLocaleString()} · คลิก{" "}
+                      {(ad.clicks||0).toLocaleString()} · CTR{" "}
+                      {adCtr(ad.impressions||0,ad.clicks||0)}%
                     </Typography>
                   </TableCell>
                   <TableCell>
                     <Chip
                       label={
-                        TYPES.find((t) => t.value === ad.type)?.label || ad.type
+                        TYPES.find((t) => t.value===ad.type)?.label||ad.type
                       }
                       size="small"
                     />
@@ -1253,8 +1256,8 @@ export default function AdvertisementsPage() {
                   <TableCell>
                     <Chip
                       label={
-                        PLACEMENTS.find((p) => p.value === ad.placement)
-                          ?.label || ad.placement
+                        PLACEMENTS.find((p) => p.value===ad.placement)
+                          ?.label||ad.placement
                       }
                       size="small"
                       sx={{
@@ -1270,8 +1273,9 @@ export default function AdvertisementsPage() {
                   </TableCell>
                   <TableCell>
                     <Switch
+                      slotProps={{ input: { "aria-label": `เปิดใช้งานโฆษณา ${ad.title}` } }}
                       checked={ad.isActive}
-                      disabled={busyId === ad.id}
+                      disabled={busyId===ad.id}
                       onChange={() => handleToggleActive(ad)}
                       sx={{
                         "& .MuiSwitch-switchBase.Mui-checked": {
@@ -1282,7 +1286,7 @@ export default function AdvertisementsPage() {
                       }}
                     />
                   </TableCell>
-                  <TableCell align="right">
+                  <TableCell align="right" sx={{ whiteSpace: "nowrap" }}>
                     <Tooltip title="ทำสำเนา">
                       <IconButton
                         aria-label="ทำสำเนา"
@@ -1292,6 +1296,7 @@ export default function AdvertisementsPage() {
                       </IconButton>
                     </Tooltip>
                     <IconButton
+                      aria-label={`แก้ไขโฆษณา ${ad.title}`}
                       onClick={() => handleOpenDialog(ad)}
                       sx={{
                         color: dashboardTokens.textMuted,
@@ -1301,6 +1306,7 @@ export default function AdvertisementsPage() {
                       <EditIcon fontSize="small" />
                     </IconButton>
                     <IconButton
+                      aria-label={`ลบโฆษณา ${ad.title}`}
                       onClick={() => handleOpenDeleteDialog(ad)}
                       sx={{
                         color: dashboardTokens.textMuted,
@@ -1312,7 +1318,7 @@ export default function AdvertisementsPage() {
                   </TableCell>
                 </TableRow>
               ))}
-              {filteredAds.length === 0 && (
+              {filteredAds.length===0&&(
                 <TableRow>
                   <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
                     <Typography
@@ -1331,8 +1337,8 @@ export default function AdvertisementsPage() {
       )}
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+      {totalPages>1&&(
+        <Box sx={{ display: "flex",justifyContent: "center",mt: 4 }}>
           <Pagination
             count={totalPages}
             page={page}
@@ -1363,8 +1369,8 @@ export default function AdvertisementsPage() {
             sx: {
               bgcolor: dashboardTokens.surface,
               color: "#fafafa",
-              borderRadius: isMobile ? 0 : 1.25,
-              border: isMobile ? "none" : "1px solid rgba(255,255,255,0.08)",
+              borderRadius: isMobile? 0:1.25,
+              border: isMobile? "none":"1px solid rgba(255,255,255,0.08)",
               backgroundImage: "none",
               boxShadow: "none",
             },
@@ -1379,7 +1385,7 @@ export default function AdvertisementsPage() {
             borderBottom: "1px solid rgba(255,255,255,0.06)",
           }}
         >
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.35 }}>
+          <Box sx={{ display: "flex",flexDirection: "column",gap: 0.35 }}>
             <Typography
               sx={{
                 color: dashboardTokens.accent,
@@ -1395,25 +1401,25 @@ export default function AdvertisementsPage() {
               component="span"
               sx={{
                 fontWeight: 900,
-                fontSize: { xs: "1.2rem", md: "1.35rem" },
+                fontSize: { xs: "1.2rem",md: "1.35rem" },
                 color: "#fafafa",
               }}
             >
-              {editingAd ? "แก้ไขโฆษณา" : "เพิ่มโฆษณาใหม่"}
+              {editingAd? "แก้ไขโฆษณา":"เพิ่มโฆษณาใหม่"}
             </Typography>
             <Typography
               component="span"
-              sx={{ color: "#8c8c8c", fontWeight: 600, fontSize: "0.78rem" }}
+              sx={{ color: "#8c8c8c",fontWeight: 600,fontSize: "0.78rem" }}
             >
               จัดรูปภาพ ลิงก์ และตำแหน่งให้พร้อมใช้งานจากฟอร์มเดียว
             </Typography>
           </Box>
         </DialogTitle>
-        <DialogContent sx={{ px: { xs: 2, md: 3 }, py: { xs: 2, md: 2.5 } }}>
+        <DialogContent sx={{ px: { xs: 2,md: 3 },py: { xs: 2,md: 2.5 } }}>
           <Box
             sx={{
               display: "flex",
-              flexDirection: { xs: "column", md: "row" },
+              flexDirection: { xs: "column",md: "row" },
               gap: 2.25,
               mt: 0.5,
             }}
@@ -1424,7 +1430,7 @@ export default function AdvertisementsPage() {
                 flex: 1,
                 minWidth: 0,
                 ...adDialogPanelSx,
-                p: { xs: 1.5, md: 2 },
+                p: { xs: 1.5,md: 2 },
               }}
             >
               <Box sx={{ mb: 2 }}>
@@ -1448,7 +1454,7 @@ export default function AdvertisementsPage() {
                   กำหนดชนิด ชื่อ ภาพปลายทาง และการวางตำแหน่งให้ชัดก่อนบันทึก
                 </Typography>
               </Box>
-              {error && (
+              {error&&(
                 <Alert
                   severity="error"
                   sx={{
@@ -1471,7 +1477,7 @@ export default function AdvertisementsPage() {
                   value={formData.type}
                   label="ประเภท"
                   onChange={(e) =>
-                    setFormData({ ...formData, type: e.target.value })
+                    setFormData({ ...formData,type: e.target.value })
                   }
                   sx={adDialogFieldSx}
                   MenuProps={adDialogSelectMenuProps}
@@ -1489,9 +1495,9 @@ export default function AdvertisementsPage() {
                 label="ชื่อโฆษณา"
                 value={formData.title}
                 onChange={(e) =>
-                  setFormData({ ...formData, title: e.target.value })
+                  setFormData({ ...formData,title: e.target.value })
                 }
-                sx={{ mb: 2, ...adDialogFieldSx }}
+                sx={{ mb: 2,...adDialogFieldSx }}
                 helperText="ใช้สำหรับจัดการภายใน ผู้ใช้จะไม่เห็นข้อความนี้"
               />
 
@@ -1508,12 +1514,12 @@ export default function AdvertisementsPage() {
                   variant="outlined"
                   fullWidth
                   startIcon={
-                    uploading ? (
+                    uploading? (
                       <CircularProgress
                         size={20}
                         sx={{ color: dashboardTokens.accent }}
                       />
-                    ) : (
+                    ):(
                       <CloudUploadIcon />
                     )
                   }
@@ -1524,7 +1530,7 @@ export default function AdvertisementsPage() {
                     borderRadius: 1.25,
                     border: "1px dashed rgba(255,255,255,0.16)",
                     bgcolor: "rgba(255,255,255,0.02)",
-                    color: formData.imageUrl ? "#f7d27a" : "#d4d4d4",
+                    color: formData.imageUrl? "#f7d27a":"#d4d4d4",
                     fontWeight: 800,
                     textTransform: "none",
                     letterSpacing: "0",
@@ -1540,11 +1546,11 @@ export default function AdvertisementsPage() {
                 >
                   {uploading
                     ? "กำลังอัปโหลด..."
-                    : formData.imageUrl
+                    :formData.imageUrl
                       ? "เปลี่ยนรูป"
-                      : "อัปโหลดรูป"}
+                      :"อัปโหลดรูป"}
                 </Button>
-                {formData.imageUrl && (
+                {formData.imageUrl&&(
                   <Typography
                     variant="caption"
                     sx={{
@@ -1563,7 +1569,7 @@ export default function AdvertisementsPage() {
 
               <Box
                 component="fieldset"
-                sx={{ border: 0, p: 0, m: 0, mb: 2, minWidth: 0 }}
+                sx={{ border: 0,p: 0,m: 0,mb: 2,minWidth: 0 }}
               >
                 <Typography
                   component="legend"
@@ -1589,9 +1595,9 @@ export default function AdvertisementsPage() {
                   หรือเว้นว่างเพื่อแสดงภาพอย่างเดียว
                 </Typography>
                 <Box
-                  sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}
+                  sx={{ display: "flex",flexDirection: "column",gap: 1.5 }}
                 >
-                  {formData.linkUrls.map((link, index) => (
+                  {formData.linkUrls.map((link,index) => (
                     <Box
                       key={index}
                       sx={{
@@ -1602,20 +1608,20 @@ export default function AdvertisementsPage() {
                       }}
                     >
                       <TextField
-                        id={`ad-destination-${index + 1}`}
+                        id={`ad-destination-${index+1}`}
                         name={`linkUrls[${index}]`}
                         fullWidth
                         type="url"
-                        label={`ลิงก์ปลายทาง ${index + 1}`}
+                        label={`ลิงก์ปลายทาง ${index+1}`}
                         value={link}
-                        disabled={saving || uploading}
+                        disabled={saving||uploading}
                         error={Boolean(linkErrors[index])}
                         helperText={linkErrors[index]}
                         slotProps={{
                           htmlInput: {
                             "aria-describedby": linkErrors[index]
-                              ? `ad-destination-${index + 1}-helper-text ad-links-help`
-                              : "ad-links-help",
+                              ? `ad-destination-${index+1}-helper-text ad-links-help`
+                              :"ad-links-help",
                             maxLength: 2048,
                             inputMode: "url",
                           },
@@ -1624,16 +1630,16 @@ export default function AdvertisementsPage() {
                           setLinkErrors((current) => ({
                             ...current,
                             [index]:
-                              link.trim() && !normalizeAdvertisementLink(link)
+                              link.trim()&&!normalizeAdvertisementLink(link)
                                 ? "ใช้ URL ที่ขึ้นต้นด้วย https:// หรือ http:// และไม่มีช่องว่าง"
-                                : "",
+                                :"",
                           }))
                         }
                         onChange={(e) => {
                           setFormData((current) => ({
                             ...current,
-                            linkUrls: current.linkUrls.map((value, position) =>
-                              position === index ? e.target.value : value,
+                            linkUrls: current.linkUrls.map((value,position) =>
+                              position===index? e.target.value:value,
                             ),
                           }));
                           setLinkErrors((current) => ({
@@ -1644,17 +1650,17 @@ export default function AdvertisementsPage() {
                         sx={adDialogFieldSx}
                       />
                       <IconButton
-                        aria-label={`ลบลิงก์ปลายทาง ${index + 1}`}
-                        disabled={saving || uploading}
+                        aria-label={`ลบลิงก์ปลายทาง ${index+1}`}
+                        disabled={saving||uploading}
                         onClick={() => {
                           setFormData((current) => ({
                             ...current,
                             linkUrls:
-                              current.linkUrls.length === 1
+                              current.linkUrls.length===1
                                 ? [""]
-                                : current.linkUrls.filter(
-                                    (_, position) => position !== index,
-                                  ),
+                                :current.linkUrls.filter(
+                                  (_,position) => position!==index,
+                                ),
                           }));
                           setLinkErrors({});
                         }}
@@ -1679,14 +1685,14 @@ export default function AdvertisementsPage() {
                 <Button
                   startIcon={<AddIcon />}
                   disabled={
-                    saving ||
-                    uploading ||
-                    formData.linkUrls.length >= maxAdvertisementLinks
+                    saving||
+                    uploading||
+                    formData.linkUrls.length>=maxAdvertisementLinks
                   }
                   onClick={() =>
                     setFormData((current) => ({
                       ...current,
-                      linkUrls: [...current.linkUrls, ""],
+                      linkUrls: [...current.linkUrls,""],
                     }))
                   }
                   sx={{
@@ -1706,9 +1712,9 @@ export default function AdvertisementsPage() {
                 label="เนื้อหาเพิ่มเติม / หมายเหตุ"
                 value={formData.content}
                 onChange={(e) =>
-                  setFormData({ ...formData, content: e.target.value })
+                  setFormData({ ...formData,content: e.target.value })
                 }
-                sx={{ mb: 2, ...adDialogFieldSx }}
+                sx={{ mb: 2,...adDialogFieldSx }}
                 multiline
                 rows={2}
                 placeholder="เช่น เลขพร้อมเพย์ หรือคำอธิบาย"
@@ -1722,7 +1728,7 @@ export default function AdvertisementsPage() {
                   value={formData.placement}
                   label="ตำแหน่ง"
                   onChange={(e) =>
-                    setFormData({ ...formData, placement: e.target.value })
+                    setFormData({ ...formData,placement: e.target.value })
                   }
                   sx={adDialogFieldSx}
                   MenuProps={adDialogSelectMenuProps}
@@ -1771,7 +1777,7 @@ export default function AdvertisementsPage() {
                 }
               />
               {/* Repeat Count - only for grid placement */}
-              {formData.placement === "grid" && (
+              {formData.placement==="grid"&&(
                 <TextField
                   fullWidth
                   type="number"
@@ -1780,13 +1786,13 @@ export default function AdvertisementsPage() {
                   onChange={(e) =>
                     setFormData({
                       ...formData,
-                      repeatCount: Math.max(1, parseInt(e.target.value) || 1),
+                      repeatCount: Math.max(1,parseInt(e.target.value)||1),
                     })
                   }
-                  sx={{ mt: 2, ...adDialogFieldSx }}
+                  sx={{ mt: 2,...adDialogFieldSx }}
                   helperText="จำนวนครั้งที่โฆษณานี้จะแทรกในกริดมังงะ (1-10)"
                   slotProps={{
-                    htmlInput: { min: 1, max: 10 },
+                    htmlInput: { min: 1,max: 10 },
                   }}
                 />
               )}
@@ -1795,10 +1801,10 @@ export default function AdvertisementsPage() {
             {/* Right: Preview */}
             <Box
               sx={{
-                width: { xs: "100%", md: 320 },
+                width: { xs: "100%",md: 320 },
                 flexShrink: 0,
                 ...adDialogPanelSx,
-                p: { xs: 1.5, md: 2 },
+                p: { xs: 1.5,md: 2 },
               }}
             >
               <Typography
@@ -1824,8 +1830,8 @@ export default function AdvertisementsPage() {
               </Typography>
               <PlacementPreview
                 placement={formData.placement}
-                imageUrl={previewUrl || undefined}
-                title={formData.title || undefined}
+                imageUrl={previewUrl||undefined}
+                title={formData.title||undefined}
               />
             </Box>
           </Box>
@@ -1855,7 +1861,7 @@ export default function AdvertisementsPage() {
           <Button
             variant="contained"
             onClick={handleSubmit}
-            disabled={uploading || saving}
+            disabled={uploading||saving}
             sx={{
               ...dashboardPrimaryButtonSx,
               px: 4,
@@ -1864,9 +1870,9 @@ export default function AdvertisementsPage() {
           >
             {saving
               ? "กำลังบันทึก..."
-              : formData.isActive
+              :formData.isActive
                 ? "บันทึกและเปิดใช้งาน"
-                : "บันทึกฉบับร่าง"}
+                :"บันทึกฉบับร่าง"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1898,7 +1904,7 @@ export default function AdvertisementsPage() {
           ยืนยันการลบ
         </DialogTitle>
         <DialogContent>
-          <Typography sx={{ fontWeight: 600, color: "#d4d4d4" }}>
+          <Typography sx={{ fontWeight: 600,color: "#d4d4d4" }}>
             ยืนยันว่าจะลบ &quot;{deletingAd?.title}&quot; ใช่หรือไม่
           </Typography>
           <Typography
@@ -1915,10 +1921,10 @@ export default function AdvertisementsPage() {
             การกระทำนี้ยกเลิกไม่ได้
           </Typography>
         </DialogContent>
-        <DialogActions sx={{ p: 2.5, bgcolor: "rgba(0,0,0,0.2)" }}>
+        <DialogActions sx={{ p: 2.5,bgcolor: "rgba(0,0,0,0.2)" }}>
           <Button
             onClick={handleCloseDeleteDialog}
-            sx={{ color: "#a3a3a3", fontWeight: 800, textTransform: "none" }}
+            sx={{ color: "#a3a3a3",fontWeight: 800,textTransform: "none" }}
           >
             ยกเลิก
           </Button>

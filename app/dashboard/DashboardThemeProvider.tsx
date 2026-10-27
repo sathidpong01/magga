@@ -85,9 +85,10 @@ const dashboardTheme = createTheme({
         root: {
           textTransform: "none",
           fontWeight: 700,
-          color: maggaColors.textMuted,
+          color: maggaColors.textSecondary,
+          opacity: 1,
           "&.Mui-selected": {
-            color: maggaColors.archiveGold,
+            color: maggaColors.archiveGoldHover,
           },
         },
       },

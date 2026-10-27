@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useId } from "react";
 import { usePathname } from "next/navigation";
 import {
   AppBar,
@@ -15,7 +15,10 @@ import {
   Avatar,
   Divider,
   ListItemIcon,
+  ListSubheader,
   Chip,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import Link from "next/link";
 import Image from "next/image";
@@ -42,6 +45,9 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const menuId = useId();
+  const theme = useTheme();
+  const showSubmitInMenu = useMediaQuery(theme.breakpoints.up("lg"));
 
   // Handle Scroll Effect
   useEffect(() => {
@@ -57,7 +63,11 @@ export default function Header() {
   };
 
   const handleMenuClose = () => {
+    const trigger = anchorEl;
     setAnchorEl(null);
+    requestAnimationFrame(() => {
+      if (trigger?.isConnected && document.activeElement === document.body) trigger.focus({ preventScroll: true });
+    });
   };
 
   const isAdmin = isAdminRole(session);
@@ -278,6 +288,10 @@ export default function Header() {
                 />
               ) : session ? (
                 <IconButton
+                  id={`${menuId}-user-trigger`}
+                  aria-haspopup="menu"
+                  aria-expanded={Boolean(anchorEl)}
+                  aria-controls={anchorEl ? menuId : undefined}
                   onClick={handleMenuOpen}
                   aria-label="Open user menu"
                   sx={{
@@ -324,6 +338,10 @@ export default function Header() {
           {/* Mobile Menu Icon */}
           <Box sx={{ display: { xs: "flex", md: "none" } }}>
             <IconButton
+              id={`${menuId}-mobile-trigger`}
+              aria-haspopup="menu"
+              aria-expanded={Boolean(anchorEl)}
+              aria-controls={anchorEl ? menuId : undefined}
               size="large"
               onClick={handleMenuOpen}
               color="inherit"
@@ -334,11 +352,19 @@ export default function Header() {
           </Box>
 
           {/* Dropdown Menu */}
-          <Menu
+          {anchorEl && <Menu
             anchorEl={anchorEl}
             open={Boolean(anchorEl)}
             onClose={handleMenuClose}
+            autoFocus={false}
+            disableAutoFocus
+            disableRestoreFocus
             slotProps={{
+              list: { id: menuId, "aria-labelledby": anchorEl.id },
+              transition: { onEntering: (element: HTMLElement) => queueMicrotask(() => {
+                const item = Array.from(element.querySelectorAll<HTMLElement>('[role="menuitem"]')).find(item => item.offsetParent !== null && item.getAttribute("aria-disabled") !== "true");
+                (item ?? element.querySelector<HTMLElement>('[role="menu"]'))?.focus({ preventScroll: true });
+              }) },
               paper: {
                 sx: {
                   mt: 1.5,
@@ -363,8 +389,8 @@ export default function Header() {
                 </Box>
               </Box>
             ) : session ? (
-              <Box>
-                <Box sx={{ px: 2, py: 1.5 }}>
+              [
+                <ListSubheader key="identity" component="div" role="presentation" disableSticky sx={{ px: 2, py: 1.5, bgcolor: "transparent", color: "inherit", lineHeight: "normal" }}>
                   <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
                     {session.user?.name}
                   </Typography>
@@ -391,26 +417,27 @@ export default function Header() {
                       />
                     )}
                   </Box>
-                </Box>
-                <Divider sx={{ borderColor: "rgba(255,255,255,0.1)" }} />
+                </ListSubheader>,
+                <Divider key="identity-divider" sx={{ borderColor: "rgba(255,255,255,0.1)" }} />,
 
-                {!isAdmin && (
+                !isAdmin && showSubmitInMenu && (
                   <MenuItem
+                    key="submit"
                     onClick={handleMenuClose}
                     component={Link}
                     href="/dashboard/submit"
                     prefetch={false}
-                    sx={{ display: { xs: "none", lg: "flex" } }}
                   >
                     <ListItemIcon>
                       <CloudUploadIcon sx={{ color: "#fbbf24" }} />
                     </ListItemIcon>
                     ฝากลงมังงะ
                   </MenuItem>
-                )}
+                ),
 
-                {!isAdmin && (
+                !isAdmin && (
                   <MenuItem
+                    key="submissions"
                     onClick={handleMenuClose}
                     component={Link}
                     href="/dashboard/submissions"
@@ -421,10 +448,11 @@ export default function Header() {
                     </ListItemIcon>
                     รายการของฉัน
                   </MenuItem>
-                )}
+                ),
 
-                {isAdmin && (
+                isAdmin && (
                   <MenuItem
+                    key="dashboard"
                     onClick={handleMenuClose}
                     component={Link}
                     href="/dashboard"
@@ -435,9 +463,10 @@ export default function Header() {
                     </ListItemIcon>
                     Admin Dashboard
                   </MenuItem>
-                )}
+                ),
 
                 <MenuItem
+                  key="profile"
                   onClick={handleMenuClose}
                   component={Link}
                   href={`/profile/${(session?.user as any)?.username || session?.user?.id || ""}`}
@@ -447,9 +476,10 @@ export default function Header() {
                     <PersonIcon sx={{ color: "#5eead4" }} />
                   </ListItemIcon>
                   หน้าโปรไฟล์
-                </MenuItem>
+                </MenuItem>,
 
                 <MenuItem
+                  key="settings"
                   onClick={handleMenuClose}
                   component={Link}
                   href="/settings"
@@ -459,9 +489,10 @@ export default function Header() {
                     <SettingsIcon sx={{ color: "#fbbf24" }} />
                   </ListItemIcon>
                   ตั้งค่าบัญชี
-                </MenuItem>
+                </MenuItem>,
 
                 <MenuItem 
+                  key="sign-out"
                   onClick={async () => {
                     handleMenuClose();
                     try {
@@ -482,23 +513,24 @@ export default function Header() {
                   </ListItemIcon>
                   ออกจากระบบ
                 </MenuItem>
-              </Box>
+              ]
             ) : (
-              <Box>
-                <MenuItem
+              [
+                showSubmitInMenu && <MenuItem
+                  key="submit"
                   onClick={handleMenuClose}
                   component={Link}
                   href="/auth/signin?callbackUrl=/dashboard/submit"
                   prefetch={false}
-                  sx={{ display: { xs: "none", lg: "flex" } }}
                 >
                   <ListItemIcon>
                     <CloudUploadIcon sx={{ color: "#fbbf24" }} />
                   </ListItemIcon>
                   ฝากลงมังงะ
-                </MenuItem>
-                <Divider sx={{ display: { xs: "none", lg: "block" }, borderColor: "rgba(255,255,255,0.1)" }} />
+                </MenuItem>,
+                showSubmitInMenu && <Divider key="submit-divider" sx={{ borderColor: "rgba(255,255,255,0.1)" }} />,
                 <MenuItem
+                  key="sign-in"
                   onClick={() => { handleMenuClose(); setAuthModalOpen(true); }}
                 >
                   <ListItemIcon>
@@ -506,9 +538,9 @@ export default function Header() {
                   </ListItemIcon>
                   เข้าสู่ระบบ
                 </MenuItem>
-              </Box>
+              ]
             )}
-          </Menu>
+          </Menu>}
         </Toolbar>
       </Container>
     </AppBar>

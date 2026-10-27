@@ -1,208 +1,32 @@
 "use client";
-
-import {
-  Box,
-  Skeleton,
-  TableContainer,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-} from "@mui/material";
-import {
-  dashboardTableContainerSx,
-  dashboardTokens,
-  dashboardRadii,
-} from "@/app/components/dashboard/system";
+import { Box, Paper, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
+import { useSearchParams } from "next/navigation";
+import MangaListHeader from "@/app/components/dashboard/MangaListHeader";
+import AdminListControls from "@/app/components/dashboard/AdminListControls";
+import { mangaColumnWidths, mangaListPageSx, mangaListShellSx, mangaSorts, mangaStatuses, mangaTableSx } from "@/app/components/dashboard/manga-list-layout";
+import { adminPageQuery } from "@/lib/admin-pagination";
+import { maggaColors, maggaRadii } from "@/lib/design-tokens";
 
 export default function MangaListLoading() {
-  return (
-    <Box>
-      {/* Header */}
-      <Box
-        sx={{
-          mb: 3,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
-      >
-        <Box>
-          <Skeleton
-            variant="text"
-            width={240}
-            height={38}
-            sx={{ bgcolor: "rgba(255,255,255,0.08)", borderRadius: "6px" }}
-          />
-          <Skeleton
-            variant="text"
-            width={320}
-            height={20}
-            sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: "4px", mt: 0.5 }}
-          />
-        </Box>
-        <Skeleton
-          variant="rectangular"
-          width={150}
-          height={40}
-          sx={{ bgcolor: "rgba(255,255,255,0.08)", borderRadius: dashboardRadii.button }}
-        />
-      </Box>
-
-      {/* Search & Action Bar */}
-      <Box
-        sx={{
-          mb: 2.5,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: 2,
-        }}
-      >
-        <Skeleton
-          variant="rectangular"
-          width={320}
-          height={42}
-          sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: dashboardRadii.field }}
-        />
-        <Skeleton
-          variant="text"
-          width={110}
-          height={24}
-          sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: "4px" }}
-        />
-      </Box>
-
-      {/* Manga Table */}
-      <TableContainer sx={dashboardTableContainerSx}>
-        <Table>
-          <TableHead>
-            <TableRow
-              sx={{
-                "& th": {
-                  borderBottom: `1px solid ${dashboardTokens.border}`,
-                  bgcolor: "rgba(255,255,255,0.02)",
-                  py: 1.75,
-                  px: 2,
-                },
-              }}
-            >
-              {[
-                "",
-                "ปก",
-                "ชื่อเรื่อง",
-                "หมวดหมู่",
-                "แท็ก",
-                "สถานะ",
-                "ผู้ชม",
-                "จัดการ",
-              ].map((header) => (
-                <TableCell key={header}>
-                  <Skeleton
-                    variant="text"
-                    width={header === "" || header === "ปก" ? 36 : 70}
-                    height={20}
-                    sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: "4px" }}
-                  />
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-              <TableRow
-                key={i}
-                sx={{
-                  "& td": {
-                    borderBottom: `1px solid rgba(255,255,255,0.05)`,
-                    py: 1.5,
-                    px: 2,
-                  },
-                }}
-              >
-                <TableCell>
-                  <Skeleton
-                    variant="rectangular"
-                    width={18}
-                    height={18}
-                    sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: "4px" }}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Skeleton
-                    variant="rectangular"
-                    width={42}
-                    height={56}
-                    sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: "6px" }}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Skeleton
-                    variant="text"
-                    width="min(240px, 80%)"
-                    height={22}
-                    sx={{ bgcolor: "rgba(255,255,255,0.08)", borderRadius: "4px" }}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Skeleton
-                    variant="rectangular"
-                    width={72}
-                    height={24}
-                    sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: "6px" }}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Box sx={{ display: "flex", gap: 0.5 }}>
-                    <Skeleton
-                      variant="rectangular"
-                      width={55}
-                      height={24}
-                      sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: "6px" }}
-                    />
-                    <Skeleton
-                      variant="rectangular"
-                      width={55}
-                      height={24}
-                      sx={{ bgcolor: "rgba(255,255,255,0.05)", borderRadius: "6px" }}
-                    />
-                  </Box>
-                </TableCell>
-                <TableCell>
-                  <Skeleton
-                    variant="rectangular"
-                    width={68}
-                    height={24}
-                    sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: "6px" }}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Skeleton
-                    variant="text"
-                    width={50}
-                    height={20}
-                    sx={{ bgcolor: "rgba(255,255,255,0.07)", borderRadius: "4px" }}
-                  />
-                </TableCell>
-                <TableCell>
-                  <Box sx={{ display: "flex", gap: 0.5, justifyContent: "flex-end" }}>
-                    {[1, 2, 3].map((j) => (
-                      <Skeleton
-                        key={j}
-                        variant="rectangular"
-                        width={30}
-                        height={30}
-                        sx={{ bgcolor: "rgba(255,255,255,0.06)", borderRadius: "6px" }}
-                      />
-                    ))}
-                  </Box>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
+  const params = useSearchParams();
+  const query = adminPageQuery(Object.fromEntries(params.entries()));
+  const labels = ["เลือก", "ปก", "ชื่อเรื่อง", "หมวดหมู่", "แท็ก", "สถานะ", "ยอดอ่าน", "จัดการ"];
+  return <Box sx={mangaListPageSx} aria-busy="true" aria-label="กำลังโหลดรายการมังงะ">
+    <MangaListHeader />
+    <AdminListControls query={query} hasMore={false} count={0} sorts={mangaSorts} statuses={mangaStatuses} loading compactSpacing />
+    <Box sx={mangaListShellSx}>
+      <Box sx={{ mb: 1, minHeight: 56, display: "flex", alignItems: "center", px: 2 }}><Typography sx={{ fontSize: "0.875rem", fontWeight: 800 }}>กำลังโหลดรายการในหน้านี้</Typography></Box>
+      <TableContainer component={Paper} sx={{ bgcolor: maggaColors.surfaceMuted, border: `1px solid ${maggaColors.border}`, borderRadius: "10px", backgroundImage: "none", overflowX: "auto" }}>
+        <Table className="admin-work-table admin-manga-table" sx={mangaTableSx} aria-label="กำลังโหลดรายการมังงะ">
+          <colgroup>{mangaColumnWidths.map((width, index) => <col key={index} style={{ width }} />)}</colgroup>
+          <TableHead><TableRow sx={{ bgcolor: "rgba(255,255,255,0.02)", "& th": { color: maggaColors.textSecondary, py: 2, px: 2, borderBottom: `1px solid ${maggaColors.border}`, fontWeight: 600 } }}>{labels.map((label, index) => <TableCell key={label} align={index === 7 ? "right" : "left"}>{index === 0 ? <Skeleton variant="rounded" width={24} height={24} sx={{ mx: "auto" }} /> : label}</TableCell>)}</TableRow></TableHead>
+          <TableBody>{Array.from({ length: query.limit }, (_, index) => <TableRow key={index} sx={{ "& td": { py: 2, px: 2, borderBottom: `1px solid ${maggaColors.border}` } }}>
+            {labels.map((label, column) => <TableCell key={label} data-label={label}>
+              {column === 0 ? <Box sx={{ width: 42, height: 42, display: "grid", placeItems: "center" }}><Skeleton variant="rounded" width={24} height={24} /></Box> : column === 1 ? <Skeleton variant="rounded" width={48} height={64} sx={{ borderRadius: `${maggaRadii.card}px` }} /> : column === 6 ? <Box sx={{ width: "100%", maxWidth: 130, ml: "auto" }}><Skeleton width={38} height={20} /><Skeleton variant="rounded" height={44} /></Box> : column === 7 ? <Box sx={{ display: "flex", justifyContent: "flex-end", gap: "4px" }}>{[0, 1, 2].map(item => <Skeleton key={item} variant="rounded" width={44} height={44} />)}</Box> : <Skeleton variant="rounded" height={24} width={column === 2 ? "80%" : column === 4 ? "90%" : 55} />}
+            </TableCell>)}
+          </TableRow>)}</TableBody>
         </Table>
       </TableContainer>
     </Box>
-  );
+  </Box>;
 }

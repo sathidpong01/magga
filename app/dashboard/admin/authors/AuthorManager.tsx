@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState,useEffect,useRef } from "react";
 import { enrichUnchangedItem } from "@/lib/form-metadata";
 import { useRouter } from "next/navigation";
 import type { InferSelectModel } from "drizzle-orm";
 import type { authors } from "@/db/schema";
 
-type Author = InferSelectModel<typeof authors>;
-import { Button, TextField, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, IconButton, Stack, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, CircularProgress, Tooltip, Box, Avatar, Chip, InputAdornment } from "@mui/material";
+type Author=InferSelectModel<typeof authors>;
+import { Button,TextField,Typography,Paper,Table,TableBody,TableCell,TableContainer,TableHead,TableRow,IconButton,Stack,Dialog,DialogActions,DialogContent,DialogContentText,DialogTitle,CircularProgress,Tooltip,Box,Avatar,Chip,InputAdornment } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import LinkIcon from "@mui/icons-material/Link";
@@ -15,183 +15,170 @@ import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import AddIcon from "@mui/icons-material/Add";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { useToast } from "@/app/contexts/ToastContext";
-import { dashboardTokens, dashboardRadii, dashboardPrimaryButtonSx } from "@/app/components/dashboard/system";
+import { dashboardTokens,dashboardRadii,dashboardPrimaryButtonSx } from "@/app/components/dashboard/system";
+import DirectoryTableHeader from "@/app/components/dashboard/DirectoryTableHeader";
+import { maggaColors } from "@/lib/design-tokens";
+import { authorSocialLinks,authorLinkLabel } from "@/lib/author-social-links";
+import { directoryColumns,directoryTableSx } from "@/app/components/dashboard/directory-list-layout";
 
-type SocialLink = {
+type SocialLink={
   url: string;
   label: string;
   icon: string;
 };
 
-type AuthorManagerProps = {
+type AuthorManagerProps={
   initialAuthors: Author[];
 };
 
 export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
-  const router = useRouter();
-  const [editorOpen, setEditorOpen] = useState(false);
-  const [authors, setAuthors] = useState<Author[]>(initialAuthors);
-  const { showSuccess, showError } = useToast();
-  const [editingAuthor, setEditingAuthor] = useState<Author | null>(null);
-  const [name, setName] = useState("");
-  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([
-    { url: "", label: "", icon: "" },
+  const router=useRouter();
+  const [editorOpen,setEditorOpen]=useState(false);
+  const [authors,setAuthors]=useState<Author[]>(initialAuthors);
+  const { showSuccess,showError }=useToast();
+  const [editingAuthor,setEditingAuthor]=useState<Author|null>(null);
+  const [name,setName]=useState("");
+  const [socialLinks,setSocialLinks]=useState<SocialLink[]>([
+    { url: "",label: "",icon: "" },
   ]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isFetching, setIsFetching] = useState<number | null>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [authorToDelete, setAuthorToDelete] = useState<Author | null>(null);
-  const enrichmentGeneration = useRef(0);
-  const savePending = useRef(false);
+  const [isLoading,setIsLoading]=useState(false);
+  const [isFetching,setIsFetching]=useState<number|null>(null);
+  const [deleteDialogOpen,setDeleteDialogOpen]=useState(false);
+  const [authorToDelete,setAuthorToDelete]=useState<Author|null>(null);
+  const enrichmentGeneration=useRef(0);
+  const savePending=useRef(false);
 
   useEffect(() => {
     setAuthors(initialAuthors);
-  }, [initialAuthors]);
+  },[initialAuthors]);
 
   // Auto-fetch metadata from URL
-  const handleAutoFetch = async (index: number) => {
-    const link = socialLinks[index];
-    if (!link.url) return;
-    const generation = ++enrichmentGeneration.current;
+  const handleAutoFetch=async (index: number) => {
+    const link=socialLinks[index];
+    if(!link.url) return;
+    const generation=++enrichmentGeneration.current;
 
     setIsFetching(index);
 
     try {
-      const res = await fetch(
+      const res=await fetch(
         `/api/metadata?url=${encodeURIComponent(link.url)}`,
       );
-      if (!res.ok) throw new Error("ไม่สามารถดึงข้อมูลได้");
-      const data = await res.json();
+      if(!res.ok) throw new Error("ไม่สามารถดึงข้อมูลได้");
+      const data=await res.json();
 
-      if (generation !== enrichmentGeneration.current) return;
-      setSocialLinks((current) => enrichUnchangedItem(current, link, data));
+      if(generation!==enrichmentGeneration.current) return;
+      setSocialLinks((current) => enrichUnchangedItem(current,link,data));
     } catch {
-      if (generation === enrichmentGeneration.current)
+      if(generation===enrichmentGeneration.current)
         showError("ไม่สามารถดึงข้อมูลจาก URL นี้ได้");
     } finally {
-      if (generation === enrichmentGeneration.current) setIsFetching(null);
+      if(generation===enrichmentGeneration.current) setIsFetching(null);
     }
   };
 
-  const addSocialLink = () => {
-    setSocialLinks((current) => [...current, { url: "", label: "", icon: "" }]);
+  const addSocialLink=() => {
+    setSocialLinks((current) => [...current,{ url: "",label: "",icon: "" }]);
   };
 
-  const removeSocialLink = (index: number) => {
-    if (socialLinks.length > 1) {
-      setSocialLinks((current) => current.filter((_, i) => i !== index));
+  const removeSocialLink=(index: number) => {
+    if(socialLinks.length>1) {
+      setSocialLinks((current) => current.filter((_,i) => i!==index));
     }
   };
 
-  const updateSocialLink = (
+  const updateSocialLink=(
     index: number,
     field: keyof SocialLink,
     value: string,
   ) => {
     setSocialLinks((current) =>
-      current.map((link, i) =>
-        i === index ? { ...link, [field]: value } : link,
+      current.map((link,i) =>
+        i===index? { ...link,[field]: value }:link,
       ),
     );
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit=async (e: React.FormEvent) => {
     e.preventDefault();
-    if (savePending.current) return;
-    savePending.current = true;
+    if(savePending.current) return;
+    savePending.current=true;
     enrichmentGeneration.current++;
     setIsFetching(null);
     setIsLoading(true);
 
     // Filter out empty links and prepare data
-    const validLinks = socialLinks.filter((link) => link.url.trim() !== "");
-    const profileUrl = validLinks.length > 0 ? validLinks[0].url : null;
+    const validLinks=socialLinks.filter((link) => link.url.trim()!=="");
+    const profileUrl=validLinks.length>0? validLinks[0].url:null;
 
-    const url = editingAuthor
+    const url=editingAuthor
       ? `/api/authors/${editingAuthor.id}`
-      : "/api/authors";
-    const method = editingAuthor ? "PUT" : "POST";
+      :"/api/authors";
+    const method=editingAuthor? "PUT":"POST";
 
     try {
-      const response = await fetch(url, {
+      const response=await fetch(url,{
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name,
           profileUrl,
           socialLinks:
-            validLinks.length > 0 ? JSON.stringify(validLinks) : null,
+            validLinks.length>0? JSON.stringify(validLinks):null,
         }),
       });
 
-      if (!response.ok) {
-        const res = await response.json();
-        throw new Error(res.error || "Save failed.");
+      if(!response.ok) {
+        const res=await response.json();
+        throw new Error(res.error||"Save failed.");
       }
 
       showSuccess(
-        editingAuthor ? "อัปเดตผู้แต่งเรียบร้อย" : "เพิ่มผู้แต่งเรียบร้อย",
+        editingAuthor? "อัปเดตผู้แต่งเรียบร้อย":"เพิ่มผู้แต่งเรียบร้อย",
       );
       resetForm();
       router.refresh();
-    } catch (err) {
-      showError(err instanceof Error ? err.message : "เกิดข้อผิดพลาด");
+    } catch(err) {
+      showError(err instanceof Error? err.message:"เกิดข้อผิดพลาด");
     } finally {
-      savePending.current = false;
+      savePending.current=false;
       setIsLoading(false);
     }
   };
 
-  const resetForm = () => {
+  const resetForm=() => {
     setEditorOpen(false);
     enrichmentGeneration.current++;
     setIsFetching(null);
     setName("");
-    setSocialLinks([{ url: "", label: "", icon: "" }]);
+    setSocialLinks([{ url: "",label: "",icon: "" }]);
     setEditingAuthor(null);
   };
 
-  const handleEdit = (author: Author) => {
+  const handleEdit=(author: Author) => {
+    if(savePending.current) return;
     setEditorOpen(true);
-    if (savePending.current) return;
     enrichmentGeneration.current++;
     setIsFetching(null);
     setEditingAuthor(author);
     setName(author.name);
 
-    // Parse social links
-    if (author.socialLinks) {
-      try {
-        const links = JSON.parse(author.socialLinks);
-        setSocialLinks(
-          links.length > 0
-            ? links
-            : [{ url: author.profileUrl || "", label: "", icon: "" }],
-        );
-      } catch {
-        setSocialLinks([{ url: author.profileUrl || "", label: "", icon: "" }]);
-      }
-    } else if (author.profileUrl) {
-      setSocialLinks([{ url: author.profileUrl, label: "", icon: "" }]);
-    } else {
-      setSocialLinks([{ url: "", label: "", icon: "" }]);
-    }
-
-    window.scrollTo(0, 0);
+    const links=authorSocialLinks(author);
+    setSocialLinks(links.length? links:[{ url: "",label: "",icon: "" }]);
   };
 
-  const handleDeleteClick = (author: Author) => {
+  const handleDeleteClick=(author: Author) => {
     setAuthorToDelete(author);
     setDeleteDialogOpen(true);
   };
 
-  const handleDeleteConfirm = async () => {
-    if (!authorToDelete) return;
+  const handleDeleteConfirm=async () => {
+    if(!authorToDelete) return;
     try {
-      const response = await fetch(`/api/authors/${authorToDelete.id}`, {
+      const response=await fetch(`/api/authors/${authorToDelete.id}`,{
         method: "DELETE",
       });
-      if (!response.ok) throw new Error("Delete failed.");
+      if(!response.ok) throw new Error("Delete failed.");
       setDeleteDialogOpen(false);
       setAuthorToDelete(null);
       showSuccess("ลบผู้แต่งเรียบร้อย");
@@ -202,39 +189,17 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
     }
   };
 
-  const parseSocialLinks = (author: Author): SocialLink[] => {
-    if (author.socialLinks) {
-      try {
-        return JSON.parse(author.socialLinks);
-      } catch {
-        return [];
-      }
-    }
-    return author.profileUrl
-      ? [{ url: author.profileUrl, label: "", icon: "" }]
-      : [];
-  };
-
   return (
     <>
-      <Button
-        onClick={() => {
-          resetForm();
-          setEditorOpen(true);
-        }}
-        sx={{ mb: 2 }}
-      >
-        เพิ่มผู้แต่ง
-      </Button>
       {/* Form Section */}
       <Dialog
         open={editorOpen}
         onClose={() => {
-          if (!isLoading) resetForm();
+          if(!isLoading) resetForm();
         }}
         fullWidth
         maxWidth="md"
-        aria-label="ข้อมูลผู้แต่ง"
+        aria-labelledby="author-editor-title"
       >
         <DialogContent>
           <Paper
@@ -255,6 +220,8 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
               }}
             >
               <Typography
+                id="author-editor-title"
+                component="h2"
                 variant="subtitle1"
                 sx={{
                   fontWeight: 800,
@@ -262,10 +229,10 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                   letterSpacing: "0.03em",
                 }}
               >
-                {editingAuthor ? "แก้ไขผู้แต่ง" : "เพิ่มผู้แต่ง"}
+                {editingAuthor? "แก้ไขผู้แต่ง":"เพิ่มผู้แต่ง"}
               </Typography>
               <Stack direction="row" spacing={1}>
-                {editingAuthor && (
+                {editingAuthor&&(
                   <Button
                     variant="outlined"
                     onClick={resetForm}
@@ -289,13 +256,13 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                   type="submit"
                   form="author-form"
                   variant="contained"
-                  disabled={isLoading || !name}
+                  disabled={isLoading||!name}
                   startIcon={
-                    isLoading ? (
+                    isLoading? (
                       <CircularProgress size={18} sx={{ color: "#0f0f14" }} />
-                    ) : editingAuthor ? (
+                    ):editingAuthor? (
                       <EditIcon />
-                    ) : (
+                    ):(
                       <AddIcon />
                     )
                   }
@@ -305,7 +272,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                     borderRadius: dashboardRadii.button,
                   }}
                 >
-                  {editingAuthor ? "บันทึกการแก้ไข" : "เพิ่ม"}
+                  {editingAuthor? "บันทึกการแก้ไข":"เพิ่ม"}
                 </Button>
               </Stack>
             </Stack>
@@ -314,12 +281,14 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
               <Box
                 component="fieldset"
                 disabled={isLoading}
-                sx={{ border: 0, p: 0, m: 0, minWidth: 0 }}
+                sx={{ border: 0,p: 0,m: 0,minWidth: 0 }}
               >
                 <Stack spacing={2.5}>
                   {/* Author Name only - icons come from social links */}
                   <Box>
                     <Typography
+                      component="label"
+                      htmlFor="author-name"
                       variant="caption"
                       sx={{
                         color: dashboardTokens.textMuted,
@@ -338,6 +307,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                       fullWidth
                       required
                       size="small"
+                      id="author-name"
                       placeholder="ชื่อผู้แต่งหรือชื่อปากกา..."
                       sx={{
                         "& .MuiOutlinedInput-root": {
@@ -369,7 +339,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                     </Typography>
 
                     <Stack spacing={2}>
-                      {socialLinks.map((link, index) => (
+                      {socialLinks.map((link,index) => (
                         <Box
                           key={index}
                           sx={{
@@ -380,7 +350,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                           }}
                         >
                           <Stack
-                            direction={{ xs: "column", md: "row" }}
+                            direction={{ xs: "column",md: "row" }}
                             spacing={1.5}
                             sx={{
                               alignItems: "flex-end",
@@ -390,7 +360,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                               <Typography
                                 variant="caption"
                                 sx={{
-                                  color: "#737373",
+                                  color: maggaColors.textSecondary,
                                   mb: 0.5,
                                   display: "block",
                                 }}
@@ -400,7 +370,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                               <TextField
                                 value={link.url}
                                 onChange={(e) =>
-                                  updateSocialLink(index, "url", e.target.value)
+                                  updateSocialLink(index,"url",e.target.value)
                                 }
                                 fullWidth
                                 size="small"
@@ -412,6 +382,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                                   },
                                 }}
                                 slotProps={{
+                                  htmlInput: { "aria-label": `URL ช่องทาง ${index+1}` },
                                   input: {
                                     startAdornment: (
                                       <InputAdornment position="start">
@@ -450,6 +421,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                                 fullWidth
                                 size="small"
                                 placeholder="ชื่อแสดง (เช่น Twitter)"
+                                slotProps={{ htmlInput: { "aria-label": `ชื่อแสดงช่องทาง ${index+1}` } }}
                                 sx={{
                                   "& .MuiOutlinedInput-root": {
                                     bgcolor: dashboardTokens.surfaceMuted,
@@ -488,6 +460,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                                   fullWidth
                                   size="small"
                                   placeholder="วาง URL ไอคอน"
+                                  slotProps={{ htmlInput: { "aria-label": `URL ไอคอนช่องทาง ${index+1}` } }}
                                   sx={{
                                     "& .MuiOutlinedInput-root": {
                                       bgcolor: dashboardTokens.surfaceMuted,
@@ -495,10 +468,10 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                                     },
                                   }}
                                 />
-                                {link.icon && (
+                                {link.icon&&(
                                   <Avatar
                                     src={link.icon}
-                                    sx={{ width: 28, height: 28 }}
+                                    sx={{ width: 28,height: 28 }}
                                   />
                                 )}
                               </Stack>
@@ -506,13 +479,13 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                             <Stack
                               direction="row"
                               spacing={0.5}
-                              sx={{ flexShrink: 0, pb: 0.5 }}
+                              sx={{ flexShrink: 0,pb: 0.5 }}
                             >
                               <Tooltip title="ดึงชื่อและไอคอนอัตโนมัติ">
                                 <Box component="span">
                                   <IconButton
                                     onClick={() => handleAutoFetch(index)}
-                                    disabled={!link.url || isFetching === index}
+                                    disabled={!link.url||isFetching===index}
                                     size="small"
                                     sx={{
                                       bgcolor: dashboardTokens.surfaceAlt,
@@ -522,15 +495,15 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                                       color: dashboardTokens.textMuted,
                                     }}
                                   >
-                                    {isFetching === index ? (
+                                    {isFetching===index? (
                                       <CircularProgress size={18} />
-                                    ) : (
+                                    ):(
                                       <AutoFixHighIcon fontSize="small" />
                                     )}
                                   </IconButton>
                                 </Box>
                               </Tooltip>
-                              {socialLinks.length > 1 && (
+                              {socialLinks.length>1&&(
                                 <Tooltip title="ลบช่องทางนี้">
                                   <IconButton
                                     onClick={() => removeSocialLink(index)}
@@ -598,29 +571,12 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
           overflow: "hidden",
         }}
       >
-        <Box
-          sx={{
-            px: 3,
-            py: 2.5,
-            borderBottom: `1px solid ${dashboardTokens.border}`,
-            bgcolor: "rgba(255,255,255,0.02)",
-          }}
-        >
-          <Typography
-            variant="subtitle1"
-            sx={{
-              fontWeight: 900,
-              color: "#fafafa",
-              textTransform: "none",
-              fontSize: "0.85rem",
-              letterSpacing: "0",
-            }}
-          >
-            รายชื่อผู้แต่ง ({authors.length})
-          </Typography>
-        </Box>
+        <DirectoryTableHeader kind="authors" count={authors.length}>
+          <Button startIcon={<AddIcon />} sx={dashboardPrimaryButtonSx} onClick={() => { resetForm(); setEditorOpen(true); }}>เพิ่มผู้แต่ง</Button>
+        </DirectoryTableHeader>
         <TableContainer>
-          <Table className="admin-work-table" aria-label="รายการผู้แต่ง">
+          <Table className="admin-work-table" sx={directoryTableSx} aria-label="รายการผู้แต่ง">
+            <colgroup>{directoryColumns.authors.map((width,index) => <col key={index} style={{ width }} />)}</colgroup>
             <TableHead>
               <TableRow sx={{ bgcolor: "rgba(0,0,0,0.2)" }}>
                 <TableCell
@@ -659,7 +615,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
             </TableHead>
             <TableBody>
               {authors.map((author) => {
-                const links = parseSocialLinks(author);
+                const links=authorSocialLinks(author);
                 return (
                   <TableRow
                     key={author.id}
@@ -669,7 +625,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                     }}
                   >
                     <TableCell data-label="ผู้แต่ง">
-                      <Typography sx={{ fontWeight: 500, color: "#fafafa" }}>
+                      <Typography title={author.name} sx={{ fontWeight: 500,color: maggaColors.textPrimary,overflowWrap: "anywhere" }}>
                         {author.name}
                       </Typography>
                     </TableCell>
@@ -677,28 +633,30 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                       <Stack
                         direction="row"
                         spacing={0.5}
+                        useFlexGap
                         sx={{
                           flexWrap: "wrap",
                           gap: 0.5,
+                          minWidth: 0,
+                          flex: 1,
                         }}
                       >
-                        {links.length > 0 ? (
-                          links.map((link, i) => (
+                        {links.length>0? (
+                          links.map((link,i) => (
                             <Chip
                               key={i}
                               icon={
-                                link.icon ? (
+                                link.icon? (
                                   <Avatar
                                     src={link.icon}
-                                    sx={{ width: 16, height: 16 }}
+                                    sx={{ width: 16,height: 16 }}
                                   />
-                                ) : (
+                                ):(
                                   <OpenInNewIcon sx={{ fontSize: 14 }} />
                                 )
                               }
                               label={
-                                link.label ||
-                                new URL(link.url).hostname.replace("www.", "")
+                                authorLinkLabel(link)
                               }
                               size="small"
                               component="a"
@@ -706,6 +664,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                               target="_blank"
                               rel="noopener noreferrer"
                               clickable
+                              title={authorLinkLabel(link)}
                               sx={{
                                 bgcolor: dashboardTokens.surfaceAlt,
                                 color: dashboardTokens.textMuted,
@@ -714,11 +673,14 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                                   color: dashboardTokens.text,
                                 },
                                 borderRadius: 0.75,
+                                maxWidth: "100%",
+                                height: { xs: 44,md: 32 },
+                                "& .MuiChip-label": { maxWidth: 220 },
                               }}
                             />
                           ))
-                        ) : (
-                          <Typography variant="body2" sx={{ color: "#525252" }}>
+                        ):(
+                          <Typography variant="body2" sx={{ color: maggaColors.textSecondary }}>
                             ไม่มีข้อมูล
                           </Typography>
                         )}
@@ -728,9 +690,10 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                       <Tooltip title="แก้ไข">
                         <IconButton
                           onClick={() => handleEdit(author)}
+                          aria-label={`แก้ไขผู้แต่ง ${author.name}`}
                           size="small"
                           sx={{
-                            color: "#737373",
+                            color: maggaColors.textSecondary,
                             "&:hover": { color: "#fafafa" },
                           }}
                         >
@@ -740,9 +703,10 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                       <Tooltip title="ลบผู้แต่ง">
                         <IconButton
                           onClick={() => handleDeleteClick(author)}
+                          aria-label={`ลบผู้แต่ง ${author.name}`}
                           size="small"
                           sx={{
-                            color: "#737373",
+                            color: maggaColors.textSecondary,
                             "&:hover": { color: "#ef4444" },
                           }}
                         >
@@ -753,11 +717,11 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                   </TableRow>
                 );
               })}
-              {authors.length === 0 && (
+              {authors.length===0&&(
                 <TableRow>
                   <TableCell
                     colSpan={3}
-                    sx={{ textAlign: "center", py: 6, color: "#525252" }}
+                    sx={{ textAlign: "center",py: 6,color: maggaColors.textSecondary }}
                   >
                     ยังไม่มีผู้แต่ง กรุณาเพิ่มรายการแรกด้านบน
                   </TableCell>
@@ -786,16 +750,16 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
         }}
       >
         <DialogTitle
-          sx={{ fontWeight: 900, letterSpacing: "0", fontSize: "1rem" }}
+          sx={{ fontWeight: 900,letterSpacing: "0",fontSize: "1rem" }}
         >
           ยืนยันการลบ
         </DialogTitle>
         <DialogContent>
-          <DialogContentText sx={{ color: "#d4d4d4", fontWeight: 600 }}>
+          <DialogContentText sx={{ color: "#d4d4d4",fontWeight: 600 }}>
             ต้องการลบผู้แต่ง &quot;{authorToDelete?.name}&quot; ใช่หรือไม่?
           </DialogContentText>
         </DialogContent>
-        <DialogActions sx={{ p: 2.5, bgcolor: "rgba(0,0,0,0.2)" }}>
+        <DialogActions sx={{ p: 2.5,bgcolor: "rgba(0,0,0,0.2)" }}>
           <Button
             onClick={() => setDeleteDialogOpen(false)}
             sx={{

@@ -20,7 +20,7 @@ export default function ScrollToTop() {
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
-      behavior: "smooth",
+      behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
     });
   };
 
@@ -43,6 +43,8 @@ export default function ScrollToTop() {
           bottom: { xs: 80, md: 32 }, // Higher on mobile to avoid bottom nav if exists
           right: { xs: 16, md: 32 },
           zIndex: 1000,
+          minWidth: 44,
+          minHeight: 44,
           bgcolor: "primary.main",
           "&:hover": {
             bgcolor: "primary.dark",

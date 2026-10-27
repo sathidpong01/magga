@@ -19,6 +19,10 @@ import { dashboardTokens, dashboardPrimaryButtonSx } from "@/app/components/dash
 import { authFetch } from "@/lib/auth-fetch";
 import { getMetadataChipSx } from "@/lib/metadata-chip-tone";
 import CacheRefreshNotice from "@/app/components/dashboard/CacheRefreshNotice";
+import MangaViewHistory from "@/app/components/dashboard/MangaViewHistory";
+import type { ViewSummary } from "@/lib/view-history";
+import { maggaColors, maggaRadii } from "@/lib/design-tokens";
+import { mangaColumnWidths, mangaTableSx } from "@/app/components/dashboard/manga-list-layout";
 
 type Manga = {
   id: string;
@@ -27,6 +31,7 @@ type Manga = {
   coverImage: string;
   isHidden: boolean;
   viewCount: number;
+  viewHistory?: ViewSummary | null;
   category: { id?:string; name: string } | null;
   tags: { id: string; name: string }[];
   author: { id?: string; name: string } | null;
@@ -305,12 +310,13 @@ export default function MangaDataTable({
           }}
         />
       )}
-      {selected.length > 0 && (
+      {(
         <Toolbar
           sx={{
-            mb: 2,
-            bgcolor: "rgba(251, 191, 36, 0.08)",
-            border: "1px solid rgba(251, 191, 36, 0.18)",
+            mb: 1,
+            minHeight: "56px !important",
+            bgcolor: selected.length ? "rgba(251, 191, 36, 0.08)" : "transparent",
+            border: selected.length ? "1px solid rgba(251, 191, 36, 0.18)" : "1px solid transparent",
             borderRadius: 1.5,
             display: "flex",
             justifyContent: "space-between",
@@ -327,9 +333,9 @@ export default function MangaDataTable({
               letterSpacing: "0.02em",
             }}
           >
-            เลือกแล้ว {selected.length} รายการ
+            {selected.length ? `เลือกแล้ว ${selected.length} รายการ` : `เลือกหลายรายการเฉพาะหน้านี้ · ${filteredMangas.length} รายการ`}
           </Typography>
-          <Box sx={{ display: "flex", gap: 1 }}>
+          {selected.length > 0 && <Box sx={{ display: "flex", gap: 1, maxWidth: "100%", overflowX: "auto" }}>
             <Button
               size="small"
               startIcon={<VisibilityOffIcon />}
@@ -372,13 +378,11 @@ export default function MangaDataTable({
             >
               ลบทั้งหมด
             </Button>
-          </Box>
+          </Box>}
         </Toolbar>
       )}
 
-      <Typography sx={{ mb: 1 }}>
-        เลือกหลายรายการเฉพาะหน้านี้ · {filteredMangas.length} รายการ
-      </Typography>
+
       <TableContainer
         component={Paper}
         sx={{
@@ -387,16 +391,9 @@ export default function MangaDataTable({
           WebkitOverflowScrolling: "touch",
         }}
       >
-        <Table className="admin-work-table" aria-label="รายการมังงะ">
+        <Table className="admin-work-table admin-manga-table" sx={mangaTableSx} aria-label="รายการมังงะ">
           <colgroup>
-            <col style={{ width: 44 }} />
-            <col style={{ width: 64 }} />
-            <col style={{ width: "27%" }} />
-            <col style={{ width: "12%" }} />
-            <col style={{ width: "12%" }} />
-            <col style={{ width: 80 }} />
-            <col style={{ width: 65 }} />
-            <col style={{ width: 156 }} />
+            {mangaColumnWidths.map((width, index) => <col key={index} style={{ width }} />)}
           </colgroup>
           <TableHead>
             <TableRow
@@ -421,7 +418,7 @@ export default function MangaDataTable({
                   }
                   onChange={handleSelectAll}
                   sx={{
-                    color: "#525252",
+                    color: maggaColors.textMuted,
                     "&.Mui-checked": { color: dashboardTokens.accent },
                     "&.MuiCheckbox-indeterminate": {
                       color: dashboardTokens.accent,
@@ -460,7 +457,7 @@ export default function MangaDataTable({
               <TableCell
                 sx={{ color: "#a3a3a3", fontWeight: 600, width: "80px" }}
               >
-                ผู้ชม
+                ยอดอ่าน
               </TableCell>
               <TableCell
                 align="right"
@@ -490,7 +487,7 @@ export default function MangaDataTable({
                     checked={selected.includes(manga.id)}
                     onChange={() => handleSelect(manga.id)}
                     sx={{
-                      color: "#525252",
+                      color: maggaColors.textMuted,
                       "&.Mui-checked": { color: dashboardTokens.accent },
                     }}
                   />
@@ -501,17 +498,23 @@ export default function MangaDataTable({
                     src={manga.coverImage}
                     alt={manga.title}
                     variant="rounded"
-                    sx={{ width: 40, height: 56 }}
+                    sx={{ width: 48, height: 64, borderRadius: `${maggaRadii.card}px` }}
                   />
                 </TableCell>
 
                 <TableCell data-label="ชื่อเรื่อง">
                   <Link
                     href={`/${manga.slug || manga.id}`}
+                    prefetch={false}
+                    title={manga.title}
                     style={{
                       color: "#fafafa",
                       textDecoration: "none",
                       fontWeight: 500,
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
                     }}
                   >
                     {manga.title}
@@ -530,10 +533,11 @@ export default function MangaDataTable({
                         fontSize: "0.75rem",
                         height: 24,
                         fontWeight: 700,
+                        maxWidth: "100%",
                       }}
                     />
                   ) : (
-                    <Box component="span" sx={{ color: "#525252" }}>
+                    <Box component="span" sx={{ color: maggaColors.textSecondary }}>
                       -
                     </Box>
                   )}
@@ -552,6 +556,7 @@ export default function MangaDataTable({
                       <Chip
                         key={tag.id}
                         label={tag.name}
+                        title={tag.name}
                         size="small"
                         sx={{
                           ...getMetadataChipSx(tag.name),
@@ -559,6 +564,7 @@ export default function MangaDataTable({
                           height: 24,
                           fontWeight: 600,
                           borderRadius: 0.75,
+                          maxWidth: 120,
                         }}
                       />
                     ))}
@@ -567,8 +573,8 @@ export default function MangaDataTable({
                         label={`+${manga.tags.length - 3}`}
                         size="small"
                         sx={{
-                          bgcolor: "#27272a",
-                          color: "#71717a",
+                          bgcolor: maggaColors.surfaceElevated,
+                          color: maggaColors.textSecondary,
                           fontSize: "0.75rem",
                           height: 24,
                         }}
@@ -596,8 +602,11 @@ export default function MangaDataTable({
                   />
                 </TableCell>
 
-                <TableCell data-label="ยอดอ่าน" sx={{ color: "#a3a3a3" }}>
-                  {manga.viewCount.toLocaleString()}
+                <TableCell data-label="ยอดอ่าน" sx={{ color: "#a3a3a3", px: 1 }}>
+                  <Box sx={{ width: "100%", maxWidth: 130, minWidth: 0, ml: "auto" }}>
+                    <Typography component="span" noWrap sx={{ display: "block", fontSize: "0.85rem", fontVariantNumeric: "tabular-nums" }}>{manga.viewCount.toLocaleString()}</Typography>
+                    <MangaViewHistory id={manga.id} title={manga.title} initial={manga.viewHistory} />
+                  </Box>
                 </TableCell>
 
                 <TableCell data-label="จัดการ" align="right">

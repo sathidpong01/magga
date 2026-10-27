@@ -7,7 +7,7 @@ export default function MangaLoading() {
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: maggaColors.background, pb: 8 }}>
       <ReaderHeroSkeleton />
-      <Container maxWidth="lg" sx={{ mt: 6, px: { xs: 0, lg: 3 } }}><MangaReaderSkeleton /></Container>
+      <Container maxWidth="lg" sx={{ mt: 2, px: { xs: 0, lg: 3 } }}><MangaReaderSkeleton /></Container>
     </Box>
   );
 }

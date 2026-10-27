@@ -11,6 +11,7 @@ import {
 } from "@/db/schema";
 import { and, asc, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { escapeLike, pageSlice, type AdminPageQuery } from "./admin-pagination";
+import { readViewSummaries } from "./admin-view-history";
 
 // Call only after the page/API's fresh authorization guard. No shared cache of private lists.
 export async function readAdminManga(query: AdminPageQuery) {
@@ -62,10 +63,12 @@ export async function readAdminManga(query: AdminPageQuery) {
         .innerJoin(tags, eq(tags.id, mangaTags.tagId))
         .where(inArray(mangaTags.mangaId, ids))
     : [];
+  const viewHistory = await readViewSummaries(ids);
   return {
     ...page,
     items: page.items.map((row) => ({
       ...row,
+      viewHistory: viewHistory[row.id] ?? null,
       tags: relations
         .filter((tag) => tag.mangaId === row.id)
         .map(({ id, name }) => ({ id, name })),

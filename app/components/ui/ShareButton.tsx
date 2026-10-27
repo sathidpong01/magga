@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useId } from "react";
 import {
   IconButton,
   Menu,
@@ -25,6 +25,7 @@ interface ShareButtonProps {
 export default function ShareButton({ title, slug }: ShareButtonProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [showCopied, setShowCopied] = useState(false);
+  const menuId = useId();
 
   const getShareUrl = useCallback(() => {
     if (typeof window !== "undefined") {
@@ -35,6 +36,7 @@ export default function ShareButton({ title, slug }: ShareButtonProps) {
 
   const handleShare = useCallback(
     async (event: React.MouseEvent<HTMLElement>) => {
+      const trigger = event.currentTarget;
       const url = getShareUrl();
 
       // Use native share API on mobile if available
@@ -42,17 +44,24 @@ export default function ShareButton({ title, slug }: ShareButtonProps) {
         try {
           await navigator.share({ title, url });
           return;
-        } catch {
-          // User cancelled or API failed, fall through to menu
+        } catch (error) {
+          if (error instanceof Error && error.name === "AbortError") return;
+          // A failed native API can still use the local share menu.
         }
       }
 
-      setAnchorEl(event.currentTarget);
+      setAnchorEl(trigger);
     },
     [title, getShareUrl]
   );
 
-  const handleClose = () => setAnchorEl(null);
+  const handleClose = useCallback(() => {
+    const trigger = anchorEl;
+    setAnchorEl(null);
+    requestAnimationFrame(() => {
+      if (trigger?.isConnected && document.activeElement === document.body) trigger.focus({ preventScroll: true });
+    });
+  }, [anchorEl]);
 
   const handleCopyLink = useCallback(async () => {
     handleClose();
@@ -69,7 +78,7 @@ export default function ShareButton({ title, slug }: ShareButtonProps) {
       document.body.removeChild(textArea);
       setShowCopied(true);
     }
-  }, [getShareUrl]);
+  }, [getShareUrl, handleClose]);
 
   const handleShareX = useCallback(() => {
     handleClose();
@@ -79,7 +88,7 @@ export default function ShareButton({ title, slug }: ShareButtonProps) {
       "_blank",
       "noopener,noreferrer"
     );
-  }, [title, getShareUrl]);
+  }, [title, getShareUrl, handleClose]);
 
   const handleShareFacebook = useCallback(() => {
     handleClose();
@@ -89,7 +98,7 @@ export default function ShareButton({ title, slug }: ShareButtonProps) {
       "_blank",
       "noopener,noreferrer"
     );
-  }, [getShareUrl]);
+  }, [getShareUrl, handleClose]);
 
   const handleShareTelegram = useCallback(() => {
     handleClose();
@@ -99,7 +108,7 @@ export default function ShareButton({ title, slug }: ShareButtonProps) {
       "_blank",
       "noopener,noreferrer"
     );
-  }, [title, getShareUrl]);
+  }, [title, getShareUrl, handleClose]);
 
   return (
     <>
@@ -107,7 +116,13 @@ export default function ShareButton({ title, slug }: ShareButtonProps) {
         <IconButton
           onClick={handleShare}
           aria-label="Share this manga"
+          id={`${menuId}-trigger`}
+          aria-haspopup="menu"
+          aria-expanded={Boolean(anchorEl)}
+          aria-controls={anchorEl ? menuId : undefined}
           sx={{
+            minWidth: 44,
+            minHeight: 44,
             color: "rgba(255,255,255,0.6)",
             border: "1px solid rgba(255,255,255,0.15)",
             "&:hover": {
@@ -122,17 +137,23 @@ export default function ShareButton({ title, slug }: ShareButtonProps) {
         </IconButton>
       </Tooltip>
 
-      <Menu
+      {anchorEl && <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleClose}
+        autoFocus={false}
+        disableAutoFocus
+        disableRestoreFocus
         slotProps={{
+          list: { id: menuId, "aria-labelledby": `${menuId}-trigger` },
+          transition: { onEntering: (element: HTMLElement) => queueMicrotask(() => element.querySelector<HTMLElement>('[role="menuitem"]')?.focus({ preventScroll: true })) },
           paper: {
             sx: {
               bgcolor: "#171717",
               border: "1px solid rgba(255,255,255,0.1)",
               color: "#fafafa",
               minWidth: 180,
+              "& .MuiMenuItem-root": { minHeight: 44 },
             },
           },
         }}
@@ -163,7 +184,7 @@ export default function ShareButton({ title, slug }: ShareButtonProps) {
           </ListItemIcon>
           <Typography variant="body2">แชร์ไป Telegram</Typography>
         </MenuItem>
-      </Menu>
+      </Menu>}
 
       <Snackbar
         open={showCopied}

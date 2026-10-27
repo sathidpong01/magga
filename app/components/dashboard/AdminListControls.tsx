@@ -11,18 +11,23 @@ export default function AdminListControls({
   count,
   sorts = [],
   statuses = [],
+  loading = false,
+  compactSpacing = false,
 }: {
   query: AdminPageQuery;
   hasMore: boolean;
   count: number;
   sorts?: { value: string; label: string }[];
   statuses?: { value: string; label: string }[];
+  loading?: boolean;
+  compactSpacing?: boolean;
 }) {
   const router = useRouter(),
     pathname = usePathname(),
     params = useSearchParams();
   const [search, setSearch] = useState(query.search);
-  const [pending, startTransition] = useTransition();
+  const [transitioning, startTransition] = useTransition();
+  const pending = loading || transitioning;
   useEffect(() => setSearch(query.search), [query.search]);
   function navigate(changes: Record<string, string>) {
     const next = new URLSearchParams(params.toString());
@@ -36,9 +41,9 @@ export default function AdminListControls({
   }
   return (
     <Box
-      data-admin-list-ready
+      data-admin-list-ready={loading ? undefined : true}
       aria-busy={pending}
-      sx={{ my: 2, minHeight: 100 }}
+      sx={{ my: compactSpacing ? 0 : 2, minHeight: 100 }}
     >
       <Box
         component="form"
@@ -55,6 +60,7 @@ export default function AdminListControls({
           size="small"
           sx={{ flex: "1 1 220px" }}
           slotProps={{ htmlInput: { maxLength: 120 } }}
+          disabled={pending}
         />
         <Button type="submit" disabled={pending}>
           ค้นหา
@@ -74,7 +80,9 @@ export default function AdminListControls({
           <TextField
             select
             label="สถานะ"
-            value={query.status}
+            value={statuses.some((status) => status.value === query.status) ? query.status : statuses[0].value}
+            disabled={pending}
+            slotProps={{ inputLabel: { shrink: true }, select: { displayEmpty: true } }}
             onChange={(e) => navigate({ status: e.target.value, page: "1" })}
             size="small"
             sx={{ minWidth: 140 }}
@@ -97,6 +105,8 @@ export default function AdminListControls({
             }
             onChange={(e) => navigate({ sort: e.target.value, page: "1" })}
             size="small"
+            disabled={pending}
+            slotProps={{ inputLabel: { shrink: true }, select: { displayEmpty: true } }}
             sx={{ minWidth: 150 }}
           >
             {sorts.map((s) => (
@@ -110,6 +120,7 @@ export default function AdminListControls({
           select
           label="รายการต่อหน้า"
           value={query.limit}
+          disabled={pending}
           onChange={(e) => navigate({ limit: e.target.value, page: "1" })}
           size="small"
           sx={{ minWidth: 130 }}
@@ -127,7 +138,7 @@ export default function AdminListControls({
           mt: 1,
         }}
       >
-        <Typography variant="body2" role="status" sx={{ flex: 1 }}>
+        <Typography variant="body2" role="status" sx={{ flex: 1, minHeight: 24 }}>
           {pending
             ? "กำลังโหลด…"
             : `หน้า ${query.page} · ${count} รายการในหน้านี้`}

@@ -3,6 +3,7 @@ import { sql } from "drizzle-orm"
 
 import { commentGuests } from "./comment-schema";
 export * from "./comment-schema";
+export * from "./view-history-schema";
 const tsvector = customType<{ data: string }>({ dataType() { return 'tsvector'; } });
 const currentUserId = sql`(SELECT private.current_user_id())`;
 const adminOnly = sql`(SELECT private.is_admin())`;

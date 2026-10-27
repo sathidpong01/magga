@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { IconButton, Menu, MenuItem } from "@mui/material";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import Link from "next/link";
@@ -19,21 +19,57 @@ export default function AdminRowMenu({
   }[];
 }) {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  const id = useId();
+  function close() {
+    const trigger = anchor;
+    setAnchor(null);
+    requestAnimationFrame(() => {
+      if (trigger?.isConnected && document.activeElement === document.body) trigger.focus({ preventScroll: true });
+    });
+  }
+  useEffect(() => {
+    if (!anchor) return;
+    const dismiss = (event: Event) => {
+      if (event.target instanceof Element && event.target.closest('[role="menu"]')) return;
+      setAnchor(null);
+      anchor.focus({ preventScroll: true });
+    };
+    document.addEventListener("scroll", dismiss, true);
+    window.addEventListener("resize", dismiss);
+    return () => { document.removeEventListener("scroll", dismiss, true); window.removeEventListener("resize", dismiss); };
+  }, [anchor]);
   return (
     <>
       <IconButton
+        id={`${id}-trigger`}
         aria-label={`เพิ่มเติม ${title}`}
         aria-haspopup="menu"
         aria-expanded={Boolean(anchor)}
+        aria-controls={anchor ? `${id}-menu` : undefined}
         disabled={disabled}
         onClick={(e) => setAnchor(e.currentTarget)}
       >
         <MoreHorizIcon />
       </IconButton>
-      <Menu
+      {anchor && <Menu
         anchorEl={anchor}
         open={Boolean(anchor)}
-        onClose={() => setAnchor(null)}
+        onClose={close}
+        autoFocus={false}
+        disableAutoFocus
+        disableRestoreFocus
+        disableScrollLock
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+        slotProps={{
+          list: { id: `${id}-menu`, "aria-labelledby": `${id}-trigger` },
+          // Popover positions itself after onEntering; focus after that synchronous
+          // work, without waiting for animation or letting focus scroll the page.
+          transition: { onEntering: (element: HTMLElement) => queueMicrotask(() => {
+            if (element.isConnected) element.querySelector<HTMLElement>('[role="menuitem"]')?.focus({ preventScroll: true });
+          }) },
+          paper: { sx: { maxHeight: "calc(100dvh - 32px)", "& .MuiMenuItem-root": { minHeight: 44 } } },
+        }}
       >
         {actions.map((action) =>
           action.href ? (
@@ -44,7 +80,7 @@ export default function AdminRowMenu({
               href={action.href}
               target={action.newTab ? "_blank" : undefined}
               rel={action.newTab ? "noopener noreferrer" : undefined}
-              onClick={() => setAnchor(null)}
+              onClick={close}
             >
               {action.label}
             </MenuItem>
@@ -56,7 +92,7 @@ export default function AdminRowMenu({
                 minHeight: 44,
               }}
               onClick={() => {
-                setAnchor(null);
+                close();
                 action.onClick?.();
               }}
             >
@@ -64,7 +100,7 @@ export default function AdminRowMenu({
             </MenuItem>
           ),
         )}
-      </Menu>
+      </Menu>}
     </>
   );
 }

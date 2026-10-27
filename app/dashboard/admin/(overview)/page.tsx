@@ -198,7 +198,7 @@ export default async function AdminPage() {
       </Grid>
 
       {/* Popular Manga: Side-by-side Top 3 (Left) & Top 4-10 (Right) to fit in one screen */}
-      <Grid container spacing={2} sx={{ alignItems: "stretch" }}>
+      <Grid container spacing={2} sx={{ alignItems: "flex-start" }}>
         {/* Left: Top 3 Manga */}
         <Grid size={{ xs: 12, lg: 7 }}>
           <DashboardSurface
@@ -217,7 +217,7 @@ export default async function AdminPage() {
             <Grid
               container
               spacing={1.5}
-              sx={{ flex: 1, alignItems: "stretch" }}
+              sx={{ alignItems: "flex-start" }}
             >
               {rankedManga.slice(0, 3).map((manga, index) => (
                 <Grid key={manga.id} size={{ xs: 12, sm: 4 }}>

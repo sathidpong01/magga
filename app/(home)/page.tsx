@@ -73,7 +73,7 @@ const getGridAds = async () => (await getPublicAds()).filter((ad) => ad.placemen
 
 export default async function Home({ searchParams }: Props) {
   const params = normalizeHomeFilters(await searchParams);
-  return <Suspense fallback={<HomeSkeleton author={params.author} />}><HomeContent params={params} /></Suspense>;
+  return <Suspense fallback={<HomeSkeleton author={params.author} resume={!params.search && !params.author && !params.category && !params.tags.length} />}><HomeContent params={params} /></Suspense>;
 }
 
 async function HomeContent({ params }: { params: ReturnType<typeof normalizeHomeFilters> }) {
