@@ -76,7 +76,9 @@ export const auth = betterAuth({
   },
   advanced: {
     useSecureCookies: process.env.NODE_ENV === "production",
-    generateId: () => randomUUID(),
+    database: {
+      generateId: () => randomUUID(),
+    },
     disableCSRFCheck: false, // Explicit: never disable CSRF protection
   },
   session: {

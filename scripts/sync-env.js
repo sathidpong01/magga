@@ -2,6 +2,7 @@ const { execFileSync } = require('node:child_process');
 const { parse } = require('dotenv');
 const fs = require('node:fs');
 const path = require('node:path');
+const { resolveVercelCli } = require('./vercel-cli');
 
 function parseOptions(args) {
   const options = { target: '', keys: [], envFile: path.join(__dirname, '../.env.local'), dryRun: false };
@@ -18,12 +19,12 @@ function parseOptions(args) {
   options.keys = [...new Set(options.keys)];
   return options;
 }
-function syncEnvironment(options, envVars, execute = execFileSync, log = console.log) {
+function syncEnvironment(options, envVars, execute = execFileSync, log = console.log, resolveCli = resolveVercelCli) {
   for (const key of options.keys) {
     if (!Object.prototype.hasOwnProperty.call(envVars, key)) throw new Error(`Missing selected key: ${key}`);
   }
   if (options.dryRun) { options.keys.forEach(key => log(`Would sync ${key} to ${options.target}`)); return; }
-  const vercelCli = require.resolve('vercel/dist/index.js');
+  const vercelCli = resolveCli();
   let failed = false;
   for (const key of options.keys) {
     try {

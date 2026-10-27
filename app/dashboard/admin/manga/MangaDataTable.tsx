@@ -164,9 +164,7 @@ export default function MangaDataTable({
       manga.category
         ? [
             {
-              id:
-                allCategories.find((c) => c.name === manga.category?.name)
-                  ?.id ?? "",
+              id: manga.category.id ?? "",
               name: manga.category.name,
             },
           ]

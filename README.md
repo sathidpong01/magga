@@ -187,6 +187,17 @@ bun run dev
 
 Deployment uses `framework: "nextjs"`, `bunVersion: "1.4.x"`, `bun install --frozen-lockfile`, and `bun run build` in `vercel.json`. Vercel manages Bun patch versions; local development and CI pin 1.4.2. The [Vercel Bun runtime](https://vercel.com/docs/functions/runtimes/bun) is currently in beta.
 
+Vercel CLI is optional tooling with its own pinned dependency tree in `tools/vercel/`. Normal web builds and Git-based Vercel deployments do not need it. For manual CLI commands or a real `env:sync` operation, install it separately:
+
+```bash
+bun install --cwd tools/vercel --frozen-lockfile
+bun run vercel --version
+```
+
+`bun run vercel <arguments>` runs the pinned CLI from the repository root, preserving the linked project directory. Installing the tool does not deploy anything. Environment synchronization keeps its explicit target/key allowlist and stdin-only secret handling; dry runs do not require the CLI installation. CLI updates must change `tools/vercel/package.json` and its own `bun.lock` together. This directory is not a root workspace and is excluded from manual Vercel uploads.
+
+Audit both dependency trees separately: `bun audit` for the web project and `bun audit --cwd tools/vercel` for deployment tooling. Known remaining risks and verification are recorded in [the workspace follow-up](docs/admin-workspace-hobby-2026-10-27.md#dependency-isolation-follow-up-2272).
+
 Before submitting changes, run `bun run runtime:check`, `bun run lint`, `bun run typecheck`, `bun run test`, and `bun run build`. Tests use Bun's native test runner through `bun run test`; per-file isolation prevents mocked modules from leaking between suites.
 
 For a checkout without local environment files, `bun run build:local` builds against a newly created synthetic PGlite database at `127.0.0.1:55433`. It creates both `public` and `private` schemas, verifies the guest-comment foreign key and advertisement fields, and closes the database when finished. It refuses existing environment files or an occupied fixture port. `bun run build:local --keep-db` retains the disposable database for local browser checks; Ctrl+C closes it. Temporary fixture paths are printed so the synthetic data can be inspected.

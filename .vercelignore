@@ -10,3 +10,4 @@ graphify-out/
 node_modules/
 .next/
 coverage/
+tools/vercel/

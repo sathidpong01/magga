@@ -16,10 +16,13 @@ describe("explicit environment synchronization", () => {
     const calls: { args: string[]; input: string }[] = [];
     const execute = (_runtime: string, args: string[], options: { input: string }) => { calls.push({ args, input: options.input }); if (args.includes("SECOND_KEY")) throw new Error("fixture-secret"); };
     const lines: string[] = [];
-    expect(() => syncEnvironment(parseOptions(["--target", "preview", "--keys", "API_KEY,SECOND_KEY"]), { API_KEY: "fixture-secret", SECOND_KEY: "other-secret", UNSELECTED: "must-not-send" }, execute, (line: string) => lines.push(line))).toThrow("synchronization failed");
+    expect(() => syncEnvironment(parseOptions(["--target", "preview", "--keys", "API_KEY,SECOND_KEY"]), { API_KEY: "fixture-secret", SECOND_KEY: "other-secret", UNSELECTED: "must-not-send" }, execute, (line: string) => lines.push(line), () => "isolated-vercel-cli.js")).toThrow("synchronization failed");
     expect(calls).toHaveLength(2);
     expect(calls[0].input).toBe("fixture-secret");
     expect(calls.map(call => call.args.join(" ")).join(" ")).not.toContain("fixture-secret");
     expect(lines.join(" ")).not.toContain("fixture-secret");
+  });
+  it("dry-run does not require installing the isolated CLI", () => {
+    expect(() => syncEnvironment(parseOptions(["--target", "preview", "--keys", "API_KEY", "--dry-run"]), { API_KEY: "fixture-secret" }, () => {}, () => {}, () => { throw new Error("must not resolve CLI"); })).not.toThrow();
   });
 });
