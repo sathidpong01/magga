@@ -1,6 +1,7 @@
 import { expect, it, mock } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import { parse } from "node-html-parser";
+import { Children, isValidElement, type ReactNode } from "react";
 
 const works = Array.from({ length: 10 }, (_, index) => ({
   id: `10000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`,
@@ -34,4 +35,13 @@ it("shows history for all ten ranked works without nesting controls in manga lin
     expect(button.closest("a")).toBeNull();
     expect(root.querySelector(`a[href="/work-${index + 1}"]`)).not.toBeNull();
   }
+});
+
+it("keeps component props serializable across the overview's server/client boundary", async () => {
+  function check(node: ReactNode) {
+    if (!isValidElement<{ component?: unknown; children?: ReactNode }>(node)) return;
+    if (node.props.component !== undefined) expect(typeof node.props.component).toBe("string");
+    Children.forEach(node.props.children, check);
+  }
+  check(await AdminPage());
 });

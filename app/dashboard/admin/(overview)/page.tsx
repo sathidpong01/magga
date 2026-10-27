@@ -397,15 +397,14 @@ export default async function AdminPage() {
                       },
                     }}
                   >
-                    <Box
-                      component={Link}
+                    <Link
                       href={`/${manga.slug || manga.id}`}
                       prefetch={false}
-                      sx={{
+                      style={{
                         textDecoration: "none",
                         display: "flex",
                         alignItems: "center",
-                        gap: 1.25,
+                        gap: 10,
                         minWidth: 0,
                         flex: 1,
                       }}
@@ -461,7 +460,7 @@ export default async function AdminPage() {
                       >
                         {manga.title}
                       </Typography>
-                    </Box>
+                    </Link>
                     <Box sx={{ textAlign: "right", flexShrink: 0, width: 105 }}>
                       <Typography
                         variant="body2"
