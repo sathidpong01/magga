@@ -188,6 +188,7 @@ export default function SubmissionsManager({
           <Box>
             <Typography
               variant="h4"
+              component="h1"
               sx={{
                 fontWeight: 900,
                 letterSpacing: "-0.03em",

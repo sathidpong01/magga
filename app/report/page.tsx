@@ -44,7 +44,7 @@ export default function ReportPage() {
           }}
         >
           <Typography variant="body2">
-            ติดต่อแจ้งเรื่องที่: <Box component="strong" sx={{ color: maggaColors.archiveGold }}>Facebook @nightsu9</Box>
+            ติดต่อแจ้งเรื่องที่: <Box component="strong" sx={{ color: maggaColors.archiveGoldHover }}>Facebook @nightsu9</Box>
           </Typography>
         </Alert>
 

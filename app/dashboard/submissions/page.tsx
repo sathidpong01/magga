@@ -259,6 +259,7 @@ function MySubmissionsContent() {
                     <Box sx={{ minWidth: 0 }}>
                       <Typography
                         variant="h6"
+                        component="h2"
                         sx={{
                           color: dashboardTokens.text,
                           fontWeight: 700,

@@ -276,6 +276,7 @@ export default function CommentBox({
     <Box sx={{ display: "flex", gap: 1.5, alignItems: "flex-start" }}>
       <Avatar
         src={actor?.image || undefined}
+        alt={actor?.name || "ผู้แสดงความคิดเห็น"}
         sx={{
           display: { xs: "none", sm: "flex" },
           width: 40,

@@ -219,6 +219,7 @@ export default function CommentsManager({
       <Box component="fieldset" disabled={loading} sx={{ border: 0,m: 0,p: 0,minWidth: 0 }}>
         <Typography
           variant="h4"
+          component="h1"
           sx={{ fontWeight: 700,color: maggaColors.textPrimary,mb: 1 }}
         >
           จัดการความคิดเห็น
@@ -346,7 +347,7 @@ export default function CommentsManager({
               <TableRow>
                 <TableCell>
                   <Checkbox
-                    aria-label="เลือกทุกความคิดเห็นในหน้านี้"
+                    slotProps={{ input: { "aria-label": "เลือกทุกความคิดเห็นในหน้านี้" } }}
                     checked={
                       comments.length>0&&selected.length===comments.length
                     }
@@ -384,7 +385,7 @@ export default function CommentsManager({
                 <TableRow key={comment.id}>
                   <TableCell data-label="เลือก">
                     <Checkbox
-                      aria-label={`เลือกความคิดเห็นของ ${comment.authorName||comment.user.name||"ผู้ใช้"}`}
+                      slotProps={{ input: { "aria-label": `เลือกความคิดเห็นของ ${comment.authorName||comment.user.name||"ผู้ใช้"}` } }}
                       checked={selected.includes(comment.id)}
                       onChange={(event) =>
                         setSelected((previous) =>
@@ -399,6 +400,7 @@ export default function CommentsManager({
                     <Box sx={{ display: "flex",alignItems: "center",gap: 1 }}>
                       <Avatar
                         src={comment.user.image||undefined}
+                        alt=""
                         sx={{ width: 32,height: 32 }}
                       />
                       {comment.authorName||

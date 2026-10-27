@@ -396,6 +396,7 @@ export default function CollapsibleSidebar({
             {(isMobile || !isCollapsed) && (
               <Box sx={{ overflow: "hidden", flex: 1 }}>
                 <Typography
+                  component="span"
                   sx={{
                     fontSize: "0.85rem",
                     fontWeight: 600,

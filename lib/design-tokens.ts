@@ -48,6 +48,7 @@ export const maggaMotion = {
 
 // Shared geometry for content and its loading state.
 export const maggaLayout = {
+  readerHero: { columns: { xs: "minmax(0, 1fr) minmax(0, 2fr)", md: "256px minmax(0, 1fr)" }, rows: { md: "auto 1fr" }, columnGap: { xs: 2, md: 3 }, rowGap: { xs: 2, md: 1.5 } },
   mangaGrid: { spacing: { xs: 1.5, sm: 2, md: 3 }, columns: { xs: 6, sm: 6, md: 4, lg: 3 } },
   taxonomyGrid: { spacing: { xs: 1.5, sm: 2, md: 2.5 }, columns: { xs: 6, sm: 4, md: 3, lg: 2.4 } },
   reader: { gap: { xs: "8px", sm: "12px" }, maxWidth: { xs: "none", lg: "1000px" }, aspectRatio: "900 / 1273" },

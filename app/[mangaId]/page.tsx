@@ -14,11 +14,11 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { getSessionRole } from "@/lib/auth-helpers";
 import LinkChip from "@/app/components/ui/LinkChip";
-import { Box, Typography, Chip, Container, Grid } from "@mui/material";
+import { Box, Typography, Chip, Container } from "@mui/material";
 import Image from "next/image";
 import Link from "next/link";
 import MangaViewRating from "@/app/components/features/manga/MangaViewRating";
-import { maggaColors, maggaRadii } from "@/lib/design-tokens";
+import { maggaColors, maggaRadii, maggaLayout } from "@/lib/design-tokens";
 import { SuspendedMangaReader } from "./manga-content";
 import { CommentSectionSkeleton } from "./loading-skeletons";
 import CommentSection from "@/app/components/features/comments/LazyCommentSection";
@@ -362,12 +362,8 @@ export default async function MangaPage({ params }: MangaPageProps) {
               ตัวอย่างเรื่องที่ยังไม่เผยแพร่
             </Typography>
           )}
-          <Grid
-            container
-            spacing={{ xs: 2, md: 3 }}
-            sx={{ alignItems: "flex-start" }}
-          >
-            <Grid size={{ xs: 4, md: 3 }}>
+          <Box sx={{ display: "grid", gridTemplateColumns: maggaLayout.readerHero.columns, gridTemplateRows: maggaLayout.readerHero.rows, columnGap: maggaLayout.readerHero.columnGap, rowGap: maggaLayout.readerHero.rowGap, alignItems: "start" }}>
+            <Box sx={{ gridRow: { md: "1 / span 2" } }}>
               <Box
                 sx={{
                   position: "relative",
@@ -388,8 +384,8 @@ export default async function MangaPage({ params }: MangaPageProps) {
                   preload
                 />
               </Box>
-            </Grid>
-            <Grid size={{ xs: 8, md: 9 }}>
+            </Box>
+            <Box sx={{ minWidth: 0 }}>
               <Typography
                 variant="h2"
                 component="h1"
@@ -448,77 +444,59 @@ export default async function MangaPage({ params }: MangaPageProps) {
                 />
                 <ShareButton title={manga.title} slug={manga.slug} />
               </Box>
-            </Grid>
-          </Grid>
-          <Box
-            component="details"
-            sx={{
-              mt: 2,
-              color: maggaColors.textSecondary,
-              borderTop: "1px solid " + maggaColors.border,
-            }}
-          >
-            <Box
-              component="summary"
-              sx={{
-                cursor: "pointer",
-                minHeight: 44,
-                py: 1.25,
-                color: maggaColors.textPrimary,
-              }}
-            >
-              เรื่องย่อ หมวดหมู่ และเครดิต
             </Box>
-            {manga.description && (
-              <Typography
-                sx={{
-                  mb: 2,
-                  lineHeight: 1.7,
-                  whiteSpace: "pre-wrap",
-                  overflowWrap: "anywhere",
-                }}
-              >
-                {manga.description}
-              </Typography>
-            )}
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
-              {manga.category && (
-                <LinkChip
-                  label={manga.category.name}
-                  href={"/category/" + encodeURIComponent(manga.category.name)}
-                />
+            <Box component="section" aria-label="ข้อมูลเรื่องและเครดิต" sx={{ gridColumn: { xs: "1 / -1", md: "2" }, minWidth: 0, color: maggaColors.textSecondary }}>
+              {manga.description && (
+                <Typography
+                  sx={{
+                    mb: 1.25,
+                    lineHeight: 1.7,
+                    whiteSpace: "pre-wrap",
+                    overflowWrap: "anywhere",
+                  }}
+                >
+                  {manga.description}
+                </Typography>
               )}
-              {manga.mangaTags_mangaId.map(({ tag_tagId: tag }) => (
-                <LinkChip
-                  key={tag.id}
-                  label={tag.name}
-                  href={"/tag/" + encodeURIComponent(tag.name)}
-                />
+              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 1.25 }}>
+                {manga.category && (
+                  <LinkChip
+                    label={manga.category.name}
+                    href={"/category/" + encodeURIComponent(manga.category.name)}
+                  />
+                )}
+                {manga.mangaTags_mangaId.map(({ tag_tagId: tag }) => (
+                  <LinkChip
+                    key={tag.id}
+                    label={tag.name}
+                    href={"/tag/" + encodeURIComponent(tag.name)}
+                  />
+                ))}
+              </Box>
+              {authorCredits.map((person) => (
+                <Box key={person.id} sx={{ mb: 1.25, overflowWrap: "anywhere" }}>
+                  <Typography variant="body2">
+                    {person.role}: {person.name}
+                  </Typography>
+                  <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 1 }}>
+                    {parseSocialLinks(person.socialLinks).map((link) => (
+                      <Chip
+                        key={link.url}
+                        icon={<SocialLinkIcon url={link.url} />}
+                        label={link.label || person.name}
+                        component="a"
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        clickable
+                        variant="outlined"
+                        sx={{ minHeight: 44 }}
+                      />
+                    ))}
+                  </Box>
+                </Box>
               ))}
             </Box>
-            {authorCredits.map((person) => (
-              <Box key={person.id} sx={{ mb: 2, overflowWrap: "anywhere" }}>
-                <Typography variant="body2">
-                  {person.role}: {person.name}
-                </Typography>
-                <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 1 }}>
-                  {parseSocialLinks(person.socialLinks).map((link) => (
-                    <Chip
-                      key={link.url}
-                      icon={<SocialLinkIcon url={link.url} />}
-                      label={link.label || person.name}
-                      component="a"
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      clickable
-                      variant="outlined"
-                      sx={{ minHeight: 44 }}
-                    />
-                  ))}
-                </Box>
-              </Box>
-            ))}
           </Box>
         </Container>
       </Box>

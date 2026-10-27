@@ -326,6 +326,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                   <Box>
                     <Typography
                       variant="subtitle2"
+                      component="h3"
                       sx={{
                         color: "#a3a3a3",
                         mb: 1.5,
@@ -471,6 +472,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                                 {link.icon&&(
                                   <Avatar
                                     src={link.icon}
+                                    alt=""
                                     sx={{ width: 28,height: 28 }}
                                   />
                                 )}
@@ -481,9 +483,10 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                               spacing={0.5}
                               sx={{ flexShrink: 0,pb: 0.5 }}
                             >
-                              <Tooltip title="ดึงชื่อและไอคอนอัตโนมัติ">
+                              <Tooltip title="ดึงชื่อและไอคอนอัตโนมัติ" describeChild>
                                 <Box component="span">
                                   <IconButton
+                                    aria-label={`ดึงชื่อและไอคอนอัตโนมัติ ช่องทาง ${index+1}`}
                                     onClick={() => handleAutoFetch(index)}
                                     disabled={!link.url||isFetching===index}
                                     size="small"
@@ -649,6 +652,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                                 link.icon? (
                                   <Avatar
                                     src={link.icon}
+                                    alt=""
                                     sx={{ width: 16,height: 16 }}
                                   />
                                 ):(

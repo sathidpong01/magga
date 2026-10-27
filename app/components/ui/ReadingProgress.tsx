@@ -115,6 +115,8 @@ export default function ReadingProgress({
       {/* Resume Reading Banner */}
       {showResume && (
         <Box
+          component="aside"
+          aria-label="อ่านต่อจากหน้าที่บันทึกไว้"
           sx={{
             position: "fixed",
             bottom: "calc(60px + env(safe-area-inset-bottom, 0px))",
@@ -181,6 +183,8 @@ export default function ReadingProgress({
 
       {/* Bottom Progress Bar */}
       <Box
+        component="nav"
+        aria-label="ควบคุมการอ่าน"
         sx={{
           position: "fixed",
           bottom: 0,

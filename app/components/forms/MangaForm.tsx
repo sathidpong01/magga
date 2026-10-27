@@ -76,6 +76,8 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const formRef = useRef<HTMLFormElement>(null);
+  const pagesInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
   const focusInvalidField = (field: string) => {
     const selectors: Record<string, string> = {
       title: '[name="title"]',
@@ -1714,27 +1716,22 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                       mb: 1.1,
                     }}
                   >
-                    <Typography variant="subtitle1" component="h4">
+                    <Typography variant="subtitle1" component="h3">
                       หน้าอ่าน ({pageItems.length})
                     </Typography>
                     <Button
                       size="small"
                       startIcon={<AddPhotoAlternateIcon />}
-                      component="label"
+                      type="button"
+                      onClick={() => pagesInputRef.current?.click()}
                       sx={{
                         ...(mediaActionButtonSx as any),
                         cursor: "pointer",
                       }}
                     >
-                      <input
-                        type="file"
-                        hidden
-                        accept="image/*"
-                        multiple
-                        onChange={handlePagesUpload}
-                      />
                       เพิ่มหน้า
                     </Button>
+                    <input ref={pagesInputRef} type="file" hidden accept="image/*" multiple onChange={handlePagesUpload} />
                   </Box>
 
                   {pageItems.length > 0 && (
@@ -1855,15 +1852,17 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                       {fieldErrors.coverImage}
                     </Typography>
                   )}
-                  <Typography variant="subtitle1" component="h4" gutterBottom>
+                  <Typography variant="subtitle1" component="h3" gutterBottom>
                     รูปปกเรื่อง
                   </Typography>
 
+                  <input ref={coverInputRef} type="file" hidden accept="image/*" onChange={handleCoverUpload} />
                   {!coverItem ? (
                     <Button
                       variant="outlined"
                       fullWidth
-                      component="label"
+                      type="button"
+                      onClick={() => coverInputRef.current?.click()}
                       sx={{
                         ...mediaActionButtonSx,
                         height: 120,
@@ -1873,12 +1872,6 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                         cursor: "pointer",
                       }}
                     >
-                      <input
-                        type="file"
-                        hidden
-                        accept="image/*"
-                        onChange={handleCoverUpload}
-                      />
                       <AddPhotoAlternateIcon
                         sx={{ fontSize: 40, opacity: 0.5 }}
                       />

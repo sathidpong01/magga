@@ -1,5 +1,5 @@
 import { Box, Container, Grid, Skeleton, Stack } from "@mui/material";
-import { maggaColors, maggaRadii } from "@/lib/design-tokens";
+import { maggaColors, maggaRadii, maggaLayout } from "@/lib/design-tokens";
 import MangaGridSkeleton from "@/app/components/features/manga/MangaGridSkeleton";
 
 export function SkeletonLine({ width = "100%", height = 20 }: { width?: number | string; height?: number }) {
@@ -59,19 +59,23 @@ export function AccountSkeleton({ profile = false }: { profile?: boolean }) {
 export function ReaderHeroSkeleton() {
   return <Box sx={{ position: "relative", overflow: "hidden" }} data-skeleton="reader-hero">
     <Container maxWidth="lg" sx={{ py: { xs: 2, md: 4 } }}>
-      <Grid container spacing={{ xs: 2, md: 3 }} sx={{ alignItems: "flex-start" }}>
-        <Grid size={{ xs: 4, md: 3 }}>
+      <Box sx={{ display: "grid", gridTemplateColumns: maggaLayout.readerHero.columns, gridTemplateRows: maggaLayout.readerHero.rows, columnGap: maggaLayout.readerHero.columnGap, rowGap: maggaLayout.readerHero.rowGap, alignItems: "start" }}>
+        <Box sx={{ gridRow: { md: "1 / span 2" } }}>
           <Box sx={{ width: "100%", maxWidth: 256, aspectRatio: "3/4", borderRadius: `${maggaRadii.card}px`, overflow: "hidden", bgcolor: maggaColors.surface }}><Skeleton variant="rectangular" width="100%" height="100%" /></Box>
-        </Grid>
-        <Grid size={{ xs: 8, md: 9 }}>
+        </Box>
+        <Box sx={{ minWidth: 0 }}>
           <Box sx={{ height: { xs: 56.16, sm: 74.88, md: 58.24 }, mb: 1 }}><Skeleton variant="rectangular" width="90%" height="100%" /></Box>
           <Box sx={{ mb: 0.5 }}><SkeletonLine width="65%" height={20} /></Box>
           <SkeletonLine width={110} height={18} />
           <SkeletonLine width={190} height={24} />
           <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", my: 1 }}><SkeletonLine width={128} height={44} /><SkeletonLine width={44} height={44} /></Box>
-        </Grid>
-      </Grid>
-      <Box sx={{ mt: 2, borderTop: `1px solid ${maggaColors.border}`, minHeight: 44, py: 1.25 }}><SkeletonLine width={230} height={24} /></Box>
+        </Box>
+        <Box sx={{ gridColumn: { xs: "1 / -1", md: "2" }, minWidth: 0 }}>
+          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 1.25 }}>{[50, 55, 60, 55, 50].map((width, index) => <SkeletonLine key={index} width={width} height={32} />)}</Box>
+          <SkeletonLine width={120} height={20} />
+          <Box sx={{ display: "flex", gap: 1, mt: 1 }}>{[92, 108, 80].map(width => <SkeletonLine key={width} width={width} height={44} />)}</Box>
+        </Box>
+      </Box>
     </Container>
   </Box>;
 }

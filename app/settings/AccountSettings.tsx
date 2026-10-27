@@ -116,8 +116,9 @@ function SectionHeading({ title }: { title: string }) {
   return (
     <Typography
       variant="caption"
+      component="h2"
       sx={{
-        color: maggaColors.textMuted,
+        color: maggaColors.textSecondary,
         fontWeight: 700,
         letterSpacing: 0.8,
         textTransform: "uppercase",
@@ -355,6 +356,7 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
         <Box sx={{ minWidth: 0 }}>
           <Typography
             variant="h4"
+            component="h1"
             sx={{
               fontWeight: 800,
               letterSpacing: -0.4,
@@ -816,7 +818,7 @@ function BlockedUsersPanel({ onCountChange }: { onCountChange?: (n: number) => v
         >
           <Avatar
             src={item.blockedUser?.image}
-            alt={item.blockedUser?.name}
+            alt=""
             sx={{ width: 32, height: 32, bgcolor: maggaColors.softDivider, fontSize: "0.875rem" }}
           >
             {(item.blockedUser?.name || "?").charAt(0).toUpperCase()}

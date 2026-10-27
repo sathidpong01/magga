@@ -284,7 +284,7 @@ export default function ChangelogPage() {
           }}>
           บันทึกการอัพเดท
         </Typography>
-        <Typography variant="subtitle1" sx={{ color: maggaColors.textSecondary }}>
+        <Typography component="p" variant="subtitle1" sx={{ color: maggaColors.textSecondary }}>
           ประวัติการปรับปรุงและพัฒนาเว็บไซต์ล่าสุด
         </Typography>
       </Box>

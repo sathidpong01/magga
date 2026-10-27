@@ -194,7 +194,7 @@ export function SortableItem({
       <Typography
         variant="caption"
         sx={{
-          color: maggaColors.textMuted,
+          color: maggaColors.textSecondary,
           fontWeight: 700,
           textAlign: "center",
           letterSpacing: "0.02em",

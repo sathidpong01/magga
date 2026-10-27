@@ -391,6 +391,7 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                     >
                       <Avatar
                         src={user.image||undefined}
+                        alt=""
                         sx={{ width: 36,height: 36,bgcolor: "#404040" }}
                       >
                         {user.name?.[0]||user.email?.[0]||"?"}

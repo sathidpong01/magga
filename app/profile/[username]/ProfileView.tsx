@@ -164,7 +164,7 @@ export default function ProfileView({ profileUser, isOwnProfile }: Props) {
           <HomeIcon sx={{ fontSize: 16, mr: 0.5 }} />
           หน้าแรก
         </Link>
-        <Typography sx={{ color: maggaColors.textMuted, fontSize: "0.875rem" }}>
+        <Typography sx={{ color: maggaColors.textSecondary, fontSize: "0.875rem" }}>
           {isOwnProfile ? "ฉัน" : displayName}
         </Typography>
         <Typography sx={{ color: "#fafafa", fontSize: "0.875rem" }}>โปรไฟล์</Typography>
@@ -182,7 +182,10 @@ export default function ProfileView({ profileUser, isOwnProfile }: Props) {
         <Box sx={{ px: { xs: 2.5, sm: 3.5 }, pt: { xs: 2.8, sm: 3.5 }, pb: { xs: 2.4, sm: 3 } }}>
           <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 2.5, alignItems: { xs: "flex-start", sm: "center" } }}>
             <Box
-              sx={{ position: "relative", flexShrink: 0, cursor: isOwnProfile ? "pointer" : "default" }}
+              component={isOwnProfile ? "button" : "div"}
+              type={isOwnProfile ? "button" : undefined}
+              aria-label={isOwnProfile ? `เปลี่ยนรูปโปรไฟล์ ${displayName}` : undefined}
+              sx={{ position: "relative", flexShrink: 0, cursor: isOwnProfile ? "pointer" : "default", p: 0, border: 0, bgcolor: "transparent", borderRadius: "50%", "&:focus-visible": { outline: `2px solid ${maggaColors.archiveGoldHover}`, outlineOffset: 4 } }}
               onClick={() => isOwnProfile && fileInputRef.current?.click()}
             >
               <Avatar
@@ -231,6 +234,7 @@ export default function ProfileView({ profileUser, isOwnProfile }: Props) {
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.75, flexWrap: "wrap" }}>
                 <Typography
                   variant="h4"
+                  component="h1"
                   sx={{
                     fontWeight: 800,
                     letterSpacing: -0.5
@@ -243,7 +247,7 @@ export default function ProfileView({ profileUser, isOwnProfile }: Props) {
                     size="small"
                     sx={{
                       bgcolor: "rgba(239,68,68,0.15)",
-                      color: "#ef4444",
+                      color: maggaColors.dangerRedText,
                       border: "1px solid rgba(239,68,68,0.3)",
                       height: 22,
                       fontSize: "0.7rem",

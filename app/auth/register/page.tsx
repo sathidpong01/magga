@@ -161,6 +161,7 @@ function RegisterForm() {
           </Box>
           <Typography
             variant="h5"
+            component="h1"
             sx={{
               fontWeight: 700,
               mb: 0.5,
@@ -331,7 +332,7 @@ function RegisterForm() {
             </Button>
           </Box>
 
-          <Divider sx={{ my: 2, borderColor: "rgba(255, 255, 255, 0.08)", "& .MuiDivider-wrapper": { color: "#71717a", fontSize: "0.8rem" } }}>
+          <Divider sx={{ my: 2, borderColor: "rgba(255, 255, 255, 0.08)", "& .MuiDivider-wrapper": { color: maggaColors.textSecondary, fontSize: "0.8rem" } }}>
             หรือ
           </Divider>
 

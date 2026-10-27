@@ -15,6 +15,7 @@ export default function MetadataHeader() {
     </Typography>
     <Typography
       variant="h4"
+      component="h1"
       sx={{
         color: dashboardTokens.text,
         fontWeight: 900,

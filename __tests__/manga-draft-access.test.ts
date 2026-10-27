@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, jest, mock } from "bun:test";
 import { PgDialect } from "drizzle-orm/pg-core";
+import { Children, isValidElement, type ReactNode } from "react";
 
 const mocks = { session: jest.fn(), hidden: true };
 mock.module("@/lib/auth", () => ({ auth: { api: { getSession: mocks.session } } }));
@@ -66,5 +67,21 @@ describe("draft manga access", () => {
     mocks.hidden = false;
     await expect(MangaPage(props())).resolves.toBeTruthy();
     expect((await generateMetadata(props())).openGraph).toBeDefined();
+  });
+
+  it("keeps reader metadata visible without a collapsed details control", async () => {
+    mocks.hidden = false;
+    const components: unknown[] = [];
+    const labels: unknown[] = [];
+    function visit(node: ReactNode) {
+      if (!isValidElement<{ component?: unknown; "aria-label"?: unknown; children?: ReactNode }>(node)) return;
+      components.push(node.props.component);
+      labels.push(node.props["aria-label"]);
+      Children.forEach(node.props.children, visit);
+    }
+    visit(await MangaPage(props()));
+    expect(labels).toContain("ข้อมูลเรื่องและเครดิต");
+    expect(components).not.toContain("details");
+    expect(components).not.toContain("summary");
   });
 });

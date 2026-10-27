@@ -151,10 +151,10 @@ export default function MyCommentsPage() {
           <ChatBubbleOutlineIcon sx={{ color: maggaColors.archiveGold, fontSize: 24 }} />
         </Box>
         <Box>
-          <Typography variant="h5" sx={{
+          <Typography component="h1" variant="h5" sx={{
             fontWeight: 800
           }}>ความคิดเห็นของฉัน</Typography>
-          <Typography variant="body2" sx={{ color: maggaColors.textMuted }}>
+          <Typography variant="body2" sx={{ color: maggaColors.textSecondary }}>
             {comments.length} ความคิดเห็น{hasMore ? "+" : ""}
           </Typography>
         </Box>

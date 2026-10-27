@@ -25,7 +25,7 @@ export default function LayoutWrapper({
     <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
       <Header />
       {/* โฆษณาใต้ Header */}
-      <Container maxWidth="lg">
+      <Container component="aside" aria-label="โฆษณาด้านบน" maxWidth="lg">
         <AdContainer placement="header" />
       </Container>
       <Container
@@ -43,7 +43,7 @@ export default function LayoutWrapper({
       </Container>
       {/* โฆษณาเหนือ Footer */}
       {!isMangaPage && (
-        <Container maxWidth="lg">
+        <Container component="aside" aria-label="โฆษณาด้านล่าง" maxWidth="lg">
           <AdContainer placement="footer" />
         </Container>
       )}

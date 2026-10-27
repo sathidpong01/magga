@@ -93,7 +93,7 @@ const adDialogFieldSx={
   "& .MuiFormHelperText-root": {
     mx: 0.25,
     mt: 0.85,
-    color: "#8c8c8c",
+    color: maggaColors.textSecondary,
     fontWeight: 600,
     fontSize: "0.68rem",
   },
@@ -129,7 +129,7 @@ const adDialogSelectMenuProps={
           },
           "&.Mui-selected": {
             bgcolor: dashboardTokens.accentSoft,
-            color: dashboardTokens.accent,
+            color: dashboardTokens.accentStrong,
           },
           "&.Mui-selected:hover": {
             bgcolor: "rgba(217, 119, 6, 0.22)",
@@ -496,7 +496,7 @@ function PlacementPreview({
             fontWeight: 900,
             textTransform: "none",
             letterSpacing: "0",
-            color: dashboardTokens.accent,
+            color: dashboardTokens.accentStrong,
           }}
         >
           ตัวอย่างสด
@@ -510,7 +510,7 @@ function PlacementPreview({
           sx={{
             height: 24,
             bgcolor: dashboardTokens.accentSoft,
-            color: dashboardTokens.accent,
+            color: dashboardTokens.accentStrong,
             border: `1px solid ${dashboardTokens.accentSoft}`,
             fontWeight: 700,
             borderRadius: 0.75,
@@ -534,7 +534,7 @@ function PlacementPreview({
           display: "block",
           fontSize: 10,
           fontWeight: 600,
-          color: "#8c8c8c",
+          color: maggaColors.textSecondary,
           textTransform: "none",
           letterSpacing: "0",
           lineHeight: 1.5,
@@ -846,6 +846,7 @@ export default function AdvertisementsPage() {
       >
         <Typography
           variant="h4"
+          component="h1"
           sx={{
             fontWeight: 900,
             letterSpacing: "-0.02em",
@@ -904,8 +905,9 @@ export default function AdvertisementsPage() {
           sx={{ flex: "1 1 200px" }}
         />
         <FormControl size="small" sx={{ minWidth: 145 }}>
-          <InputLabel>สถานะ</InputLabel>
+          <InputLabel id="ad-status-filter-label">สถานะ</InputLabel>
           <Select
+            labelId="ad-status-filter-label"
             label="สถานะ"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
@@ -916,8 +918,9 @@ export default function AdvertisementsPage() {
           </Select>
         </FormControl>
         <FormControl size="small" sx={{ minWidth: 145 }}>
-          <InputLabel>ตำแหน่ง</InputLabel>
+          <InputLabel id="ad-placement-filter-label">ตำแหน่ง</InputLabel>
           <Select
+            labelId="ad-placement-filter-label"
             label="ตำแหน่ง"
             value={placementFilter}
             onChange={(e) => setPlacementFilter(e.target.value)}
@@ -931,8 +934,9 @@ export default function AdvertisementsPage() {
           </Select>
         </FormControl>
         <FormControl size="small" sx={{ minWidth: 145 }}>
-          <InputLabel>อุปกรณ์</InputLabel>
+          <InputLabel id="ad-device-filter-label">อุปกรณ์</InputLabel>
           <Select
+            labelId="ad-device-filter-label"
             label="อุปกรณ์"
             value={deviceFilter}
             onChange={(e) => setDeviceFilter(e.target.value)}
@@ -1265,7 +1269,7 @@ export default function AdvertisementsPage() {
                         fontSize: "0.7rem",
                         borderRadius: dashboardRadii.compact,
                         bgcolor: dashboardTokens.accentSoft,
-                        color: dashboardTokens.accent,
+                        color: dashboardTokens.accentStrong,
                         border: `1px solid ${dashboardTokens.accentSoft}`,
                         textTransform: "none",
                       }}
@@ -1279,7 +1283,7 @@ export default function AdvertisementsPage() {
                       onChange={() => handleToggleActive(ad)}
                       sx={{
                         "& .MuiSwitch-switchBase.Mui-checked": {
-                          color: dashboardTokens.accent,
+                          color: dashboardTokens.accentStrong,
                         },
                         "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
                           { bgcolor: dashboardTokens.accent },
@@ -1388,7 +1392,7 @@ export default function AdvertisementsPage() {
           <Box sx={{ display: "flex",flexDirection: "column",gap: 0.35 }}>
             <Typography
               sx={{
-                color: dashboardTokens.accent,
+                color: dashboardTokens.accentStrong,
                 fontSize: "0.72rem",
                 fontWeight: 900,
                 letterSpacing: "0.08em",
@@ -1409,7 +1413,7 @@ export default function AdvertisementsPage() {
             </Typography>
             <Typography
               component="span"
-              sx={{ color: "#8c8c8c",fontWeight: 600,fontSize: "0.78rem" }}
+              sx={{ color: maggaColors.textSecondary,fontWeight: 600,fontSize: "0.78rem" }}
             >
               จัดรูปภาพ ลิงก์ และตำแหน่งให้พร้อมใช้งานจากฟอร์มเดียว
             </Typography>
@@ -1435,6 +1439,7 @@ export default function AdvertisementsPage() {
             >
               <Box sx={{ mb: 2 }}>
                 <Typography
+                  component="h3"
                   sx={{
                     color: "#fafafa",
                     fontWeight: 800,
@@ -1445,7 +1450,7 @@ export default function AdvertisementsPage() {
                 </Typography>
                 <Typography
                   sx={{
-                    color: "#8c8c8c",
+                    color: maggaColors.textSecondary,
                     fontWeight: 600,
                     fontSize: "0.74rem",
                     mt: 0.35,
@@ -1470,10 +1475,11 @@ export default function AdvertisementsPage() {
               )}
 
               <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel sx={adDialogFieldSx["& .MuiInputLabel-root"]}>
+                <InputLabel id="ad-editor-type-label" sx={adDialogFieldSx["& .MuiInputLabel-root"]}>
                   ประเภท
                 </InputLabel>
                 <Select
+                  labelId="ad-editor-type-label"
                   value={formData.type}
                   label="ประเภท"
                   onChange={(e) =>
@@ -1721,10 +1727,11 @@ export default function AdvertisementsPage() {
               />
 
               <FormControl fullWidth>
-                <InputLabel sx={adDialogFieldSx["& .MuiInputLabel-root"]}>
+                <InputLabel id="ad-editor-placement-label" sx={adDialogFieldSx["& .MuiInputLabel-root"]}>
                   ตำแหน่ง
                 </InputLabel>
                 <Select
+                  labelId="ad-editor-placement-label"
                   value={formData.placement}
                   label="ตำแหน่ง"
                   onChange={(e) =>
@@ -1742,8 +1749,9 @@ export default function AdvertisementsPage() {
               </FormControl>
 
               <FormControl fullWidth sx={{ mt: 2 }}>
-                <InputLabel>อุปกรณ์</InputLabel>
+                <InputLabel id="ad-editor-device-label">อุปกรณ์</InputLabel>
                 <Select
+                  labelId="ad-editor-device-label"
                   label="อุปกรณ์"
                   value={formData.targetDevice}
                   sx={adDialogFieldSx}
@@ -1808,6 +1816,7 @@ export default function AdvertisementsPage() {
               }}
             >
               <Typography
+                component="h3"
                 sx={{
                   color: "#fafafa",
                   fontWeight: 800,
@@ -1819,7 +1828,7 @@ export default function AdvertisementsPage() {
               </Typography>
               <Typography
                 sx={{
-                  color: "#8c8c8c",
+                  color: maggaColors.textSecondary,
                   fontWeight: 600,
                   fontSize: "0.74rem",
                   mb: 1.75,
