@@ -44,6 +44,7 @@ it("shows history for all ten ranked works without nesting controls in manga lin
     expect(ids).toHaveLength(2);
     const labels = ids.map(id => root.querySelectorAll("[id]").find(element => element.id === id)?.textContent);
     expect(labels).toEqual([`7 วัน · ${index + 1} ครั้ง`, `ดูสถิติยอดอ่าน Work ${index + 1}`]);
+    expect(button.querySelectorAll("[id]").some(element => element.id === ids[1])).toBe(false);
     expect(button.getAttribute("aria-label")).toBeUndefined();
     expect(button.closest("a")).toBeNull();
     expect(root.querySelector(`a[href="/work-${index + 1}"]`)).not.toBeNull();
