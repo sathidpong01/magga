@@ -2,6 +2,7 @@ import { expect, it, mock } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import { parse } from "node-html-parser";
 import { Children, isValidElement, type ReactNode } from "react";
+import MangaViewHistory from "@/app/components/dashboard/MangaViewHistory";
 
 const works = Array.from({ length: 10 }, (_, index) => ({
   id: `10000000-0000-4000-8000-${String(index + 1).padStart(12, "0")}`,
@@ -32,9 +33,10 @@ it("shows history for all ten ranked works without nesting controls in manga lin
   expect(root.querySelectorAll('svg[aria-label="แนวโน้มยอดอ่าน 7 วัน"]')).toHaveLength(10);
   expect(root.textContent).not.toContain("ผู้ชม");
   const firstChart = root.querySelectorAll('svg[aria-label="แนวโน้มยอดอ่าน 7 วัน"]')[0];
-  expect(firstChart.querySelectorAll("g")).toHaveLength(7);
-  expect(firstChart.querySelectorAll("rect[stroke-dasharray]")).toHaveLength(5);
-  expect(firstChart.querySelectorAll("circle")).toHaveLength(1);
+  expect(firstChart.querySelectorAll("title")).toHaveLength(7);
+  expect(firstChart.querySelectorAll("rect")).toHaveLength(0);
+  expect(firstChart.querySelectorAll('path[fill="none"]')[0].getAttribute("d")).toContain(" C");
+  expect(firstChart.querySelectorAll("circle")).toHaveLength(2);
   expect(firstChart.textContent).toContain("ยังไม่มีข้อมูล");
   expect(root.textContent).toContain("7 วัน · 1 ครั้ง");
   for (const [index, button] of buttons.entries()) {
@@ -51,4 +53,18 @@ it("keeps component props serializable across the overview's server/client bound
     Children.forEach(node.props.children, check);
   }
   check(await AdminPage());
+});
+
+it("curves recorded days without bridging unknown days or dropping recorded zeroes", () => {
+  const initial = {
+    startedAt: "2026-10-21T00:00:00Z", baselineViews: 0,
+    points: [4, 0, null, 7, 2, 5, null].map((views, day) => ({ date: `2026-10-${21 + day}`, views })),
+  };
+  const root = parse(renderToStaticMarkup(<MangaViewHistory id={works[0].id} title="Gaps" initial={initial} />));
+  const paths = root.querySelectorAll('path[fill="none"]');
+  expect(paths).toHaveLength(2);
+  expect(paths.every(path => path.getAttribute("d")?.includes(" C"))).toBe(true);
+  expect(root.querySelectorAll("circle")).toHaveLength(5);
+  expect(root.textContent).toContain("0 ครั้ง");
+  expect(root.textContent).toContain("ยังไม่มีข้อมูล");
 });

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Alert, Box, Button, CircularProgress, Dialog, DialogContent, DialogTitle, FormControl, IconButton, InputLabel, MenuItem, Select, Stack, Typography, useMediaQuery } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { maggaColors } from "@/lib/design-tokens";
@@ -11,30 +11,40 @@ function dateLabel(value: string, hourly = false) {
   return new Intl.DateTimeFormat("th-TH", hourly ? { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Bangkok" } : { day: "numeric", month: "short", year: "2-digit", timeZone: "Asia/Bangkok" }).format(new Date(value.length === 10 ? value + "T00:00:00+07:00" : value));
 }
 function LineChart({ points, small = false }: { points: ViewPoint[]; small?: boolean }) {
+  const gradientId = useId();
+  const width = small ? 140 : 600, height = small ? 32 : 200;
+  const bottom = small ? 28 : 190, plotHeight = small ? 23 : 170;
   const maximum = Math.max(1, ...points.map(point => point.views ?? 0));
-  if (small) return <svg viewBox="0 0 140 32" width="100%" height={28} style={{ display: "block", flexShrink: 0 }} preserveAspectRatio="none" role="img" aria-label="แนวโน้มยอดอ่าน 7 วัน">
-    <line x1="4" x2="136" y1="28" y2="28" stroke={maggaColors.borderStrong} vectorEffect="non-scaling-stroke" />
-    {points.map((point, index) => {
-      const x = 10 + index / Math.max(1, points.length - 1) * 120;
-      const height = (point.views ?? 0) / maximum * 23;
-      return <g key={point.date}><title>{`${dateLabel(point.date)} · ${point.views === null ? "ยังไม่มีข้อมูล" : `${point.views.toLocaleString()} ครั้ง`}`}</title>
-        {point.views === null ? <rect x={x - 6} y="5" width="12" height="23" rx="2" fill="none" stroke={maggaColors.textMuted} strokeDasharray="2 3" vectorEffect="non-scaling-stroke" />
-          : point.views === 0 ? <circle cx={x} cy="27" r="2" fill={maggaColors.archiveGoldHover} />
-          : <rect x={x - 6} y={28 - height} width="12" height={height} rx="2" fill={maggaColors.archiveGoldHover} />}
-      </g>;
-    })}
-  </svg>;
-  const segments: string[] = [];
-  let segment: string[] = [];
-  points.forEach((point, index) => {
-    if (point.views === null) { if (segment.length) segments.push(segment.join(" ")); segment = []; return; }
-    segment.push(`${10 + index / Math.max(1, points.length - 1) * 580},${190 - point.views / maximum * 170}`);
+  const segments: { line: string; start: number; end: number }[] = [];
+  let segment: typeof segments[number] | null = null;
+  let previousY = 0;
+  const coordinates = points.map((point, index) => {
+    const x = 10 + index / Math.max(1, points.length - 1) * (width - 20);
+    return { ...point, x, y: bottom - (point.views ?? 0) / maximum * plotHeight };
   });
-  if (segment.length) segments.push(segment.join(" "));
-  return <svg viewBox="0 0 600 200" width="100%" height={200} preserveAspectRatio="none" role="img" aria-label={`กราฟยอดอ่าน ค่าสูงสุดในช่วง ${maximum.toLocaleString()} ครั้ง`}>
-    {[20, 105, 190].map(y => <line key={y} x1="10" x2="590" y1={y} y2={y} stroke={maggaColors.borderStrong} />)}
-    {segments.map((value, index) => <polyline key={index} points={value} fill="none" stroke={maggaColors.archiveGoldHover} strokeWidth={2} vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />)}
-    {points.map((point, index) => point.views === null ? null : <circle key={index} cx={10 + index / Math.max(1, points.length - 1) * 580} cy={190 - point.views / maximum * 170} r={points.length < 32 ? 3 : 1} fill={maggaColors.archiveGoldHover} />)}
+  for (const { views, x, y } of coordinates) {
+    if (views === null) { segment = null; continue; }
+    if (!segment) {
+      segment = { line: `M${x},${y}`, start: x, end: x };
+      segments.push(segment);
+    } else {
+      const middle = (segment.end + x) / 2;
+      segment.line += ` C${middle},${previousY} ${middle},${y} ${x},${y}`;
+      segment.end = x;
+    }
+    previousY = y;
+  }
+  return <svg viewBox={`0 0 ${width} ${height}`} width="100%" height={small ? 28 : 200} style={{ display: "block", flexShrink: 0 }} preserveAspectRatio="none" role="img" aria-label={small ? "แนวโน้มยอดอ่าน 7 วัน" : `กราฟยอดอ่าน ค่าสูงสุดในช่วง ${maximum.toLocaleString()} ครั้ง`}>
+    <defs><linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={maggaColors.archiveGoldHover} stopOpacity="0.25" /><stop offset="100%" stopColor={maggaColors.archiveGoldHover} stopOpacity="0.02" /></linearGradient></defs>
+    {[bottom - plotHeight, bottom - plotHeight / 2, bottom].map(y => <line key={y} x1="4" x2={width - 4} y1={y} y2={y} stroke={maggaColors.border} vectorEffect="non-scaling-stroke" />)}
+    {segments.map(({ line, start, end }, index) => <g key={index}>
+      <path d={`${line} L${end},${bottom} L${start},${bottom} Z`} fill={`url(#${gradientId})`} />
+      <path d={line} fill="none" stroke={maggaColors.archiveGoldHover} strokeWidth={2} vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
+    </g>)}
+    {coordinates.map(point => <g key={point.date}><title>{`${dateLabel(point.date, point.date.length > 10)} · ${point.views === null ? "ยังไม่มีข้อมูล" : `${point.views.toLocaleString()} ครั้ง`}`}</title>
+      {point.views === null ? small && <line x1={point.x} x2={point.x} y1={bottom - 2} y2={bottom + 2} stroke={maggaColors.textMuted} vectorEffect="non-scaling-stroke" />
+        : <circle cx={point.x} cy={point.y} r={small ? 2.5 : points.length < 32 ? 3 : 1} fill={maggaColors.archiveGoldHover} />}
+    </g>)}
   </svg>;
 }
 
