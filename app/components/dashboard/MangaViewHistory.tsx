@@ -3,6 +3,7 @@ import { useEffect, useId, useState } from "react";
 import { Alert, Box, Button, CircularProgress, Dialog, DialogContent, DialogTitle, FormControl, IconButton, InputLabel, MenuItem, Select, Stack, Typography, useMediaQuery } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { maggaColors } from "@/lib/design-tokens";
+import { visuallyHidden } from "@mui/utils";
 import { authFetch } from "@/lib/auth-fetch";
 import type { HistoryPeriod, ViewHistory, ViewPoint, ViewSummary } from "@/lib/view-history";
 
@@ -34,7 +35,7 @@ function LineChart({ points, small = false }: { points: ViewPoint[]; small?: boo
     }
     previousY = y;
   }
-  return <svg viewBox={`0 0 ${width} ${height}`} width="100%" height={small ? 28 : 200} style={{ display: "block", flexShrink: 0 }} preserveAspectRatio="none" role="img" aria-label={small ? "แนวโน้มยอดอ่าน 7 วัน" : `กราฟยอดอ่าน ค่าสูงสุดในช่วง ${maximum.toLocaleString()} ครั้ง`}>
+  return <svg viewBox={`0 0 ${width} ${height}`} width="100%" height={small ? 28 : 200} style={{ display: "block", flexShrink: 0 }} preserveAspectRatio="none" aria-hidden={small || undefined} role={small ? undefined : "img"} aria-label={small ? undefined : `กราฟยอดอ่าน ค่าสูงสุดในช่วง ${maximum.toLocaleString()} ครั้ง`}>
     <defs><linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={maggaColors.archiveGoldHover} stopOpacity="0.25" /><stop offset="100%" stopColor={maggaColors.archiveGoldHover} stopOpacity="0.02" /></linearGradient></defs>
     {[bottom - plotHeight, bottom - plotHeight / 2, bottom].map(y => <line key={y} x1="4" x2={width - 4} y1={y} y2={y} stroke={maggaColors.border} vectorEffect="non-scaling-stroke" />)}
     {segments.map(({ line, start, end }, index) => <g key={index}>
@@ -92,10 +93,12 @@ function HistoryDialog({ id, title, close }: { id: string; title: string; close:
 
 export default function MangaViewHistory({ id, title, initial }: { id: string; title: string; initial?: ViewSummary | null }) {
   const [open, setOpen] = useState(false);
+  const labelId = useId(), contextId = useId();
   const label = initial ? `7 วัน · ${initial.points.reduce((sum, point) => sum + (point.views ?? 0), 0).toLocaleString()} ครั้ง` : "ยังไม่เริ่มเก็บ · ดูสถิติ";
   return <>
-    <Button onClick={() => setOpen(true)} title="กดกราฟเพื่อเลือกช่วงเวลาและดูรายละเอียด" aria-label={`ดูสถิติยอดอ่าน ${title} · ${label}`} sx={{ display: "flex", flexDirection: "column", gap: 0.25, height: 48, minWidth: 0, width: "100%", p: 0.25, borderRadius: 1, color: maggaColors.archiveGoldHover, "&:hover": { bgcolor: maggaColors.archiveGoldSoft }, "&.Mui-focusVisible": { outline: `2px solid ${maggaColors.archiveGoldHover}`, outlineOffset: 2 } }}>
-      {initial ? <><Typography component="span" noWrap sx={{ fontSize: "0.75rem", lineHeight: "14px", width: "100%", textAlign: "left", fontVariantNumeric: "tabular-nums" }}>{label}</Typography><LineChart points={initial.points} small /></> : <Typography component="span" variant="caption">{label}</Typography>}
+    <Button onClick={() => setOpen(true)} title="กดกราฟเพื่อเลือกช่วงเวลาและดูรายละเอียด" aria-labelledby={`${labelId} ${contextId}`} aria-haspopup="dialog" sx={{ display: "flex", flexDirection: "column", gap: 0.25, height: 48, minWidth: 0, width: "100%", p: 0.25, borderRadius: 1, color: maggaColors.archiveGoldHover, "&:hover": { bgcolor: maggaColors.archiveGoldSoft }, "&.Mui-focusVisible": { outline: `2px solid ${maggaColors.archiveGoldHover}`, outlineOffset: 2 } }}>
+      {initial ? <><Typography id={labelId} component="span" noWrap sx={{ fontSize: "0.75rem", lineHeight: "14px", width: "100%", textAlign: "left", fontVariantNumeric: "tabular-nums" }}>{label}</Typography><LineChart points={initial.points} small /></> : <Typography id={labelId} component="span" variant="caption">{label}</Typography>}
+      <Box id={contextId} component="span" sx={visuallyHidden}>ดูสถิติยอดอ่าน {title}</Box>
     </Button>
     {open && <HistoryDialog id={id} title={title} close={() => setOpen(false)} />}
   </>;

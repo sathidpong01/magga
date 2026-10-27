@@ -26,13 +26,13 @@ const { default: AdminPage } = await import("@/app/dashboard/admin/(overview)/pa
 
 it("shows history for all ten ranked works without nesting controls in manga links", async () => {
   const root = parse(renderToStaticMarkup(await AdminPage()));
-  const buttons = root.querySelectorAll("button[aria-label]").filter(button => button.getAttribute("aria-label")?.startsWith("ดูสถิติยอดอ่าน "));
+  const buttons = root.querySelectorAll('button[aria-haspopup="dialog"]');
   expect(summaries).toHaveBeenCalledTimes(1);
   expect(summaries).toHaveBeenCalledWith(works.map(work => work.id));
   expect(buttons).toHaveLength(10);
-  expect(root.querySelectorAll('svg[aria-label="แนวโน้มยอดอ่าน 7 วัน"]')).toHaveLength(10);
+  expect(buttons.filter(button => button.querySelector('svg[aria-hidden="true"]'))).toHaveLength(10);
   expect(root.textContent).not.toContain("ผู้ชม");
-  const firstChart = root.querySelectorAll('svg[aria-label="แนวโน้มยอดอ่าน 7 วัน"]')[0];
+  const firstChart = buttons[0].querySelectorAll("svg")[0];
   expect(firstChart.querySelectorAll("title")).toHaveLength(7);
   expect(firstChart.querySelectorAll("rect")).toHaveLength(0);
   expect(firstChart.querySelectorAll('path[fill="none"]')[0].getAttribute("d")).toContain(" C");
@@ -40,8 +40,11 @@ it("shows history for all ten ranked works without nesting controls in manga lin
   expect(firstChart.textContent).toContain("ยังไม่มีข้อมูล");
   expect(root.textContent).toContain("7 วัน · 1 ครั้ง");
   for (const [index, button] of buttons.entries()) {
-    expect(button.getAttribute("aria-label")).toBe(`ดูสถิติยอดอ่าน Work ${index + 1} · 7 วัน · ${index + 1} ครั้ง`);
-    expect(button.getAttribute("aria-label")).toContain(button.querySelectorAll("span")[0].textContent);
+    const ids = button.getAttribute("aria-labelledby")?.split(" ") ?? [];
+    expect(ids).toHaveLength(2);
+    const labels = ids.map(id => root.querySelectorAll("[id]").find(element => element.id === id)?.textContent);
+    expect(labels).toEqual([`7 วัน · ${index + 1} ครั้ง`, `ดูสถิติยอดอ่าน Work ${index + 1}`]);
+    expect(button.getAttribute("aria-label")).toBeUndefined();
     expect(button.closest("a")).toBeNull();
     expect(root.querySelector(`a[href="/work-${index + 1}"]`)).not.toBeNull();
   }
@@ -50,7 +53,8 @@ it("shows history for all ten ranked works without nesting controls in manga lin
 it("includes the visible fallback text in the history button's accessible name", () => {
   const root = parse(renderToStaticMarkup(<MangaViewHistory id={works[0].id} title="No history" />));
   const button = root.querySelectorAll("button")[0];
-  expect(button.getAttribute("aria-label")).toContain("ยังไม่เริ่มเก็บ · ดูสถิติ");
+  const visibleId = button.getAttribute("aria-labelledby")?.split(" ")[0];
+  expect(root.querySelectorAll("[id]").find(element => element.id === visibleId)?.textContent).toBe("ยังไม่เริ่มเก็บ · ดูสถิติ");
 });
 
 it("keeps component props serializable across the overview's server/client boundary", async () => {
