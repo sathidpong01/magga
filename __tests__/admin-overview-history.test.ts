@@ -8,9 +8,9 @@ const works = Array.from({ length: 10 }, (_, index) => ({
   title: `Work ${index + 1}`, slug: `work-${index + 1}`,
   viewCount: 100 - index, coverImage: null,
 }));
-const summaries = mock(async () => Object.fromEntries(works.map(work => [work.id, {
+const summaries = mock(async () => Object.fromEntries(works.map((work, index) => [work.id, {
   startedAt: "2026-10-27T00:00:00Z", baselineViews: work.viewCount,
-  points: [{ date: "2026-10-27", views: 0 }],
+  points: Array.from({ length: 7 }, (_, day) => ({ date: `2026-10-${21 + day}`, views: day < 5 ? null : day === 5 ? 0 : index + 1 })),
 }])));
 mock.module("@/lib/auth-helpers", () => ({ requireAdminPage: async () => {}, isAdminRole: () => true }));
 mock.module("@/lib/auth", () => ({ auth: { api: { getSession: async () => ({ user: { role: "admin" } }) } } }));
@@ -30,6 +30,13 @@ it("shows history for all ten ranked works without nesting controls in manga lin
   expect(summaries).toHaveBeenCalledWith(works.map(work => work.id));
   expect(buttons).toHaveLength(10);
   expect(root.querySelectorAll('svg[aria-label="แนวโน้มยอดอ่าน 7 วัน"]')).toHaveLength(10);
+  expect(root.textContent).not.toContain("ผู้ชม");
+  const firstChart = root.querySelectorAll('svg[aria-label="แนวโน้มยอดอ่าน 7 วัน"]')[0];
+  expect(firstChart.querySelectorAll("g")).toHaveLength(7);
+  expect(firstChart.querySelectorAll("rect[stroke-dasharray]")).toHaveLength(5);
+  expect(firstChart.querySelectorAll("circle")).toHaveLength(1);
+  expect(firstChart.textContent).toContain("ยังไม่มีข้อมูล");
+  expect(root.textContent).toContain("7 วัน · 1 ครั้ง");
   for (const [index, button] of buttons.entries()) {
     expect(button.getAttribute("aria-label")).toBe(`ดูสถิติยอดอ่าน Work ${index + 1}`);
     expect(button.closest("a")).toBeNull();

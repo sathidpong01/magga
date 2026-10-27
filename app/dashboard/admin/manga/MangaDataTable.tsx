@@ -602,9 +602,9 @@ export default function MangaDataTable({
                   />
                 </TableCell>
 
-                <TableCell data-label="ยอดอ่าน" sx={{ color: "#a3a3a3", px: 1 }}>
+                <TableCell data-label="ยอดอ่าน" sx={{ color: maggaColors.textSecondary, px: 1, py: 1 }}>
                   <Box sx={{ width: "100%", maxWidth: 130, minWidth: 0, ml: "auto" }}>
-                    <Typography component="span" noWrap sx={{ display: "block", fontSize: "0.85rem", fontVariantNumeric: "tabular-nums" }}>{manga.viewCount.toLocaleString()}</Typography>
+                    <Typography component="span" noWrap sx={{ display: "block", fontSize: "0.75rem", lineHeight: "18px", fontVariantNumeric: "tabular-nums" }}>สะสม {manga.viewCount.toLocaleString()}</Typography>
                     <MangaViewHistory id={manga.id} title={manga.title} initial={manga.viewHistory} />
                   </Box>
                 </TableCell>

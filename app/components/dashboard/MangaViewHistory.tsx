@@ -12,6 +12,18 @@ function dateLabel(value: string, hourly = false) {
 }
 function LineChart({ points, small = false }: { points: ViewPoint[]; small?: boolean }) {
   const maximum = Math.max(1, ...points.map(point => point.views ?? 0));
+  if (small) return <svg viewBox="0 0 140 32" width="100%" height={28} style={{ display: "block", flexShrink: 0 }} preserveAspectRatio="none" role="img" aria-label="แนวโน้มยอดอ่าน 7 วัน">
+    <line x1="4" x2="136" y1="28" y2="28" stroke={maggaColors.borderStrong} vectorEffect="non-scaling-stroke" />
+    {points.map((point, index) => {
+      const x = 10 + index / Math.max(1, points.length - 1) * 120;
+      const height = (point.views ?? 0) / maximum * 23;
+      return <g key={point.date}><title>{`${dateLabel(point.date)} · ${point.views === null ? "ยังไม่มีข้อมูล" : `${point.views.toLocaleString()} ครั้ง`}`}</title>
+        {point.views === null ? <rect x={x - 6} y="5" width="12" height="23" rx="2" fill="none" stroke={maggaColors.textMuted} strokeDasharray="2 3" vectorEffect="non-scaling-stroke" />
+          : point.views === 0 ? <circle cx={x} cy="27" r="2" fill={maggaColors.archiveGoldHover} />
+          : <rect x={x - 6} y={28 - height} width="12" height={height} rx="2" fill={maggaColors.archiveGoldHover} />}
+      </g>;
+    })}
+  </svg>;
   const segments: string[] = [];
   let segment: string[] = [];
   points.forEach((point, index) => {
@@ -19,10 +31,10 @@ function LineChart({ points, small = false }: { points: ViewPoint[]; small?: boo
     segment.push(`${10 + index / Math.max(1, points.length - 1) * 580},${190 - point.views / maximum * 170}`);
   });
   if (segment.length) segments.push(segment.join(" "));
-  return <svg viewBox="0 0 600 200" width="100%" height={small ? 26 : 200} preserveAspectRatio="none" role="img" aria-label={small ? "แนวโน้มยอดอ่าน 7 วัน" : `กราฟยอดอ่าน ค่าสูงสุดในช่วง ${maximum.toLocaleString()} ครั้ง`}>
-    {!small && [20, 105, 190].map(y => <line key={y} x1="10" x2="590" y1={y} y2={y} stroke={maggaColors.borderStrong} />)}
-    {segments.map((value, index) => <polyline key={index} points={value} fill="none" stroke={maggaColors.archiveGoldHover} strokeWidth={small ? 3 : 2} vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />)}
-    {points.map((point, index) => point.views === null ? null : <circle key={index} cx={10 + index / Math.max(1, points.length - 1) * 580} cy={190 - point.views / maximum * 170} r={small ? 2 : points.length < 32 ? 3 : 1} fill={maggaColors.archiveGoldHover} />)}
+  return <svg viewBox="0 0 600 200" width="100%" height={200} preserveAspectRatio="none" role="img" aria-label={`กราฟยอดอ่าน ค่าสูงสุดในช่วง ${maximum.toLocaleString()} ครั้ง`}>
+    {[20, 105, 190].map(y => <line key={y} x1="10" x2="590" y1={y} y2={y} stroke={maggaColors.borderStrong} />)}
+    {segments.map((value, index) => <polyline key={index} points={value} fill="none" stroke={maggaColors.archiveGoldHover} strokeWidth={2} vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />)}
+    {points.map((point, index) => point.views === null ? null : <circle key={index} cx={10 + index / Math.max(1, points.length - 1) * 580} cy={190 - point.views / maximum * 170} r={points.length < 32 ? 3 : 1} fill={maggaColors.archiveGoldHover} />)}
   </svg>;
 }
 
@@ -71,8 +83,8 @@ function HistoryDialog({ id, title, close }: { id: string; title: string; close:
 export default function MangaViewHistory({ id, title, initial }: { id: string; title: string; initial?: ViewSummary | null }) {
   const [open, setOpen] = useState(false);
   return <>
-    <Button onClick={() => setOpen(true)} aria-label={`ดูสถิติยอดอ่าน ${title}`} sx={{ display: "flex", flexDirection: "column", height: 48, minWidth: 0, width: "100%", p: 0.5, color: maggaColors.archiveGoldHover }}>
-      {initial ? <><LineChart points={initial.points} small /><Typography component="span" sx={{ fontSize: "0.65rem", lineHeight: 1.2 }}>7 วัน · ดูสถิติ</Typography></> : <Typography component="span" variant="caption">ดูสถิติ</Typography>}
+    <Button onClick={() => setOpen(true)} title="กดกราฟเพื่อเลือกช่วงเวลาและดูรายละเอียด" aria-label={`ดูสถิติยอดอ่าน ${title}`} sx={{ display: "flex", flexDirection: "column", gap: 0.25, height: 48, minWidth: 0, width: "100%", p: 0.25, borderRadius: 1, color: maggaColors.archiveGoldHover, "&:hover": { bgcolor: maggaColors.archiveGoldSoft }, "&.Mui-focusVisible": { outline: `2px solid ${maggaColors.archiveGoldHover}`, outlineOffset: 2 } }}>
+      {initial ? <><Typography component="span" noWrap sx={{ fontSize: "0.75rem", lineHeight: "14px", width: "100%", textAlign: "left", fontVariantNumeric: "tabular-nums" }}>7 วัน · {initial.points.reduce((sum, point) => sum + (point.views ?? 0), 0).toLocaleString()} ครั้ง</Typography><LineChart points={initial.points} small /></> : <Typography component="span" variant="caption">ยังไม่เริ่มเก็บ · ดูสถิติ</Typography>}
     </Button>
     {open && <HistoryDialog id={id} title={title} close={() => setOpen(false)} />}
   </>;

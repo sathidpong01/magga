@@ -1,4 +1,4 @@
-# Manga view history (2.29.0)
+# Manga view history (2.29.2)
 
 The admin manga list shows a seven-day sparkline beneath each lifetime view count. Selecting it opens a keyboard-accessible dialog with today's hourly totals, 7/30/90/365-day ranges, or the period since publication. Exact values are available in an expandable table. Daily peak selection remains exact even when the lifetime chart groups several days into each plotted point.
 
@@ -27,6 +27,8 @@ The application tolerates deployment before the migration: normal views/rating b
 On 2026-10-27, the migration was applied to `magga-db` (`ssgsxrdobafxkiuigoqw`) after confirming both tables, the function and the trigger were absent. All 36 existing manga received coverage metadata with their original lifetime totals preserved. A transaction verified daily/hourly capture and unchanged counters on a no-increment update, then rolled back all probe changes. Collection starts at migration time; older daily totals remain unknown.
 
 The admin overview also loads seven-day summaries for its ten popular manga with one bounded query. Each ranking offers the same history dialog as the manga list, outside the link to the work. Rankings continue to use lifetime views. Loading placeholders reserve space for the added charts; detail requests run only when a dialog opens.
+
+The compact overview uses an inline moderation queue, removes the unavailable unique-visitor placeholders, and bounds top-three covers by viewport height while retaining their 3:4 ratio. The overview and manga table show seven daily bars with a seven-day total; dashed slots mean unknown days, dots mean recorded zero, and gold bars mean recorded reads. Hovering a day gives its date and value. Clicking the chart opens the existing period selector. Overview loading geometry shares the cover, card and ranking dimensions with the rendered page.
 
 ## Layout and validation
 
