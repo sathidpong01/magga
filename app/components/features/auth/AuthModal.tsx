@@ -184,13 +184,13 @@ export default function AuthModal({
               sx={{
                 fontWeight: 700,
                 mb: 0.5,
-                letterSpacing: "-0.02em",
-                lineHeight: 1.2,
+                letterSpacing: "normal",
+                lineHeight: 1.75,
                 color: "#f4f4f5",
               }}>
               ยินดีต้อนรับกลับ
             </Typography>
-            <Typography variant="body2" sx={{ color: "#a1a1aa", maxWidth: 320, lineHeight: 1.55, fontSize: "0.9rem" }}>
+            <Typography variant="body2" sx={{ color: "#a1a1aa", maxWidth: 320, lineHeight: 1.75, fontSize: "0.9rem" }}>
               เข้าสู่ระบบเพื่อใช้งานโปรไฟล์ ความคิดเห็น และการตั้งค่าของคุณต่อเนื่อง
             </Typography>
           </Box>

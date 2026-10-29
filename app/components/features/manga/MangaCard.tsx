@@ -4,7 +4,7 @@ import { memo } from "react";
 import { Card, Typography, Box, Chip } from "@mui/material";
 import Image from "next/image";
 import Link from "next/link";
-import { maggaColors, maggaShadows } from "@/lib/design-tokens";
+import { maggaColors, maggaShadows, maggaTypography } from "@/lib/design-tokens";
 
 // Minimal interface for MangaCard - only fields we actually use
 export interface MangaWithDetails {
@@ -153,13 +153,13 @@ const MangaCard = ({ manga, priority = false }: MangaCardProps) => {
             component="h2"
             sx={{
               fontWeight: 500,
-              minHeight: "1.2rem",
+              minHeight: maggaTypography.cardTitleHeight,
               color: maggaColors.textPrimary,
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
               fontSize: "0.92rem",
-              lineHeight: 1.3,
+              lineHeight: 1.75,
               transition: "color 0.15s ease",
             }}
           >
@@ -168,7 +168,7 @@ const MangaCard = ({ manga, priority = false }: MangaCardProps) => {
         </Link>
 
         {/* Author Line - 1 Line, Clickable Filter */}
-        <Box sx={{ minHeight: "1.2rem", display: "flex", alignItems: "center" }}>
+        <Box sx={{ minHeight: maggaTypography.cardAuthorHeight, display: "flex", alignItems: "center" }}>
           {manga.authorName ? (
             <Link
               href={`/?author=${encodeURIComponent(manga.authorName)}`}
@@ -188,7 +188,7 @@ const MangaCard = ({ manga, priority = false }: MangaCardProps) => {
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
                   display: "block",
-                  lineHeight: 1.25,
+                  lineHeight: 1.75,
                   transition: "color 0.15s ease",
                   "&:hover": {
                     color: maggaColors.archiveGoldHover,
@@ -205,8 +205,8 @@ const MangaCard = ({ manga, priority = false }: MangaCardProps) => {
               sx={{
                 color: maggaColors.textSecondary,
                 fontSize: "0.78rem",
-                fontStyle: "italic",
-                lineHeight: 1.25,
+                fontStyle: "oblique 10deg",
+                lineHeight: 1.75,
               }}
             >
               ไม่ระบุผู้แต่ง
@@ -220,7 +220,7 @@ const MangaCard = ({ manga, priority = false }: MangaCardProps) => {
             display: "flex",
             alignItems: "center",
             gap: 0.75,
-            minHeight: "1.2rem",
+            minHeight: maggaTypography.cardStatsHeight,
             fontSize: "0.75rem",
             color: maggaColors.textSecondary,
             mt: 0.15,
@@ -251,7 +251,7 @@ const MangaCard = ({ manga, priority = false }: MangaCardProps) => {
           )}
           <Typography
             variant="caption"
-            sx={{ color: maggaColors.textSecondary, fontSize: "0.72rem" }}
+            sx={{ color: maggaColors.textSecondary, fontSize: "0.75rem" }}
           >
             {manga.viewCount >= 1000000
               ? `${(manga.viewCount / 1000000).toFixed(1)}M`

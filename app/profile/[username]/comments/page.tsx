@@ -152,7 +152,7 @@ export default function MyCommentsPage() {
         </Box>
         <Box>
           <Typography component="h1" variant="h5" sx={{
-            fontWeight: 800
+            fontWeight: 700
           }}>ความคิดเห็นของฉัน</Typography>
           <Typography variant="body2" sx={{ color: maggaColors.textSecondary }}>
             {comments.length} ความคิดเห็น{hasMore ? "+" : ""}
@@ -229,7 +229,7 @@ export default function MyCommentsPage() {
                       size="small"
                       sx={{
                         height: 18,
-                        fontSize: "0.65rem",
+                        fontSize: "0.75rem",
                         bgcolor: comment.voteScore > 0 ? "rgba(74,222,128,0.1)" : "rgba(248,113,113,0.1)",
                         color: comment.voteScore > 0 ? "#4ade80" : "#f87171",
                       }}

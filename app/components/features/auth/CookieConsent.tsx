@@ -84,7 +84,7 @@ export default function CookieConsent() {
           boxSizing: "border-box", p: 2, borderRadius: `${maggaRadii.card}px`, bgcolor: maggaColors.surface,
           color: maggaColors.textPrimary, border: `1px solid ${maggaColors.border}`, zIndex: 1300, boxShadow: maggaShadows.authPanelDepth }}>
         <Typography id="privacy-choice-title" component="h2" variant="subtitle1" sx={{ fontWeight: 700 }}>ความเป็นส่วนตัวของคุณ</Typography>
-        <Typography id="privacy-choice-description" variant="body2" sx={{ mt: 1, color: maggaColors.textSecondary, lineHeight: 1.7 }}>
+        <Typography id="privacy-choice-description" variant="body2" sx={{ mt: 1, color: maggaColors.textSecondary, lineHeight: 1.75 }}>
           คุกกี้ที่จำเป็นใช้สำหรับล็อกอินและจำสิทธิ์คอมเมนต์ผู้เยี่ยมชม ส่วนการยืนยันอายุและอ่านต่อจะจำไว้ในเบราว์เซอร์
           คุณเลือกได้ว่าจะอนุญาตสถิติยอดอ่าน การแสดงและคลิกโฆษณา รวมถึงการวิเคราะห์ผู้เข้าชมและความเร็วเว็บของ Vercel หรือไม่ ปฏิเสธแล้วยังอ่านและใช้บัญชีได้
         </Typography>

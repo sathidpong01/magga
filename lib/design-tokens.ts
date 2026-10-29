@@ -1,3 +1,13 @@
+export const maggaTypography = {
+  fontFamily: 'var(--font-magga), Tahoma, Arial, sans-serif',
+  // Thai above/below-base marks need more space than the previous compact UI.
+  lineHeight: 1.75,
+  weight: { body: 400, label: 500, emphasis: 600, heading: 700 },
+  cardTitleHeight: "1.61rem",
+  cardAuthorHeight: "1.365rem",
+  cardStatsHeight: "1.4rem",
+} as const;
+
 export const maggaColors = {
   background: "#141416",
   midnightCanvas: "#0a0a0a",

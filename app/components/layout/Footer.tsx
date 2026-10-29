@@ -72,7 +72,7 @@ export default function Footer() {
               sx={{
                 color: "#8e8e93",
                 fontSize: "0.875rem",
-                lineHeight: 1.7,
+                lineHeight: 1.75,
                 maxWidth: 440,
               }}
             >

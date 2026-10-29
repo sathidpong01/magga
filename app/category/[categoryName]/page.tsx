@@ -154,7 +154,7 @@ export default async function CategoryPage({
                 fontSize: { xs: "1.6rem", sm: "2rem" },
                 fontWeight: 700,
                 color: "#ffffff",
-                letterSpacing: "-0.01em",
+                letterSpacing: "normal",
               }}
             >
               {category.name}

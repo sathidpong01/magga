@@ -14,34 +14,34 @@ colors:
   danger-red: "#ef4444"
 typography:
   author-heading:
-    fontFamily: "Kanit, sans-serif"
+    fontFamily: "Ekkamai Vibe, sans-serif"
     fontSize: "2rem"
     fontWeight: 700
-    lineHeight: 1.167
+    lineHeight: 1.75
     letterSpacing: "normal"
   manga-title:
-    fontFamily: "Kanit, sans-serif"
+    fontFamily: "Ekkamai Vibe, sans-serif"
     fontSize: "0.92rem"
     fontWeight: 500
-    lineHeight: 1.3
+    lineHeight: 1.75
     letterSpacing: "normal"
   manga-author:
-    fontFamily: "Kanit, sans-serif"
+    fontFamily: "Ekkamai Vibe, sans-serif"
     fontSize: "0.78rem"
     fontWeight: 400
-    lineHeight: 1.25
+    lineHeight: 1.75
     letterSpacing: "normal"
   body:
-    fontFamily: "Kanit, sans-serif"
+    fontFamily: "Ekkamai Vibe, sans-serif"
     fontSize: "1rem"
     fontWeight: 400
-    lineHeight: 1.5
+    lineHeight: 1.75
     letterSpacing: "normal"
   category-label:
-    fontFamily: "Kanit, sans-serif"
+    fontFamily: "Ekkamai Vibe, sans-serif"
     fontSize: "0.8rem"
     fontWeight: 600
-    lineHeight: 1.5
+    lineHeight: 1.75
     letterSpacing: "0.03em"
 rounded:
   sm: "4px"
@@ -91,7 +91,7 @@ Implementation references:
 
 - [Design tokens](lib/design-tokens.ts): the source of shared color, radius, shadow, and motion values.
 - [Design system specification](DESIGN_SYSTEM.md): project component requirements.
-- [Public theme](app/components/layout/Providers.tsx) and [root layout](app/layout.tsx): the public Kanit font and theme.
+- [Public theme](app/components/layout/Providers.tsx) and [root layout](app/layout.tsx): the public Ekkamai Vibe font and theme.
 - [Manga card](app/components/features/manga/MangaCard.tsx), [author header](app/components/features/author/AuthorHeaderCard.tsx), [search filters](app/components/features/search/SearchFilters.tsx), and [header](app/components/layout/Header.tsx): the current component appearance.
 
 If this document and the implementation drift, reconcile the documentation with the owner's approved design and project instructions before changing the visuals. Do not introduce new styling merely to satisfy an outdated description.
@@ -124,15 +124,15 @@ The current muted text value is documented as observed, not certified for all re
 
 ## Typography
 
-The public interface uses Kanit with a sans-serif fallback. `app/layout.tsx` loads weights 400, 500, and 700 for Thai and Latin; components also request intermediate CSS weights. Do not add another font or font download to resolve a usability issue.
+The public interface uses Ekkamai Vibe with a sans-serif fallback. `app/fonts.ts` loads one local variable WOFF2 through `next/font/local`, weights 100–700, width 75–125%, slant 0–10°. Both MUI themes use `--font-magga` through `maggaThemeTypography`. Use 400 for prose, 500 for card titles and labels, 600 for badges/table headers, and 700 for page headings and primary confirmations. Never request 800/900 from this family. Keep technical identifiers monospace.
 
 The frontmatter captures the current manga title, author, category label, and author heading sizes. Other headings follow their existing MUI variants and component-specific responsive sizes. The homepage deliberately uses a compact `h6` visual variant for its semantic `h1`; do not replace it with an oversized marketing hero.
 
-Manga titles are `0.92rem`, weight 500, line-height 1.3. Author names are `0.78rem`, line-height 1.25. The Views caption remains `0.72rem` and uses `textSecondary` for improved contrast without changing card geometry.
+Manga titles are `0.92rem`, weight 500, line-height 1.75. Author names are `0.78rem`, line-height 1.75. The Views caption remains `0.75rem` and uses `textSecondary` for improved contrast without changing card geometry.
 
-The dashboard keeps its separate component styling and now explicitly uses the same Kanit font family and heading weights as the public theme.
+The dashboard keeps its separate component styling and now explicitly uses the same Ekkamai Vibe font family and heading weights as the public theme.
 
-Keep Thai labels readable, allow form helper text to wrap, and preserve the one-line title/author treatment on manga cards. Use size, weight, and placement for hierarchy.
+Keep Thai labels readable, allow form helper text to wrap, and preserve the one-line title/author treatment on manga cards. Use size, weight, and placement for hierarchy. Reserve line-height 1.75 for Thai marks, especially in clipped/no-wrap boxes. Keep width 100% and use real oblique 10deg for emphasized text. Match card skeleton heights to shared typography tokens.
 
 ## Elevation
 
@@ -153,7 +153,7 @@ Preserve local shadows already used by dialogs, menus, and cover thumbnails. Man
 - Cover aspect ratio is **3:4**, with **10px** corners.
 - The category badge sits at the top-right, 10px from the edges. It has a dark translucent background, 8px backdrop blur, a thin light border, 28px height, 6px corners, and `0.8rem` text at weight 600.
 - Title appears **below the cover**, on exactly one line with ellipsis. Do not put it back over the artwork or use the former two-line treatment.
-- Author appears below the title, on one line. Its link filters through `/?author=${encodeURIComponent(authorName)}`. The author container reserves `minHeight: 1.2rem`.
+- Author appears below the title, on one line. Its link filters through `/?author=${encodeURIComponent(authorName)}`. The author container reserves `maggaTypography.cardAuthorHeight`.
 - The stats row below the author currently displays a rating when available and Views. A comment count is not rendered by the current card; do not claim it is implemented.
 - The current cover has a subtle bottom vignette. Preserve it; it is not the former large title overlay.
 - Mobile discovery uses two columns; wider breakpoints add columns through the existing Grid configuration.

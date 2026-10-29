@@ -151,7 +151,7 @@ export default async function TagPage({ params, searchParams }: TagPageProps) {
                 fontSize: { xs: "1.6rem", sm: "2rem" },
                 fontWeight: 700,
                 color: "#ffffff",
-                letterSpacing: "-0.01em",
+                letterSpacing: "normal",
               }}
             >
               {tag.name}

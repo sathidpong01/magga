@@ -159,7 +159,7 @@ export default function CollapsibleSidebar({
               fontWeight: 700,
               color: dashboardTokens.text,
               fontSize: "1.05rem",
-              letterSpacing: "-0.01em",
+              letterSpacing: "normal",
               whiteSpace: "nowrap",
               overflow: "hidden",
             }}
@@ -410,7 +410,7 @@ export default function CollapsibleSidebar({
                 </Typography>
                 <Typography
                   sx={{
-                    fontSize: "0.72rem",
+                    fontSize: "0.75rem",
                     color: dashboardTokens.textMuted,
                     whiteSpace: "nowrap",
                     overflow: "hidden",
@@ -433,7 +433,7 @@ export default function CollapsibleSidebar({
                   >
                     <Typography
                       sx={{
-                        fontSize: "0.65rem",
+                        fontSize: "0.75rem",
                         fontWeight: 600,
                         color: "#ef4444",
                       }}

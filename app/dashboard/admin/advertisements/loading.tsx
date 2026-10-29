@@ -5,7 +5,7 @@ import { maggaColors } from "@/lib/design-tokens";
 export default function Loading() {
   return <Box data-skeleton="advertisements" aria-busy>
     <Box sx={{ display: "flex",justifyContent: "space-between",alignItems: "center",mb: 4,gap: 1,flexWrap: "wrap" }}>
-      <Typography variant="h4" sx={{ fontWeight: 900,letterSpacing: "-0.02em",color: dashboardTokens.text }}>จัดการโฆษณา</Typography>
+      <Typography variant="h4" sx={{ fontWeight: 700,letterSpacing: "normal",color: dashboardTokens.text }}>จัดการโฆษณา</Typography>
       <Button disabled variant="contained" sx={{ height: 44,px: 3 }}>สร้างโฆษณา</Button>
     </Box>
     <Box sx={{ display: "flex",gap: 1.5,flexWrap: "wrap",mb: 2,minHeight: 56 }}>

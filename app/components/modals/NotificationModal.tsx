@@ -92,7 +92,7 @@ export default function NotificationModal({
         ) : (
           <Typography
             variant="body1"
-            sx={{ color: "#d4d4d4", lineHeight: 1.6 }}
+            sx={{ color: "#d4d4d4", lineHeight: 1.75 }}
           >
             {message}
           </Typography>

@@ -266,7 +266,7 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                 bgcolor: dashboardTokens.accentSoft,
                 color: dashboardTokens.accentStrong,
                 border: `1px solid ${dashboardTokens.accentSoft}`,
-                fontWeight: 700,
+                fontWeight: 600,
               }}
             />
             <Chip
@@ -275,7 +275,7 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                 bgcolor: "rgba(239,68,68,0.08)",
                 color: "#f87171",
                 border: "1px solid rgba(239,68,68,0.16)",
-                fontWeight: 700,
+                fontWeight: 600,
               }}
             />
             <Chip
@@ -284,7 +284,7 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                 bgcolor: "rgba(96,165,250,0.08)",
                 color: "#93c5fd",
                 border: "1px solid rgba(96,165,250,0.16)",
-                fontWeight: 700,
+                fontWeight: 600,
               }}
             />
             <Chip
@@ -293,7 +293,7 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                 bgcolor: dashboardTokens.accentSoft,
                 color: dashboardTokens.accentStrong,
                 border: `1px solid ${dashboardTokens.accentSoft}`,
-                fontWeight: 700,
+                fontWeight: 600,
               }}
             />
           </Stack>
@@ -307,7 +307,7 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
               <TableRow sx={{ bgcolor: "rgba(0,0,0,0.2)" }}>
                 <TableCell
                   sx={{
-                    fontWeight: 800,
+                    fontWeight: 600,
                     color: "#a3a3a3",
                     fontSize: "0.75rem",
                     letterSpacing: "0.05em",
@@ -317,7 +317,7 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                 </TableCell>
                 <TableCell
                   sx={{
-                    fontWeight: 800,
+                    fontWeight: 600,
                     color: "#a3a3a3",
                     fontSize: "0.75rem",
                     letterSpacing: "0.05em",
@@ -327,7 +327,7 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                 </TableCell>
                 <TableCell
                   sx={{
-                    fontWeight: 800,
+                    fontWeight: 600,
                     color: "#a3a3a3",
                     fontSize: "0.75rem",
                     letterSpacing: "0.05em",
@@ -337,7 +337,7 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                 </TableCell>
                 <TableCell
                   sx={{
-                    fontWeight: 800,
+                    fontWeight: 600,
                     color: "#a3a3a3",
                     fontSize: "0.75rem",
                     letterSpacing: "0.05em",
@@ -347,7 +347,7 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                 </TableCell>
                 <TableCell
                   sx={{
-                    fontWeight: 800,
+                    fontWeight: 600,
                     color: "#a3a3a3",
                     fontSize: "0.75rem",
                     letterSpacing: "0.05em",
@@ -358,7 +358,7 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                 <TableCell
                   align="right"
                   sx={{
-                    fontWeight: 800,
+                    fontWeight: 600,
                     color: "#a3a3a3",
                     fontSize: "0.75rem",
                     letterSpacing: "0.05em",
@@ -399,7 +399,7 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                       <Box>
                         <Typography
                           sx={{
-                            fontWeight: 800,
+                            fontWeight: 500,
                             color: "#fafafa",
                             fontSize: "0.95rem",
                             letterSpacing: "0.01em",
@@ -423,8 +423,8 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                             sx={{
                               ml: 1,
                               height: 18,
-                              fontSize: "0.6rem",
-                              fontWeight: 900,
+                              fontSize: "0.75rem",
+                              fontWeight: 600,
                               borderColor: "#ef4444",
                               color: "#ef4444",
                               bgcolor: "rgba(239, 68, 68, 0.05)",
@@ -508,7 +508,7 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                             color: dashboardTokens.accentStrong,
                             borderRadius: 0.75,
                             border: `1px solid ${dashboardTokens.accentSoft}`,
-                            fontWeight: 700,
+                            fontWeight: 600,
                             fontFamily: "monospace",
                             "& .MuiChip-label": { px: 1 },
                           }}
@@ -528,7 +528,7 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
                             color: dashboardTokens.info,
                             borderRadius: 0.75,
                             border: "1px solid rgba(56, 189, 248, 0.2)",
-                            fontWeight: 700,
+                            fontWeight: 600,
                             fontFamily: "monospace",
                             "& .MuiChip-label": { px: 1 },
                           }}
@@ -642,13 +642,13 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
         }}
       >
         <DialogTitle
-          sx={{ fontWeight: 900,letterSpacing: "0.02em",fontSize: "1rem" }}
+          sx={{ fontWeight: 700,letterSpacing: "0.02em",fontSize: "1rem" }}
         >
           ระงับบัญชีผู้ใช้นี้?
         </DialogTitle>
         <DialogContent>
           <DialogContentText
-            sx={{ color: "#a3a3a3",mb: 2,fontWeight: 500,lineHeight: 1.7 }}
+            sx={{ color: "#a3a3a3",mb: 2,fontWeight: 500,lineHeight: 1.75 }}
           >
             ระบุเหตุผลสำหรับการระงับบัญชีของ &quot;
             {userToBan?.name||userToBan?.email}&quot;
@@ -680,7 +680,7 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
         <DialogActions sx={{ p: 2.5,bgcolor: "rgba(0,0,0,0.2)" }}>
           <Button
             onClick={() => setBanDialogOpen(false)}
-            sx={{ color: "#a3a3a3",fontWeight: 700,textTransform: "none" }}
+            sx={{ color: "#a3a3a3",fontWeight: 500,textTransform: "none" }}
           >
             ยกเลิก
           </Button>
@@ -709,20 +709,20 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
         }}
       >
         <DialogTitle
-          sx={{ fontWeight: 900,letterSpacing: "0.02em",fontSize: "1rem" }}
+          sx={{ fontWeight: 700,letterSpacing: "0.02em",fontSize: "1rem" }}
         >
           ยืนยันการลบ?
         </DialogTitle>
         <DialogContent>
           <DialogContentText
-            sx={{ color: "#a3a3a3",fontWeight: 500,mb: 1,lineHeight: 1.7 }}
+            sx={{ color: "#a3a3a3",fontWeight: 500,mb: 1,lineHeight: 1.75 }}
           >
             คุณต้องการลบผู้ใช้ &quot;{userToDelete?.name||userToDelete?.email}
             &quot; ใช่หรือไม่
           </DialogContentText>
           <Typography
             variant="caption"
-            sx={{ color: "#ef4444",fontWeight: 800,letterSpacing: "0.02em" }}
+            sx={{ color: "#ef4444",fontWeight: 600,letterSpacing: "0.02em" }}
           >
             การกระทำนี้จะลบข้อมูลที่เกี่ยวข้องทั้งหมดถาวร
           </Typography>
@@ -730,7 +730,7 @@ export default function UserManager({ initialUsers }: UserManagerProps) {
         <DialogActions sx={{ p: 2.5,bgcolor: "rgba(0,0,0,0.2)" }}>
           <Button
             onClick={() => setDeleteDialogOpen(false)}
-            sx={{ color: "#a3a3a3",fontWeight: 700,textTransform: "none" }}
+            sx={{ color: "#a3a3a3",fontWeight: 500,textTransform: "none" }}
           >
             ยกเลิก
           </Button>

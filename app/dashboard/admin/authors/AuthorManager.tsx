@@ -224,7 +224,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                 component="h2"
                 variant="subtitle1"
                 sx={{
-                  fontWeight: 800,
+                  fontWeight: 600,
                   color: "#fafafa",
                   letterSpacing: "0.03em",
                 }}
@@ -240,7 +240,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                     sx={{
                       borderColor: "rgba(255,255,255,0.1)",
                       color: "#a3a3a3",
-                      fontWeight: 800,
+                      fontWeight: 500,
                       fontSize: "0.75rem",
                       letterSpacing: "0",
                       "&:hover": {
@@ -330,7 +330,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                       sx={{
                         color: "#a3a3a3",
                         mb: 1.5,
-                        fontWeight: 900,
+                        fontWeight: 600,
                         textTransform: "none",
                         letterSpacing: "0",
                         fontSize: "0.75rem",
@@ -540,9 +540,9 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                         mt: 2,
                         borderColor: "rgba(255,255,255,0.1)",
                         color: dashboardTokens.accent,
-                        fontWeight: 800,
+                        fontWeight: 700,
                         textTransform: "none",
-                        fontSize: "0.7rem",
+                        fontSize: "0.75rem",
                         letterSpacing: "0",
                         borderRadius: dashboardRadii.button,
                         "&:hover": {
@@ -584,7 +584,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
               <TableRow sx={{ bgcolor: "rgba(0,0,0,0.2)" }}>
                 <TableCell
                   sx={{
-                    fontWeight: 800,
+                    fontWeight: 600,
                     color: "#a3a3a3",
                     fontSize: "0.75rem",
                     letterSpacing: "0",
@@ -594,7 +594,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                 </TableCell>
                 <TableCell
                   sx={{
-                    fontWeight: 800,
+                    fontWeight: 600,
                     color: "#a3a3a3",
                     fontSize: "0.75rem",
                     letterSpacing: "0",
@@ -605,7 +605,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
                 <TableCell
                   align="right"
                   sx={{
-                    fontWeight: 800,
+                    fontWeight: 600,
                     color: "#a3a3a3",
                     fontSize: "0.75rem",
                     letterSpacing: "0",
@@ -754,7 +754,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
         }}
       >
         <DialogTitle
-          sx={{ fontWeight: 900,letterSpacing: "0",fontSize: "1rem" }}
+          sx={{ fontWeight: 700,letterSpacing: "0",fontSize: "1rem" }}
         >
           ยืนยันการลบ
         </DialogTitle>
@@ -768,7 +768,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
             onClick={() => setDeleteDialogOpen(false)}
             sx={{
               color: "#a3a3a3",
-              fontWeight: 800,
+              fontWeight: 500,
               textTransform: "none",
               fontSize: "0.75rem",
             }}
@@ -781,7 +781,7 @@ export default function AuthorManager({ initialAuthors }: AuthorManagerProps) {
             sx={{
               bgcolor: "#ef4444",
               color: "#fff",
-              fontWeight: 900,
+              fontWeight: 700,
               "&:hover": { bgcolor: "#dc2626" },
               px: 3,
             }}

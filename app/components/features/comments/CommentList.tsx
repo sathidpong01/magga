@@ -338,7 +338,7 @@ function CommentItem({
               whiteSpace: "pre-wrap",
               overflowWrap: "anywhere",
               color: maggaColors.textPrimary,
-              lineHeight: 1.6,
+              lineHeight: 1.75,
             }}
           >
             {isDeleted ? "ความคิดเห็นนี้ถูกลบแล้ว" : comment.content}

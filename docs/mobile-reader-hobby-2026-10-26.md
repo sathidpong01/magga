@@ -2,7 +2,7 @@
 
 ## Scope
 
-Implements the approved mobile-reader plan with the owner's excluded feature removed. No bookmark/read-later UI, API, storage key or schema was introduced. Existing charcoal/Archive Gold/Kanit styling and the manga card anatomy are retained.
+Implements the approved mobile-reader plan with the owner's excluded feature removed. No bookmark/read-later UI, API, storage key or schema was introduced. Existing charcoal/Archive Gold/Ekkamai Vibe styling and the manga card anatomy are retained.
 
 ## Changes
 

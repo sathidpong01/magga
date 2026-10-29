@@ -236,7 +236,7 @@ export default function ProfileView({ profileUser, isOwnProfile }: Props) {
                   variant="h4"
                   component="h1"
                   sx={{
-                    fontWeight: 800,
+                    fontWeight: 700,
                     letterSpacing: -0.5
                   }}>
                   {displayName}
@@ -250,8 +250,8 @@ export default function ProfileView({ profileUser, isOwnProfile }: Props) {
                       color: maggaColors.dangerRedText,
                       border: "1px solid rgba(239,68,68,0.3)",
                       height: 22,
-                      fontSize: "0.7rem",
-                      fontWeight: 700,
+                      fontSize: "0.75rem",
+                      fontWeight: 600,
                     }}
                   />
                 )}
@@ -326,7 +326,7 @@ export default function ProfileView({ profileUser, isOwnProfile }: Props) {
               <EditIcon sx={{ color: maggaColors.archiveGold, fontSize: 20 }} />
             </Box>
             <Box sx={{ flexGrow: 1 }}>
-              <Typography variant="caption" sx={{ color: maggaColors.archiveGold, display: "block", lineHeight: 1.3 }}>
+              <Typography variant="caption" sx={{ color: maggaColors.archiveGold, display: "block", lineHeight: 1.75 }}>
                 โปรไฟล์
               </Typography>
               <Typography variant="body2" sx={{
@@ -355,7 +355,7 @@ export default function ProfileView({ profileUser, isOwnProfile }: Props) {
               <GoogleIcon sx={{ color: maggaColors.archiveGold, fontSize: 20 }} />
             </Box>
             <Box sx={{ flexGrow: 1 }}>
-              <Typography variant="caption" sx={{ color: maggaColors.archiveGold, display: "block", lineHeight: 1.3 }}>
+              <Typography variant="caption" sx={{ color: maggaColors.archiveGold, display: "block", lineHeight: 1.75 }}>
                 การเข้าสู่ระบบ
               </Typography>
               <Typography variant="body2" sx={{
@@ -384,7 +384,7 @@ export default function ProfileView({ profileUser, isOwnProfile }: Props) {
               <ChatBubbleOutlineIcon sx={{ color: maggaColors.archiveGold, fontSize: 20 }} />
             </Box>
             <Box sx={{ flexGrow: 1 }}>
-              <Typography variant="caption" sx={{ color: maggaColors.archiveGold, display: "block", lineHeight: 1.3 }}>
+              <Typography variant="caption" sx={{ color: maggaColors.archiveGold, display: "block", lineHeight: 1.75 }}>
                 ประวัติ
               </Typography>
               <Typography variant="body2" sx={{

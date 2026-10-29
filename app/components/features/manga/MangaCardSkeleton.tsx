@@ -1,5 +1,5 @@
 import { Skeleton, Box } from "@mui/material";
-import { maggaColors } from "@/lib/design-tokens";
+import { maggaColors, maggaTypography } from "@/lib/design-tokens";
 
 export default function MangaCardSkeleton() {
   return (
@@ -45,29 +45,29 @@ export default function MangaCardSkeleton() {
         <Skeleton
           variant="text"
           width="85%"
-          height={19.2}
+          height={maggaTypography.cardTitleHeight}
           sx={{ bgcolor: "rgba(255, 255, 255, 0.08)" }}
         />
         {/* Author Line */}
         <Skeleton
           variant="text"
           width="45%"
-          height={19.2}
+          height={maggaTypography.cardAuthorHeight}
           sx={{ bgcolor: "rgba(255, 255, 255, 0.05)" }}
         />
 
         {/* Stats Skeleton */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 0.15, minHeight: "1.2rem" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 0.15, minHeight: maggaTypography.cardStatsHeight }}>
           <Skeleton
             variant="text"
             width={35}
-            height={19.2}
+            height={maggaTypography.cardStatsHeight}
             sx={{ bgcolor: "rgba(217, 119, 6, 0.15)" }}
           />
           <Skeleton
             variant="text"
             width={45}
-            height={19.2}
+            height={maggaTypography.cardStatsHeight}
             sx={{ bgcolor: "rgba(255, 255, 255, 0.06)" }}
           />
         </Box>

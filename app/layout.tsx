@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Kanit } from "next/font/google";
+import { ekkamaiVibe } from "./fonts";
 import "./globals.css";
 import { Providers } from "./components/layout/Providers";
 import ErrorBoundary from "./components/common/ErrorBoundary";
@@ -8,12 +8,6 @@ import LazyClientComponents from "./components/layout/LazyClientComponents";
 import { getSiteUrl } from "@/lib/site-url";
 import { getStoragePublicUrl } from "@/lib/storage";
 import { getPublicAds } from "@/lib/advertisements-server";
-
-const kanit = Kanit({
-  weight: ["400", "500", "700"],
-  subsets: ["latin", "thai"],
-  display: "swap",
-});
 
 const siteDescription =
   "อ่านการ์ตูน Furry แปลไทยบน MAGGA รวมมังงะ Furry และโดจินแปลไทยให้เลือกอ่านออนไลน์ ค้นหาเรื่องตามชื่อ ผู้แต่ง หมวดหมู่ หรือแท็ก";
@@ -80,7 +74,7 @@ export default async function RootLayout({
         <link rel="preconnect" href={r2PublicUrl} />
         <link rel="dns-prefetch" href={r2PublicUrl} />
       </head>
-      <body className={kanit.className}>
+      <body className={`${ekkamaiVibe.variable} ${ekkamaiVibe.className}`}>
         <ErrorBoundary>
           <Providers initialAds={initialAds}>
             <LazyClientComponents />

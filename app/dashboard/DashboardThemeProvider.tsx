@@ -2,18 +2,11 @@
 import GlobalStyles from "@mui/material/GlobalStyles";
 
 import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { maggaThemeTypography, maggaTypographyComponents } from "@/lib/typography";
 import { maggaColors } from "@/lib/design-tokens";
 
 const dashboardTheme = createTheme({
-  typography: {
-    fontFamily: "'Kanit', sans-serif",
-    h1: { fontWeight: 700 },
-    h2: { fontWeight: 700 },
-    h3: { fontWeight: 600 },
-    h4: { fontWeight: 600 },
-    h5: { fontWeight: 600 },
-    h6: { fontWeight: 600 },
-  },
+  typography: maggaThemeTypography,
   palette: {
     mode: "dark",
     background: {
@@ -33,6 +26,7 @@ const dashboardTheme = createTheme({
     borderRadius: 10,
   },
   components: {
+    ...maggaTypographyComponents,
     MuiPaper: {
       styleOverrides: {
         root: {
@@ -56,7 +50,7 @@ const dashboardTheme = createTheme({
           style: {
             background: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
             color: "#0f0f14",
-            fontWeight: 800,
+            fontWeight: 700,
             boxShadow: "0 4px 14px rgba(217, 119, 6, 0.35)",
             "&:hover": {
               background: "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
@@ -97,12 +91,12 @@ const dashboardTheme = createTheme({
       styleOverrides: {
         root: {
           color: maggaColors.textMuted,
-          fontWeight: 700,
+          fontWeight: 500,
           borderRadius: 8,
           "&.Mui-selected": {
             backgroundColor: `${maggaColors.archiveGold} !important`,
             color: "#0f0f14 !important",
-            fontWeight: 800,
+            fontWeight: 600,
           },
         },
       },
@@ -132,7 +126,9 @@ const dashboardTheme = createTheme({
     },
     MuiChip: {
       styleOverrides: {
+        ...maggaTypographyComponents.MuiChip.styleOverrides,
         root: {
+          ...maggaTypographyComponents.MuiChip.styleOverrides.root,
           borderRadius: 8,
         },
       },
@@ -167,6 +163,7 @@ const dashboardTheme = createTheme({
     },
     MuiInputBase: {
       styleOverrides: {
+        ...maggaTypographyComponents.MuiInputBase.styleOverrides,
         input: {
           color: maggaColors.textPrimary,
           WebkitTextFillColor: maggaColors.textPrimary,
@@ -195,6 +192,7 @@ const dashboardTheme = createTheme({
     MuiInputLabel: {
       styleOverrides: {
         root: {
+          ...maggaTypographyComponents.MuiInputLabel.styleOverrides.root,
           color: maggaColors.textSecondary,
           "&.Mui-focused": {
             color: maggaColors.archiveGold,

@@ -119,10 +119,10 @@ export default async function AdminPage() {
                   <Link href={`/${manga.slug || manga.id}`} prefetch={false} style={{ textDecoration: "none", display: "block", minWidth: 0 }}>
                     <Box data-overview-cover sx={overviewCoverSx}>
                       {manga.coverImage ? <Image src={manga.coverImage} alt={manga.title} fill sizes="(max-width: 600px) 240px, 20vw" style={{ objectFit: "cover" }} /> : null}
-                      <Box sx={{ position: "absolute", top: 8, left: 8, px: 0.75, height: 26, display: "flex", alignItems: "center", borderRadius: 1, bgcolor: maggaColors.background, color: maggaColors.archiveGoldHover, fontWeight: 800, fontSize: "0.8rem" }}>#{index + 1}</Box>
+                      <Box sx={{ position: "absolute", top: 8, left: 8, px: 0.75, height: 26, display: "flex", alignItems: "center", borderRadius: 1, bgcolor: maggaColors.background, color: maggaColors.archiveGoldHover, fontWeight: 600, fontSize: "0.8rem" }}>#{index + 1}</Box>
                     </Box>
-                    <Typography component="h3" title={manga.title} noWrap sx={{ color: maggaColors.textPrimary, fontWeight: 600, fontSize: "0.85rem", lineHeight: "20px", minHeight: 20, mt: 0.75 }}>{manga.title}</Typography>
-                    <Typography sx={{ color: maggaColors.archiveGoldHover, fontWeight: 700, fontSize: "0.8rem", lineHeight: "20px", fontVariantNumeric: "tabular-nums" }}>{manga.viewCount?.toLocaleString() || 0} ครั้ง</Typography>
+                    <Typography component="h3" title={manga.title} noWrap sx={{ color: maggaColors.textPrimary, fontWeight: 600, fontSize: "0.85rem", lineHeight: 1.75, minHeight: 20, mt: 0.75 }}>{manga.title}</Typography>
+                    <Typography sx={{ color: maggaColors.archiveGoldHover, fontWeight: 700, fontSize: "0.8rem", lineHeight: 1.75, fontVariantNumeric: "tabular-nums" }}>{manga.viewCount?.toLocaleString() || 0} ครั้ง</Typography>
                   </Link>
                   <Box sx={{ mt: 0.5, pt: 0.5, borderTop: `1px solid ${maggaColors.border}` }}>
                     <MangaViewHistory id={manga.id} title={manga.title} initial={viewHistory[manga.id]} />
@@ -143,8 +143,8 @@ export default async function AdminPage() {
                     {manga.coverImage ? <Image src={manga.coverImage} alt={manga.title} fill sizes="30px" style={{ objectFit: "cover" }} /> : null}
                   </Box>
                   <Box sx={{ minWidth: 0 }}>
-                    <Typography title={manga.title} noWrap sx={{ color: maggaColors.textPrimary, fontWeight: 600, fontSize: "0.8rem", lineHeight: "18px" }}>{manga.title}</Typography>
-                    <Typography sx={{ color: maggaColors.textSecondary, fontSize: "0.75rem", lineHeight: "18px", fontVariantNumeric: "tabular-nums" }}>{manga.viewCount?.toLocaleString() || 0} ครั้ง</Typography>
+                    <Typography title={manga.title} noWrap sx={{ color: maggaColors.textPrimary, fontWeight: 600, fontSize: "0.8rem", lineHeight: 1.75 }}>{manga.title}</Typography>
+                    <Typography sx={{ color: maggaColors.textSecondary, fontSize: "0.75rem", lineHeight: 1.75, fontVariantNumeric: "tabular-nums" }}>{manga.viewCount?.toLocaleString() || 0} ครั้ง</Typography>
                   </Box>
                 </Link>
                 <Box sx={{ width: { xs: 108, sm: 128 }, flexShrink: 0 }}>

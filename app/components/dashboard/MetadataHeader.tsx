@@ -6,9 +6,9 @@ export default function MetadataHeader() {
       variant="overline"
       sx={{
         color: dashboardTokens.accent,
-        fontWeight: 800,
+        fontWeight: 500,
         letterSpacing: "0.18em",
-        lineHeight: 1,
+        lineHeight: 1.75,
       }}
     >
       WORKSPACE
@@ -18,8 +18,8 @@ export default function MetadataHeader() {
       component="h1"
       sx={{
         color: dashboardTokens.text,
-        fontWeight: 900,
-        letterSpacing: "-0.03em",
+        fontWeight: 700,
+        letterSpacing: "normal",
       }}
     >
       จัดการเมตาดาต้า

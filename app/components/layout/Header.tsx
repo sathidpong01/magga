@@ -188,7 +188,7 @@ export default function Header() {
                 const parent = target.parentElement;
                 if (parent) {
                   parent.innerHTML =
-                    '<span style="color:#fbbf24;font-weight:800;font-size:1.5rem;letter-spacing:-1px;">MAGGA</span>';
+                    '<span style="color:#fbbf24;font-weight:700;font-size:1.5rem;letter-spacing:-1px;">MAGGA</span>';
                 }
               }}
             />
@@ -408,7 +408,7 @@ export default function Header() {
                         color="error"
                         sx={{
                           height: 20,
-                          fontSize: "0.65rem",
+                          fontSize: "0.75rem",
                           fontWeight: 600,
                           bgcolor: "rgba(239, 68, 68, 0.1)", // translucent red
                           color: "#ef4444",

@@ -392,7 +392,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
                 sx={{
                   fontWeight: 700,
                   fontSize: { xs: "1.35rem", sm: "1.8rem", md: "2.8rem" },
-                  lineHeight: 1.3,
+                  lineHeight: 1.75,
                   overflowWrap: "anywhere",
                   mb: 1,
                 }}
@@ -450,7 +450,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
                 <Typography
                   sx={{
                     mb: 1.25,
-                    lineHeight: 1.7,
+                    lineHeight: 1.75,
                     whiteSpace: "pre-wrap",
                     overflowWrap: "anywhere",
                   }}

@@ -165,7 +165,7 @@ function RegisterForm() {
             sx={{
               fontWeight: 700,
               mb: 0.5,
-              letterSpacing: "-0.02em",
+              letterSpacing: "normal",
               color: "#f4f4f5",
             }}>
             ยินดีต้อนรับสู่ MAGGA

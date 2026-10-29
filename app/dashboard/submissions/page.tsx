@@ -264,7 +264,7 @@ function MySubmissionsContent() {
                           color: dashboardTokens.text,
                           fontWeight: 700,
                           fontSize: "1.1rem",
-                          lineHeight: 1.3,
+                          lineHeight: 1.75,
                         }}
                       >
                         {submission.title}
@@ -349,7 +349,7 @@ function MySubmissionsContent() {
                         variant="body2"
                         sx={{
                           color: dashboardTokens.danger,
-                          fontWeight: 800,
+                          fontWeight: 600,
                           mb: 0.5,
                         }}
                       >
@@ -389,7 +389,7 @@ function MySubmissionsContent() {
           paper: { sx: dashboardDialogPaperSx },
         }}
       >
-        <DialogTitle sx={{ fontWeight: 800 }}>ยืนยันการลบ</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>ยืนยันการลบ</DialogTitle>
         <DialogContent>
           <Typography sx={{ color: dashboardTokens.text }}>
             คุณต้องการลบ <strong>{selectedSubmission?.title}</strong>{" "}

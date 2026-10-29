@@ -26,8 +26,8 @@ export default function NotFound() {
           component="h1"
           sx={{
             fontSize: { xs: "8rem", md: "12rem" },
-            fontWeight: 900,
-            lineHeight: 1,
+            fontWeight: 700,
+            lineHeight: 1.75,
             color: maggaColors.archiveGold,
             textShadow: "0 10px 28px rgba(0, 0, 0, 0.55)",
             mb: 2,

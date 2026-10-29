@@ -15,7 +15,7 @@ export default function MangaListLoading() {
     <MangaListHeader />
     <AdminListControls query={query} hasMore={false} count={0} sorts={mangaSorts} statuses={mangaStatuses} loading compactSpacing />
     <Box sx={mangaListShellSx}>
-      <Box sx={{ mb: 1, minHeight: 56, display: "flex", alignItems: "center", px: 2 }}><Typography sx={{ fontSize: "0.875rem", fontWeight: 800 }}>กำลังโหลดรายการในหน้านี้</Typography></Box>
+      <Box sx={{ mb: 1, minHeight: 56, display: "flex", alignItems: "center", px: 2 }}><Typography sx={{ fontSize: "0.875rem", fontWeight: 600 }}>กำลังโหลดรายการในหน้านี้</Typography></Box>
       <TableContainer component={Paper} sx={{ bgcolor: maggaColors.surfaceMuted, border: `1px solid ${maggaColors.border}`, borderRadius: "10px", backgroundImage: "none", overflowX: "auto" }}>
         <Table className="admin-work-table admin-manga-table" sx={mangaTableSx} aria-label="กำลังโหลดรายการมังงะ">
           <colgroup>{mangaColumnWidths.map((width, index) => <col key={index} style={{ width }} />)}</colgroup>

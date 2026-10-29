@@ -332,7 +332,7 @@ export default function ChangelogPage() {
                   sx={{
                     bgcolor: maggaColors.archiveGoldSoft,
                     color: maggaColors.archiveGoldHover,
-                    fontWeight: 700,
+                    fontWeight: 600,
                     borderRadius: "6px",
                   }}
                 />

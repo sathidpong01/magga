@@ -113,7 +113,7 @@ export const dashboardSelectSx: SxProps<Theme> = {
 export const dashboardPrimaryButtonSx: SxProps<Theme> = {
   bgcolor: dashboardTokens.accent,
   color: "#120d00",
-  fontWeight: 800,
+  fontWeight: 700,
   borderRadius: dashboardRadii.button,
   px: 2.25,
   boxShadow: "0 10px 28px rgba(251,191,36,0.18)",
@@ -127,7 +127,7 @@ export const dashboardSecondaryButtonSx: SxProps<Theme> = {
   borderColor: dashboardTokens.borderStrong,
   bgcolor: alpha(dashboardTokens.text, 0.02),
   borderRadius: dashboardRadii.button,
-  fontWeight: 700,
+  fontWeight: 600,
   "&:hover": {
     borderColor: alpha(dashboardTokens.accent, 0.5),
     color: dashboardTokens.accent,
@@ -138,7 +138,7 @@ export const dashboardSecondaryButtonSx: SxProps<Theme> = {
 export const dashboardGhostButtonSx: SxProps<Theme> = {
   color: dashboardTokens.textMuted,
   borderRadius: dashboardRadii.button,
-  fontWeight: 700,
+  fontWeight: 500,
   "&:hover": {
     color: dashboardTokens.text,
     bgcolor: alpha(dashboardTokens.text, 0.06),
@@ -149,7 +149,7 @@ export const dashboardDangerButtonSx: SxProps<Theme> = {
   bgcolor: dashboardTokens.danger,
   color: "#fff",
   borderRadius: dashboardRadii.button,
-  fontWeight: 800,
+  fontWeight: 700,
   "&:hover": {
     bgcolor: "#dc2626",
   },
@@ -170,7 +170,7 @@ export const dashboardTableContainerSx: SxProps<Theme> = {
 
 export const dashboardTableHeadCellSx: SxProps<Theme> = {
   color: dashboardTokens.textMuted,
-  fontWeight: 700,
+  fontWeight: 600,
   fontSize: "0.78rem",
   letterSpacing: "0.02em",
   borderBottom: `1px solid ${dashboardTokens.border}`,
@@ -275,8 +275,8 @@ export function DashboardPageHeader({
           sx={{
             color: dashboardTokens.text,
             fontWeight: 700,
-            letterSpacing: "-0.02em",
-            lineHeight: 1.2,
+            letterSpacing: "normal",
+            lineHeight: 1.75,
           }}
         >
           {title}
@@ -288,7 +288,7 @@ export function DashboardPageHeader({
               color: dashboardTokens.textMuted,
               maxWidth: 720,
               fontSize: "0.9rem",
-              lineHeight: 1.5,
+              lineHeight: 1.75,
             }}
           >
             {description}
@@ -345,7 +345,7 @@ export function DashboardSectionTitle({
         {title}
       </Typography>
       {description ? (
-        <Typography sx={{ color: dashboardTokens.textSoft, fontSize: "0.85rem", lineHeight: 1.5 }}>
+        <Typography sx={{ color: dashboardTokens.textSoft, fontSize: "0.85rem", lineHeight: 1.75 }}>
           {description}
         </Typography>
       ) : null}
@@ -427,8 +427,8 @@ export function DashboardStat({
           color: dashboardTokens.text,
           fontSize: compact ? { xs: "1.35rem", md: "1.5rem" } : { xs: "1.75rem", md: "2rem" },
           fontWeight: 700,
-          lineHeight: 1.1,
-          letterSpacing: "-0.02em",
+          lineHeight: 1.75,
+          letterSpacing: "normal",
           fontVariantNumeric: "tabular-nums",
         }}
       >
@@ -465,7 +465,7 @@ export function DashboardEmptyState({
     >
       <Typography
         variant="h6"
-        sx={{ color: dashboardTokens.text, fontWeight: 800, mb: 1 }}
+        sx={{ color: dashboardTokens.text, fontWeight: 600, mb: 1 }}
       >
         {title}
       </Typography>
@@ -474,7 +474,7 @@ export function DashboardEmptyState({
           color: dashboardTokens.textMuted,
           maxWidth: 520,
           mx: "auto",
-          lineHeight: 1.7,
+          lineHeight: 1.75,
         }}
       >
         {description}
@@ -570,9 +570,9 @@ export function DashboardStatusBadge({
         px: 1.25,
         py: 0.55,
         borderRadius: dashboardRadii.badge,
-        fontSize: "0.74rem",
-        fontWeight: 800,
-        lineHeight: 1,
+        fontSize: "0.75rem",
+        fontWeight: 600,
+        lineHeight: 1.75,
         color: config.color,
         bgcolor: config.background,
         border: `1px solid ${config.border}`,

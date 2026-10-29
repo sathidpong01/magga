@@ -109,7 +109,7 @@ export default function AgeVerificationModal() {
             color: "rgba(255, 255, 255, 0.6)",
             mb: 4,
             px: 2,
-            lineHeight: 1.7,
+            lineHeight: 1.75,
             fontSize: "0.9rem",
           }}
         >

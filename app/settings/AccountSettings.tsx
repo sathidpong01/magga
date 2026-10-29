@@ -358,7 +358,7 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
             variant="h4"
             component="h1"
             sx={{
-              fontWeight: 800,
+              fontWeight: 700,
               letterSpacing: -0.4,
               mb: 0.5,
               color: maggaColors.textPrimary,
@@ -379,7 +379,7 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
         <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: maggaColors.textSecondary }} />} sx={summarySx}>
           <RowIcon icon={<PersonIcon fontSize="small" />} />
           <Box>
-            <Typography variant="caption" sx={{ color: maggaColors.archiveGold, fontWeight: 600, display: "block", lineHeight: 1.3 }}>ชื่อแสดง</Typography>
+            <Typography variant="caption" sx={{ color: maggaColors.archiveGold, fontWeight: 600, display: "block", lineHeight: 1.75 }}>ชื่อแสดง</Typography>
             <Typography variant="body1" sx={{
               fontWeight: 500
             }}>{formData.name || "ยังไม่ได้ตั้งค่า"}</Typography>
@@ -419,7 +419,7 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
         <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: maggaColors.textSecondary }} />} sx={summarySx}>
           <RowIcon icon={<PersonIcon fontSize="small" />} />
           <Box>
-            <Typography variant="caption" sx={{ color: maggaColors.archiveGold, fontWeight: 600, display: "block", lineHeight: 1.3 }}>ชื่อผู้ใช้</Typography>
+            <Typography variant="caption" sx={{ color: maggaColors.archiveGold, fontWeight: 600, display: "block", lineHeight: 1.75 }}>ชื่อผู้ใช้</Typography>
             <Typography variant="body1" sx={{
               fontWeight: 500
             }}>{formData.username || "ยังไม่ได้ตั้งค่า"}</Typography>
@@ -455,7 +455,7 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
         <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: maggaColors.textSecondary }} />} sx={summarySx}>
           <RowIcon icon={<EmailIcon fontSize="small" />} />
           <Box>
-            <Typography variant="caption" sx={{ color: maggaColors.archiveGold, fontWeight: 600, display: "block", lineHeight: 1.3 }}>อีเมล</Typography>
+            <Typography variant="caption" sx={{ color: maggaColors.archiveGold, fontWeight: 600, display: "block", lineHeight: 1.75 }}>อีเมล</Typography>
             <Typography variant="body1" sx={{
               fontWeight: 500
             }}>{formData.email || "ยังไม่ได้ตั้งค่า"}</Typography>
@@ -492,7 +492,7 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
         <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: maggaColors.textSecondary }} />} sx={summarySx}>
           <RowIcon icon={<LockIcon fontSize="small" />} />
           <Box>
-            <Typography variant="caption" sx={{ color: maggaColors.archiveGold, fontWeight: 600, display: "block", lineHeight: 1.3 }}>รหัสผ่าน</Typography>
+            <Typography variant="caption" sx={{ color: maggaColors.archiveGold, fontWeight: 600, display: "block", lineHeight: 1.75 }}>รหัสผ่าน</Typography>
             <Typography variant="body1" sx={{
               fontWeight: 500
             }}>{hasPassword ? "เปลี่ยนรหัสผ่าน" : "ตั้งรหัสผ่าน"}</Typography>
@@ -565,7 +565,7 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
                   size="small"
                   variant={req.ok ? "filled" : "outlined"}
                   sx={{
-                    fontSize: "0.7rem",
+                    fontSize: "0.75rem",
                     height: 22,
                     ...(req.ok
                       ? { bgcolor: "rgba(34, 197, 94, 0.15)", color: "#22c55e", border: "1px solid rgba(34, 197, 94, 0.3)" }
@@ -595,7 +595,7 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
             fontSize: "small"
           }} />} />
           <Box>
-            <Typography variant="caption" sx={{ color: maggaColors.archiveGold, fontWeight: 600, display: "block", lineHeight: 1.3 }}>บัญชีที่เชื่อมต่อ</Typography>
+            <Typography variant="caption" sx={{ color: maggaColors.archiveGold, fontWeight: 600, display: "block", lineHeight: 1.75 }}>บัญชีที่เชื่อมต่อ</Typography>
             <Typography variant="body1" sx={{
               fontWeight: 500
             }}>
@@ -653,7 +653,7 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
         <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: maggaColors.textSecondary }} />} sx={summarySx}>
           <RowIcon icon={<ChatBubbleIcon fontSize="small" />} />
           <Box>
-            <Typography variant="caption" sx={{ color: maggaColors.archiveGold, fontWeight: 600, display: "block", lineHeight: 1.3 }}>ความคิดเห็นการ์ตูน</Typography>
+            <Typography variant="caption" sx={{ color: maggaColors.archiveGold, fontWeight: 600, display: "block", lineHeight: 1.75 }}>ความคิดเห็นการ์ตูน</Typography>
             <Typography variant="body1" sx={{
               fontWeight: 500
             }}>
@@ -696,8 +696,8 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
                   {commentPrefSaving
                     ? <CircularProgress size={16} sx={{ color: maggaColors.archiveGold }} />
                     : active
-                      ? <Chip label="ใช้งานอยู่" size="small" sx={{ height: 20, fontSize: "0.7rem", bgcolor: "rgba(251,191,36,0.15)", color: maggaColors.archiveGold }} />
-                      : <Chip label="ซ่อน" size="small" sx={{ height: 20, fontSize: "0.7rem", bgcolor: "rgba(255,255,255,0.05)", color: maggaColors.textMuted }} />
+                      ? <Chip label="ใช้งานอยู่" size="small" sx={{ height: 20, fontSize: "0.75rem", bgcolor: "rgba(251,191,36,0.15)", color: maggaColors.archiveGold }} />
+                      : <Chip label="ซ่อน" size="small" sx={{ height: 20, fontSize: "0.75rem", bgcolor: "rgba(255,255,255,0.05)", color: maggaColors.textMuted }} />
                   }
                 </Box>
               );
@@ -713,13 +713,13 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
         <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: maggaColors.textSecondary }} />} sx={summarySx}>
           <RowIcon icon={<BlockIcon fontSize="small" />} />
           <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="caption" sx={{ color: maggaColors.archiveGold, fontWeight: 600, display: "block", lineHeight: 1.3 }}>ผู้ใช้ที่บล็อก</Typography>
+            <Typography variant="caption" sx={{ color: maggaColors.archiveGold, fontWeight: 600, display: "block", lineHeight: 1.75 }}>ผู้ใช้ที่บล็อก</Typography>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <Typography variant="body1" sx={{
                 fontWeight: 500
               }}>จัดการผู้ใช้ที่บล็อก</Typography>
               {liveBlockedUserCount > 0 && (
-                <Chip label={liveBlockedUserCount} size="small" sx={{ height: 20, fontSize: "0.7rem", bgcolor: "rgba(255,255,255,0.08)", color: maggaColors.textSecondary }} />
+                <Chip label={liveBlockedUserCount} size="small" sx={{ height: 20, fontSize: "0.75rem", bgcolor: "rgba(255,255,255,0.08)", color: maggaColors.textSecondary }} />
               )}
             </Box>
           </Box>
@@ -734,13 +734,13 @@ export default function AccountSettings({ user, hasPassword, blockedUserCount, b
         <AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: maggaColors.textSecondary }} />} sx={summarySx}>
           <RowIcon icon={<LocalOfferIcon fontSize="small" />} />
           <Box sx={{ flexGrow: 1 }}>
-            <Typography variant="caption" sx={{ color: maggaColors.archiveGold, fontWeight: 600, display: "block", lineHeight: 1.3 }}>แท็กที่บล็อก</Typography>
+            <Typography variant="caption" sx={{ color: maggaColors.archiveGold, fontWeight: 600, display: "block", lineHeight: 1.75 }}>แท็กที่บล็อก</Typography>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <Typography variant="body1" sx={{
                 fontWeight: 500
               }}>จัดการแท็กที่บล็อก</Typography>
               {liveBlockedTagCount > 0 && (
-                <Chip label={liveBlockedTagCount} size="small" sx={{ height: 20, fontSize: "0.7rem", bgcolor: "rgba(255,255,255,0.08)", color: maggaColors.textSecondary }} />
+                <Chip label={liveBlockedTagCount} size="small" sx={{ height: 20, fontSize: "0.75rem", bgcolor: "rgba(255,255,255,0.08)", color: maggaColors.textSecondary }} />
               )}
             </Box>
           </Box>

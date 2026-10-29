@@ -227,7 +227,7 @@ const ReaderPage = forwardRef<HTMLDivElement, ReaderPageProps>(
                 alignItems: "center",
                 justifyContent: "center",
                 gap: 1,
-                lineHeight: 1.5,
+                lineHeight: 1.75,
                 p: 2,
               }}
             >

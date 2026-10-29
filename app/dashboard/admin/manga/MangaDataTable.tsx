@@ -328,7 +328,7 @@ export default function MangaDataTable({
           <Typography
             sx={{
               color: "#fbbf24",
-              fontWeight: 800,
+              fontWeight: 600,
               fontSize: "0.875rem",
               letterSpacing: "0.02em",
             }}
@@ -532,7 +532,7 @@ export default function MangaDataTable({
                         border: "1px solid rgba(251,191,36,0.18)",
                         fontSize: "0.75rem",
                         height: 24,
-                        fontWeight: 700,
+                        fontWeight: 600,
                         maxWidth: "100%",
                       }}
                     />
@@ -604,7 +604,7 @@ export default function MangaDataTable({
 
                 <TableCell data-label="ยอดอ่าน" sx={{ color: maggaColors.textSecondary, px: 1, py: 1 }}>
                   <Box sx={{ width: "100%", maxWidth: 130, minWidth: 0, ml: "auto" }}>
-                    <Typography component="span" noWrap sx={{ display: "block", fontSize: "0.75rem", lineHeight: "18px", fontVariantNumeric: "tabular-nums" }}>สะสม {manga.viewCount.toLocaleString()}</Typography>
+                    <Typography component="span" noWrap sx={{ display: "block", fontSize: "0.75rem", lineHeight: 1.75, fontVariantNumeric: "tabular-nums" }}>สะสม {manga.viewCount.toLocaleString()}</Typography>
                     <MangaViewHistory id={manga.id} title={manga.title} initial={manga.viewHistory} />
                   </Box>
                 </TableCell>
@@ -681,7 +681,7 @@ export default function MangaDataTable({
       >
         <DialogTitle
           sx={{
-            fontWeight: 900,
+            fontWeight: 700,
             color: "#fafafa",
             fontSize: "1.1rem",
             letterSpacing: "0.02em",
@@ -721,7 +721,7 @@ export default function MangaDataTable({
         <DialogActions sx={{ p: 2.5, pt: 1 }}>
           <Button
             onClick={() => setSettingsOpen(false)}
-            sx={{ color: "#a3a3a3", fontWeight: 700, textTransform: "none" }}
+            sx={{ color: "#a3a3a3", fontWeight: 500, textTransform: "none" }}
           >
             ยกเลิก
           </Button>

@@ -1,0 +1,61 @@
+EKKAMAI VIBE VARIABLE: SUPPORTER LICENSE
+License version 1.0, 28 October 2026
+
+Copyright (c) 2019-2026 Worachet Deeyai. All rights reserved.
+Ekkamai Vibe is a trademark of Worachet Deeyai.
+Designed by Ekkamai Foundry. Released by Stratophic.
+
+This license is an agreement between you, the person who bought it, and
+Worachet Deeyai, the designer and copyright owner of Ekkamai Vibe ("we").
+By installing or using the Font, you accept these terms.
+
+
+1. THE FONT
+
+"The Font" means the Ekkamai Vibe Variable font files that come with this
+license: the variable font, the static fonts and their WOFF2 webfont
+versions, and any copy, conversion or subset of them. The Font is licensed to you, not sold. We keep
+the copyright.
+
+
+2. WHO MAY USE IT
+
+One person: you. You may install the Font on the computers and devices you
+own or use.
+
+
+3. WHAT YOU MAY DO
+
+  + Use the Font in personal, non-commercial projects: study, hobby work,
+    and trying it out.
+  + Keep backup copies of the font files.
+
+
+4. WHAT YOU MAY NOT DO
+
+  - Use the Font for commercial or client work. This covers anything you
+    sell, anything you make for a client or an employer, and anything that
+    promotes a business, product or service.
+  - Share, resell or redistribute the font files, on their own or with
+    anything else.
+  - Let anyone else use your copy of the Font.
+
+For paid or client work, choose the Commercial License.
+
+
+5. ENDING THE LICENSE
+
+If you break these terms, the license ends. You must then stop using the
+Font and delete every copy of it.
+
+
+6. NO WARRANTY
+
+The Font is provided "as is", without warranty of any kind. To the extent
+the law allows, we are not liable for any damage that comes from using it.
+
+
+7. QUESTIONS
+
+For any use this license doesn't cover, contact Stratophic through
+https://stratophic.gumroad.com/l/ekkamai before you use the Font for it.

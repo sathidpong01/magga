@@ -11,9 +11,22 @@ html[data-magga-resume="true"] .magga-continue-slot {
 }
 
 body {
+  font-family: var(--font-magga), Tahoma, Arial, sans-serif;
+  font-weight: 400;
+  font-stretch: 100%;
+  line-height: 1.75;
+  font-synthesis: none;
   background-color: #141416; /* Charcoal Neutral Dark */
   color: #f4f4f5;
   overflow-x: hidden;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+}
+
+em, i {
+  font-style: oblique 10deg;
 }
 
 /* Micro-animations */

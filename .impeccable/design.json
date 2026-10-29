@@ -125,7 +125,7 @@
       "refersTo": "button-primary",
       "description": "Use for submit, save, selected tab, and high-confidence actions.",
       "html": "<button class=\"ds-btn-primary\">ฝากลงมังงะ</button>",
-      "css": ".ds-btn-primary { background: #fbbf24; color: #0a0a0a; border: 0; border-radius: 8px; padding: 8px 16px; font-family: Kanit, sans-serif; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease; } .ds-btn-primary:hover { background: #f59e0b; box-shadow: 0 0 20px rgba(251, 191, 36, 0.28); } .ds-btn-primary:focus-visible { outline: 2px solid #fafafa; outline-offset: 2px; } .ds-btn-primary:active { transform: translateY(1px); }"
+      "css": ".ds-btn-primary { background: #fbbf24; color: #0a0a0a; border: 0; border-radius: 8px; padding: 8px 16px; font-family: Ekkamai Vibe, sans-serif; font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease; } .ds-btn-primary:hover { background: #f59e0b; box-shadow: 0 0 20px rgba(251, 191, 36, 0.28); } .ds-btn-primary:focus-visible { outline: 2px solid #fafafa; outline-offset: 2px; } .ds-btn-primary:active { transform: translateY(1px); }"
     },
     {
       "name": "Manga Card",
@@ -133,7 +133,7 @@
       "refersTo": "manga-card",
       "description": "The signature public cover card with immersive image, gradient overlay, category chip, and compact metadata.",
       "html": "<article class=\"ds-manga-card\"><div class=\"ds-manga-cover\"></div><span class=\"ds-manga-chip\">Furry</span><div class=\"ds-manga-overlay\"><h3>Translated Fandom Title</h3><p>★ 4.8 · 12.4K Views</p></div></article>",
-      "css": ".ds-manga-card { position: relative; aspect-ratio: 2 / 3; width: 180px; overflow: hidden; border-radius: 8px; background: #0a0a0a; color: #fafafa; font-family: Kanit, sans-serif; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); } .ds-manga-card:hover { transform: translateY(-4px); } .ds-manga-card:focus-within { outline: 2px solid #fbbf24; outline-offset: 2px; } .ds-manga-cover { position: absolute; inset: 0; background: linear-gradient(135deg, #262626, #0a0a0a); } .ds-manga-cover::after { content: \"\"; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, transparent 100%); } .ds-manga-chip { position: absolute; top: 8px; right: 8px; background: #fbbf24; color: #0a0a0a; border-radius: 8px; padding: 2px 8px; font-size: 0.7rem; font-weight: 700; } .ds-manga-overlay { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px; } .ds-manga-overlay h3 { margin: 0 0 4px; font-size: 0.95rem; line-height: 1.1; font-weight: 600; text-shadow: 0 2px 4px rgba(0,0,0,0.8); } .ds-manga-overlay p { margin: 0; font-size: 0.82rem; color: #fafafa; opacity: 0.9; }"
+      "css": ".ds-manga-card { position: relative; aspect-ratio: 2 / 3; width: 180px; overflow: hidden; border-radius: 8px; background: #0a0a0a; color: #fafafa; font-family: Ekkamai Vibe, sans-serif; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); } .ds-manga-card:hover { transform: translateY(-4px); } .ds-manga-card:focus-within { outline: 2px solid #fbbf24; outline-offset: 2px; } .ds-manga-cover { position: absolute; inset: 0; background: linear-gradient(135deg, #262626, #0a0a0a); } .ds-manga-cover::after { content: \"\"; position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, transparent 100%); } .ds-manga-chip { position: absolute; top: 8px; right: 8px; background: #fbbf24; color: #0a0a0a; border-radius: 8px; padding: 2px 8px; font-size: 0.7rem; font-weight: 700; } .ds-manga-overlay { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px; } .ds-manga-overlay h3 { margin: 0 0 4px; font-size: 0.95rem; line-height: 1.1; font-weight: 600; text-shadow: 0 2px 4px rgba(0,0,0,0.8); } .ds-manga-overlay p { margin: 0; font-size: 0.82rem; color: #fafafa; opacity: 0.9; }"
     },
     {
       "name": "Filter Panel",
@@ -141,7 +141,7 @@
       "refersTo": "filter-panel",
       "description": "Compact discovery control for search, sorting, categories, and tags.",
       "html": "<section class=\"ds-filter-panel\"><button class=\"ds-filter-head\">Filter, display, tags</button><label>Category<input value=\"All\" /></label></section>",
-      "css": ".ds-filter-panel { background: #171717; color: #fafafa; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 16px; width: 280px; font-family: Kanit, sans-serif; } .ds-filter-head { width: 100%; background: transparent; color: #fafafa; border: 0; padding: 4px 0 12px; text-align: left; font-family: inherit; font-size: 0.8rem; font-weight: 500; cursor: pointer; } .ds-filter-head:hover { color: #fbbf24; } .ds-filter-head:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; } .ds-filter-panel label { display: grid; gap: 6px; color: #a3a3a3; font-size: 0.85rem; } .ds-filter-panel input { background: transparent; color: #fafafa; border: 0; border-bottom: 1px solid rgba(255,255,255,0.12); padding: 6px 0; font-family: inherit; font-size: 0.85rem; } .ds-filter-panel input:focus-visible { outline: 0; border-bottom-color: #fbbf24; }"
+      "css": ".ds-filter-panel { background: #171717; color: #fafafa; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 16px; width: 280px; font-family: Ekkamai Vibe, sans-serif; } .ds-filter-head { width: 100%; background: transparent; color: #fafafa; border: 0; padding: 4px 0 12px; text-align: left; font-family: inherit; font-size: 0.8rem; font-weight: 500; cursor: pointer; } .ds-filter-head:hover { color: #fbbf24; } .ds-filter-head:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; } .ds-filter-panel label { display: grid; gap: 6px; color: #a3a3a3; font-size: 0.85rem; } .ds-filter-panel input { background: transparent; color: #fafafa; border: 0; border-bottom: 1px solid rgba(255,255,255,0.12); padding: 6px 0; font-family: inherit; font-size: 0.85rem; } .ds-filter-panel input:focus-visible { outline: 0; border-bottom-color: #fbbf24; }"
     },
     {
       "name": "Admin Surface",
@@ -149,7 +149,7 @@
       "refersTo": "admin-surface",
       "description": "Industrial work panel for dashboard, tables, and moderation flows.",
       "html": "<section class=\"ds-admin-surface\"><header><span>SUBMISSIONS</span><strong>24</strong></header><p>Pending translator submissions</p></section>",
-      "css": ".ds-admin-surface { background: #171717; color: #fafafa; border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 20px; font-family: Kanit, sans-serif; box-shadow: none; } .ds-admin-surface:hover { background: #1b1b1b; border-color: rgba(251,191,36,0.28); } .ds-admin-surface:focus-within { outline: 2px solid #FABF06; outline-offset: 2px; } .ds-admin-surface header { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; } .ds-admin-surface span { color: #a3a3a3; font-size: 0.72rem; font-weight: 900; letter-spacing: 0.08em; } .ds-admin-surface strong { color: #FABF06; font-size: 2rem; line-height: 1; } .ds-admin-surface p { margin: 10px 0 0; color: #a3a3a3; font-size: 0.9rem; }"
+      "css": ".ds-admin-surface { background: #171717; color: #fafafa; border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 20px; font-family: Ekkamai Vibe, sans-serif; box-shadow: none; } .ds-admin-surface:hover { background: #1b1b1b; border-color: rgba(251,191,36,0.28); } .ds-admin-surface:focus-within { outline: 2px solid #FABF06; outline-offset: 2px; } .ds-admin-surface header { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; } .ds-admin-surface span { color: #a3a3a3; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; } .ds-admin-surface strong { color: #FABF06; font-size: 2rem; line-height: 1; } .ds-admin-surface p { margin: 10px 0 0; color: #a3a3a3; font-size: 0.9rem; }"
     },
     {
       "name": "Category Chip",
@@ -157,7 +157,7 @@
       "refersTo": "category-chip",
       "description": "Gold content classification marker used over covers and metadata surfaces.",
       "html": "<span class=\"ds-category-chip\">Furry</span>",
-      "css": ".ds-category-chip { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 8px; background: #fbbf24; color: #0a0a0a; font-family: Kanit, sans-serif; font-size: 0.7rem; font-weight: 700; line-height: 1; } .ds-category-chip:hover { background: #f59e0b; } .ds-category-chip:focus-visible { outline: 2px solid #fafafa; outline-offset: 2px; }"
+      "css": ".ds-category-chip { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 8px; background: #fbbf24; color: #0a0a0a; font-family: Ekkamai Vibe, sans-serif; font-size: 0.7rem; font-weight: 700; line-height: 1; } .ds-category-chip:hover { background: #f59e0b; } .ds-category-chip:focus-visible { outline: 2px solid #fafafa; outline-offset: 2px; }"
     },
     {
       "name": "Dark Text Field",
@@ -165,7 +165,7 @@
       "refersTo": "filter-panel",
       "description": "Standard dark input for settings, auth, search, and admin forms.",
       "html": "<label class=\"ds-field\"><span>Display name</span><input value=\"Translator\" /></label>",
-      "css": ".ds-field { display: grid; gap: 8px; color: #a3a3a3; font-family: Kanit, sans-serif; font-size: 0.85rem; font-weight: 500; } .ds-field input { background: #262626; color: #fafafa; border: 1px solid #404040; border-radius: 8px; padding: 10px 12px; font-family: inherit; font-size: 0.95rem; } .ds-field input:hover { border-color: #fbbf24; } .ds-field input:focus-visible { outline: 2px solid rgba(251,191,36,0.45); outline-offset: 2px; border-color: #fbbf24; } .ds-field input:disabled { color: #737373; background: #171717; cursor: not-allowed; }"
+      "css": ".ds-field { display: grid; gap: 8px; color: #a3a3a3; font-family: Ekkamai Vibe, sans-serif; font-size: 0.85rem; font-weight: 500; } .ds-field input { background: #262626; color: #fafafa; border: 1px solid #404040; border-radius: 8px; padding: 10px 12px; font-family: inherit; font-size: 0.95rem; } .ds-field input:hover { border-color: #fbbf24; } .ds-field input:focus-visible { outline: 2px solid rgba(251,191,36,0.45); outline-offset: 2px; border-color: #fbbf24; } .ds-field input:disabled { color: #737373; background: #171717; cursor: not-allowed; }"
     }
   ],
   "narrative": {

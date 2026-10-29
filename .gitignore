@@ -102,3 +102,6 @@ output/playwright/
 .local/mcp/
 .local/mcp-production-backup/
 !db/migrations/0012_advertisement_management.sql
+
+# Original licensed desktop font package; deploy only the selected WOFF2.
+/EkkamaiVibe-Variable-2.000-Supporter/

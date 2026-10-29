@@ -347,7 +347,7 @@ export default function SearchFilters({ categories, tags }: Props) {
                   borderRadius: "50%",
                   width: 18,
                   height: 18,
-                  fontSize: "0.68rem",
+                  fontSize: "0.75rem",
                   fontWeight: 700,
                   display: "flex",
                   alignItems: "center",

@@ -185,7 +185,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
       <Box sx={{
         color: maggaColors.textSecondary,
         '& ul': { pl: 3, mt: 1, mb: 2 },
-        '& li': { mb: 1.5, lineHeight: 1.7 },
+        '& li': { mb: 1.5, lineHeight: 1.75 },
         '& p': { mb: 2, lineHeight: 1.8 },
         '& strong': { color: '#d4d4d4' }
       }}>

@@ -20,7 +20,7 @@ export default function DirectoryListLoading({ kind }: { kind: DirectoryKind }) 
       <TableContainer sx={{ overflowX: "auto" }}>
         <Table className="admin-work-table" sx={kind==="users"? { ...directoryTableSx,"@media(min-width:900px)": { ...directoryTableSx["@media(min-width:900px)"],minWidth: 1040 } }:directoryTableSx} aria-label="กำลังโหลดข้อมูล">
           <colgroup>{directoryColumns[kind].map((width,index) => <col key={index} style={{ width }} />)}</colgroup>
-          <TableHead><TableRow sx={{ bgcolor: "rgba(0,0,0,0.2)","& th": { color: maggaColors.textSecondary,fontSize: "0.75rem",fontWeight: 800 } }}>{directoryLabels[kind].map((label,index) => <TableCell key={label} align={index===directoryLabels[kind].length-1? "right":"left"}>{label}</TableCell>)}</TableRow></TableHead>
+          <TableHead><TableRow sx={{ bgcolor: "rgba(0,0,0,0.2)","& th": { color: maggaColors.textSecondary,fontSize: "0.75rem",fontWeight: 600 } }}>{directoryLabels[kind].map((label,index) => <TableCell key={label} align={index===directoryLabels[kind].length-1? "right":"left"}>{label}</TableCell>)}</TableRow></TableHead>
           <TableBody>{Array.from({ length: query.limit },(_,row) => <TableRow key={row}>{directoryLabels[kind].map((label,column) => <TableCell key={label} data-label={label}>
             {column===directoryLabels[kind].length-1? <Box sx={{ display: "flex",justifyContent: "flex-end",gap: 0.5 }}>{[0,1].map(item => <Skeleton key={item} variant="rounded" width={44} height={44} />)}</Box>:<Skeleton variant="rounded" height={column===0? 36:28} width={column===0? "80%":"90%"} />}
           </TableCell>)}</TableRow>)}</TableBody>

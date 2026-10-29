@@ -5,6 +5,7 @@ import { CssBaseline } from "@mui/material";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 import { ToastProvider } from "@/app/contexts/ToastContext";
 import { AdsProvider } from "@/app/components/features/ads";
+import { maggaThemeTypography, maggaTypographyComponents } from "@/lib/typography";
 import { maggaColors, maggaRadii } from "@/lib/design-tokens";
 
 // NOTE: Font is already loaded in layout.tsx, use CSS font-family string here
@@ -28,19 +29,12 @@ const darkTheme = createTheme({
       secondary: maggaColors.textSecondary,
     },
   },
-  typography: {
-    fontFamily: "'Kanit', sans-serif",
-    h1: { fontWeight: 700 },
-    h2: { fontWeight: 700 },
-    h3: { fontWeight: 600 },
-    h4: { fontWeight: 600 },
-    h5: { fontWeight: 600 },
-    h6: { fontWeight: 600 },
-  },
+  typography: maggaThemeTypography,
   shape: {
     borderRadius: maggaRadii.lg,
   },
   components: {
+    ...maggaTypographyComponents,
     MuiAppBar: {
       styleOverrides: {
         root: {
@@ -82,11 +76,12 @@ const darkTheme = createTheme({
       styleOverrides: {
         root: {
           textTransform: "none",
-          fontWeight: 500,
+          fontWeight: 600,
           variants: [
             {
               props: { variant: "contained", color: "primary" },
               style: {
+                fontWeight: 700,
                 boxShadow: "none",
                 "&:hover": {
                   boxShadow: "0 4px 12px rgba(217, 119, 6, 0.3)",

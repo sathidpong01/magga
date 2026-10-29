@@ -493,7 +493,7 @@ function PlacementPreview({
           variant="caption"
           sx={{
             display: "block",
-            fontWeight: 900,
+            fontWeight: 600,
             textTransform: "none",
             letterSpacing: "0",
             color: dashboardTokens.accentStrong,
@@ -512,7 +512,7 @@ function PlacementPreview({
             bgcolor: dashboardTokens.accentSoft,
             color: dashboardTokens.accentStrong,
             border: `1px solid ${dashboardTokens.accentSoft}`,
-            fontWeight: 700,
+            fontWeight: 600,
             borderRadius: 0.75,
           }}
         />
@@ -537,7 +537,7 @@ function PlacementPreview({
           color: maggaColors.textSecondary,
           textTransform: "none",
           letterSpacing: "0",
-          lineHeight: 1.5,
+          lineHeight: 1.75,
         }}
       >
         * ชื่อโฆษณาใช้สำหรับจัดการภายในเท่านั้น ผู้ใช้จะไม่เห็นข้อความนี้
@@ -848,8 +848,8 @@ export default function AdvertisementsPage() {
           variant="h4"
           component="h1"
           sx={{
-            fontWeight: 900,
-            letterSpacing: "-0.02em",
+            fontWeight: 700,
+            letterSpacing: "normal",
             color: "#fafafa",
             textTransform: "none",
           }}
@@ -1001,7 +1001,7 @@ export default function AdvertisementsPage() {
                         TYPES.find((t) => t.value===ad.type)?.label||ad.type
                       }
                       size="small"
-                      sx={{ height: 20,fontSize: "0.7rem" }}
+                      sx={{ height: 20,fontSize: "0.75rem" }}
                     />
                     <Chip
                       label={
@@ -1011,7 +1011,7 @@ export default function AdvertisementsPage() {
                       size="small"
                       color="primary"
                       variant="outlined"
-                      sx={{ height: 20,fontSize: "0.7rem" }}
+                      sx={{ height: 20,fontSize: "0.75rem" }}
                     />
                   </Box>
                   <Box
@@ -1121,7 +1121,7 @@ export default function AdvertisementsPage() {
                 <TableCell
                   sx={{
                     py: 2.5,
-                    fontWeight: 900,
+                    fontWeight: 600,
                     color: "#a3a3a3",
                     fontSize: "0.7rem",
                     letterSpacing: "0.08em",
@@ -1134,7 +1134,7 @@ export default function AdvertisementsPage() {
                 <TableCell
                   sx={{
                     py: 2.5,
-                    fontWeight: 900,
+                    fontWeight: 600,
                     color: "#a3a3a3",
                     fontSize: "0.7rem",
                     letterSpacing: "0.08em",
@@ -1147,7 +1147,7 @@ export default function AdvertisementsPage() {
                 <TableCell
                   sx={{
                     py: 2.5,
-                    fontWeight: 900,
+                    fontWeight: 600,
                     color: "#a3a3a3",
                     fontSize: "0.7rem",
                     letterSpacing: "0.08em",
@@ -1160,7 +1160,7 @@ export default function AdvertisementsPage() {
                 <TableCell
                   sx={{
                     py: 2.5,
-                    fontWeight: 900,
+                    fontWeight: 600,
                     color: "#a3a3a3",
                     fontSize: "0.7rem",
                     letterSpacing: "0.08em",
@@ -1173,7 +1173,7 @@ export default function AdvertisementsPage() {
                 <TableCell
                   sx={{
                     py: 2.5,
-                    fontWeight: 900,
+                    fontWeight: 600,
                     color: "#a3a3a3",
                     fontSize: "0.7rem",
                     letterSpacing: "0.08em",
@@ -1187,7 +1187,7 @@ export default function AdvertisementsPage() {
                   align="right"
                   sx={{
                     py: 2.5,
-                    fontWeight: 900,
+                    fontWeight: 600,
                     color: "#a3a3a3",
                     fontSize: "0.7rem",
                     letterSpacing: "0.08em",
@@ -1265,8 +1265,8 @@ export default function AdvertisementsPage() {
                       }
                       size="small"
                       sx={{
-                        fontWeight: 900,
-                        fontSize: "0.7rem",
+                        fontWeight: 600,
+                        fontSize: "0.75rem",
                         borderRadius: dashboardRadii.compact,
                         bgcolor: dashboardTokens.accentSoft,
                         color: dashboardTokens.accentStrong,
@@ -1383,7 +1383,7 @@ export default function AdvertisementsPage() {
       >
         <DialogTitle
           sx={{
-            fontWeight: 800,
+            fontWeight: 700,
             textTransform: "none",
             letterSpacing: "0",
             borderBottom: "1px solid rgba(255,255,255,0.06)",
@@ -1393,8 +1393,8 @@ export default function AdvertisementsPage() {
             <Typography
               sx={{
                 color: dashboardTokens.accentStrong,
-                fontSize: "0.72rem",
-                fontWeight: 900,
+                fontSize: "0.75rem",
+                fontWeight: 600,
                 letterSpacing: "0.08em",
                 textTransform: "uppercase",
               }}
@@ -1404,7 +1404,7 @@ export default function AdvertisementsPage() {
             <Typography
               component="span"
               sx={{
-                fontWeight: 900,
+                fontWeight: 600,
                 fontSize: { xs: "1.2rem",md: "1.35rem" },
                 color: "#fafafa",
               }}
@@ -1442,7 +1442,7 @@ export default function AdvertisementsPage() {
                   component="h3"
                   sx={{
                     color: "#fafafa",
-                    fontWeight: 800,
+                    fontWeight: 600,
                     fontSize: "0.95rem",
                   }}
                 >
@@ -1452,7 +1452,7 @@ export default function AdvertisementsPage() {
                   sx={{
                     color: maggaColors.textSecondary,
                     fontWeight: 600,
-                    fontSize: "0.74rem",
+                    fontSize: "0.75rem",
                     mt: 0.35,
                   }}
                 >
@@ -1537,7 +1537,7 @@ export default function AdvertisementsPage() {
                     border: "1px dashed rgba(255,255,255,0.16)",
                     bgcolor: "rgba(255,255,255,0.02)",
                     color: formData.imageUrl? "#f7d27a":"#d4d4d4",
-                    fontWeight: 800,
+                    fontWeight: 600,
                     textTransform: "none",
                     letterSpacing: "0",
                     justifyContent: "flex-start",
@@ -1563,9 +1563,9 @@ export default function AdvertisementsPage() {
                       mt: 1,
                       display: "block",
                       color: "#86efac",
-                      fontWeight: 800,
+                      fontWeight: 600,
                       textTransform: "none",
-                      fontSize: "0.66rem",
+                      fontSize: "0.75rem",
                     }}
                   >
                     ✓ อัปโหลดรูปเรียบร้อย
@@ -1819,7 +1819,7 @@ export default function AdvertisementsPage() {
                 component="h3"
                 sx={{
                   color: "#fafafa",
-                  fontWeight: 800,
+                  fontWeight: 600,
                   fontSize: "0.95rem",
                   mb: 0.5,
                 }}
@@ -1830,7 +1830,7 @@ export default function AdvertisementsPage() {
                 sx={{
                   color: maggaColors.textSecondary,
                   fontWeight: 600,
-                  fontSize: "0.74rem",
+                  fontSize: "0.75rem",
                   mb: 1.75,
                 }}
               >
@@ -1858,7 +1858,7 @@ export default function AdvertisementsPage() {
             onClick={handleCloseDialog}
             sx={{
               color: "#d4d4d4",
-              fontWeight: 800,
+              fontWeight: 500,
               textTransform: "none",
               borderRadius: 1,
               px: 2.2,
@@ -1904,7 +1904,7 @@ export default function AdvertisementsPage() {
       >
         <DialogTitle
           sx={{
-            fontWeight: 900,
+            fontWeight: 700,
             textTransform: "none",
             letterSpacing: "0",
             fontSize: "1rem",
@@ -1933,7 +1933,7 @@ export default function AdvertisementsPage() {
         <DialogActions sx={{ p: 2.5,bgcolor: "rgba(0,0,0,0.2)" }}>
           <Button
             onClick={handleCloseDeleteDialog}
-            sx={{ color: "#a3a3a3",fontWeight: 800,textTransform: "none" }}
+            sx={{ color: "#a3a3a3",fontWeight: 500,textTransform: "none" }}
           >
             ยกเลิก
           </Button>
@@ -1943,7 +1943,7 @@ export default function AdvertisementsPage() {
             sx={{
               bgcolor: "#ef4444",
               color: "#fff",
-              fontWeight: 900,
+              fontWeight: 700,
               "&:hover": { bgcolor: "#dc2626" },
               px: 3,
             }}

@@ -190,8 +190,8 @@ export default function SubmissionsManager({
               variant="h4"
               component="h1"
               sx={{
-                fontWeight: 900,
-                letterSpacing: "-0.03em",
+                fontWeight: 700,
+                letterSpacing: "normal",
                 color: "#fafafa",
               }}
             >
@@ -237,7 +237,7 @@ export default function SubmissionsManager({
               borderColor: dashboardTokens.border,
               minHeight: 56,
               "& .MuiTab-root": {
-                fontWeight: 800,
+                fontWeight: 600,
                 color: dashboardTokens.textMuted,
                 fontSize: "0.85rem",
                 letterSpacing: "0",
@@ -323,7 +323,7 @@ export default function SubmissionsManager({
                 <TableCell
                   sx={{
                     py: 2.5,
-                    fontWeight: 900,
+                    fontWeight: 600,
                     color: "#a3a3a3",
                     fontSize: "0.7rem",
                     letterSpacing: "0.08em",
@@ -336,7 +336,7 @@ export default function SubmissionsManager({
                 <TableCell
                   sx={{
                     py: 2.5,
-                    fontWeight: 900,
+                    fontWeight: 600,
                     color: "#a3a3a3",
                     fontSize: "0.7rem",
                     letterSpacing: "0.08em",
@@ -349,7 +349,7 @@ export default function SubmissionsManager({
                 <TableCell
                   sx={{
                     py: 2.5,
-                    fontWeight: 900,
+                    fontWeight: 600,
                     color: "#a3a3a3",
                     fontSize: "0.7rem",
                     letterSpacing: "0.08em",
@@ -362,7 +362,7 @@ export default function SubmissionsManager({
                 <TableCell
                   sx={{
                     py: 2.5,
-                    fontWeight: 900,
+                    fontWeight: 600,
                     color: "#a3a3a3",
                     fontSize: "0.7rem",
                     letterSpacing: "0.08em",
@@ -375,7 +375,7 @@ export default function SubmissionsManager({
                 <TableCell
                   sx={{
                     py: 2.5,
-                    fontWeight: 900,
+                    fontWeight: 600,
                     color: "#a3a3a3",
                     fontSize: "0.7rem",
                     letterSpacing: "0.08em",
@@ -389,7 +389,7 @@ export default function SubmissionsManager({
                   align="right"
                   sx={{
                     py: 2.5,
-                    fontWeight: 900,
+                    fontWeight: 600,
                     color: "#a3a3a3",
                     fontSize: "0.7rem",
                     letterSpacing: "0.08em",
@@ -454,7 +454,7 @@ export default function SubmissionsManager({
                     <TableCell data-label="ชื่อเรื่อง">
                       <Typography
                         sx={{
-                          fontWeight: 800,
+                          fontWeight: 500,
                           color: "#fff",
                           fontSize: "0.95rem",
                         }}
@@ -478,8 +478,8 @@ export default function SubmissionsManager({
                         label={getStatusLabel(sub.status)}
                         size="small"
                         sx={{
-                          fontWeight: 900,
-                          fontSize: "0.65rem",
+                          fontWeight: 600,
+                          fontSize: "0.75rem",
                           letterSpacing: "0",
                           borderRadius: 1,
                           bgcolor:

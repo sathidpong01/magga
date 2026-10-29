@@ -182,7 +182,7 @@ export default function AuthorHeaderCard({ author }: AuthorHeaderCardProps) {
           component="span"
           sx={{
             color: maggaColors.textPrimary,
-            fontWeight: 600,
+            fontWeight: 500,
             fontSize: "0.88rem",
           }}
         >
@@ -222,8 +222,8 @@ export default function AuthorHeaderCard({ author }: AuthorHeaderCardProps) {
                 fontSize: { xs: "1.6rem", sm: "2rem" },
                 fontWeight: 700,
                 color: "#ffffff",
-                letterSpacing: "-0.01em",
-                lineHeight: 1.2,
+                letterSpacing: "normal",
+                lineHeight: 1.75,
               }}
             >
               {author.name}

@@ -285,7 +285,7 @@ export default function SubmissionDetailPage({
           sx={{
             mb: 3,
             color: dashboardTokens.textMuted,
-            fontWeight: 800,
+            fontWeight: 600,
             fontSize: "0.75rem",
             letterSpacing: "0.05em",
             "&:hover": { color: dashboardTokens.accent },
@@ -335,10 +335,10 @@ export default function SubmissionDetailPage({
             <Typography
               variant="h4"
               sx={{
-                fontWeight: 900,
-                letterSpacing: "-0.02em",
+                fontWeight: 700,
+                letterSpacing: "normal",
                 color: dashboardTokens.text,
-                lineHeight: 1.2,
+                lineHeight: 1.75,
               }}
             >
               {submission.title}
@@ -356,8 +356,8 @@ export default function SubmissionDetailPage({
               <Chip
                 label={submission.status}
                 sx={{
-                  fontWeight: 900,
-                  fontSize: "0.65rem",
+                  fontWeight: 600,
+                  fontSize: "0.75rem",
                   letterSpacing: "0.05em",
                   borderRadius: dashboardRadii.compact,
                   bgcolor: statusInfo.bg,
@@ -436,7 +436,7 @@ export default function SubmissionDetailPage({
                     sx={{
                       borderRadius: dashboardRadii.button,
                       px: 3,
-                      fontWeight: 800,
+                      fontWeight: 700,
                       borderColor: "rgba(239, 68, 68, 0.4)",
                       color: "#f87171",
                       "&:hover": {
@@ -454,7 +454,7 @@ export default function SubmissionDetailPage({
                     sx={{
                       borderRadius: dashboardRadii.button,
                       px: 3,
-                      fontWeight: 900,
+                      fontWeight: 700,
                       bgcolor: dashboardTokens.accent,
                       color: "#000",
                       "&:hover": { bgcolor: dashboardTokens.accentStrong },
@@ -498,7 +498,7 @@ export default function SubmissionDetailPage({
                 <Typography
                   variant="h6"
                   sx={{
-                    fontWeight: 900,
+                    fontWeight: 600,
                     letterSpacing: "0.02em",
                     fontSize: "0.95rem",
                     color: dashboardTokens.text,
@@ -515,7 +515,7 @@ export default function SubmissionDetailPage({
                     startIcon={<EditIcon />}
                     onClick={() => setIsEditing(true)}
                     sx={{
-                      fontWeight: 800,
+                      fontWeight: 600,
                       color: dashboardTokens.accent,
                       fontSize: "0.75rem",
                     }}
@@ -695,7 +695,7 @@ export default function SubmissionDetailPage({
               <Typography
                 variant="h6"
                 sx={{
-                  fontWeight: 900,
+                  fontWeight: 600,
                   letterSpacing: "0.02em",
                   fontSize: "0.95rem",
                   color: dashboardTokens.text,
@@ -710,7 +710,7 @@ export default function SubmissionDetailPage({
                   ml: 1.5,
                   bgcolor: dashboardTokens.surfaceMuted,
                   color: dashboardTokens.textMuted,
-                  fontWeight: 800,
+                  fontWeight: 600,
                   fontSize: "0.75rem",
                   borderRadius: dashboardRadii.compact,
                 }}
@@ -817,7 +817,7 @@ export default function SubmissionDetailPage({
               <Typography
                 variant="h6"
                 sx={{
-                  fontWeight: 900,
+                  fontWeight: 600,
                   letterSpacing: "0.02em",
                   fontSize: "0.95rem",
                   color: dashboardTokens.text,
@@ -911,7 +911,7 @@ export default function SubmissionDetailPage({
               <Typography
                 variant="h6"
                 sx={{
-                  fontWeight: 900,
+                  fontWeight: 600,
                   letterSpacing: "0.02em",
                   fontSize: "0.95rem",
                   color: dashboardTokens.text,
@@ -994,8 +994,8 @@ export default function SubmissionDetailPage({
       >
         <DialogTitle
           sx={{
-            fontWeight: 900,
-            letterSpacing: "-0.01em",
+            fontWeight: 700,
+            letterSpacing: "normal",
             fontSize: "1.1rem",
             color: dashboardTokens.text,
           }}
@@ -1064,7 +1064,7 @@ export default function SubmissionDetailPage({
             onClick={() => setApproveOpen(false)}
             sx={{
               color: dashboardTokens.textMuted,
-              fontWeight: 800,
+              fontWeight: 500,
               fontSize: "0.85rem",
             }}
           >
@@ -1085,7 +1085,7 @@ export default function SubmissionDetailPage({
               px: 3,
               bgcolor: dashboardTokens.accent,
               color: "#000",
-              fontWeight: 900,
+              fontWeight: 700,
               borderRadius: dashboardRadii.button,
               "&:hover": { bgcolor: dashboardTokens.accentStrong },
             }}
@@ -1114,8 +1114,8 @@ export default function SubmissionDetailPage({
       >
         <DialogTitle
           sx={{
-            fontWeight: 900,
-            letterSpacing: "-0.01em",
+            fontWeight: 700,
+            letterSpacing: "normal",
             fontSize: "1.1rem",
             color: dashboardTokens.text,
           }}
@@ -1185,7 +1185,7 @@ export default function SubmissionDetailPage({
             onClick={() => setRejectOpen(false)}
             sx={{
               color: dashboardTokens.textMuted,
-              fontWeight: 800,
+              fontWeight: 500,
               fontSize: "0.85rem",
             }}
           >
@@ -1202,7 +1202,7 @@ export default function SubmissionDetailPage({
               px: 3,
               bgcolor: "#ef4444",
               color: "#fff",
-              fontWeight: 900,
+              fontWeight: 700,
               borderRadius: dashboardRadii.button,
               "&:hover": { bgcolor: "#dc2626" },
             }}
