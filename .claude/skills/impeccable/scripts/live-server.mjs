@@ -23,6 +23,7 @@ import { fileURLToPath } from 'node:url';
 import { parseDesignMd } from './design-parser.mjs';
 import { resolveContextDir } from './load-context.mjs';
 import { createLiveSessionStore } from './live-session-store.mjs';
+import { allowPreviewRequest, previewSourcePath } from './live-security.mjs';
 import {
   getDesignSidecarPath,
   getLiveAnnotationsDir,
@@ -263,16 +264,18 @@ function validateEvent(msg) {
 
 function createRequestHandler({ detectScript, sessionPath, livePath }) {
   return (req, res) => {
+    if (!allowPreviewRequest(req, res, state.port, allowedOrigins)) {
+      res.writeHead(403); res.end('Forbidden origin'); return;
+    }
     const url = new URL(req.url, `http://localhost:${state.port}`);
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
 
     const p = url.pathname;
 
     // --- Scripts ---
     if (p === '/live.js') {
+      // The injector obtains this capability locally; a public script must not mint it.
+      if (url.searchParams.get('token') !== state.token) { res.writeHead(401); res.end('Unauthorized'); return; }
       // Re-read from disk each request so edits to live-browser.js land on
       // the next tab reload. No-store headers prevent browser caching across
       // sessions — during iteration, a cached old script silently breaks
@@ -481,12 +484,9 @@ function createRequestHandler({ detectScript, sessionPath, livePath }) {
       const token = url.searchParams.get('token');
       if (token !== state.token) { res.writeHead(401); res.end('Unauthorized'); return; }
       const filePath = url.searchParams.get('path');
-      if (!filePath || filePath.includes('..')) { res.writeHead(400); res.end('Bad path'); return; }
-      const absPath = path.resolve(process.cwd(), filePath);
-      if (!absPath.startsWith(process.cwd())) { res.writeHead(403); res.end('Forbidden'); return; }
       let content;
-      try { content = fs.readFileSync(absPath, 'utf-8'); }
-      catch { res.writeHead(404); res.end('File not found'); return; }
+      try { content = fs.readFileSync(previewSourcePath(process.cwd(), filePath), 'utf-8'); }
+      catch { res.writeHead(403); res.end('Forbidden source'); return; }
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end(content);
       return;
@@ -697,6 +697,11 @@ function shutdown() {
 // ---------------------------------------------------------------------------
 
 const args = process.argv.slice(2);
+const allowedOrigins = args.filter(arg => arg.startsWith('--origin=')).map(arg => {
+  const url = new URL(arg.slice('--origin='.length));
+  if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.href !== `${url.origin}/`) throw new Error('Use --origin= with an exact HTTP(S) origin');
+  return url.origin;
+});
 
 if (args.includes('--help') || args.includes('-h')) {
   console.log(`Usage: node live-server.mjs [options]
@@ -711,6 +716,7 @@ Commands:
 Options:
   --background  Start detached, print connection JSON to stdout, then exit
   --port=PORT   Use a specific port (default: auto-detect starting at 8400)
+  --origin=URL  Allow one exact remote preview origin (repeat for additional origins)
   --keep-inject Only with stop: skip live-inject.mjs --remove
   --help        Show this help
 
@@ -828,7 +834,7 @@ httpServer.listen(state.port, '127.0.0.1', () => {
   const url = `http://localhost:${state.port}`;
   console.log(`\nImpeccable live server running on ${url}`);
   console.log(`Token: ${state.token}\n`);
-  console.log(`Inject: <script src="${url}/live.js"><\/script>`);
+  console.log(`Inject: <script src="${url}/live.js?token=${state.token}"><\/script>`);
   console.log(`Stop:   node ${path.basename(fileURLToPath(import.meta.url))} stop`);
 });
 

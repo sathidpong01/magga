@@ -29,6 +29,12 @@ export function isPrivateIpAddress(address: string) {
 export function getClientIp(headers: Headers) {
   return headers.get("x-forwarded-for")?.split(",")[0].trim() || headers.get("cf-connecting-ip") || headers.get("x-real-ip") || "unknown";
 }
+/** Only the active ingress may supply network identity for an abuse quota. */
+export function getQuotaClientIp(headers: Headers, vercel = Boolean(process.env.VERCEL)): string | null {
+  if (!vercel) return "local";
+  const ip = headers.get("x-vercel-forwarded-for")?.split(",")[0].trim();
+  return ip && isIP(ip) ? ip.toLowerCase() : null;
+}
 export type ResolvedAddress = { address: string; family: number };
 export async function resolveExternalUrl(urlString: string, resolver = lookup): Promise<
   { valid: true; url: URL; addresses: ResolvedAddress[] } | { valid: false; error: string }

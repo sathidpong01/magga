@@ -197,14 +197,6 @@ export function isUserBanned(session: SessionLike): boolean {
   return Boolean(user && (user.banned ?? user.isBanned));
 }
 
-export function isValidCallbackUrl(url: string | null): string {
-  if (!url) return "/";
-  try {
-    if (url.startsWith("/") && !url.startsWith("//")) return url;
-    return "/";
-  } catch {
-    return "/";
-  }
-}
+export { isValidCallbackUrl } from "./callback-url";
 
 

@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { isUserBanned } from "@/lib/auth-helpers";
 import { db } from "@/db";
 import { profiles as usersTable } from "@/db/schema";
-import { eq, or, and, ne } from "drizzle-orm";
+import { eq, or, and, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 
 const profileSchema = z.object({
@@ -17,14 +17,14 @@ const profileSchema = z.object({
   ),
   email: z.preprocess(
     (val) => (val === "" ? undefined : val),
-    z.string().email("Invalid email address").optional()
+    z.string().email("Invalid email address").transform(value => value.toLowerCase()).optional()
   ),
   commentPreference: z.enum(["sidebar", "bottom", "both", "none"]).optional(),
 });
 
 export async function PUT(req: Request) {
   try {
-    const session = await auth.api.getSession({ headers: req.headers });
+    const session = await auth.api.getSession({ headers: req.headers, query: { disableCookieCache: true } });
 
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -74,7 +74,13 @@ export async function PUT(req: Request) {
     const updateData: any = {};
     if (name) updateData.name = name;
     if (username) updateData.username = username;
-    if (email) updateData.email = email;
+    if (email) {
+      const normalizedEmail = email.toLowerCase();
+      updateData.email = normalizedEmail;
+      // Compare inside the same UPDATE: unchanged email/name-only saves retain
+      // verification, while concurrent email changes can never inherit it.
+      updateData.emailVerified = sql`CASE WHEN ${usersTable.email} = ${normalizedEmail} THEN ${usersTable.emailVerified} ELSE false END`;
+    }
     if (commentPreference) updateData.commentPreference = commentPreference;
 
     let user;

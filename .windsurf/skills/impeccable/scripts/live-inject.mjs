@@ -16,7 +16,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { resolveLiveConfigPath } from './impeccable-paths.mjs';
+import { resolveLiveConfigPath, readLiveServerInfo } from './impeccable-paths.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CONFIG_PATH = resolveLiveConfigPath({ cwd: process.cwd(), scriptsDir: __dirname });
@@ -111,12 +111,14 @@ Output (JSON):
     process.exit(1);
   }
 
+  const server = readLiveServerInfo(process.cwd())?.info;
+  if (server?.port !== port || !server.token) throw new Error('Start the live server before injecting its capability');
   const results = resolvedFiles.map((relFile) => {
     const absFile = path.resolve(process.cwd(), relFile);
     if (!fs.existsSync(absFile)) return { file: relFile, error: 'file_not_found' };
     const content = fs.readFileSync(absFile, 'utf-8');
     const withoutOld = revertCspMeta(removeTag(content, config.commentSyntax));
-    const withTag = insertTag(withoutOld, config, port);
+    const withTag = insertTag(withoutOld, config, port, server.token);
     if (withTag === withoutOld) {
       return { file: relFile, error: 'insertion_point_not_found', anchor: config.insertBefore || config.insertAfter };
     }
@@ -256,18 +258,18 @@ function validateConfig(cfg) {
 function commentOpen(syntax) { return syntax === 'jsx' ? '{/*' : '<!--'; }
 function commentClose(syntax) { return syntax === 'jsx' ? '*/}' : '-->'; }
 
-function buildTagBlock(syntax, port) {
+function buildTagBlock(syntax, port, token = '') {
   const open = commentOpen(syntax);
   const close = commentClose(syntax);
   return (
     open + ' ' + MARKER_OPEN_TEXT + ' ' + close + '\n' +
-    '<script src="http://localhost:' + port + '/live.js"></script>\n' +
+    '<script src="http://localhost:' + port + '/live.js' + (token ? '?token=' + encodeURIComponent(token) : '') + '"></script>\n' +
     open + ' ' + MARKER_CLOSE_TEXT + ' ' + close + '\n'
   );
 }
 
-function insertTag(content, config, port) {
-  const block = buildTagBlock(config.commentSyntax, port);
+function insertTag(content, config, port, token) {
+  const block = buildTagBlock(config.commentSyntax, port, token);
   // insertBefore: match the LAST occurrence. Anchors like `</body>` naturally
   // belong at the end, and the same literal can appear earlier in code blocks
   // within rendered documentation pages.

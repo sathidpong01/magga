@@ -14,7 +14,7 @@ type RouteContext = {
 // PATCH - อัพเดทโฆษณา (Admin only)
 export async function PATCH(request: NextRequest, context: RouteContext) {
   try {
-    const session = await auth.api.getSession({ headers: request.headers });
+    const session = await auth.api.getSession({ headers: request.headers, query: { disableCookieCache: true } });
     const authError = requireAdmin(session);
     if (authError) return authError;
     
@@ -49,7 +49,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
 // DELETE - ลบโฆษณา (Admin only)
 export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
-    const session = await auth.api.getSession({ headers: request.headers });
+    const session = await auth.api.getSession({ headers: request.headers, query: { disableCookieCache: true } });
     const authError = requireAdmin(session);
     if (authError) return authError;
     

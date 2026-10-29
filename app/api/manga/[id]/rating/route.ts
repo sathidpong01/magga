@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { recordMangaRating } from "@/lib/manga-statistics";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { getQuotaClientIp } from "@/lib/network-security";
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { manga as mangaTable, mangaRatings as mangaRatingsTable } from '@/db/schema';
@@ -23,19 +24,6 @@ function hashString(input: string): string {
 /**
  * Get client IP address from request headers
  */
-function getClientIP(request: NextRequest): string {
-  const forwarded = request.headers.get('x-forwarded-for');
-  const realIP = request.headers.get('x-real-ip');
-  const cfIP = request.headers.get('cf-connecting-ip');
-  
-  return (
-    cfIP ||
-    realIP ||
-    (forwarded ? forwarded.split(',')[0].trim() : '') ||
-    'unknown'
-  );
-}
-
 /**
  * GET /api/manga/[id]/rating?fingerprint=xxx
  * ดึงข้อมูลคะแนนของมังงะและคะแนนที่ผู้ใช้เคยให้ (ถ้ามี)
@@ -133,7 +121,9 @@ export async function POST(
       );
     }
 
-    const hashedIP = hashString(getClientIP(request));
+    const ip = getQuotaClientIp(request.headers);
+    if (!ip) return NextResponse.json({ error: "Network identity unavailable" }, { status: 503 });
+    const hashedIP = hashString(ip);
     const quota = await checkRateLimit(`rating:${hashedIP}`, 60, 60 * 60 * 1000, { failClosed: true });
     if (!quota.allowed) return NextResponse.json({ error: "Too many rating requests" }, { status: 429 });
     const result = await recordMangaRating(db, id, rating, hashString(fingerprint), hashedIP);

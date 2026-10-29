@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { recordMangaView } from '@/lib/manga-statistics';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { getQuotaClientIp } from '@/lib/network-security';
 import { z } from 'zod';
 import { createHash } from 'crypto';
 import {
@@ -15,15 +16,6 @@ type RouteParams = {
     id: string;
   }>;
 };
-
-function getClientIP(request: NextRequest): string {
-  return (
-    request.headers.get('cf-connecting-ip') ||
-    request.headers.get('x-real-ip') ||
-    request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
-    'unknown'
-  );
-}
 
 function getViewerKey(request: NextRequest, mangaId: string) {
   const cookieVisitorId = request.cookies.get(VISITOR_COOKIE_NAME)?.value;
@@ -59,7 +51,9 @@ export async function POST(
     const { id } = await params;
     if (!z.uuid().safeParse(id).success) return NextResponse.json({ error: "Invalid manga ID" }, { status: 400 });
     // Bound cookie rotation abuse independently of the client-controlled visitor ID.
-    const quotaKey = createHash('sha256').update(getClientIP(request)).digest('hex');
+    const ip = getQuotaClientIp(request.headers);
+    if (!ip) return NextResponse.json({ error: "Network identity unavailable" }, { status: 503 });
+    const quotaKey = createHash('sha256').update(ip).digest('hex');
     const quota = await checkRateLimit(`view:${quotaKey}`, 240, 10 * 60 * 1000, { failClosed: true });
     if (!quota.allowed) return NextResponse.json({ error: "Too many view requests" }, {
       status: 429,

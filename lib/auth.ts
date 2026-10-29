@@ -41,6 +41,9 @@ export const auth = betterAuth({
   },
   account: {
     storeStateStrategy: "cookie",
+    // Legacy profile email edits may have retained verification of an old address.
+    // Existing provider-ID logins and explicit authenticated linking still work.
+    accountLinking: { disableImplicitLinking: true },
   },
   user: {
     additionalFields: {

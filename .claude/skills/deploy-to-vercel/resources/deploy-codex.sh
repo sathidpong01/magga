@@ -167,7 +167,6 @@ INPUT_PATH="${1:-.}"
 # Create temp directory for packaging
 TEMP_DIR=$(mktemp -d)
 TARBALL="$TEMP_DIR/project.tgz"
-STAGING_DIR="$TEMP_DIR/staging"
 CLEANUP_TEMP=true
 
 cleanup() {
@@ -179,56 +178,25 @@ trap cleanup EXIT
 
 echo "Preparing deployment..." >&2
 
-# Check if input is a .tgz file or a directory
+# Both directories and supplied archives pass the same local privacy filter.
 FRAMEWORK="null"
-
-if [ -f "$INPUT_PATH" ] && [[ "$INPUT_PATH" == *.tgz ]]; then
-    # Input is already a tarball, use it directly
-    echo "Using provided tarball..." >&2
-    TARBALL="$INPUT_PATH"
-    CLEANUP_TEMP=false
-    # Can't detect framework from tarball, leave as null
-elif [ -d "$INPUT_PATH" ]; then
-    # Input is a directory, need to tar it
+if [ -d "$INPUT_PATH" ]; then
     PROJECT_PATH=$(cd "$INPUT_PATH" && pwd)
-
-    # Detect framework from package.json
     FRAMEWORK=$(detect_framework "$PROJECT_PATH/package.json")
-
-    # Stage files into a temporary directory to avoid mutating the source tree.
-    mkdir -p "$STAGING_DIR"
-    echo "Staging project files..." >&2
-    tar -C "$PROJECT_PATH" \
-        --exclude='node_modules' \
-        --exclude='.git' \
-        --exclude='.env' \
-        --exclude='.env.*' \
-        -cf - . | tar -C "$STAGING_DIR" -xf -
-
-    # Check if this is a static HTML project (no package.json)
-    if [ ! -f "$PROJECT_PATH/package.json" ]; then
-        # Find HTML files in root
-        HTML_FILES=$(find "$STAGING_DIR" -maxdepth 1 -name "*.html" -type f)
-        HTML_COUNT=$(printf '%s\n' "$HTML_FILES" | sed '/^$/d' | wc -l | tr -d '[:space:]')
-
-        # If there's exactly one HTML file and it's not index.html, rename it
-        if [ "$HTML_COUNT" -eq 1 ]; then
-            HTML_FILE=$(echo "$HTML_FILES" | head -1)
-            BASENAME=$(basename "$HTML_FILE")
-            if [ "$BASENAME" != "index.html" ]; then
-                echo "Renaming $BASENAME to index.html..." >&2
-                mv "$HTML_FILE" "$STAGING_DIR/index.html"
-            fi
-        fi
-    fi
-
-    # Create tarball from the staging directory
-    echo "Creating deployment package..." >&2
-    tar -czf "$TARBALL" -C "$STAGING_DIR" .
-else
+elif ! { [ -f "$INPUT_PATH" ] && [[ "$INPUT_PATH" == *.tgz ]]; }; then
     echo "Error: Input must be a directory or a .tgz file" >&2
     exit 1
 fi
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+if command -v python3 >/dev/null 2>&1; then
+    PYTHON_COMMAND=python3
+elif command -v python >/dev/null 2>&1; then
+    PYTHON_COMMAND=python
+else
+    echo "Python 3 is required for safe deployment packaging." >&2
+    exit 1
+fi
+"$PYTHON_COMMAND" "$SCRIPT_DIR/package-project.py" "$INPUT_PATH" "$TARBALL"
 
 if [ "$FRAMEWORK" != "null" ]; then
     echo "Detected framework: $FRAMEWORK" >&2

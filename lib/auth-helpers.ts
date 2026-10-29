@@ -74,15 +74,7 @@ export function canModifyResource(
   return (session as SessionLike)?.user?.id === resourceUserId;
 }
 
-export function isValidCallbackUrl(url: string | null): string {
-  if (!url) return "/";
-  try {
-    if (url.startsWith("/") && !url.startsWith("//")) return url;
-    return "/";
-  } catch {
-    return "/";
-  }
-}
+export { isValidCallbackUrl } from "./callback-url";
 
 /**
  * Authenticate incoming request for Next.js Route Handlers

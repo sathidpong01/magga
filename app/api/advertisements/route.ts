@@ -87,7 +87,7 @@ export async function GET(request: NextRequest) {
 // POST - สร้างโฆษณาใหม่ (Admin only)
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth.api.getSession({ headers: request.headers });
+    const session = await auth.api.getSession({ headers: request.headers, query: { disableCookieCache: true } });
     const authError = requireAdmin(session);
     if (authError) return authError;
 
