@@ -1,5 +1,7 @@
 "use client";
 
+import { hasStatisticsConsent } from "@/lib/privacy-consent";
+import { useStatisticsConsent } from "@/lib/use-statistics-consent";
 import { useState, useEffect, useRef } from "react";
 import {
   Alert,
@@ -36,6 +38,7 @@ export default function MangaViewRating({
   hideAverage = false,
   trackViewOnMount = false,
 }: MangaViewRatingProps) {
+  const statisticsAllowed = useStatisticsConsent();
   const [averageRating, setAverageRating] = useState(initialAverageRating);
   const [ratingCount, setRatingCount] = useState(initialRatingCount);
   const [userRating, setUserRating] = useState<number | null>(null);
@@ -71,10 +74,10 @@ export default function MangaViewRating({
 
   // Track a page view only from the designated instance and only once the tab is visible.
   useEffect(() => {
-    if (!trackViewOnMount || viewTracked.current) return;
+    if (!statisticsAllowed || !trackViewOnMount || viewTracked.current) return;
 
     const postView = () => {
-      if (viewTracked.current) return;
+      if (viewTracked.current || !hasStatisticsConsent()) return;
       viewTracked.current = true;
       fetch(`/api/manga/${mangaId}/view`, {
         method: "POST",
@@ -105,7 +108,7 @@ export default function MangaViewRating({
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [mangaId, trackViewOnMount]);
+  }, [mangaId, trackViewOnMount, statisticsAllowed]);
 
   // Load FingerprintJS and fetch existing rating
   useEffect(() => {
@@ -317,6 +320,11 @@ export default function MangaViewRating({
             </Typography>
           )}
         </Box>
+      )}
+      {active && !hideInteractive && (
+        <Typography variant="caption" color="text.secondary">
+          ใช้ลายนิ้วมือเบราว์เซอร์เพื่อจำคะแนนและป้องกันการให้คะแนนซ้ำ ดูรายละเอียดในนโยบายความเป็นส่วนตัว
+        </Typography>
       )}
       {identityLoading && (
         <Typography role="status" variant="body2" color="text.secondary">

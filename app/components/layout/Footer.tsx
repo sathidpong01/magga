@@ -1,5 +1,6 @@
 "use client";
 
+import { openPrivacySettings } from "@/lib/privacy-consent";
 import { maggaColors } from "@/lib/design-tokens";
 
 import {
@@ -105,6 +106,10 @@ export default function Footer() {
                 alignItems: { xs: "flex-start", md: "flex-end" },
               }}
             >
+              <Button onClick={openPrivacySettings}
+                sx={{ minHeight: 44, color: maggaColors.textSecondary, px: 0, fontSize: "0.875rem", "&:hover": { color: maggaColors.archiveGoldHover } }}>
+                ตั้งค่าความเป็นส่วนตัว
+              </Button>
               {policyLinks.map((link) => (
                 <Link
                   key={link.href}

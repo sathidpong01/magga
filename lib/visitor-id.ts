@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 
 export const VISITOR_COOKIE_NAME = "magga_vid";
-const VISITOR_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+const VISITOR_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
 
 export function createVisitorId(): string {
   return randomUUID().replace(/-/g, "");

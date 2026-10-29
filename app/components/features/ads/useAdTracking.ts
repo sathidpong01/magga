@@ -1,10 +1,13 @@
 "use client";
 
+import { hasStatisticsConsent } from "@/lib/privacy-consent";
+import { useStatisticsConsent } from "@/lib/use-statistics-consent";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { deliverAdEvent } from "@/lib/ad-event-transport";
 
 export function useAdTracking(adId: string) {
+  const statisticsAllowed = useStatisticsConsent();
   const imageRef = useRef<HTMLImageElement>(null);
   const eventId = useRef<string | null>(null);
   const sent = useRef(new Set<string>());
@@ -13,12 +16,12 @@ export function useAdTracking(adId: string) {
   const pathname = usePathname();
 
   const send = (kind: "impression" | "click") => {
-    if (sent.current.has(kind) || pending.current.has(kind) || !eventId.current || pathname.startsWith("/dashboard")) return;
+    if (!hasStatisticsConsent() || sent.current.has(kind) || pending.current.has(kind) || !eventId.current || pathname.startsWith("/dashboard")) return;
     const currentEventId = eventId.current;
     pending.current.add(kind);
     const url = `/api/advertisements/${adId}/events`;
     void deliverAdEvent(url, { eventId: currentEventId, kind }, {
-      isCurrent: () => eventId.current === currentEventId,
+      isCurrent: () => hasStatisticsConsent() && eventId.current === currentEventId,
     }).then((acknowledged) => {
       if (eventId.current !== currentEventId) return;
       pending.current.delete(kind);
@@ -35,6 +38,7 @@ export function useAdTracking(adId: string) {
   }, [adId, pathname]);
 
   useEffect(() => {
+    if (!statisticsAllowed) return;
     const element = imageRef.current;
     if (!element || (!loaded && !element.complete) || !element.naturalWidth) return;
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -55,7 +59,7 @@ export function useAdTracking(adId: string) {
     return () => { stop(); observer.disconnect(); document.removeEventListener("visibilitychange", visibilityChange); };
     // The observer owns this page visit; callback state lives in refs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [adId, pathname, loaded]);
+  }, [adId, pathname, loaded, statisticsAllowed]);
 
   return { imageRef, onLoad: () => setLoaded(true), onClick: () => { send("impression"); send("click"); } };
 }

@@ -6,6 +6,7 @@ const mocks = { effects: [] as Array<() => void | (() => void)>, pathname: "/", 
 const originalReact = await import("react");
 mock.module("react", () => ({
   ...originalReact,
+  useSyncExternalStore: (_subscribe: unknown, snapshot: () => boolean) => snapshot(),
   useState: (value: unknown) => [value, jest.fn()],
   useRef: (current: unknown) => ({ current }),
   useEffect: (effect: () => void | (() => void)) => { mocks.effects.push(effect); },
@@ -28,7 +29,7 @@ describe("viewable advertisement tracking", () => {
     mocks.callback = undefined;
     jest.useFakeTimers();
     stubGlobal("fetch", fetchMock.mockReset().mockResolvedValue({ ok: true }));
-    stubGlobal("document", Object.assign(new EventTarget(), { visibilityState: "visible" }));
+    stubGlobal("document", Object.assign(new EventTarget(), { visibilityState: "visible", cookie: `magga_consent=2.yes.${Date.now()}` }));
     stubGlobal("IntersectionObserver", class {
       constructor(callback: (entries: object[]) => void) { mocks.callback = callback; }
       observe = mocks.observe;
@@ -38,6 +39,22 @@ describe("viewable advertisement tracking", () => {
   });
   afterEach(() => { jest.useRealTimers(); restoreGlobals(); });
 
+  it("does not observe or send without consent, including clicks", () => {
+    document.cookie = "";
+    const { tracking } = TrackingHarness();
+    tracking.onClick();
+    expect(mocks.callback).toBeUndefined();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+  it("stops a pending impression and clicks after withdrawal", () => {
+    const { tracking, cleanup } = TrackingHarness();
+    mocks.callback!([{ isIntersecting: true, intersectionRatio: 1 }]);
+    document.cookie = `magga_consent=2.no.${Date.now()}`;
+    jest.advanceTimersByTime(1500);
+    tracking.onClick();
+    expect(fetch).not.toHaveBeenCalled();
+    if (typeof cleanup === "function") cleanup();
+  });
   it("requires half the image to stay visible for one second", () => {
     const { cleanup } = TrackingHarness();
     mocks.callback!([{ isIntersecting: true, intersectionRatio: 0.4 }]);

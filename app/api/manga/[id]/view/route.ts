@@ -1,3 +1,4 @@
+import { consentFromCookies } from "@/lib/privacy-consent";
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { recordMangaView } from '@/lib/manga-statistics';
@@ -47,6 +48,9 @@ export async function POST(
   request: NextRequest,
   { params }: RouteParams
 ) {
+  if (consentFromCookies(request.headers.get("cookie")) !== true) {
+    return new NextResponse(null, { status: 204, headers: { "Cache-Control": "private, no-store" } });
+  }
   try {
     const { id } = await params;
     if (!z.uuid().safeParse(id).success) return NextResponse.json({ error: "Invalid manga ID" }, { status: 400 });

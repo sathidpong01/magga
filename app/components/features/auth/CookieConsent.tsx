@@ -1,135 +1,101 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Box, Typography, Button, Paper, Slide, Portal } from "@mui/material";
+import { useEffect, useRef, useState } from "react";
+import NextLink from "next/link";
+import { Alert, Box, Typography, Button, Paper, Portal, Link } from "@mui/material";
+import { maggaColors, maggaRadii, maggaShadows } from "@/lib/design-tokens";
+import { CONSENT_CHANGED, OPEN_PRIVACY_SETTINGS, consentFromCookies, consumePrivacySettingsRequest } from "@/lib/privacy-consent";
 
 export default function CookieConsent() {
-  const [isVisible, setIsVisible] = useState(false);
+  const [visible, setVisible] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const savingRef = useRef(false);
+  const firstButton = useRef<HTMLButtonElement>(null);
+  const opener = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    let timer:ReturnType<typeof setTimeout>;
-    const check=()=>{try{if(localStorage.getItem("isAgeVerified")&&!localStorage.getItem("cookieConsent"))timer=setTimeout(()=>setIsVisible(true),1500);}catch{/* Consent remains off when storage is unavailable. */}};
-    check();window.addEventListener("magga-age-verified",check);
-    return ()=>{clearTimeout(timer);window.removeEventListener("magga-age-verified",check);};
+    let timer: ReturnType<typeof setTimeout>;
+    const check = () => {
+      clearTimeout(timer);
+      try {
+        if (localStorage.getItem("isAgeVerified") && consentFromCookies(document.cookie) === null) {
+          timer = setTimeout(() => setVisible(true), 1500);
+        }
+      } catch { /* Settings remain available from the footer. */ }
+    };
+    const open = () => {
+      consumePrivacySettingsRequest();
+      opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      setVisible(true);
+      setError("");
+      requestAnimationFrame(() => firstButton.current?.focus());
+    };
+    check();
+    window.addEventListener("magga-age-verified", check);
+    window.addEventListener(OPEN_PRIVACY_SETTINGS, open);
+    window.addEventListener("focus", check);
+    if (consumePrivacySettingsRequest()) open();
+    const interval = window.setInterval(check, 60_000);
+    return () => {
+      clearTimeout(timer);
+      clearInterval(interval);
+      window.removeEventListener("magga-age-verified", check);
+      window.removeEventListener(OPEN_PRIVACY_SETTINGS, open);
+      window.removeEventListener("focus", check);
+    };
   }, []);
 
-  const handleAccept = () => {
-    localStorage.setItem("cookieConsent", "true");
-    window.dispatchEvent(new Event("cookieConsentChanged"));
-    setIsVisible(false);
+  const save = async (statistics: boolean) => {
+    if (savingRef.current) return;
+    savingRef.current = true;
+    setSaving(true);
+    setError("");
+    const wasAccepted = consentFromCookies(document.cookie) === true;
+    try {
+      const response = await fetch("/api/privacy/consent", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ statistics }),
+      });
+      if (!response.ok || consentFromCookies(document.cookie) !== statistics) throw new Error("Consent not saved");
+      try {
+        localStorage.removeItem("cookieConsent");
+        localStorage.setItem("magga-consent-updated", String(Date.now()));
+      } catch { /* The server cookie is the source of truth. */ }
+      window.dispatchEvent(new Event(CONSENT_CHANGED));
+      setVisible(false);
+      opener.current?.focus();
+      // Remove previously loaded analytics scripts and listeners after withdrawal.
+      if (wasAccepted && !statistics) window.location.reload();
+    } catch {
+      setError("บันทึกตัวเลือกไม่ได้ กรุณาอนุญาตคุกกี้ของเว็บไซต์แล้วลองอีกครั้ง");
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
   };
 
-  const handleDecline = () => {
-    localStorage.setItem("cookieConsent", "false");
-    window.dispatchEvent(new Event("cookieConsentChanged"));
-    setIsVisible(false);
-  };
-
-  if (!isVisible) return null;
-
+  if (!visible) return null;
   return (
     <Portal>
-      <Slide direction="up" in={isVisible} mountOnEnter unmountOnExit>
-        <Paper
-          elevation={8}
-          sx={{
-            position: "fixed",
-            bottom: { xs: 12, md: 20 },
-            left: { xs: 12, md: 20 },
-            right: "auto",
-            width: { xs: "calc(100% - 24px)", sm: 320 },
-            maxWidth: 320,
-            boxSizing: "border-box",
-            p: 2,
-            borderRadius: 1.5,
-            bgcolor: "#171717",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            zIndex: 1300,
-            boxShadow: "0 12px 40px -8px rgba(0,0,0,0.5)",
-          }}
-        >
-        {/* Main Content Row */}
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 2,
-            mb: 2,
-          }}
-        >
-          {/* Cookie Emoji */}
-          <Box
-            sx={{
-              fontSize: 40,
-              animation: "wobble 3s ease-in-out infinite",
-              "@keyframes wobble": {
-                "0%, 100%": { transform: "rotate(0deg)" },
-                "25%": { transform: "rotate(-5deg)" },
-                "75%": { transform: "rotate(5deg)" },
-              },
-            }}
-          >
-            🍪
-          </Box>
-
-          {/* Text */}
-          <Typography
-            variant="body2"
-            sx={{
-              color: "#e5e5e5",
-              lineHeight: 1.5,
-              fontSize: "0.8rem",
-            }}
-          >
-            เว็บไซต์ใช้คุกกี้ที่จำเป็นสำหรับเข้าสู่ระบบ ยืนยันอายุ และจำสิทธิ์คอมเมนต์ guest การเลือกนี้ใช้กับการวิเคราะห์การใช้งาน
-          </Typography>
-        </Box>
-
-        {/* Buttons - Right aligned */}
-        <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
-          <Button
-            size="small"
-            variant="contained"
-            onClick={handleAccept}
-            sx={{
-              bgcolor: "#f59e0b",
-              color: "#000",
-              fontWeight: 600,
-              fontSize: "0.75rem",
-              px: 2,
-              py: 0.5,
-              minHeight: 28,
-              borderRadius: "6px",
-              boxShadow: "none",
-              "&:hover": {
-                bgcolor: "#d97706",
-                boxShadow: "none",
-              },
-            }}
-          >
-            ยอมรับ
-          </Button>
-          <Button
-            size="small"
-            variant="text"
-            onClick={handleDecline}
-            sx={{
-              color: "#a3a3a3",
-              fontSize: "0.75rem",
-              px: 1.5,
-              py: 0.5,
-              minHeight: 28,
-              "&:hover": {
-                color: "#fafafa",
-                bgcolor: "rgba(255,255,255,0.05)",
-              },
-            }}
-          >
-            ปฏิเสธ
-          </Button>
+      <Paper role="region" aria-labelledby="privacy-choice-title" aria-describedby="privacy-choice-description" aria-busy={saving}
+        sx={{ position: "fixed", bottom: { xs: 12, md: 20 }, left: { xs: 12, md: 20 },
+          width: "calc(100% - 24px)", maxWidth: 420, maxHeight: "calc(100dvh - 24px)", overflowY: "auto",
+          boxSizing: "border-box", p: 2, borderRadius: `${maggaRadii.card}px`, bgcolor: maggaColors.surface,
+          color: maggaColors.textPrimary, border: `1px solid ${maggaColors.border}`, zIndex: 1300, boxShadow: maggaShadows.authPanelDepth }}>
+        <Typography id="privacy-choice-title" component="h2" variant="subtitle1" sx={{ fontWeight: 700 }}>ความเป็นส่วนตัวของคุณ</Typography>
+        <Typography id="privacy-choice-description" variant="body2" sx={{ mt: 1, color: maggaColors.textSecondary, lineHeight: 1.7 }}>
+          คุกกี้ที่จำเป็นใช้สำหรับล็อกอินและจำสิทธิ์คอมเมนต์ผู้เยี่ยมชม ส่วนการยืนยันอายุและอ่านต่อจะจำไว้ในเบราว์เซอร์
+          คุณเลือกได้ว่าจะอนุญาตสถิติยอดอ่าน การแสดงและคลิกโฆษณา รวมถึงการวิเคราะห์ผู้เข้าชมและความเร็วเว็บของ Vercel หรือไม่ ปฏิเสธแล้วยังอ่านและใช้บัญชีได้
+        </Typography>
+        <Link component={NextLink} href="/privacy" sx={{ display: "inline-flex", alignItems: "center", minHeight: 44, color: maggaColors.archiveGoldHover }}>อ่านนโยบายความเป็นส่วนตัว</Link>
+        <Typography variant="caption" component="p" sx={{ color: maggaColors.textSecondary, mb: 1.5 }}>เปลี่ยนตัวเลือกได้ที่ “ตั้งค่าความเป็นส่วนตัว” ท้ายเว็บ เราจำตัวเลือกไว้ 180 วัน</Typography>
+        {error && <Alert severity="error" sx={{ mb: 1.5 }}>{error}</Alert>}
+        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, "& button": { minHeight: 44, flex: "1 1 160px", borderRadius: `${maggaRadii.md}px`, color: maggaColors.textPrimary, borderColor: maggaColors.borderStrong } }}>
+          <Button ref={firstButton} variant="outlined" disabled={saving} onClick={() => void save(false)}>ใช้เฉพาะที่จำเป็น</Button>
+          <Button variant="outlined" disabled={saving} onClick={() => void save(true)}>อนุญาตสถิติเพิ่มเติม</Button>
         </Box>
       </Paper>
-    </Slide>
-  </Portal>
+    </Portal>
   );
 }

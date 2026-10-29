@@ -1,3 +1,4 @@
+import { consentFromCookies } from "@/lib/privacy-consent";
 import { NextResponse } from "next/server";
 import { sql } from "drizzle-orm";
 import { db } from "@/db";
@@ -8,6 +9,9 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  if (consentFromCookies(request.headers.get("cookie")) !== true) {
+    return new NextResponse(null, { status: 204, headers: { "Cache-Control": "private, no-store" } });
+  }
   try {
     const { id } = await params;
     const parsed = adEventInput.safeParse(await request.json());

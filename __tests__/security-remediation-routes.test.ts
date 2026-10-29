@@ -30,7 +30,7 @@ const { POST: rate } = await import("@/app/api/manga/[id]/rating/route");
 const id = "11111111-1111-4111-8111-111111111111";
 const params = { params: Promise.resolve({ id }) };
 const request = (body: object, method = "PUT", headers = {}) => new NextRequest("http://localhost/api/test", {
-  method, headers: { "Content-Type": "application/json", ...headers }, body: JSON.stringify(body),
+  method, headers: { "Content-Type": "application/json", cookie: `magga_consent=2.yes.${Date.now()}`, ...headers }, body: JSON.stringify(body),
 });
 const oldVercel = process.env.VERCEL;
 beforeAll(async () => {
@@ -104,4 +104,12 @@ it("statistics quotas ignore spoofed identity and fail closed without the Vercel
   expect((await view(request({}, "POST", { "cf-connecting-ip": "198.51.100.20" }), params)).status).toBe(503);
   expect((await rate(request({ rating: 5, fingerprint: "fresh" }, "POST"), params)).status).toBe(503);
   expect(recordView).toHaveBeenCalledTimes(2); expect(recordRating).toHaveBeenCalledTimes(2);
+});
+
+it.each(["", `magga_consent=2.no.${Date.now()}`, "magga_consent=1.yes.1"])("view statistics skip quotas, writes and cookies without consent: %s", async cookie => {
+  const response = await view(request({}, "POST", { cookie }), params);
+  expect(response.status).toBe(204);
+  expect(response.headers.getSetCookie()).toEqual([]);
+  expect(quota).not.toHaveBeenCalled();
+  expect(recordView).not.toHaveBeenCalled();
 });

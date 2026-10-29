@@ -14,7 +14,7 @@ const client = new PGlite();
 
 async function record(kind = "impression", event = eventId, origin = "http://localhost") {
   return POST(new Request(`http://localhost/api/advertisements/${adId}/events`, {
-    method: "POST", headers: { "Content-Type": "application/json", origin },
+    method: "POST", headers: { "Content-Type": "application/json", origin, cookie: `magga_consent=2.yes.${Date.now()}` },
     body: JSON.stringify({ kind, eventId: event }),
   }), { params: Promise.resolve({ id: adId }) });
 }
@@ -42,6 +42,15 @@ describe("advertisement migration and tracking", () => {
   it("keeps existing active campaigns for all devices", async () => {
     const { rows } = await client.query("SELECT is_active, target_device FROM advertisements");
     expect(rows[0]).toEqual({ is_active: true, target_device: "all" });
+  });
+  it.each([undefined, `magga_consent=2.no.${Date.now()}`, "magga_consent=1.yes.1"])("does not record without current consent: %s", async cookie => {
+    const response = await POST(new Request(`http://localhost/api/advertisements/${adId}/events`, {
+      method: "POST", headers: cookie ? { cookie } : {}, body: "invalid json",
+    }), { params: Promise.resolve({ id: adId }) });
+    expect(response.status).toBe(204);
+    expect(await metrics()).toEqual({ impressions: 0, clicks: 0 });
+    expect(mocks.execute).not.toHaveBeenCalled();
+    expect(mocks.rateLimit).not.toHaveBeenCalled();
   });
   it("counts an impression and click once each despite retries", async () => {
     expect((await record()).status).toBe(204);
