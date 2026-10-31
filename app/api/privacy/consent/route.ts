@@ -3,7 +3,10 @@ import { CONSENT_COOKIE, CONSENT_VERSION, CONSENT_MAX_AGE } from "@/lib/privacy-
 import { VISITOR_COOKIE_NAME } from "@/lib/visitor-id";
 
 export async function POST(request: Request) {
-  if (request.headers.get("origin") !== new URL(request.url).origin) {
+  const url = new URL(request.url);
+  // Next may normalize the URL host; use the browser authority, never X-Forwarded-Host.
+  const expectedOrigin = request.headers.get("host") ? `${url.protocol}//${request.headers.get("host")}` : url.origin;
+  if (request.headers.get("origin") !== expectedOrigin) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
   const body = await request.json().catch(() => null);

@@ -20,8 +20,9 @@ export function parseConsent(value: string | undefined, now = Date.now()): boole
   if (!value) return null;
   const [version, choice, date, ...extra] = value.split(".");
   const timestamp = Number(date);
+  // Allow small clock differences between the browser and the server that sets the cookie.
   if (extra.length || version !== CONSENT_VERSION || !["yes", "no"].includes(choice) ||
-      !Number.isSafeInteger(timestamp) || timestamp <= 0 || timestamp > now || now - timestamp >= CONSENT_MAX_AGE * 1000) return null;
+      !Number.isSafeInteger(timestamp) || timestamp <= 0 || timestamp > now + 5 * 60 * 1000 || now - timestamp >= CONSENT_MAX_AGE * 1000) return null;
   return choice === "yes";
 }
 
