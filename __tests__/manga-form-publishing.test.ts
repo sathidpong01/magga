@@ -69,6 +69,8 @@ type FormElement = ReactElement<{
   "aria-label"?: string;
   accept?: string;
   multiple?: boolean;
+  id?: string;
+  onInputChange?: (event: null, value: string, reason: "input" | "selectOption" | "reset" | "blur" | "removeOption") => void;
   files?: UploadFileStatus[];
   onRetry?: (id: string) => Promise<void>;
   type?: string;
@@ -170,6 +172,21 @@ describe("manga editor publishing", () => {
   afterEach(() => {
     mocks.cleanups.forEach((cleanup) => cleanup());
     restoreGlobals();
+  });
+  it.each(["selectOption", "reset", "blur", "removeOption"] as const)("clears the remote tag search when the empty input reports %s", async (reason) => {
+    const requests = jest.fn<(input: RequestInfo | URL) => Promise<Response>>(async () => Response.json([]));
+    stubGlobal("fetch", requests);
+    const tree = renderForm(true);
+    const tags = findElement(tree, element => element.props.id === "tags-autocomplete")!;
+    tags.props.onInputChange!(null, "f", "input");
+    const searched = renderForm(true, null, true);
+    await new Promise(resolve => setTimeout(resolve, 450));
+    const tagRequests = () => requests.mock.calls.map(call => String(call[0])).filter(url => url.startsWith("/api/tags?"));
+    expect(new URL(tagRequests().at(-1)!, "http://localhost").searchParams.get("search")).toBe("f");
+    findElement(searched, element => element.props.id === "tags-autocomplete")!.props.onInputChange!(null, "", reason);
+    renderForm(true, null, true);
+    await new Promise(resolve => setTimeout(resolve, 30));
+    expect(new URL(tagRequests().at(-1)!, "http://localhost").searchParams.get("search")).toBe("");
   });
   it("opens scheduling only through a separate dialog action", async () => {
     for (const scheduledAt of [null, "2099-01-01T12:00:00Z"]) {

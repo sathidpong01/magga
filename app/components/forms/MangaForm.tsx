@@ -1271,7 +1271,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                       handleHomeEndKeys
                       id="author-autocomplete"
                       onInputChange={(_, value, reason) => {
-                        if (reason === "input" || reason === "clear")
+                        if (reason === "input" || reason === "clear" || value === "")
                           authorOptions.setSearch(value);
                       }}
                       loading={optionsLoading}
@@ -1580,7 +1580,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                       handleHomeEndKeys
                       id="category-autocomplete"
                       onInputChange={(_, value, reason) => {
-                        if (reason === "input" || reason === "clear")
+                        if (reason === "input" || reason === "clear" || value === "")
                           categoryOptions.setSearch(value);
                       }}
                       loading={optionsLoading}
@@ -1639,7 +1639,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                       multiple
                       id="tags-autocomplete"
                       onInputChange={(_, value, reason) => {
-                        if (reason === "input" || reason === "clear")
+                        if (reason === "input" || reason === "clear" || value === "")
                           tagOptions.setSearch(value);
                       }}
                       loading={optionsLoading}
