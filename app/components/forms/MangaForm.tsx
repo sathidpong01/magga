@@ -32,6 +32,7 @@ import { DashboardPageHeader, DashboardSectionTitle, DashboardSurface, dashboard
 import { getMetadataChipSx } from "@/lib/metadata-chip-tone";
 import { fromLocalPublicationInput, toLocalPublicationInput } from "@/lib/publication-time";
 import { maggaColors } from "@/lib/design-tokens";
+import { MANGA_IMAGE_ACCEPT, mangaImageSelectionError } from "@/lib/manga-upload-policy";
 
 // DnD Kit Imports
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
@@ -44,10 +45,17 @@ type MangaFormProps = {
 
 type PageItem = {
   id: string;
-  type: "url" | "file";
-  content: string | File;
   preview: string;
-};
+} & ({ type: "url"; content: string } | { type: "file"; content: File });
+
+function createFileItem(file: File): PageItem {
+  return {
+    id: crypto.randomUUID(),
+    type: "file",
+    content: file,
+    preview: URL.createObjectURL(file),
+  };
+}
 
 const metadataAutocompleteSx = {
   // Reserve both 44px controls before async options add the clear button.
@@ -132,7 +140,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
   const [notificationMessage, setNotificationMessage] = useState("");
   const [previewPage, setPreviewPage] = useState<{
     src: string;
-    index: number;
+    title: string;
   } | null>(null);
   const [previewZoom, setPreviewZoom] = useState(1);
 
@@ -300,18 +308,19 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
       return;
     const file = e.target.files?.[0];
     if (!file) return;
+    e.target.value = "";
+    const error = mangaImageSelectionError(file);
+    if (error) { setFieldErrors(previous => ({ ...previous, coverImage: error })); return; }
+    setFieldErrors(previous => ({ ...previous, coverImage: "" }));
 
     // Revoke old preview if exists
     if (coverItem?.type === "file") {
       URL.revokeObjectURL(coverItem.preview);
     }
+    if (coverItem) setUploadFiles((files) => files.filter((file) => file.id !== coverItem.id));
 
-    setCoverItem({
-      id: `cover-${crypto.randomUUID()}`,
-      type: "file",
-      content: file,
-      preview: URL.createObjectURL(file),
-    });
+    setCoverItem(createFileItem(file));
+    e.target.value = "";
   };
 
   const handlePagesUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -324,12 +333,12 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    const newItems: PageItem[] = Array.from(files).map((file, index) => ({
-      id: `page-${crypto.randomUUID()}-${index}`,
-      type: "file",
-      content: file,
-      preview: URL.createObjectURL(file),
-    }));
+    const selectedFiles = Array.from(files);
+    e.target.value = "";
+    const invalid = selectedFiles.map(mangaImageSelectionError).filter(Boolean);
+    if (invalid.length) { setFieldErrors(previous => ({ ...previous, pages: invalid.join(" · ") })); return; }
+    setFieldErrors(previous => ({ ...previous, pages: "" }));
+    const newItems = selectedFiles.map(createFileItem);
 
     setPageItems((prev) => [...prev, ...newItems]);
   };
@@ -360,6 +369,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
     if (coverItem?.type === "file") {
       URL.revokeObjectURL(coverItem.preview);
     }
+    if (coverItem) setUploadFiles((files) => files.filter((file) => file.id !== coverItem.id));
     setCoverItem(null);
   };
 
@@ -532,7 +542,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
     }
     if (!title.trim()) nextErrors.title = "กรุณากรอกชื่อเรื่อง";
     if (!slug.trim()) nextErrors.slug = "กรุณาระบุ slug ของเรื่อง";
-    if (!coverItem) nextErrors.coverImage = "กรุณาอัปโหลดรูปปก";
+    if (!coverItem) nextErrors.coverImage = "กรุณาเลือกรูปปก";
     if (mode === "submission" && pageItems.length === 0)
       nextErrors.pages = "กรุณาเพิ่มหน้าภาพอย่างน้อย 1 หน้า";
     setFieldErrors(nextErrors);
@@ -590,19 +600,8 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
         }
       }
 
-      // 1. Upload Cover if it's a file
-      let finalCoverUrl = "";
-      if (coverItem.type === "file") {
-        finalCoverUrl = await uploader().upload(
-          coverItem.id,
-          coverItem.content as File,
-        );
-      } else {
-        finalCoverUrl = coverItem.content as string;
-      }
-
-      // 2. Upload Page Files with Progress
-      const fileItems = pageItems.filter((p) => p.type === "file");
+      // Cover and pages share progress, retry checkpoints, and the upload queue.
+      const fileItems = [coverItem, ...pageItems].filter((p) => p.type === "file");
 
       // Filter out files that are already uploaded
       const filesToUpload = fileItems.filter((item) => !uploadedUrls[item.id]);
@@ -615,8 +614,8 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
 
           const newFiles = filesToUpload.map((item) => ({
             id: item.id,
-            name: (item.content as File).name,
-            size: (item.content as File).size,
+            name: item.content.name,
+            size: item.content.size,
             progress: 0,
             status: "pending" as const,
           }));
@@ -638,14 +637,14 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
         // Upload Queue Logic
         const queue = [...filesToUpload];
         const activeUploads = new Set<Promise<void>>();
-        const CONCURRENCY = 3;
+        const CONCURRENCY = 6;
         let hasUploadErrors = false;
 
-        const uploadFile = async (item: PageItem) => {
+        const uploadFile = async (item: Extract<PageItem, { type: "file" }>) => {
           try {
             const url = await uploader().upload(
               item.id,
-              item.content as File,
+              item.content,
               (progress) => {
                 setUploadFiles((previous) =>
                   previous.map((file) =>
@@ -711,9 +710,14 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
         }
       }
 
+      const finalCoverUrl = coverItem.type === "url"
+        ? coverItem.content
+        : uploadedUrlMap[coverItem.id];
+      if (!finalCoverUrl) throw new Error("รูปปกยังไม่มี URL กรุณาลองอัปโหลดใหม่");
+
       // Reconstruct pages array in order
       const finalPages = pageItems.map((item) => {
-        if (item.type === "url") return item.content as string;
+        if (item.type === "url") return item.content;
         return uploadedUrlMap[item.id] || uploadedUrls[item.id];
       });
 
@@ -860,7 +864,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
       retryingFiles.current.has(fileId)
     )
       return;
-    const item = pageItems.find((page) => page.id === fileId);
+    const item = [coverItem, ...pageItems].find((page) => page?.id === fileId);
     if (!item || item.type !== "file") return;
     retryingFiles.current.add(fileId);
     setRetryCount(retryingFiles.current.size);
@@ -874,7 +878,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
     try {
       const url = await uploader().upload(
         fileId,
-        item.content as File,
+        item.content,
         (progress) => {
           setUploadFiles((previous) =>
             previous.map((file) =>
@@ -1808,8 +1812,11 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     >
                       เพิ่มหน้า
                     </Button>
-                    <input ref={pagesInputRef} type="file" hidden accept="image/*" multiple onChange={handlePagesUpload} />
+                    <input ref={pagesInputRef} type="file" hidden accept={MANGA_IMAGE_ACCEPT} multiple onChange={handlePagesUpload} />
                   </Box>
+                  <Typography variant="caption" sx={{ display: "block", mb: 1, color: maggaColors.textSecondary }}>
+                    JPEG, PNG, WebP, GIF, AVIF · ไม่เกิน 4 MiB ต่อรูป
+                  </Typography>
 
                   {pageItems.length > 0 && (
                     <Typography
@@ -1872,7 +1879,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                               handleRemovePage(item.id);
                             }}
                             onPreview={() =>
-                              setPreviewPage({ src: item.preview, index })
+                              setPreviewPage({ src: item.preview, title: `หน้า ${index + 1}` })
                             }
                           />
                         ))}
@@ -1933,7 +1940,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     รูปปกเรื่อง
                   </Typography>
 
-                  <input ref={coverInputRef} type="file" hidden accept="image/*" onChange={handleCoverUpload} />
+                  <input ref={coverInputRef} type="file" hidden accept={MANGA_IMAGE_ACCEPT} onChange={handleCoverUpload} />
                   {!coverItem ? (
                     <Button
                       variant="outlined"
@@ -1952,7 +1959,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                       <AddPhotoAlternateIcon
                         sx={{ fontSize: 40, opacity: 0.5 }}
                       />
-                      อัปโหลดรูปปก
+                      เลือกรูปปก
                     </Button>
                   ) : (
                     <Box
@@ -1968,15 +1975,23 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                       }}
                     >
                       <Box
-                        component="img"
-                        src={coverItem.preview}
-                        alt="Cover preview"
-                        sx={{ width: "100%", height: "auto", display: "block" }}
-                      />
+                        component="button"
+                        type="button"
+                        aria-label="ดูตัวอย่างรูปปก"
+                        onClick={() => setPreviewPage({ src: coverItem.preview, title: "รูปปกเรื่อง" })}
+                        sx={{ width: "100%", p: 0, border: 0, display: "block", cursor: "zoom-in", bgcolor: maggaColors.surfaceElevated, "&:focus-visible": { outline: `2px solid ${maggaColors.archiveGold}`, outlineOffset: -2 } }}
+                      >
+                        <Box
+                          component="img"
+                          src={coverItem.preview}
+                          alt="รูปปกเรื่อง"
+                          sx={{ width: "100%", aspectRatio: "3 / 4", objectFit: "contain", display: "block" }}
+                        />
+                      </Box>
                       <IconButton
                         aria-label="Remove cover image"
                         size="small"
-                        onClick={handleRemoveCover}
+                        onClick={() => { unsaved.markDirty(); handleRemoveCover(); }}
                         sx={{
                           position: "absolute",
                           top: 4,
@@ -1990,6 +2005,14 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                         <DeleteIcon fontSize="small" />
                       </IconButton>
                     </Box>
+                  )}
+                  <Typography variant="caption" sx={{ display: "block", mt: 1, color: maggaColors.textSecondary }}>
+                    เลือกเพื่อดูตัวอย่างก่อน อัปโหลดเมื่อบันทึก · ไม่เกิน 4 MiB ต่อรูป
+                  </Typography>
+                  {coverItem && (
+                    <Button type="button" size="small" onClick={() => coverInputRef.current?.click()} sx={mediaActionButtonSx}>
+                      เปลี่ยนรูปปก
+                    </Button>
                   )}
                 </Box>
               </DashboardSurface>
@@ -2128,7 +2151,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
               variant="body2"
               sx={{ color: dashboardTokens.text, fontWeight: 700 }}
             >
-              {previewPage ? `หน้า ${previewPage.index + 1}` : ""}
+              {previewPage?.title || ""}
             </Typography>
             <Typography
               variant="caption"
@@ -2206,7 +2229,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
               <Box
                 component="img"
                 src={previewPage.src}
-                alt={`Preview page ${previewPage.index + 1}`}
+                alt={previewPage.title}
                 sx={{
                   display: "block",
                   width: previewZoom > 1 ? `${previewZoom * 100}%` : "auto",

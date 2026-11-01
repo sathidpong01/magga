@@ -96,6 +96,8 @@ try {
   // only inside this newly-created disposable database.
   const historyMigration = readFileSync(join(root, 'db/migrations/0015_manga_view_history.sql'), 'utf8');
   await db.exec(historyMigration.slice(historyMigration.indexOf('CREATE FUNCTION public.capture_manga_view_history()')));
+  const uploadMigration = readFileSync(join(root, 'db/migrations/0017_manga_upload_lifecycle.sql'), 'utf8');
+  await db.exec(uploadMigration.slice(uploadMigration.indexOf('CREATE FUNCTION public.guard_manga_upload_references()')));
   // All content is synthetic. No user accounts, credentials, or production rows.
   await db.exec(`
     INSERT INTO categories(id,name) VALUES('10000000-0000-4000-8000-000000000001','Test category');

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { loginAttempts as loginAttemptsTable, mangaSubmissions as submissionsTable, advertisementEvents, mangaViews } from "@/db/schema";
 import { lt, eq, and, sql, count } from "drizzle-orm";
+import { cleanupMangaUploads } from "@/lib/storage/manga-uploads";
+import { getDefaultStorageAdapter } from "@/lib/storage";
 
 export async function GET(req: Request) {
   // Verify secret to prevent unauthorized calls (supports both query param and header)
@@ -72,6 +74,8 @@ export async function GET(req: Request) {
     // Keep the records as a retry/review ledger until ownership and references
     // are migrated. A status snapshot is never authority to delete an object.
     results.submissionsDeferred = Number(deferred?.count ?? 0);
+
+    results.r2FilesDeleted = await cleanupMangaUploads(db, getDefaultStorageAdapter());
 
     return NextResponse.json({ 
       success: true,

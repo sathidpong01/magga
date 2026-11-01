@@ -509,6 +509,25 @@ export const blockedTags = pgTable("blocked_tags", {
 	pgPolicy("blocked_tags_delete", { as: "permissive", for: "delete", to: ["authenticated"], using: sql`user_id = ${currentUserId}` }),
 ]);
 
+export const mangaUploads = pgTable("manga_uploads", {
+	userId: text("user_id").notNull(),
+	uploadId: uuid("upload_id").notNull(),
+	objectKey: text("object_key").notNull().unique(),
+	url: text().notNull().unique(),
+	contentHash: text("content_hash").notNull(),
+	contentType: text("content_type").notNull(),
+	bytes: integer().notNull(),
+	width: integer().notNull(),
+	height: integer().notNull(),
+	state: text().$type<"pending" | "ready" | "retired">().default("pending").notNull(),
+	expiresAt: timestamp("expires_at", { withTimezone: true, mode: "date" }).notNull(),
+	removedAt: timestamp("removed_at", { withTimezone: true, mode: "date" }),
+}, table => [
+	primaryKey({ columns: [table.userId, table.uploadId] }),
+	index("idx_manga_uploads_cleanup").on(table.expiresAt).where(sql`${table.removedAt} IS NULL`),
+	check("manga_uploads_state_check", sql`${table.state} IN ('pending', 'ready', 'retired')`),
+]).enableRLS();
+
 export const mangaTags = pgTable("manga_tags", {
 	mangaId: uuid("manga_id").notNull(),
 	tagId: uuid("tag_id").notNull(),

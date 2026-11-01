@@ -45,7 +45,8 @@ export class R2StorageAdapter implements StorageAdapter {
         Body: body,
         ContentType: contentType,
         CacheControl: options?.cacheControl ?? "public, max-age=31536000, immutable",
-      })
+      }),
+      { abortSignal: AbortSignal.timeout(30_000) }
     );
   }
 
@@ -63,7 +64,8 @@ export class R2StorageAdapter implements StorageAdapter {
           Delete: {
             Objects: chunk.map((Key) => ({ Key })),
           },
-        })
+        }),
+        { abortSignal: AbortSignal.timeout(10_000) }
       );
       if (response.Errors?.length) {
         throw new Error(`Storage deletion failed for ${response.Errors.length} object(s)`);

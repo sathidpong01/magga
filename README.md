@@ -208,6 +208,8 @@ Write tests in `__tests__/` with imports from `bun:test`. Run a focused file wit
 
 Scheduled manga publishing uses the admin's local time zone and server-side clock checks. See [scheduled publication](docs/scheduled-publication.md) for the migration, minute-level worker, and Supabase Cron setup. Facebook posts are scheduled manually outside Magga.
 
+Manga covers and pages share validated, retry-safe uploads. See [manga uploads](docs/manga-uploads.md) for supported images, API limits, migration and orphan cleanup.
+
 GitHub CI runs only through `workflow_dispatch`; pushes and pull requests do not trigger it automatically. Vercel Preview builds continue automatically for the experimental branch.
 
 ### 🚀 Performance Optimizations (2026-02-14 Major Update)

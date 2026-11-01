@@ -2,6 +2,7 @@ import sharp from "sharp";
 import { randomUUID } from "node:crypto";
 import { readValidatedImageFile, sanitizeObjectKeySegment } from "../image-security";
 import { AssetKind, StoreAssetContext } from "./types";
+import { MANGA_IMAGE_MAX_BYTES, MANGA_IMAGE_TYPES } from "../manga-upload-policy";
 
 export interface ProcessedAsset {
   data: Uint8Array;
@@ -30,15 +31,8 @@ function sanitizeFileName(name: string): string {
 
 export const ASSET_POLICIES: Record<AssetKind, AssetPolicy> = {
   "manga-page": {
-    maxBytes: 4 * 1024 * 1024, // 4 MB
-    allowedMimeTypes: [
-      "image/jpeg",
-      "image/png",
-      "image/webp",
-      "image/gif",
-      "image/avif",
-      "image/bmp",
-    ],
+    maxBytes: MANGA_IMAGE_MAX_BYTES,
+    allowedMimeTypes: MANGA_IMAGE_TYPES,
     async process(file: File, context: StoreAssetContext): Promise<ProcessedAsset> {
       if (context.kind !== "manga-page") {
         throw new Error("Invalid context for manga-page policy");
@@ -48,6 +42,12 @@ export const ASSET_POLICIES: Record<AssetKind, AssetPolicy> = {
         maxBytes: ASSET_POLICIES["manga-page"].maxBytes,
         allowedMimeTypes: ASSET_POLICIES["manga-page"].allowedMimeTypes,
       });
+      // Decode without transcoding; a matching header alone can still be a broken image.
+      const image = sharp(buffer, { animated: true, limitInputPixels: 40_000_000, failOn: "warning" });
+      const metadata = await image.metadata();
+      if (!metadata.width || !metadata.height || metadata.width * (metadata.pageHeight || metadata.height) * (metadata.pages || 1) > 40_000_000)
+        throw new Error("Image dimensions exceed the supported limit");
+      await image.stats();
 
       const { year, month } = getDateSegments();
       const mangaId = sanitizeObjectKeySegment(context.mangaId, "uncategorized");
@@ -58,8 +58,8 @@ export const ASSET_POLICIES: Record<AssetKind, AssetPolicy> = {
         data: new Uint8Array(buffer),
         contentType: file.type,
         key,
-        width: 0,
-        height: 0,
+        width: metadata.width,
+        height: metadata.pageHeight || metadata.height,
       };
     },
   },

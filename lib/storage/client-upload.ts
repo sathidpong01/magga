@@ -1,4 +1,5 @@
 import { extractFirstUploadUrl } from "./client";
+import { mangaImageSelectionError } from "../manga-upload-policy";
 
 /** File IDs are stable for a form draft. Reuse acknowledged uploads and join concurrent retries. */
 export class DraftFileUploader {
@@ -10,6 +11,8 @@ export class DraftFileUploader {
   constructor(private createRequest = () => new XMLHttpRequest()) {}
 
   upload(id: string, file: File, onProgress: (progress: number) => void = () => {}): Promise<string> {
+    const error = mangaImageSelectionError(file);
+    if (error) return Promise.reject(new Error(error));
     if (this.disposed) return Promise.reject(new Error("ยกเลิกการอัปโหลดแล้ว"));
     const url = this.completed.get(id);
     if (url) return Promise.resolve(url);
@@ -45,6 +48,7 @@ export class DraftFileUploader {
       request.onabort = () => fail("ยกเลิกการอัปโหลดแล้ว");
       try {
         request.open("POST", "/api/upload");
+        request.setRequestHeader("X-Upload-Id", id);
         request.withCredentials = true;
         request.timeout = 120_000;
         const body = new FormData();

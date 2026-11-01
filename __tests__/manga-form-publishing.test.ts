@@ -8,24 +8,32 @@ import {
   mock,
 } from "bun:test";
 import type { ReactElement } from "react";
+import type { UploadFileStatus } from "@/app/components/ui/UploadProgress";
 import { restoreGlobals, stubGlobal } from "./helpers/globals";
 
 const mocks = {
   fetch: jest.fn(),
   effects: [] as Array<() => void | (() => void)>,
   cleanups: [] as Array<() => void>,
+  state: [] as unknown[],
+  refs: [] as Array<{ current: unknown }>,
+  stateIndex: 0,
+  refIndex: 0,
 };
 const originalReact = await import("react");
 mock.module("react", () => ({
   ...originalReact,
-  useState: (initial: unknown) => [
-    typeof initial === "function" ? initial() : initial,
-    jest.fn(),
-  ],
+  useState: (initial: unknown) => {
+    const index = mocks.stateIndex++;
+    if (!(index in mocks.state)) mocks.state[index] = typeof initial === "function" ? initial() : initial;
+    return [mocks.state[index], (value: unknown) => {
+      mocks.state[index] = typeof value === "function" ? value(mocks.state[index]) : value;
+    }];
+  },
   useEffect: (effect: () => void | (() => void)) => {
     mocks.effects.push(effect);
   },
-  useRef: (current: unknown) => ({ current }),
+  useRef: (current: unknown) => mocks.refs[mocks.refIndex++] ?? (mocks.refs[mocks.refIndex - 1] = { current }),
   useCallback: (callback: unknown) => callback,
 }));
 mock.module("next/navigation", () => ({
@@ -56,8 +64,15 @@ const { default: MangaForm } = await import("@/app/components/forms/MangaForm");
 type FormElement = ReactElement<{
   component?: string;
   open?: boolean;
+  fullScreen?: boolean;
   "aria-labelledby"?: string;
+  "aria-label"?: string;
+  accept?: string;
+  multiple?: boolean;
+  files?: UploadFileStatus[];
+  onRetry?: (id: string) => Promise<void>;
   type?: string;
+  onChange?: (event: { target: { files: File[]; value: string } }) => void;
   onSubmit?: (event: { preventDefault: () => void }) => Promise<void>;
   onClick?: (event: { preventDefault: () => void }) => void;
   children?: unknown;
@@ -80,7 +95,10 @@ function findElement(
   }
 }
 
-function renderForm(isHidden: boolean, scheduledPublishAt: string | null = null) {
+function renderForm(isHidden: boolean, scheduledPublishAt: string | null = null, rerender = false) {
+  if (!rerender) { mocks.state = []; mocks.refs = []; }
+  mocks.stateIndex = 0;
+  mocks.refIndex = 0;
   const tree = MangaForm({
     mode: "admin",
     manga: {
@@ -116,6 +134,28 @@ function renderForm(isHidden: boolean, scheduledPublishAt: string | null = null)
   return tree;
 }
 
+function installUploads(failFirst = false) {
+  const sent: FormData[] = [];
+  class UploadRequest {
+    upload = { onprogress: () => {} };
+    status = 200;
+    responseText = "";
+    onload = () => {};
+    open() {}
+    setRequestHeader() {}
+    send(body: FormData) {
+      sent.push(body);
+      const file = body.get("files");
+      this.status = failFirst && sent.length === 1 ? 500 : 200;
+      this.responseText = JSON.stringify({ urls: [`https://images.example/${file instanceof File ? file.name : "unknown"}`] });
+      queueMicrotask(() => this.onload());
+    }
+    abort() {}
+  }
+  stubGlobal("XMLHttpRequest", UploadRequest);
+  return sent;
+}
+
 describe("manga editor publishing", () => {
   beforeEach(() => {
     mocks.effects = [];
@@ -143,6 +183,113 @@ describe("manga editor publishing", () => {
       await action.props.onClick!({ preventDefault: jest.fn() });
       expect(mocks.fetch).not.toHaveBeenCalled();
     }
+  });
+
+  it("previews cover selection without uploading and saves cover and pages through one queue", async () => {
+    const sent = installUploads();
+    const tree = renderForm(true);
+    const coverInput = findElement(tree, element => element.props.type === "file" && !element.props.multiple)!;
+    const pageInput = findElement(tree, element => element.props.type === "file" && Boolean(element.props.multiple))!;
+    const coverEvent = { target: { files: [new File(["cover"], "new-cover.png", { type: "image/png" })], value: "cover" } };
+    coverInput.props.onChange!(coverEvent);
+    pageInput.props.onChange!({ target: { files: [new File(["page"], "new-page.png", { type: "image/png" })], value: "page" } });
+    expect(coverEvent.target.value).toBe("");
+    expect(sent).toHaveLength(0);
+    expect(mocks.fetch).not.toHaveBeenCalled();
+
+    const previewTree = renderForm(true, null, true);
+    const preview = findElement(previewTree, element => element.props["aria-label"] === "ดูตัวอย่างรูปปก")!;
+    preview.props.onClick!({ preventDefault: jest.fn() });
+    expect(sent).toHaveLength(0);
+    const openedPreview = findElement(renderForm(true, null, true), element => element.props.fullScreen === true)!;
+    expect(openedPreview.props.open).toBe(true);
+    const form = findElement(previewTree, element => element.props.component === "form")!;
+    await form.props.onSubmit!({ preventDefault: jest.fn() });
+    expect(sent).toHaveLength(2);
+    const body = JSON.parse(mocks.fetch.mock.calls[0][1].body);
+    expect(body.coverImage).toBe("https://images.example/new-cover.png");
+    expect(body.pages).toEqual(["/page-2.png", "/page-1.png", "https://images.example/new-page.png"]);
+    await form.props.onSubmit!({ preventDefault: jest.fn() });
+    expect(sent).toHaveLength(2);
+  });
+
+  it("retries a failed cover from the shared progress panel before saving", async () => {
+    const sent = installUploads(true);
+    const tree = renderForm(true);
+    const input = findElement(tree, element => element.props.type === "file" && !element.props.multiple)!;
+    input.props.onChange!({ target: { files: [new File(["cover"], "retry-cover.png", { type: "image/png" })], value: "cover" } });
+    const form = findElement(renderForm(true, null, true), element => element.props.component === "form")!;
+    await form.props.onSubmit!({ preventDefault: jest.fn() });
+    expect(mocks.fetch).not.toHaveBeenCalled();
+    const progress = findElement(renderForm(true, null, true), element => Boolean(element.props.onRetry))!;
+    const failed = progress.props.files!.find(file => file.status === "error")!;
+    expect(failed.name).toBe("retry-cover.png");
+    await progress.props.onRetry!(failed.id);
+    expect(sent).toHaveLength(2);
+    const updatedTree = renderForm(true, null, true);
+    const updatedProgress = findElement(updatedTree, element => Boolean(element.props.onRetry))!;
+    expect(updatedProgress.props.files![0].status).toBe("completed");
+    await findElement(updatedTree, element => element.props.component === "form")!.props.onSubmit!({ preventDefault: jest.fn() });
+    expect(sent).toHaveLength(2);
+    expect(JSON.parse(mocks.fetch.mock.calls[0][1].body).coverImage).toBe("https://images.example/retry-cover.png");
+  });
+
+  it("shows invalid selections immediately and preserves the existing cover and pages", async () => {
+    const sent = installUploads();
+    const tree = renderForm(true);
+    const cover = findElement(tree, element => element.props.type === "file" && !element.props.multiple)!;
+    const pages = findElement(tree, element => element.props.type === "file" && Boolean(element.props.multiple))!;
+    cover.props.onChange!({ target: { files: [new File(["bmp"], "invalid.bmp", { type: "image/bmp" })], value: "bmp" } });
+    pages.props.onChange!({ target: { files: [new File([new Uint8Array(4 * 1024 * 1024 + 1)], "large.png", { type: "image/png" })], value: "large" } });
+    const updated = renderForm(true, null, true);
+    expect(findElement(updated, element => typeof element.props.children === "string" && element.props.children.includes("invalid.bmp"))).toBeDefined();
+    expect(findElement(updated, element => typeof element.props.children === "string" && element.props.children.includes("large.png"))).toBeDefined();
+    expect(sent).toHaveLength(0);
+    await findElement(updated, element => element.props.component === "form")!.props.onSubmit!({ preventDefault: jest.fn() });
+    const body = JSON.parse(mocks.fetch.mock.calls[0][1].body);
+    expect(body.coverImage).toBe("/cover.png");
+    expect(body.pages).toEqual(["/page-2.png", "/page-1.png"]);
+  });
+
+  it("uploads at most six files concurrently and saves pages in selection order", async () => {
+    const requests: UploadRequest[] = [];
+    let active = 0;
+    let peak = 0;
+    class UploadRequest {
+      upload = {};
+      status = 200;
+      responseText = "";
+      onload = () => {};
+      open() {}
+      setRequestHeader() {}
+      send(body: FormData) {
+        const file = body.get("files");
+        this.responseText = JSON.stringify({ urls: [`https://images.example/${file instanceof File ? file.name : "unknown"}`] });
+        requests.push(this);
+        peak = Math.max(peak, ++active);
+      }
+      complete() { active--; this.onload(); }
+      abort() {}
+    }
+    stubGlobal("XMLHttpRequest", UploadRequest);
+    const tree = renderForm(true);
+    const input = findElement(tree, element => element.props.type === "file" && Boolean(element.props.multiple))!;
+    const files = Array.from({ length: 9 }, (_, index) => new File(["image"], `${index}.png`, { type: "image/png" }));
+    input.props.onChange!({ target: { files, value: "pages" } });
+    const form = findElement(renderForm(true, null, true), element => element.props.component === "form")!;
+    const saving = form.props.onSubmit!({ preventDefault: jest.fn() });
+    expect(requests).toHaveLength(6);
+    expect(mocks.fetch).not.toHaveBeenCalled();
+    // Complete the initial uploads backwards to exercise out-of-order responses.
+    for (const request of requests.slice().reverse()) request.complete();
+    await new Promise(resolve => setTimeout(resolve, 0));
+    expect(requests).toHaveLength(9);
+    for (const request of requests.slice(6)) request.complete();
+    await saving;
+    expect(peak).toBe(6);
+    expect(JSON.parse(mocks.fetch.mock.calls[0][1].body).pages).toEqual([
+      "/page-2.png", "/page-1.png", ...files.map(file => `https://images.example/${file.name}`),
+    ]);
   });
 
   it.each([true, false])(

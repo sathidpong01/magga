@@ -12,6 +12,8 @@ class FakeRequest {
   status = 200;
   responseText = JSON.stringify({ urls: ["https://images.example/cover.webp"] });
   sent: FormData | null = null;
+  headers = new Map<string, string>();
+  setRequestHeader(name: string, value: string) { this.headers.set(name, value); }
   open() {}
   send(body: FormData) { this.sent = body; }
   abort() { this.onabort?.(); }
@@ -33,6 +35,7 @@ describe("draft upload checkpoint and lifecycle", () => {
     expect(requests).toHaveLength(1);
     expect(requests[0].timeout).toBe(120_000);
     expect(requests[0].withCredentials).toBe(true);
+    expect(requests[0].headers.get("X-Upload-Id")).toBe("cover-1");
     requests[0].onload!();
     expect(await first).toBe("https://images.example/cover.webp");
     expect(await uploader.upload("cover-1", file)).toBe("https://images.example/cover.webp");
@@ -45,6 +48,7 @@ describe("draft upload checkpoint and lifecycle", () => {
     await expect(first).rejects.toThrow("หมดเวลา");
     const retry = uploader.upload("page-1", file);
     expect(requests).toHaveLength(2);
+    expect(requests[1].headers.get("X-Upload-Id")).toBe(requests[0].headers.get("X-Upload-Id"));
     requests[1].onload!();
     expect(await retry).toContain("cover.webp");
   });
@@ -65,5 +69,11 @@ describe("draft upload checkpoint and lifecycle", () => {
     const retry = uploader.upload("page-1", file);
     requests[1].onload!();
     await retry;
+  });
+  it("rejects unsupported or oversized selections without starting a request", async () => {
+    const { uploader, requests } = fixture();
+    await expect(uploader.upload("invalid", new File(["svg"], "cover.svg", { type: "image/svg+xml" }))).rejects.toThrow("รองรับเฉพาะ");
+    await expect(uploader.upload("huge", new File([new Uint8Array(4 * 1024 * 1024 + 1)], "large.png", { type: "image/png" }))).rejects.toThrow("4 MiB");
+    expect(requests).toHaveLength(0);
   });
 });
