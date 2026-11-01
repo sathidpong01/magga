@@ -288,6 +288,8 @@ export const manga = pgTable("manga", {
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	isHidden: boolean("is_hidden").default(false).notNull(),
+	scheduledPublishAt: timestamp("scheduled_publish_at", { withTimezone: true, mode: 'string' }),
+	publicationTimeZone: text("publication_time_zone"),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
 	viewCount: bigint("view_count", { mode: "number" }).default(0).notNull(),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
@@ -303,6 +305,8 @@ export const manga = pgTable("manga", {
 	index("idx_manga_category").using("btree", table.categoryId.asc().nullsLast().op("uuid_ops")),
 	index("idx_manga_fts").using("gin", table.fts.asc().nullsLast().op("tsvector_ops")),
 	index("idx_manga_is_hidden").using("btree", table.isHidden.asc().nullsLast().op("bool_ops")),
+	index("idx_manga_scheduled_publish").on(table.scheduledPublishAt).where(sql`${table.scheduledPublishAt} IS NOT NULL`),
+	check("manga_publication_schedule_check", sql`(scheduled_publish_at IS NULL) = (publication_time_zone IS NULL)`),
 	index("idx_manga_recent_views").using("btree", table.createdAt.desc().nullsFirst().op("timestamptz_ops"), table.viewCount.desc().nullsFirst().op("int8_ops")),
 	index("idx_manga_updated_at").using("btree", table.updatedAt.desc().nullsFirst().op("timestamptz_ops")),
 	index("idx_manga_view_count").using("btree", table.viewCount.desc().nullsFirst().op("int8_ops")),

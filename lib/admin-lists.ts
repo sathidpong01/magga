@@ -9,7 +9,7 @@ import {
   comments,
   mangaSubmissions,
 } from "@/db/schema";
-import { and, asc, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, ilike, inArray, isNull, isNotNull, or, sql } from "drizzle-orm";
 import { escapeLike, pageSlice, type AdminPageQuery } from "./admin-pagination";
 import { readViewSummaries } from "./admin-view-history";
 
@@ -23,6 +23,8 @@ export async function readAdminManga(query: AdminPageQuery) {
       slug: manga.slug,
       coverImage: manga.coverImage,
       isHidden: manga.isHidden,
+      scheduledPublishAt: manga.scheduledPublishAt,
+      publicationTimeZone: manga.publicationTimeZone,
       viewCount: manga.viewCount,
       categoryId: manga.categoryId,
       authorId: manga.authorId,
@@ -37,8 +39,10 @@ export async function readAdminManga(query: AdminPageQuery) {
         query.search
           ? or(ilike(manga.title, pattern), ilike(authors.name, pattern))
           : undefined,
-        query.status === "hidden"
-          ? eq(manga.isHidden, true)
+        query.status === "scheduled"
+          ? and(eq(manga.isHidden, true), isNotNull(manga.scheduledPublishAt))
+          : query.status === "hidden"
+          ? and(eq(manga.isHidden, true), isNull(manga.scheduledPublishAt))
           : query.status === "published"
             ? eq(manga.isHidden, false)
             : undefined,

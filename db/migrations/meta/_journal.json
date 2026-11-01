@@ -113,6 +113,13 @@
       "when": 1793062800000,
       "tag": "0015_manga_view_history",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1793462400000,
+      "tag": "0016_scheduled_manga_publication",
+      "breakpoints": true
     }
   ]
 }

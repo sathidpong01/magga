@@ -5,7 +5,7 @@ export async function readAdminOverview() {
   const [row] = await db.execute<Record<string, number>>(sql`
     select
       (select count(*)::int from (select id from manga limit 1000) q) as manga,
-      (select count(*)::int from (select id from manga where is_hidden=true limit 1000) q) as drafts,
+      (select count(*)::int from (select id from manga where is_hidden=true AND scheduled_publish_at IS NULL limit 1000) q) as drafts,
       (select count(*)::int from (select id from profiles limit 1000) q) as users,
       (select count(*)::int from (select id from comments limit 1000) q) as comments,
       (select count(*)::int from (select id from categories limit 1000) q) as categories,

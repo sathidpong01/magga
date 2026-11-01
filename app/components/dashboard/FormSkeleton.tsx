@@ -7,7 +7,7 @@ export function FormSkeleton({ mode="admin",editing=false }: { mode?: "admin"|"s
   return <Box data-skeleton="manga-form" aria-busy>
     <Typography sx={{ mb: 1,color: dashboardTokens.textMuted }}>ข้อมูลพร้อมแก้ไข</Typography>
     <DashboardPageHeader eyebrow={mode==="admin"? "CONTENT MANAGER":"SUBMISSION"} title={title} description={mode==="admin"? "จัดการข้อมูลหลัก ปก เนื้อหา เมทาดาทา และลำดับหน้าของเรื่องให้พร้อมเผยแพร่":"กรอกข้อมูลเรื่อง ปก หน้าอ่าน และรายละเอียดที่จำเป็นเพื่อส่งให้ทีมตรวจสอบ"}>
-      <Box sx={{ display: "flex",gap: 1,flexWrap: "wrap" }}>{[80,...(!editing&&mode==="admin"? [160]:[]),136].map((width,i) => <Skeleton key={i} variant="rounded" width={width} height={44} />)}</Box>
+      <Box sx={{ display: "flex",gap: 1,flexWrap: "wrap" }}>{[80,...(!editing&&mode==="admin"? [160]:[]),...(mode==="admin"? [152]:[]),136].map((width,i) => <Skeleton key={i} variant="rounded" width={width} height={44} />)}</Box>
     </DashboardPageHeader>
     <Box sx={{ minHeight: 28,mb: 3 }} />
     <Grid container spacing={3}>

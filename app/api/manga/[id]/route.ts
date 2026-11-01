@@ -1,4 +1,4 @@
-import { mangaInputSchema } from "@/lib/manga-input";
+import { mangaInputSchema, mangaPublicationValues } from "@/lib/manga-input";
 import { invalidateMangaContent } from "@/lib/manga-invalidation";
 import { z } from "zod";
 import { requireAdmin } from "@/lib/auth-helpers";
@@ -19,7 +19,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   const { id } = await params;
   if (!z.uuid().safeParse(id).success) return NextResponse.json({ error: "Invalid manga ID" }, { status: 400 });
   const parsed = mangaInputSchema.safeParse(await request.json());
-  if (!parsed.success) return NextResponse.json({ error: "Invalid manga data", details: parsed.error.flatten() }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   const data = parsed.data;
   const { title, description, categoryId, authorId, selectedTags, coverImage, pages, isHidden, authorName, slug } = data;
 
@@ -55,6 +55,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         coverImage: coverImage || undefined,
         pages: pages ?? undefined,
         isHidden,
+        ...mangaPublicationValues(data),
         authorName,
       })
       .where(eq(mangaTable.id, id))

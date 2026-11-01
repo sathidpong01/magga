@@ -9,7 +9,7 @@ type Category = InferSelectModel<typeof categories>;
 type Tag = InferSelectModel<typeof tags>;
 type Manga = InferSelectModel<typeof mangaTable>;
 type Author = InferSelectModel<typeof authors>;
-import { Box, TextField, Button, Autocomplete, Chip, createFilterOptions, Stack, Typography, Alert, CircularProgress, Grid, IconButton, InputAdornment, Tooltip, Dialog, DialogContent } from "@mui/material";
+import { Box, TextField, Button, Autocomplete, Chip, createFilterOptions, Stack, Typography, Alert, CircularProgress, Grid, IconButton, InputAdornment, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AutoFixHighIcon from "@mui/icons-material/AutoFixHigh";
 import AddPhotoAlternateIcon from "@mui/icons-material/AddPhotoAlternate";
@@ -30,6 +30,8 @@ import { DraftFileUploader } from "@/lib/storage/client-upload";
 import { enrichUnchangedItem } from "@/lib/form-metadata";
 import { DashboardPageHeader, DashboardSectionTitle, DashboardSurface, dashboardGhostButtonSx, dashboardInsetSurfaceSx, dashboardPrimaryButtonSx, dashboardSecondaryButtonSx, dashboardTextFieldSx, dashboardTokens } from "@/app/components/dashboard/system";
 import { getMetadataChipSx } from "@/lib/metadata-chip-tone";
+import { fromLocalPublicationInput, toLocalPublicationInput } from "@/lib/publication-time";
+import { maggaColors } from "@/lib/design-tokens";
 
 // DnD Kit Imports
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
@@ -87,7 +89,16 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const pagesInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
+  const scheduleInputRef = useRef<HTMLInputElement>(null);
+  const pendingInvalidField = useRef<string | null>(null);
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
   const focusInvalidField = (field: string) => {
+    if (field === "scheduledPublishAt") { scheduleInputRef.current?.focus(); return; }
+    if (scheduleDialogOpen) {
+      pendingInvalidField.current = field;
+      setScheduleDialogOpen(false);
+      return;
+    }
     const selectors: Record<string, string> = {
       title: '[name="title"]',
       slug: '[name="slug"]',
@@ -98,6 +109,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
       tagIds: "#tags-autocomplete",
       coverImage: "#manga-cover-field",
       pages: "#manga-pages-field",
+      scheduledPublishAt: "#scheduled-publish-at",
     };
     const selector = selectors[field];
     if (!selector) return;
@@ -129,6 +141,34 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
   // Form State
   const [title, setTitle] = useState(manga?.title || "");
   const [slug, setSlug] = useState(manga?.slug || "");
+  const [scheduledLocalTime, setScheduledLocalTime] = useState("");
+  const [adminTimeZone, setAdminTimeZone] = useState("");
+  const [serverTime, setServerTime] = useState("");
+  const [clockError, setClockError] = useState(false);
+  const [clockRefresh, setClockRefresh] = useState(0);
+  const serverClock = useRef<{ milliseconds: number; receivedAt: number } | null>(null);
+  useEffect(() => {
+    if (mode !== "admin") return;
+    setAdminTimeZone(Intl.DateTimeFormat().resolvedOptions().timeZone);
+    if (manga?.isHidden && manga.scheduledPublishAt)
+      setScheduledLocalTime(toLocalPublicationInput(manga.scheduledPublishAt));
+  }, [mode, manga?.isHidden, manga?.scheduledPublishAt]);
+  useEffect(() => {
+    if (mode !== "admin" || !scheduleDialogOpen) return;
+    const controller = new AbortController();
+    setClockError(false);
+    fetch("/api/admin/time", { cache: "no-store", signal: AbortSignal.any([controller.signal, AbortSignal.timeout(10_000)]) })
+      .then(async response => {
+        if (!response.ok) throw new Error("Server time unavailable");
+        const data: unknown = await response.json();
+        if (!data || typeof data !== "object" || !("now" in data) || typeof data.now !== "string" || !Number.isFinite(Date.parse(data.now)))
+          throw new Error("Invalid server time");
+        if (controller.signal.aborted) return;
+        serverClock.current = { milliseconds: Date.parse(data.now), receivedAt: performance.now() };
+        setServerTime(data.now);
+      }).catch(() => { if (!controller.signal.aborted) setClockError(true); });
+    return () => controller.abort();
+  }, [mode, clockRefresh, scheduleDialogOpen]);
   const [description, setDescription] = useState(manga?.description || "");
   const [authorName, setAuthorName] = useState(
     (manga as any)?.authorName || "",
@@ -470,9 +510,9 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
     setAuthorName(inputValue);
   };
 
-  const handleSubmitWithDraft = async (
+  const handleSubmit = async (
     e: React.FormEvent,
-    saveAsDraft?: boolean,
+    publicationAction?: "draft" | "publish" | "schedule",
   ) => {
     e.preventDefault();
     if (
@@ -482,6 +522,14 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
     )
       return;
     const nextErrors: Record<string, string> = {};
+    const scheduledPublishAt = publicationAction === "schedule" ? fromLocalPublicationInput(scheduledLocalTime) : null;
+    if (publicationAction === "schedule") {
+      const clock = serverClock.current;
+      if (!scheduledPublishAt) nextErrors.scheduledPublishAt = "กรุณาเลือกวันและเวลาที่ถูกต้อง";
+      else if (!clock) nextErrors.scheduledPublishAt = "กรุณาอัปเดตเวลาระบบก่อนตั้งเวลา";
+      else if (Date.parse(scheduledPublishAt) <= clock.milliseconds + performance.now() - clock.receivedAt)
+        nextErrors.scheduledPublishAt = "กรุณาเลือกเวลาหลังเวลาปัจจุบันของระบบ";
+    }
     if (!title.trim()) nextErrors.title = "กรุณากรอกชื่อเรื่อง";
     if (!slug.trim()) nextErrors.slug = "กรุณาระบุ slug ของเรื่อง";
     if (!coverItem) nextErrors.coverImage = "กรุณาอัปโหลดรูปปก";
@@ -687,7 +735,9 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
               categoryId: categoryId || null,
               authorId: finalAuthorId,
               // Ordinary edits preserve the current database visibility.
-              isHidden: saveAsDraft ?? (manga ? undefined : false),
+              isHidden: publicationAction === "draft" || publicationAction === "schedule" ? true
+                : publicationAction === "publish" ? false : manga ? undefined : false,
+              ...(publicationAction === "schedule" ? { scheduledPublishAt, publicationTimeZone: adminTimeZone } : {}),
               selectedTags: selectedTagIds,
               authorName: authorName || null,
             }
@@ -750,6 +800,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
       }
 
       const data = await response.json();
+      setScheduleDialogOpen(false);
       unsaved.markSaved();
       const cachePending =
         mode === "admin" &&
@@ -769,9 +820,11 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
             : "ส่งรายการฝากลงสำเร็จ",
       );
       setNotificationMessage(
-        mode === "admin" &&
-          (saveAsDraft === true ||
-            (saveAsDraft === undefined && manga?.isHidden))
+        publicationAction === "schedule"
+          ? `ตั้งเวลาเผยแพร่ "${title}" วันที่ ${new Date(scheduledPublishAt!).toLocaleString("th-TH")} (${adminTimeZone}) แล้ว`
+          : mode === "admin" &&
+          (publicationAction === "draft" ||
+            (publicationAction === undefined && manga?.isHidden && !manga.scheduledPublishAt))
           ? `บันทึกฉบับร่าง "${title}" เรียบร้อยแล้ว`
           : manga
             ? `อัปเดตรายการ "${title}" เรียบร้อยแล้ว`
@@ -907,7 +960,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
         component="form"
         ref={formRef}
         onChangeCapture={unsaved.markDirty}
-        onSubmit={(e) => handleSubmitWithDraft(e)}
+        onSubmit={(e) => handleSubmit(e)}
       >
         <Box
           component="fieldset"
@@ -946,12 +999,12 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
             >
               ย้อนกลับ
             </Button>
-            {!manga && mode === "admin" && (
+            {mode === "admin" && !manga && (
               <Button
                 variant="outlined"
                 onClick={(e) => {
                   e.preventDefault();
-                  handleSubmitWithDraft(e, true);
+                  handleSubmit(e, "draft");
                 }}
                 disabled={isSubmitting}
                 sx={headerSecondaryButtonSx}
@@ -964,13 +1017,20 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                 type="button"
                 variant="outlined"
                 startIcon={<PublishIcon />}
-                onClick={(e) => handleSubmitWithDraft(e, false)}
+                onClick={(e) => handleSubmit(e, "publish")}
                 disabled={isSubmitting}
                 sx={headerSecondaryButtonSx}
               >
                 เผยแพร่มังงะ
               </Button>
             )}
+            {mode === "admin" && <Button type="button" variant="text" disabled={isSubmitting}
+              onClick={() => {
+                setScheduledLocalTime(manga?.isHidden && manga.scheduledPublishAt ? toLocalPublicationInput(manga.scheduledPublishAt) : "");
+                setScheduleDialogOpen(true);
+              }} sx={headerGhostButtonSx}>
+              {manga?.isHidden && manga.scheduledPublishAt ? "จัดการเวลาเผยแพร่" : "ตั้งเวลาเผยแพร่"}
+            </Button>}
             <Button
               type="submit"
               variant="contained"
@@ -990,7 +1050,9 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                 ? "กำลังบันทึก..."
                 : manga
                   ? mode === "admin"
-                    ? manga.isHidden
+                    ? manga.isHidden && manga.scheduledPublishAt
+                      ? "บันทึกโดยคงเวลาเดิม"
+                      : manga.isHidden
                       ? "บันทึกฉบับร่าง"
                       : "อัปเดตมังงะ"
                     : "อัปเดตรายการฝากลง"
@@ -1958,6 +2020,44 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
       </Box>
 
       {/* Notification Modal */}
+      {mode === "admin" && <Dialog open={scheduleDialogOpen} onClose={() => { if (!isSubmitting) setScheduleDialogOpen(false); }} fullWidth maxWidth="sm"
+        aria-labelledby="publication-dialog-title" slotProps={{ paper: { sx: { bgcolor: maggaColors.surface, backgroundImage: "none", border: `1px solid ${maggaColors.border}` } }, transition: { onExited: () => {
+          const field = pendingInvalidField.current;
+          pendingInvalidField.current = null;
+          if (field) focusInvalidField(field);
+        } } }}>
+        <DialogTitle id="publication-dialog-title">{manga?.isHidden && manga.scheduledPublishAt ? "จัดการเวลาเผยแพร่" : "ตั้งเวลาเผยแพร่"}</DialogTitle>
+        <DialogContent>
+          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+            <Typography sx={{ color: maggaColors.textSecondary, mb: 2 }}>บันทึกข้อมูลเรื่องพร้อมกำหนดเวลาเผยแพร่ โดยใช้เขตเวลาของคุณ</Typography>
+            {manga && !manga.isHidden && <Typography sx={{ color: maggaColors.textSecondary, mb: 1 }}>การตั้งเวลาใหม่จะซ่อนเรื่องนี้จนกว่าจะถึงกำหนด</Typography>}
+            <Typography sx={{ color: maggaColors.textSecondary, minHeight: 24, mb: 1 }} aria-live="polite">
+              เขตเวลา: {adminTimeZone || "กำลังตรวจสอบ..."} · เวลาระบบที่ตรวจสอบล่าสุด: {serverTime ? new Date(serverTime).toLocaleString("th-TH", { timeZone: adminTimeZone || undefined }) : "กำลังอ่าน..."}
+            </Typography>
+            {manga?.isHidden && manga.scheduledPublishAt && <Typography sx={{ color: maggaColors.archiveGoldHover, mb: 1 }}>
+              กำหนดเดิม: {adminTimeZone ? new Date(manga.scheduledPublishAt).toLocaleString("th-TH", { timeZone: adminTimeZone }) : "กำลังอ่าน..."} ({adminTimeZone || "..."})
+            </Typography>}
+            {clockError && <Alert severity="warning" sx={{ mb: 1 }}>อ่านเวลาระบบไม่สำเร็จ กดอัปเดตเวลาระบบเพื่อลองอีกครั้ง</Alert>}
+            <Stack direction="column" spacing={2} sx={{ alignItems: { sm: "flex-start" } }}>
+              <TextField autoFocus inputRef={scheduleInputRef} id="scheduled-publish-at" label="วันและเวลาเผยแพร่" type="datetime-local"
+                value={scheduledLocalTime} onChange={event => { setScheduledLocalTime(event.target.value); }}
+                disabled={isSubmitting} error={Boolean(fieldErrors.scheduledPublishAt)}
+                helperText={fieldErrors.scheduledPublishAt || (fromLocalPublicationInput(scheduledLocalTime)
+                  ? `เวลาที่เลือก: ${new Date(fromLocalPublicationInput(scheduledLocalTime)!).toLocaleString("th-TH", { timeZoneName: "shortOffset" })}`
+                  : "ตรวจคิวทุกนาที อาจคลาดเคลื่อนตามการประมวลผล")}
+                slotProps={{ inputLabel: { shrink: true } }} sx={{ ...dashboardTextFieldSx, minWidth: 0, width: "100%" }} />
+              <Button type="button" disabled={isSubmitting} onClick={() => setClockRefresh(value => value + 1)} sx={{ ...dashboardGhostButtonSx, minHeight: 56 }}>อัปเดตเวลาระบบ</Button>
+            </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3, flexWrap: "wrap", gap: 1 }}>
+          <Button type="button" disabled={isSubmitting} onClick={() => setScheduleDialogOpen(false)} sx={dashboardGhostButtonSx}>ปิด</Button>
+          {manga?.isHidden && manga.scheduledPublishAt && <Button type="button" disabled={isSubmitting} onClick={event => handleSubmit(event, "draft")} sx={dashboardSecondaryButtonSx}>ยกเลิกเวลาและเก็บเป็นฉบับร่าง</Button>}
+          <Button type="button" disabled={isSubmitting || !adminTimeZone} onClick={event => handleSubmit(event, "schedule")} sx={dashboardPrimaryButtonSx}>
+            {isSubmitting ? "กำลังบันทึก..." : manga?.isHidden && manga.scheduledPublishAt ? "ยืนยันเปลี่ยนเวลา" : "ยืนยันตั้งเวลาเผยแพร่"}
+          </Button>
+        </DialogActions>
+      </Dialog>}
+
       <NotificationModal
         open={notificationOpen}
         onClose={handleCloseNotification}

@@ -55,6 +55,8 @@ const { default: MangaForm } = await import("@/app/components/forms/MangaForm");
 
 type FormElement = ReactElement<{
   component?: string;
+  open?: boolean;
+  "aria-labelledby"?: string;
   type?: string;
   onSubmit?: (event: { preventDefault: () => void }) => Promise<void>;
   onClick?: (event: { preventDefault: () => void }) => void;
@@ -78,7 +80,7 @@ function findElement(
   }
 }
 
-function renderForm(isHidden: boolean) {
+function renderForm(isHidden: boolean, scheduledPublishAt: string | null = null) {
   const tree = MangaForm({
     mode: "admin",
     manga: {
@@ -89,6 +91,8 @@ function renderForm(isHidden: boolean) {
       pages: ["/page-2.png", "/page-1.png"],
       tags: [],
       isHidden,
+      scheduledPublishAt,
+      publicationTimeZone: scheduledPublishAt ? "Asia/Bangkok" : null,
       description: null,
       coverWidth: null,
       coverHeight: null,
@@ -127,6 +131,19 @@ describe("manga editor publishing", () => {
     mocks.cleanups.forEach((cleanup) => cleanup());
     restoreGlobals();
   });
+  it("opens scheduling only through a separate dialog action", async () => {
+    for (const scheduledAt of [null, "2099-01-01T12:00:00Z"]) {
+      const tree = renderForm(true, scheduledAt);
+      const dialog = findElement(tree, element => element.props["aria-labelledby"] === "publication-dialog-title")!;
+      expect(dialog.props.open).toBe(false);
+      const form = findElement(tree, element => element.props.component === "form")!;
+      expect(findElement(form, element => element.props["aria-labelledby"] === "publication-dialog-title")).toBeUndefined();
+      expect(findElement(form, element => element.props.component === "details")).toBeUndefined();
+      const action = findElement(form, element => element.props.children === (scheduledAt ? "จัดการเวลาเผยแพร่" : "ตั้งเวลาเผยแพร่"))!;
+      await action.props.onClick!({ preventDefault: jest.fn() });
+      expect(mocks.fetch).not.toHaveBeenCalled();
+    }
+  });
 
   it.each([true, false])(
     "preserves stored visibility on a normal update (hidden=%s)",
@@ -154,6 +171,24 @@ describe("manga editor publishing", () => {
     expect(button).toBeDefined();
     await button!.props.onClick!({ preventDefault: jest.fn() });
     expect(JSON.parse(mocks.fetch.mock.calls[0][1].body).isHidden).toBe(false);
+  });
+  it("preserves a schedule on an ordinary content edit", async () => {
+    const tree = renderForm(true, "2099-01-01T12:00:00Z");
+    const form = findElement(tree, element => element.props.component === "form")!;
+    await form.props.onSubmit!({ preventDefault: jest.fn() });
+    const body = JSON.parse(mocks.fetch.mock.calls[0][1].body);
+    expect(body).not.toHaveProperty("isHidden");
+    expect(body).not.toHaveProperty("scheduledPublishAt");
+  });
+  it("offers explicit cancellation back to a draft", async () => {
+    const button = findElement(renderForm(true, "2099-01-01T12:00:00Z"), element => element.props.children === "ยกเลิกเวลาและเก็บเป็นฉบับร่าง")!;
+    await button.props.onClick!({ preventDefault: jest.fn() });
+    expect(JSON.parse(mocks.fetch.mock.calls[0][1].body).isHidden).toBe(true);
+  });
+  it("does not save an empty scheduling request", async () => {
+    const button = findElement(renderForm(true), element => element.props.children === "ยืนยันตั้งเวลาเผยแพร่")!;
+    await button.props.onClick!({ preventDefault: jest.fn() });
+    expect(mocks.fetch).not.toHaveBeenCalled();
   });
   it("allows only one save request while its acknowledgement is pending", async () => {
     let acknowledge!: (response: {

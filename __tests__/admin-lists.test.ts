@@ -35,6 +35,8 @@ CREATE TABLE mcp_metadata_drafts(id uuid,status text);
 INSERT INTO authors SELECT gen_random_uuid(),'ผู้แต่ง '||i FROM generate_series(1,25)i;
 INSERT INTO categories VALUES('10000000-0000-4000-8000-000000000001','หมวดทดสอบ');
 INSERT INTO manga SELECT gen_random_uuid(),'ชื่อซ้ำ','work-'||i,'/test.svg',false,i,'10000000-0000-4000-8000-000000000001',null,'2026-01-01' FROM generate_series(1,205)i;
+ALTER TABLE manga ADD COLUMN scheduled_publish_at timestamptz;
+ALTER TABLE manga ADD COLUMN publication_time_zone text;
 INSERT INTO manga(id,title,slug,cover_image,created_at) VALUES('10000000-0000-4000-8000-000000000002','เก่า_100%','old','/test.svg','2020-01-01');
 INSERT INTO profiles(id,name,email) SELECT 'user-'||i,'ผู้ใช้ '||i,'user-'||i||'@example.invalid' FROM generate_series(1,25)i;
 INSERT INTO comments(user_id) VALUES('user-1'),('user-1');
@@ -107,5 +109,15 @@ describe("bounded admin SQL", () => {
       page: 10000,
       limit: 50,
     });
+  });
+  it("separates scheduled manga from ordinary drafts and published works", async () => {
+    await client.exec("UPDATE manga SET is_hidden=true,scheduled_publish_at=now()+interval '1 day',publication_time_zone='Asia/Bangkok' WHERE slug='old'");
+    const scheduled = await readAdminManga(adminPageQuery({ status: "scheduled" }));
+    expect(scheduled.items.map(row => row.slug)).toEqual(["old"]);
+    expect((await readAdminManga(adminPageQuery({ status: "hidden" }))).items).toHaveLength(0);
+    expect((await readAdminOverview()).drafts).toBe(0);
+    await client.exec("UPDATE manga SET scheduled_publish_at=null,publication_time_zone=null WHERE slug='old'");
+    expect((await readAdminManga(adminPageQuery({ status: "hidden" }))).items.map(row => row.slug)).toEqual(["old"]);
+    expect((await readAdminManga(adminPageQuery({ status: "scheduled" }))).items).toHaveLength(0);
   });
 });

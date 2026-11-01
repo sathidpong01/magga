@@ -206,6 +206,8 @@ For browser verification, copy the printed `fixture.json` environment into the l
 
 Write tests in `__tests__/` with imports from `bun:test`. Run a focused file with `bun run test ./__tests__/example.test.ts`, filter by name with `bun run test --test-name-pattern "example"`, or use `bun run test:watch` while editing. These scripts preserve per-file isolation. Run `bun run test --coverage` when coverage is needed. Historical checkpoint reports retain their original commands and results.
 
+Scheduled manga publishing uses the admin's local time zone and server-side clock checks. See [scheduled publication](docs/scheduled-publication.md) for the migration, minute-level worker, and Supabase Cron setup. Facebook posts are scheduled manually outside Magga.
+
 GitHub CI runs only through `workflow_dispatch`; pushes and pull requests do not trigger it automatically. Vercel Preview builds continue automatically for the experimental branch.
 
 ### 🚀 Performance Optimizations (2026-02-14 Major Update)

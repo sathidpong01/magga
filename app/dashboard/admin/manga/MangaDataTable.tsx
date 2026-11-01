@@ -30,6 +30,8 @@ type Manga = {
   slug: string | null;
   coverImage: string;
   isHidden: boolean;
+  scheduledPublishAt?: string | null;
+  publicationTimeZone?: string | null;
   viewCount: number;
   viewHistory?: ViewSummary | null;
   category: { id?:string; name: string } | null;
@@ -136,7 +138,7 @@ export default function MangaDataTable({
       if (updated.cache_refresh_pending) setCacheRefreshPending(true);
       setMangas((previous) =>
         previous.map((manga) =>
-          manga.id === id ? { ...manga, isHidden: updated.isHidden } : manga,
+          manga.id === id ? { ...manga, isHidden: updated.isHidden, scheduledPublishAt: null, publicationTimeZone: null } : manga,
         ),
       );
       showSuccess(
@@ -275,7 +277,7 @@ export default function MangaDataTable({
           ? previous.filter((manga) => !changed.has(manga.id))
           : previous.map((manga) =>
               changed.has(manga.id)
-                ? { ...manga, isHidden: action === "hide" }
+                ? { ...manga, isHidden: action === "hide", scheduledPublishAt: null, publicationTimeZone: null }
                 : manga,
             ),
       );
@@ -585,13 +587,13 @@ export default function MangaDataTable({
 
                 <TableCell data-label="สถานะ">
                   <Chip
-                    label={manga.isHidden ? "ซ่อน" : "เผยแพร่"}
+                    label={manga.isHidden ? manga.scheduledPublishAt ? "ตั้งเวลาแล้ว" : "ซ่อน" : "เผยแพร่"}
                     size="small"
                     sx={{
-                      bgcolor: manga.isHidden
+                      bgcolor: manga.isHidden && manga.scheduledPublishAt ? maggaColors.archiveGoldSoft : manga.isHidden
                         ? "rgba(239,68,68,0.08)"
                         : "rgba(34,197,94,0.08)",
-                      color: manga.isHidden ? "#fca5a5" : "#4ade80",
+                      color: manga.isHidden && manga.scheduledPublishAt ? maggaColors.archiveGoldHover : manga.isHidden ? "#fca5a5" : "#4ade80",
                       border: manga.isHidden
                         ? "1px solid rgba(239,68,68,0.16)"
                         : "1px solid rgba(34,197,94,0.16)",
@@ -600,6 +602,10 @@ export default function MangaDataTable({
                       fontWeight: 600,
                     }}
                   />
+                  {manga.isHidden && manga.scheduledPublishAt && <Typography sx={{ mt: 0.5, color: maggaColors.textSecondary, fontSize: "0.7rem", minHeight: 32 }}>
+                    {new Date(manga.scheduledPublishAt).toLocaleString("th-TH", { timeZone: manga.publicationTimeZone || "Asia/Bangkok" })}
+                    <br />{manga.publicationTimeZone || "Asia/Bangkok"}
+                  </Typography>}
                 </TableCell>
 
                 <TableCell data-label="ยอดอ่าน" sx={{ color: maggaColors.textSecondary, px: 1, py: 1 }}>

@@ -4,7 +4,7 @@ import { manga as mangaTable, mangaTags as mangaTagsTable } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { requireAdmin } from "@/lib/auth-helpers";
-import { mangaInputSchema } from "@/lib/manga-input";
+import { mangaInputSchema, mangaPublicationValues } from "@/lib/manga-input";
 import { invalidateMangaContent } from "@/lib/manga-invalidation";
 
 const mangaSchema = mangaInputSchema;
@@ -64,6 +64,7 @@ export async function POST(request: Request) {
         coverImage: coverImage || "https://via.placeholder.com/300x400.png?text=Cover",
         pages: pages || [],
         isHidden: isHidden || false,
+        ...mangaPublicationValues(result.data),
         authorName: authorName || null,
       })
       .returning();
