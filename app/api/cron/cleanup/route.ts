@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { loginAttempts as loginAttemptsTable, mangaSubmissions as submissionsTable, advertisementEvents } from "@/db/schema";
+import { loginAttempts as loginAttemptsTable, mangaSubmissions as submissionsTable, advertisementEvents, mangaViews } from "@/db/schema";
 import { lt, eq, and, sql, count } from "drizzle-orm";
 
 export async function GET(req: Request) {
@@ -21,6 +21,7 @@ export async function GET(req: Request) {
       r2FilesDeleted: 0,
       submissionsDeferred: 0,
       adEventsDeleted: 0,
+      viewMarkersDeleted: 0,
     };
 
     // 1. Clean up expired rate limit records (LoginAttempt)
@@ -47,6 +48,15 @@ export async function GET(req: Request) {
       ) SELECT count(*)::int AS count FROM deleted
     `);
     results.adEventsDeleted = Number(deletedEvents[0]?.count || 0);
+
+    // Retry markers expire well after the ten-minute dedup window; daily totals live separately.
+    const deletedViews = await db.execute(sql`
+      WITH deleted AS (
+        DELETE FROM ${mangaViews} WHERE ${mangaViews.viewedAt} < NOW() - INTERVAL '1 day'
+        RETURNING manga_id
+      ) SELECT count(*)::int AS count FROM deleted
+    `);
+    results.viewMarkersDeleted = Number(deletedViews[0]?.count || 0);
 
     const [deferred] = await db
       .select({ count: count() })

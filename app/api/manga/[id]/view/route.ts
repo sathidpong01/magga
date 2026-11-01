@@ -54,21 +54,40 @@ export async function POST(
   try {
     const { id } = await params;
     if (!z.uuid().safeParse(id).success) return NextResponse.json({ error: "Invalid manga ID" }, { status: 400 });
+    const event = z.object({ eventId: z.uuid().optional() }).safeParse(
+      request.body ? await request.json().catch(() => null) : {},
+    );
+    if (!event.success) return NextResponse.json({ error: "Invalid view event" }, { status: 400 });
     // Bound cookie rotation abuse independently of the client-controlled visitor ID.
     const ip = getQuotaClientIp(request.headers);
-    if (!ip) return NextResponse.json({ error: "Network identity unavailable" }, { status: 503 });
+    if (!ip) {
+      console.warn(JSON.stringify({ event: "manga_view", outcome: "failed", reason: "network_identity_unavailable", mangaId: id, status: 503 }));
+      return NextResponse.json({ error: "Network identity unavailable" }, { status: 503 });
+    }
     const quotaKey = createHash('sha256').update(ip).digest('hex');
     const quota = await checkRateLimit(`view:${quotaKey}`, 240, 10 * 60 * 1000, { failClosed: true });
-    if (!quota.allowed) return NextResponse.json({ error: "Too many view requests" }, {
-      status: 429,
-      headers: { 'Cache-Control': 'private, no-store', 'Retry-After': String(Math.max(1, Math.ceil(((quota.resetTime ?? Date.now() + 60000) - Date.now()) / 1000))) },
-    });
+    if (!quota.allowed) {
+      // A fail-closed storage error has no quota reset time.
+      if (quota.resetTime === undefined) {
+        console.warn(JSON.stringify({ event: "manga_view", outcome: "failed", reason: "quota_unavailable", mangaId: id, status: 503 }));
+        return NextResponse.json({ error: "View quota unavailable" }, { status: 503, headers: { "Cache-Control": "private, no-store" } });
+      }
+      console.warn(JSON.stringify({ event: "manga_view", outcome: "rate_limited", mangaId: id, status: 429 }));
+      return NextResponse.json({ error: "Too many view requests" }, {
+        status: 429,
+        headers: { 'Cache-Control': 'private, no-store', 'Retry-After': String(Math.max(1, Math.ceil((quota.resetTime - Date.now()) / 1000))) },
+      });
+    }
     const { viewerKey, visitorId, shouldSetCookie } = getViewerKey(request, id);
-    const result = await recordMangaView(db, id, viewerKey);
+    const eventKey = event.data.eventId
+      ? createHash('sha256').update(`event:${event.data.eventId}:${id}`).digest('hex').slice(0, 24)
+      : undefined;
+    const result = await recordMangaView(db, id, viewerKey, eventKey);
     if (!result) return NextResponse.json({ error: "Manga not found" }, { status: 404 });
+    console.info(JSON.stringify({ event: "manga_view", outcome: result.deduplicated ? "deduplicated" : "counted", mangaId: id, status: 200 }));
     return withVisitorCookie(NextResponse.json(result, { headers: { "Cache-Control": "private, no-store" } }), visitorId, shouldSetCookie);
-  } catch (error: any) {
-    console.error("View increment error:", error);
+  } catch (error: unknown) {
+    console.error(JSON.stringify({ event: "manga_view", outcome: "failed", reason: "storage_error", status: 500, error: error instanceof Error ? error.name : "UnknownError" }));
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

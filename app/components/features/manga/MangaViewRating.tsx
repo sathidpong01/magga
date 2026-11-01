@@ -2,6 +2,7 @@
 
 import { hasStatisticsConsent } from "@/lib/privacy-consent";
 import { useStatisticsConsent } from "@/lib/use-statistics-consent";
+import { deliverEvent } from "@/lib/event-transport";
 import { useState, useEffect, useRef } from "react";
 import {
   Alert,
@@ -51,7 +52,8 @@ export default function MangaViewRating({
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const submitLock = useRef(false);
-  const viewTracked = useRef(false);
+  const viewDelivery = useRef<Promise<boolean> | null>(null);
+  const viewActive = useRef(false);
   const ratingRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     const update = (event: Event) => {
@@ -74,39 +76,22 @@ export default function MangaViewRating({
 
   // Track a page view only from the designated instance and only once the tab is visible.
   useEffect(() => {
-    if (!statisticsAllowed || !trackViewOnMount || viewTracked.current) return;
+    viewActive.current = statisticsAllowed && trackViewOnMount;
+    if (!viewActive.current) return;
 
     const postView = () => {
-      if (viewTracked.current || !hasStatisticsConsent()) return;
-      viewTracked.current = true;
-      fetch(`/api/manga/${mangaId}/view`, {
-        method: "POST",
-        keepalive: true,
-      }).catch(() => {});
+      if (viewDelivery.current || !hasStatisticsConsent() || document.visibilityState !== "visible") return;
+      viewDelivery.current = deliverEvent(`/api/manga/${mangaId}/view`, { eventId: crypto.randomUUID() }, {
+        isCurrent: () => viewActive.current && hasStatisticsConsent(),
+      });
     };
 
-    if (
-      typeof document !== "undefined" &&
-      document.visibilityState === "visible"
-    ) {
-      postView();
-      return;
-    }
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        postView();
-        document.removeEventListener(
-          "visibilitychange",
-          handleVisibilityChange,
-        );
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
+    postView();
+    document.addEventListener("visibilitychange", postView);
 
     return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      viewActive.current = false;
+      document.removeEventListener("visibilitychange", postView);
     };
   }, [mangaId, trackViewOnMount, statisticsAllowed]);
 

@@ -4,7 +4,7 @@ import { hasStatisticsConsent } from "@/lib/privacy-consent";
 import { useStatisticsConsent } from "@/lib/use-statistics-consent";
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
-import { deliverAdEvent } from "@/lib/ad-event-transport";
+import { deliverEvent } from "@/lib/event-transport";
 
 export function useAdTracking(adId: string) {
   const statisticsAllowed = useStatisticsConsent();
@@ -20,7 +20,7 @@ export function useAdTracking(adId: string) {
     const currentEventId = eventId.current;
     pending.current.add(kind);
     const url = `/api/advertisements/${adId}/events`;
-    void deliverAdEvent(url, { eventId: currentEventId, kind }, {
+    void deliverEvent(url, { eventId: currentEventId, kind }, {
       isCurrent: () => hasStatisticsConsent() && eventId.current === currentEventId,
     }).then((acknowledged) => {
       if (eventId.current !== currentEventId) return;

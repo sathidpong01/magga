@@ -1,7 +1,7 @@
 /** Retry only transient failures; every attempt carries the same idempotency key. */
-export async function deliverAdEvent(
+export async function deliverEvent(
   url: string,
-  event: { eventId: string; kind: "impression" | "click" },
+  event: object,
   options: {
     fetcher?: (input: string, init: RequestInit) => Promise<Response>;
     wait?: (milliseconds: number) => Promise<void>;
