@@ -156,7 +156,7 @@ export function SortableItem({
       {onMove && typeof index === "number" && total ? (
         <Stack
           direction="row"
-          sx={{ flexWrap: "wrap", justifyContent: "center" }}
+          sx={{ alignItems: "center", justifyContent: "center", gap: 0.5, minHeight: 56 }}
         >
           <IconButton
             aria-label={`ย้ายหน้า ${index + 1} ขึ้น`}
@@ -187,7 +187,7 @@ export function SortableItem({
                   onMove(next - 1);
               }
             }}
-            sx={{ width: 100, mt: 1 }}
+            sx={{ width: 100, minWidth: 0 }}
           />
         </Stack>
       ) : null}

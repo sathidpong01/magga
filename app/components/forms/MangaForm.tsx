@@ -47,6 +47,15 @@ type PageItem = {
   preview: string;
 };
 
+const metadataAutocompleteSx = {
+  // Reserve both 44px controls before async options add the clear button.
+  "&&& .MuiFilledInput-root.MuiAutocomplete-inputRoot": {
+    minHeight: 56,
+    paddingRight: "100px",
+  },
+  "& .MuiAutocomplete-endAdornment": { display: "flex" },
+};
+
 export default function MangaForm({ manga, mode }: MangaFormProps) {
   const router = useRouter();
   const returnTo = useDashboardReturn(
@@ -1141,8 +1150,10 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                       }}
                     />
                   </Grid>
-                  <Grid size={{ xs: 12, xl: 6 }}>
+                  <Grid size={12}>
                     <Autocomplete
+                      forcePopupIcon
+                      sx={metadataAutocompleteSx}
                       value={
                         pendingAuthorName
                           ? ({
@@ -1257,7 +1268,7 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                       )}
                     />
                   </Grid>
-                  <Grid size={{ xs: 12, xl: 6 }}>
+                  <Grid size={12}>
                     <TextField
                       label="ชื่อผู้แต่ง (Author Name for OG)"
                       name="authorName"
@@ -1459,8 +1470,10 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     </Grid>
                   )}
 
-                  <Grid size={{ xs: 12, xl: 6 }}>
+                  <Grid size={12}>
                     <Autocomplete
+                      forcePopupIcon
+                      sx={metadataAutocompleteSx}
                       value={
                         availableCategories.find((c) => c.id === categoryId) ||
                         null
@@ -1553,8 +1566,10 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                       )}
                     />
                   </Grid>
-                  <Grid size={{ xs: 12, xl: 6 }}>
+                  <Grid size={12}>
                     <Autocomplete
+                      forcePopupIcon
+                      sx={metadataAutocompleteSx}
                       multiple
                       id="tags-autocomplete"
                       onInputChange={(_, value, reason) => {

@@ -1,4 +1,4 @@
-import { Box,Grid,Skeleton,Stack,Typography } from "@mui/material";
+import { Box,FormHelperText,Grid,Skeleton,Stack,Typography } from "@mui/material";
 import { maggaRadii } from "@/lib/design-tokens";
 import { DashboardPageHeader,DashboardSurface,DashboardSectionTitle,dashboardTokens } from "./system";
 export function FormSkeleton({ mode="admin",editing=false }: { mode?: "admin"|"submission"; editing?: boolean }) {
@@ -13,7 +13,15 @@ export function FormSkeleton({ mode="admin",editing=false }: { mode?: "admin"|"s
     <Grid container spacing={3}>
       <Grid size={{ xs: 12,lg: 4 }} sx={{ order: { xs: 1,lg: 2 } }}><DashboardSurface sx={{ minHeight: 600 }}>
         <DashboardSectionTitle title="ข้อมูลเรื่อง" description="กรอกชื่อเรื่องและรายละเอียดประกอบภาพก่อนบันทึก" />
-        <Stack spacing={3}>{field()}{field()}{field(160)}{field()}{field()}{field(120)}</Stack>
+        <Stack spacing={3}>
+          {field()}
+          <Box>{field()}<FormHelperText sx={{ ml: 0 }}>ตัวอย่างลิงก์: /your-slug</FormHelperText></Box>
+          {field(145)}
+          {field()}
+          <Box>{field()}<FormHelperText sx={{ ml: 0 }}>สำหรับแสดงใน og:title เมื่อแชร์ลิงก์ (auto-filled from author)</FormHelperText></Box>
+          {field()}
+          {field()}
+        </Stack>
       </DashboardSurface></Grid>
       <Grid size={{ xs: 12,lg: 8 }} sx={{ order: { xs: 2,lg: 1 } }}><DashboardSurface sx={{ height: "100%",minHeight: 600 }}>
         <DashboardSectionTitle title="จัดภาพและลำดับหน้า" description="เพิ่มภาพหน้าอ่าน ตรวจภาพตัวอย่าง และเรียงลำดับก่อนบันทึก" />
