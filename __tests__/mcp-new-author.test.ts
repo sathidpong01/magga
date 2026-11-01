@@ -57,6 +57,15 @@ describe('new author proposals', () => {
     const [row]=(await pg.query<{name:string;social_links:string}>('SELECT a.name,a.social_links FROM authors a JOIN manga m ON m.author_id=a.id WHERE m.id=$1',[d.mangaId])).rows;
     expect(row.name).toBe('Partial author'); expect(JSON.parse(row.social_links)).toEqual([second]);
   });
+  it('creates and assigns an author to a hidden manga through browser approval without publishing', async () => {
+    const mangaId = randomUUID(), id = randomUUID();
+    await pg.query('INSERT INTO manga(id,title,is_hidden) VALUES($1,$2,true)', [mangaId, 'Hidden book']);
+    await drafts.create({ request_id: id, kind: 'manga_author', target: { type: 'manga', id: mangaId }, proposal: { name: 'Draft artist', social_links: ['https://example.org/draft-artist'] }, sources }, key, randomUUID());
+    const checked = await review.get(id);
+    expect(checked.current).toMatchObject({ isHidden: true });
+    await review.decide(id,checked.review_token,'apply',randomUUID());
+    expect((await pg.query('SELECT m.is_hidden,a.name FROM manga m JOIN authors a ON a.id=m.author_id WHERE m.id=$1',[mangaId])).rows).toEqual([{is_hidden:true,name:'Draft artist'}]);
+  });
   it('can approve the author assignment while declining every proposed social channel', async () => {
     const d = await make('Author without approved links'); const checked = await review.get(d.id);
     await review.decide(d.id,checked.review_token,'apply',randomUUID(),{fields:['author'],social_link_urls:[]});

@@ -31,7 +31,7 @@ catalog:read + draft:write:
 catalog:read + metadata:write:
 - apply_metadata_draft, reject_metadata_draft
 
-Scopes are independent. Discovery and execution enforce the same boundaries. Drafts are visible only to keys belonging to the same administrator owner as the requesting key. Hidden/nonexistent manga remain unavailable.
+Scopes are independent. Discovery and execution enforce the same boundaries. Drafts are visible only to keys belonging to the same administrator owner as the requesting key. The administrator catalog includes hidden manga and unpublished drafts, with `isHidden` returned by search, details, tagging context and draft review. Tag/category validation, draft creation and approval support hidden targets without changing publication state. A visibility change invalidates an earlier review token; refresh the review before approval. Nonexistent targets remain unavailable. Public catalog and reader visibility rules are unchanged.
 
 ## User flow
 

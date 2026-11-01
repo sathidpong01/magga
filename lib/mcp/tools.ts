@@ -22,8 +22,8 @@ export function createServer(key: Principal, catalog: Catalog, drafts?: DraftSer
   const server = new McpServer({ name: 'magga-metadata', version });
   const query = z.string().trim().min(1).max(200);
   const id = z.string().uuid();
-  function register(name: string, inputSchema: z.ZodRawShape, run: (args: Record<string, unknown>) => Promise<unknown>) {
-    server.registerTool(name, { inputSchema, annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false } }, async (args) => {
+  function register(name: string, inputSchema: z.ZodRawShape, run: (args: Record<string, unknown>) => Promise<unknown>, description?: string) {
+    server.registerTool(name, { description, inputSchema, annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false } }, async (args) => {
       try {
         requireScope(key, 'catalog:read');
         const data = await run(args);
@@ -34,12 +34,12 @@ export function createServer(key: Principal, catalog: Catalog, drafts?: DraftSer
     });
   }
   if (key.scopes.includes('catalog:read')) {
-    register('find_manga', { query }, (args) => catalog.findManga(query.parse(args.query)));
-    register('get_manga_details', { manga_id: id }, (args) => catalog.mangaDetails(id.parse(args.manga_id)));
+    register('find_manga', { query }, (args) => catalog.findManga(query.parse(args.query)), 'Search the administrator catalog, including hidden manga and unpublished drafts. isHidden reports visibility; metadata operations never publish manga.');
+    register('get_manga_details', { manga_id: id }, (args) => catalog.mangaDetails(id.parse(args.manga_id)), 'Read manga metadata and assigned tags, including hidden manga. isHidden reports visibility.');
     register('find_author', { query }, (args) => catalog.findAuthor(query.parse(args.query)));
     register('get_author_details', { author_id: id }, (args) => catalog.authorDetails(id.parse(args.author_id)));
     register('list_categories_and_tags', {}, () => catalog.taxonomy());
-    register('get_tagging_context', { manga_id: id }, (args) => catalog.taggingContext(id.parse(args.manga_id)));
+    register('get_tagging_context', { manga_id: id }, (args) => catalog.taggingContext(id.parse(args.manga_id)), 'Read manga metadata and the taxonomy catalog for published or hidden manga. isHidden reports visibility.');
   }
   if (drafts && key.scopes.includes('catalog:read')) {
     register('validate_tag_proposal', { manga_id: id, tag_names: tagNames }, (args) => drafts.validateTags(id.parse(args.manga_id), tagNames.parse(args.tag_names)));

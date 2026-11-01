@@ -57,7 +57,7 @@ export function validateSocialLink(value: SocialLinkProposal, allowedHosts?: rea
 export function createDraftService(db: typeof database, allowedHosts?: readonly string[]): DraftService {
   async function validateTags(id: string, names: string[]) {
     uuid.parse(id); const requested = normalizeTagNames(names);
-    const [target] = await db.select({ id: manga.id }).from(manga).where(and(eq(manga.id, id), eq(manga.isHidden, false))).limit(1);
+    const [target] = await db.select({ id: manga.id }).from(manga).where(eq(manga.id, id)).limit(1);
     if (!target) throw new Error('Target unavailable');
     const catalog = await db.select({ id: tags.id, name: tags.name }).from(tags);
     const found = catalog.filter(tag => requested.some(name => name.toLowerCase() === tag.name.trim().toLowerCase()));
@@ -66,7 +66,7 @@ export function createDraftService(db: typeof database, allowedHosts?: readonly 
   }
   async function validateCategory(id: string, rawName: string) {
     uuid.parse(id); const name = categoryName.parse(rawName);
-    const [target] = await db.select({ id: manga.id, categoryId: manga.categoryId }).from(manga).where(and(eq(manga.id, id), eq(manga.isHidden, false))).limit(1);
+    const [target] = await db.select({ id: manga.id, categoryId: manga.categoryId }).from(manga).where(eq(manga.id, id)).limit(1);
     if (!target) throw new Error('Target unavailable');
     const catalog = await db.select({ id: categories.id, name: categories.name }).from(categories);
     const existing = catalog.find(entry => entry.name.trim().toLowerCase() === name.toLowerCase()) ?? null;
@@ -92,9 +92,9 @@ export function createDraftService(db: typeof database, allowedHosts?: readonly 
       return db.transaction(async (tx) => {
         const [current] = await tx.select({ scopes: mcpApiKeys.scopes }).from(mcpApiKeys).innerJoin(profiles, eq(profiles.id, mcpApiKeys.ownerUserId)).where(and(eq(mcpApiKeys.id, key.id), eq(profiles.id, key.ownerUserId), eq(profiles.role, 'admin'), eq(profiles.isBanned, false), sql`coalesce(${profiles.banned}, false) = false`, sql`${mcpApiKeys.revokedAt} IS NULL AND ${mcpApiKeys.expiresAt} > now()`)).for('share');
         if (!current?.scopes.includes('catalog:read') || !current.scopes.includes('draft:write')) throw new Error('Access denied');
-        // Lock the target against hiding/deletion until the pending draft commits.
+        // Lock the target against deletion until the pending draft commits.
         const target = input.target.type === 'manga'
-          ? await tx.select({ id: manga.id }).from(manga).where(and(eq(manga.id, input.target.id), eq(manga.isHidden, false))).for('share')
+          ? await tx.select({ id: manga.id }).from(manga).where(eq(manga.id, input.target.id)).for('share')
           : await tx.select({ id: authors.id }).from(authors).where(eq(authors.id, input.target.id)).for('share');
         if (!target.length) throw new Error('Target unavailable');
         if (input.kind === 'manga_author') {

@@ -28,10 +28,15 @@ describe('MCP database isolation', () => {
     await pg.query('INSERT INTO mcp_api_keys (id, owner_user_id, name, key_prefix, secret_hash, scopes, expires_at) VALUES ($1, $2, $3, $4, $5, $6, $7)', [key, 'owner', 'test', 'mgm_test', 'a'.repeat(64), ['catalog:read'], '2099-01-01']);
   }, 30000);
   afterAll(async () => { await pg.close(); });
-  it('filters hidden manga from search, details and tagging context', async () => {
-    expect(await catalog.findManga('book')).toEqual([expect.objectContaining({ id: visible })]);
-    expect(await catalog.mangaDetails(hidden)).toBeNull(); expect(await catalog.taggingContext(hidden)).toBeNull();
-    expect(await catalog.mangaDetails(visible)).toEqual(expect.objectContaining({ id: visible, tags: [] }));
+  it('includes hidden manga and their visibility in the administrator catalog', async () => {
+    expect(await catalog.findManga('book')).toEqual([
+      expect.objectContaining({ id: hidden, isHidden: true }),
+      expect.objectContaining({ id: visible, isHidden: false }),
+    ]);
+    expect(await catalog.mangaDetails(hidden)).toMatchObject({ id: hidden, isHidden: true, tags: [] });
+    expect(await catalog.taggingContext(hidden)).toMatchObject({ manga: { id: hidden, isHidden: true }, catalog: { tags: [], categories: [] } });
+    expect(await catalog.mangaDetails(visible)).toMatchObject({ id: visible, isHidden: false, tags: [] });
+    expect(await catalog.mangaDetails('00000000-0000-4000-8000-000000000099')).toBeNull();
   });
   it('treats wildcard input literally', async () => { expect(await catalog.findManga('%')).toEqual([]); });
   it('enforces an atomic shared 60-request window, reset and revocation', async () => {

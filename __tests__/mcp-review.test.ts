@@ -164,13 +164,15 @@ describe('client research, review and application', () => {
     expect((await get(id)).status).toBe('pending');
     expect((await pg.query('SELECT title FROM manga WHERE id=$1',[target])).rows).toEqual(before);
   });
-  it('rejects hidden targets and excludes them from pending lists', async () => {
+  it('requires a fresh review after visibility changes and applies metadata without publishing', async () => {
     const id = await makeTags(); const checked = await get(id);
     await pg.query('UPDATE manga SET is_hidden=true WHERE id=$1',[target]);
     try {
-      await expect(review.get(id,key)).rejects.toThrow();
-      await expect(review.decide(id,checked.review_token,'apply',key,randomUUID())).rejects.toThrow();
-      expect(await review.list(key)).toEqual([]);
+      expect(await review.get(id,key)).toMatchObject({ current: { isHidden: true } });
+      await expect(review.decide(id,checked.review_token,'apply',key,randomUUID())).rejects.toThrow('Stale review');
+      expect(await review.list(key)).toContainEqual(expect.objectContaining({ draft_id: id }));
+      await review.decide(id,(await get(id)).review_token,'apply',key,randomUUID());
+      expect((await pg.query('SELECT is_hidden FROM manga WHERE id=$1',[target])).rows).toEqual([{is_hidden:true}]);
     } finally { await pg.query('UPDATE manga SET is_hidden=false WHERE id=$1',[target]); }
   });
   it('scopes and owner boundaries protect review and mutation', async () => {

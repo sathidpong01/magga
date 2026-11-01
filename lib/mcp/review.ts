@@ -43,7 +43,7 @@ async function ownedDraft(tx: Tx, id: string, key: ReviewActor) {
 }
 async function currentTarget(tx: Tx, draft: Draft) {
   if (draft.targetType === 'manga') {
-    const [row] = await tx.select({ id: manga.id, title: manga.title, slug: manga.slug, author_id: manga.authorId, category_id: manga.categoryId }).from(manga).where(and(eq(manga.id, draft.targetId), eq(manga.isHidden, false))).for('update');
+    const [row] = await tx.select({ id: manga.id, title: manga.title, slug: manga.slug, author_id: manga.authorId, category_id: manga.categoryId, isHidden: manga.isHidden }).from(manga).where(eq(manga.id, draft.targetId)).for('update');
     if (!row) throw new Error('Target unavailable');
     const assigned = await tx.select({ id: tags.id, name: tags.name }).from(mangaTags).innerJoin(tags, eq(tags.id, mangaTags.tagId)).where(eq(mangaTags.mangaId, row.id)).orderBy(asc(tags.id));
     if (draft.kind === 'manga_metadata') {
@@ -74,7 +74,7 @@ function reviewService(db: typeof database, invalidate: () => Promise<void>, all
   return {
     list: (key: Principal) => db.transaction(async (tx) => {
       await currentKey(tx, key);
-      return tx.select({ draft_id: mcpMetadataDrafts.id, kind: mcpMetadataDrafts.kind, target_type: mcpMetadataDrafts.targetType, target_id: mcpMetadataDrafts.targetId, status: mcpMetadataDrafts.status, created_at: mcpMetadataDrafts.createdAt }).from(mcpMetadataDrafts).innerJoin(mcpApiKeys, eq(mcpApiKeys.id, mcpMetadataDrafts.requestingKeyId)).where(and(eq(mcpApiKeys.ownerUserId, key.ownerUserId), eq(mcpMetadataDrafts.status, 'pending'), sql`((${mcpMetadataDrafts.targetType} = 'manga' AND EXISTS (SELECT 1 FROM ${manga} WHERE ${manga.id} = ${mcpMetadataDrafts.targetId} AND ${manga.isHidden} = false)) OR (${mcpMetadataDrafts.targetType} = 'author' AND EXISTS (SELECT 1 FROM ${authors} WHERE ${authors.id} = ${mcpMetadataDrafts.targetId})))`)).orderBy(desc(mcpMetadataDrafts.createdAt), asc(mcpMetadataDrafts.id)).limit(50);
+      return tx.select({ draft_id: mcpMetadataDrafts.id, kind: mcpMetadataDrafts.kind, target_type: mcpMetadataDrafts.targetType, target_id: mcpMetadataDrafts.targetId, status: mcpMetadataDrafts.status, created_at: mcpMetadataDrafts.createdAt }).from(mcpMetadataDrafts).innerJoin(mcpApiKeys, eq(mcpApiKeys.id, mcpMetadataDrafts.requestingKeyId)).where(and(eq(mcpApiKeys.ownerUserId, key.ownerUserId), eq(mcpMetadataDrafts.status, 'pending'), sql`((${mcpMetadataDrafts.targetType} = 'manga' AND EXISTS (SELECT 1 FROM ${manga} WHERE ${manga.id} = ${mcpMetadataDrafts.targetId})) OR (${mcpMetadataDrafts.targetType} = 'author' AND EXISTS (SELECT 1 FROM ${authors} WHERE ${authors.id} = ${mcpMetadataDrafts.targetId})))`)).orderBy(desc(mcpMetadataDrafts.createdAt), asc(mcpMetadataDrafts.id)).limit(50);
     }),
     get: (id: string, key: ReviewActor) => db.transaction(async (tx) => {
       await currentActor(tx, key);

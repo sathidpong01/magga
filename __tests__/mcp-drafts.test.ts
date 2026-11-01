@@ -48,11 +48,17 @@ describe('pending MCP drafts', () => {
     expect((await pg.query('SELECT title FROM manga WHERE id=$1',[target])).rows).toEqual([{ title: 'Original' }]);
     expect((await pg.query('SELECT * FROM mcp_audit_events')).rows).toHaveLength(2);
   });
-  it('accepts new tags in pending drafts but rejects hidden and nonexistent targets', async () => {
-    for (const id of [hidden, randomUUID()]) {
-      await expect(service.validateTags(id, ['Adventure'])).rejects.toThrow();
-      await expect(service.create({ ...input(), target: { type: 'manga', id } }, key, randomUUID())).rejects.toThrow();
-    }
+  it('validates tags and categories and creates pending drafts for hidden manga', async () => {
+    expect(await service.validateTags(hidden, ['Adventure'])).toMatchObject({ valid: true, existing_tags: [{ id: tag, name: 'Adventure' }] });
+    expect(await service.validateCategory(hidden, 'MM')).toMatchObject({ valid: true, existing_category: { id: category, name: 'MM' } });
+    await expect(service.create({ ...input(), target: { type: 'manga', id: hidden } }, key, randomUUID())).resolves.toMatchObject({ status: 'pending', applied: false });
+    expect((await pg.query('SELECT is_hidden FROM manga WHERE id=$1', [hidden])).rows).toEqual([{ is_hidden: true }]);
+  });
+  it('accepts new tags in pending drafts but rejects nonexistent targets', async () => {
+    const id = randomUUID();
+    await expect(service.validateTags(id, ['Adventure'])).rejects.toThrow('Target unavailable');
+    await expect(service.validateCategory(id, 'MM')).rejects.toThrow('Target unavailable');
+    await expect(service.create({ ...input(), target: { type: 'manga', id } }, key, randomUUID())).rejects.toThrow('Target unavailable');
     const proposal = { ...input(), proposal: { tag_names: ['Invented', 'invented'] } };
     await expect(service.create(proposal, key, randomUUID())).resolves.toMatchObject({ status: 'pending', applied: false });
     expect((await pg.query<{payload:{tag_names:string[]}}>('SELECT payload FROM mcp_metadata_drafts WHERE id=$1',[proposal.request_id])).rows[0].payload.tag_names).toEqual(['Invented']);
