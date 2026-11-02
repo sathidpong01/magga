@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useId, useState } from "react";
-import { IconButton, Menu, MenuItem } from "@mui/material";
+import { useEffect, useId, useState, type ReactNode } from "react";
+import { IconButton, ListItemIcon, Menu, MenuItem } from "@mui/material";
 import MoreHorizIcon from "@mui/icons-material/MoreHoriz";
 import Link from "next/link";
 export default function AdminRowMenu({
@@ -12,6 +12,7 @@ export default function AdminRowMenu({
   disabled?: boolean;
   actions: {
     label: string;
+    icon?: ReactNode;
     href?: string;
     newTab?: boolean;
     onClick?: () => void;
@@ -82,6 +83,7 @@ export default function AdminRowMenu({
               rel={action.newTab ? "noopener noreferrer" : undefined}
               onClick={close}
             >
+              {action.icon && <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}>{action.icon}</ListItemIcon>}
               {action.label}
             </MenuItem>
           ) : (
@@ -96,6 +98,7 @@ export default function AdminRowMenu({
                 action.onClick?.();
               }}
             >
+              {action.icon && <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}>{action.icon}</ListItemIcon>}
               {action.label}
             </MenuItem>
           ),

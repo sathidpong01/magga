@@ -49,7 +49,7 @@ function LineChart({ points, small = false }: { points: ViewPoint[]; small?: boo
   </svg>;
 }
 
-function HistoryDialog({ id, title, close }: { id: string; title: string; close: () => void }) {
+export function HistoryDialog({ id, title, close }: { id: string; title: string; close: () => void }) {
   const [period, setPeriod] = useState<HistoryPeriod>("7");
   const [data, setData] = useState<ViewHistory | null>(null);
   const [error, setError] = useState("");

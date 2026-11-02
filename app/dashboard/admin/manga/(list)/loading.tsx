@@ -1,32 +1,173 @@
 "use client";
-import { Box, Paper, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
+import {
+  Box,
+  Skeleton,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+} from "@mui/material";
 import { useSearchParams } from "next/navigation";
 import MangaListHeader from "@/app/components/dashboard/MangaListHeader";
-import AdminListControls from "@/app/components/dashboard/AdminListControls";
-import { mangaColumnWidths, mangaListPageSx, mangaListShellSx, mangaSorts, mangaStatuses, mangaTableSx } from "@/app/components/dashboard/manga-list-layout";
+import MangaListControls from "../MangaListControls";
+import {
+  mangaCollectionSx,
+  mangaColumnWidths,
+  mangaCompactRowSx,
+  mangaCompactSx,
+  mangaListPageSx,
+  mangaTableSx,
+  mangaWideSx,
+} from "@/app/components/dashboard/manga-list-layout";
 import { adminPageQuery } from "@/lib/admin-pagination";
 import { maggaColors, maggaRadii } from "@/lib/design-tokens";
 
 export default function MangaListLoading() {
   const params = useSearchParams();
   const query = adminPageQuery(Object.fromEntries(params.entries()));
-  const labels = ["เลือก", "ปก", "ชื่อเรื่อง", "หมวดหมู่", "แท็ก", "สถานะ", "ยอดอ่าน", "จัดการ"];
-  return <Box sx={mangaListPageSx} aria-busy="true" aria-label="กำลังโหลดรายการมังงะ">
-    <MangaListHeader />
-    <AdminListControls query={query} hasMore={false} count={0} sorts={mangaSorts} statuses={mangaStatuses} loading compactSpacing />
-    <Box sx={mangaListShellSx}>
-      <Box sx={{ mb: 1, minHeight: 56, display: "flex", alignItems: "center", px: 2 }}><Typography sx={{ fontSize: "0.875rem", fontWeight: 600 }}>กำลังโหลดรายการในหน้านี้</Typography></Box>
-      <TableContainer component={Paper} sx={{ bgcolor: maggaColors.surfaceMuted, border: `1px solid ${maggaColors.border}`, borderRadius: "10px", backgroundImage: "none", overflowX: "auto" }}>
-        <Table className="admin-work-table admin-manga-table" sx={mangaTableSx} aria-label="กำลังโหลดรายการมังงะ">
-          <colgroup>{mangaColumnWidths.map((width, index) => <col key={index} style={{ width }} />)}</colgroup>
-          <TableHead><TableRow sx={{ bgcolor: "rgba(255,255,255,0.02)", "& th": { color: maggaColors.textSecondary, py: 2, px: 2, borderBottom: `1px solid ${maggaColors.border}`, fontWeight: 600 } }}>{labels.map((label, index) => <TableCell key={label} align={index === 7 ? "right" : "left"}>{index === 0 ? <Skeleton variant="rounded" width={24} height={24} sx={{ mx: "auto" }} /> : label}</TableCell>)}</TableRow></TableHead>
-          <TableBody>{Array.from({ length: query.limit }, (_, index) => <TableRow key={index} sx={{ "& td": { py: 2, px: 2, borderBottom: `1px solid ${maggaColors.border}` } }}>
-            {labels.map((label, column) => <TableCell key={label} data-label={label}>
-              {column === 0 ? <Box sx={{ width: 42, height: 42, display: "grid", placeItems: "center" }}><Skeleton variant="rounded" width={24} height={24} /></Box> : column === 1 ? <Skeleton variant="rounded" width={48} height={64} sx={{ borderRadius: `${maggaRadii.card}px` }} /> : column === 6 ? <Box sx={{ width: "100%", maxWidth: 130, ml: "auto" }}><Skeleton width={70} height={18} /><Skeleton variant="rounded" height={48} /></Box> : column === 7 ? <Box sx={{ display: "flex", justifyContent: "flex-end", gap: "4px" }}>{[0, 1, 2].map(item => <Skeleton key={item} variant="rounded" width={44} height={44} />)}</Box> : <Skeleton variant="rounded" height={24} width={column === 2 ? "80%" : column === 4 ? "90%" : 55} />}
-            </TableCell>)}
-          </TableRow>)}</TableBody>
-        </Table>
-      </TableContainer>
+  return (
+    <Box
+      sx={mangaListPageSx}
+      aria-busy="true"
+      aria-label="กำลังโหลดรายการมังงะ"
+    >
+      <MangaListHeader />
+      <MangaListControls query={query} hasMore={false} count={0} loading />
+      <Box
+        sx={{
+          ...mangaCollectionSx,
+          border: `1px solid ${maggaColors.border}`,
+          borderRadius: "12px",
+          bgcolor: maggaColors.surface,
+        }}
+      >
+        <Stack
+          direction="row"
+          sx={{
+            minHeight: 60,
+            px: 1.5,
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Skeleton width={110} />
+          <Skeleton width={100} height={44} />
+        </Stack>
+        <Box sx={mangaCompactSx}>
+          {Array.from({ length: query.limit }, (_, index) => (
+            <Box key={index} sx={mangaCompactRowSx}>
+              <Stack direction="row" spacing={1.5}>
+                <Skeleton
+                  variant="rounded"
+                  width={60}
+                  height={80}
+                  sx={{ flexShrink: 0, borderRadius: `${maggaRadii.card}px` }}
+                />
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Skeleton width="85%" height={28} />
+                  <Skeleton width="55%" height={24.5} />
+                  <Skeleton
+                    variant="rounded"
+                    width={100}
+                    height={24}
+                    sx={{ mt: 0.5 }}
+                  />
+                </Box>
+              </Stack>
+              <Stack
+                direction="row"
+                spacing={0.5}
+                sx={{ alignItems: "center", minHeight: 44, mt: 0.5 }}
+              >
+                <Skeleton variant="rounded" width={48} height={24} />
+                <Skeleton variant="rounded" width={64} height={24} />
+                <Skeleton width={70} height={24} />
+              </Stack>
+              <Stack
+                direction="row"
+                sx={{
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  minHeight: 44,
+                }}
+              >
+                <Skeleton width={80} height={42} />
+                <Skeleton width={112} height={44} />
+              </Stack>
+            </Box>
+          ))}
+        </Box>
+        <Box sx={mangaWideSx}>
+          <Table
+            sx={{
+              ...mangaTableSx,
+              borderTop: `1px solid ${maggaColors.border}`,
+              "& th, & td": {
+                px: 1,
+                py: 1.5,
+                borderBottom: `1px solid ${maggaColors.border}`,
+              },
+            }}
+            aria-label="กำลังโหลดรายการมังงะ"
+          >
+            <colgroup>
+              {mangaColumnWidths.map((width, index) => (
+                <col key={index} style={{ width }} />
+              ))}
+            </colgroup>
+            <TableHead>
+              <TableRow>
+                {[
+                  "เลือก",
+                  "ปก",
+                  "ชื่อเรื่อง",
+                  "หมวดหมู่",
+                  "แท็ก",
+                  "สถานะ",
+                  "ยอดอ่าน",
+                  "จัดการ",
+                ].map((label) => (
+                  <TableCell
+                    key={label}
+                    sx={{ color: maggaColors.textSecondary, fontWeight: 600 }}
+                  >
+                    {label === "เลือก" ? null : label}
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {Array.from({ length: query.limit }, (_, index) => (
+                <TableRow key={index}>
+                  <TableCell />
+                  <TableCell>
+                    <Skeleton
+                      variant="rounded"
+                      width={48}
+                      height={64}
+                      sx={{ borderRadius: `${maggaRadii.card}px` }}
+                    />
+                  </TableCell>
+                  {[0, 1, 2, 3, 4, 5].map((column) => (
+                    <TableCell key={column}>
+                      <Skeleton width="80%" height={column === 4 ? 48 : 24} />
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Box>
+      </Box>
+      <MangaListControls
+        query={query}
+        hasMore={false}
+        count={0}
+        loading
+        pagination
+      />
     </Box>
-  </Box>;
+  );
 }

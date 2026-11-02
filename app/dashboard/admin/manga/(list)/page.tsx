@@ -1,20 +1,15 @@
-import AdminListControls from "@/app/components/dashboard/AdminListControls";
+import MangaListControls from "../MangaListControls";
 import { adminPageQuery, type AdminSearchParams } from "@/lib/admin-pagination";
 import { readAdminManga } from "@/lib/admin-lists";
 import { requireAdminPage } from "@/lib/auth-helpers";
 import type { Metadata } from "next";
 
-
-
 import { Box } from "@mui/material";
 import MangaListHeader from "@/app/components/dashboard/MangaListHeader";
 import MangaDataTable from "../MangaDataTable";
-import { mangaListPageSx, mangaSorts, mangaStatuses } from "@/app/components/dashboard/manga-list-layout";
+import { mangaListPageSx } from "@/app/components/dashboard/manga-list-layout";
 
 export const dynamic = "force-dynamic";
-
-const ADMIN_MANGA_LIMIT = 200;
-const ADMIN_METADATA_LIMIT = 500;
 
 export const metadata: Metadata = {
   title: "จัดการมังงะ - MAGGA",
@@ -37,19 +32,22 @@ export default async function AdminMangaPage({
   const result = await readAdminManga(query);
   const mangas = result.items;
   return (
-    <Box
-      sx={mangaListPageSx}
-    >
-      <MangaListHeader count={mangas.length} />
-      <AdminListControls compactSpacing
+    <Box sx={mangaListPageSx}>
+      <MangaListHeader />
+      <MangaListControls
         query={query}
         hasMore={result.hasMore}
         count={mangas.length}
-        sorts={mangaSorts}
-        statuses={mangaStatuses}
       />
       <MangaDataTable
+        key={`${query.page}:${query.limit}:${query.search}:${query.sort}:${query.status}`}
         initialMangas={mangas}
+      />
+      <MangaListControls
+        query={query}
+        hasMore={result.hasMore}
+        count={mangas.length}
+        pagination
       />
     </Box>
   );

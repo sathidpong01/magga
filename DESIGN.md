@@ -205,3 +205,12 @@ Scope route loading placeholders to the content they represent. Homepage and adm
 - Treat observed legacy styles or known usability issues as requirements to preserve defects.
 - Add decorative UI that competes with the manga artwork.
 - Claim a documented component or accessibility requirement has passed runtime testing without testing it.
+
+
+### Admin manga management
+
+The manga management route uses a compact page heading and add action, a full-width search row, and a separate status/sort row. Pagination and page-size controls belong below the results. Keep the existing URL-based search/filter state and dashboard edit-return scroll memory.
+
+Within a named `manga-list` container, use the compact operational list below 1040px of available content width and the comparison table above it. This admin list is separate from the public discovery card anatomy: a 60x80 portrait thumbnail sits beside the title, author and publication status. Titles/authors stay on one line; the inline details action reveals full text and all tags. Keep a maximum of two compact tag chips initially, numeric cumulative/seven-day views, a labelled edit action, and an overflow menu. Detailed charts are opened on demand on compact screens.
+
+Multiple selection is an explicit mode, limited to the current page, with a sticky contextual toolbar and an exit action that clears selection. Review item names and counts before bulk deletion. Publishing scheduled work immediately requires confirmation that the schedule will be cancelled. Keep pending controls disabled, retain selection on failed writes, and distinguish missing statistics from a recorded zero. Loading placeholders share compact row geometry and the same container breakpoint.

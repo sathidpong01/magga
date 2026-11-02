@@ -1,43 +1,64 @@
 "use client";
 import AdminRowMenu from "@/app/components/dashboard/AdminRowMenu";
 import AdminOptionPicker from "@/app/components/dashboard/AdminOptionPicker";
-
-import { useEffect, useRef, useState } from "react";
-import { Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton, Chip, Checkbox, Stack, Avatar } from "@mui/material";
-
-import SettingsIcon from "@mui/icons-material/Settings";
-
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import TuneIcon from "@mui/icons-material/Tune";
+import QueryStatsIcon from "@mui/icons-material/QueryStats";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
+import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
+
+import { useEffect, useRef, useState } from "react";
+import {
+  Box,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Chip,
+  Checkbox,
+  Stack,
+  Avatar,
+} from "@mui/material";
+
 import Link from "next/link";
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Toolbar, Typography } from "@mui/material";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Typography,
+} from "@mui/material";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/app/contexts/ToastContext";
-import { dashboardTokens, dashboardPrimaryButtonSx } from "@/app/components/dashboard/system";
+import {
+  dashboardTokens,
+  dashboardPrimaryButtonSx,
+} from "@/app/components/dashboard/system";
 import { authFetch } from "@/lib/auth-fetch";
 import { getMetadataChipSx } from "@/lib/metadata-chip-tone";
 import CacheRefreshNotice from "@/app/components/dashboard/CacheRefreshNotice";
-import MangaViewHistory from "@/app/components/dashboard/MangaViewHistory";
-import type { ViewSummary } from "@/lib/view-history";
-import { maggaColors, maggaRadii } from "@/lib/design-tokens";
-import { mangaColumnWidths, mangaTableSx } from "@/app/components/dashboard/manga-list-layout";
+import MangaViewHistory, {
+  HistoryDialog,
+} from "@/app/components/dashboard/MangaViewHistory";
+import MangaCompactList, {
+  MangaStatus,
+  type ManagedManga,
+} from "./MangaCompactList";
 
-type Manga = {
-  id: string;
-  title: string;
-  slug: string | null;
-  coverImage: string;
-  isHidden: boolean;
-  scheduledPublishAt?: string | null;
-  publicationTimeZone?: string | null;
-  viewCount: number;
-  viewHistory?: ViewSummary | null;
-  category: { id?:string; name: string } | null;
-  tags: { id: string; name: string }[];
-  author: { id?: string; name: string } | null;
-};
+import { maggaColors, maggaRadii } from "@/lib/design-tokens";
+import {
+  mangaColumnWidths,
+  mangaTableSx,
+  mangaCollectionSx,
+  mangaCompactSx,
+  mangaWideSx,
+} from "@/app/components/dashboard/manga-list-layout";
+
+type Manga = ManagedManga;
 
 type MangaDataTableProps = {
   initialMangas: Manga[];
@@ -58,20 +79,7 @@ const surfaceSx = {
   backgroundImage: "none",
 };
 
-const inputSx = {
-  "& .MuiOutlinedInput-root": {
-    bgcolor: dashboardTokens.surfaceMuted,
-    borderRadius: "10px",
-    "& fieldset": { borderColor: dashboardTokens.border },
-    "&:hover fieldset": { borderColor: "rgba(255,255,255,0.15)" },
-    "&.Mui-focused fieldset": { borderColor: dashboardTokens.accent },
-  },
-  "& .MuiInputLabel-root": { color: dashboardTokens.textMuted },
-};
-
-export default function MangaDataTable({
-  initialMangas,
-}: MangaDataTableProps) {
+export default function MangaDataTable({ initialMangas }: MangaDataTableProps) {
   const router = useRouter();
   const { showSuccess, showError } = useToast();
   const [mangas, setMangas] = useState(initialMangas);
@@ -83,12 +91,28 @@ export default function MangaDataTable({
   }, [initialMangas]);
 
   const [selected, setSelected] = useState<string[]>([]);
+  const [selecting, setSelecting] = useState(false);
+  const [historyManga, setHistoryManga] = useState<Manga | null>(null);
+  const [visibilityTarget, setVisibilityTarget] = useState<Manga | null>(null);
+  const [bulkConfirm, setBulkConfirm] = useState<"delete" | "show" | null>(
+    null,
+  );
+  function requestVisibility(manga: Manga) {
+    if (manga.isHidden && manga.scheduledPublishAt) setVisibilityTarget(manga);
+    else void handleToggleVisibility(manga.id, manga.isHidden);
+  }
+  function exitSelection() {
+    setSelected([]);
+    setSelecting(false);
+  }
 
   // Settings modal state
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [editingManga, setEditingManga] = useState<Manga | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
-  const [selectedTags, setSelectedTags] = useState<any[]>([]);
+  const [selectedTags, setSelectedTags] = useState<
+    { id: string; name: string }[]
+  >([]);
   const [selectedAuthor, setSelectedAuthor] = useState<string>("");
   const [authorOption, setAuthorOption] = useState<
       { id: string; name: string }[]
@@ -103,7 +127,9 @@ export default function MangaDataTable({
 
   const filteredMangas = mangas;
   useEffect(() => {
-    setSelected([]);
+    setSelected((previous) =>
+      previous.filter((id) => initialMangas.some((manga) => manga.id === id)),
+    );
   }, [initialMangas]);
 
   const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -138,12 +164,20 @@ export default function MangaDataTable({
       if (updated.cache_refresh_pending) setCacheRefreshPending(true);
       setMangas((previous) =>
         previous.map((manga) =>
-          manga.id === id ? { ...manga, isHidden: updated.isHidden, scheduledPublishAt: null, publicationTimeZone: null } : manga,
+          manga.id === id
+            ? {
+                ...manga,
+                isHidden: updated.isHidden,
+                scheduledPublishAt: null,
+                publicationTimeZone: null,
+              }
+            : manga,
         ),
       );
       showSuccess(
         updated.isHidden ? "ซ่อนมังงะเรียบร้อย" : "แสดงมังงะเรียบร้อย",
       );
+      setVisibilityTarget(null);
       router.refresh();
     } catch (error) {
       showError(
@@ -181,10 +215,11 @@ export default function MangaDataTable({
   };
 
   const handleSaveSettings = async () => {
-    if (!editingManga) return;
-
+    if (!editingManga || mutationInFlight.current) return;
+    mutationInFlight.current = true;
+    setBulkBusy(true);
     try {
-      const res = await fetch(`/api/admin/manga/quick-edit`, {
+      const res = await authFetch(`/api/admin/manga/quick-edit`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -221,6 +256,9 @@ export default function MangaDataTable({
     } catch (error) {
       console.error("Failed to update settings:", error);
       showError("เกิดข้อผิดพลาดในการอัปเดต");
+    } finally {
+      mutationInFlight.current = false;
+      setBulkBusy(false);
     }
   };
 
@@ -230,10 +268,11 @@ export default function MangaDataTable({
   };
 
   const handleDeleteConfirm = async () => {
-    if (!mangaToDelete) return;
-
+    if (!mangaToDelete || mutationInFlight.current) return;
+    mutationInFlight.current = true;
+    setBulkBusy(true);
     try {
-      const res = await fetch(`/api/manga/${mangaToDelete.id}`, {
+      const res = await authFetch(`/api/manga/${mangaToDelete.id}`, {
         method: "DELETE",
       });
 
@@ -251,6 +290,9 @@ export default function MangaDataTable({
     } catch (error) {
       console.error("Failed to delete manga:", error);
       showError("เกิดข้อผิดพลาดในการลบ");
+    } finally {
+      mutationInFlight.current = false;
+      setBulkBusy(false);
     }
   };
 
@@ -277,11 +319,17 @@ export default function MangaDataTable({
           ? previous.filter((manga) => !changed.has(manga.id))
           : previous.map((manga) =>
               changed.has(manga.id)
-                ? { ...manga, isHidden: action === "hide", scheduledPublishAt: null, publicationTimeZone: null }
+                ? {
+                    ...manga,
+                    isHidden: action === "hide",
+                    scheduledPublishAt: null,
+                    publicationTimeZone: null,
+                  }
                 : manga,
             ),
       );
       setSelected((previous) => previous.filter((id) => !changed.has(id)));
+      setBulkConfirm(null);
       showSuccess(`บันทึกแล้ว ${changed.size} เรื่อง`);
       if (changed.size < requested.length)
         showError("บางรายการไม่พบแล้ว กรุณารีเฟรชและตรวจรายการที่ยังเลือกอยู่");
@@ -293,17 +341,11 @@ export default function MangaDataTable({
       setBulkBusy(false);
     }
   };
-  const handleBulkDelete = () => runBulkAction("delete");
-  const handleBulkToggleVisibility = (hidden: boolean) =>
-    runBulkAction(hidden ? "hide" : "show");
-
+  const selectedScheduled = mangas.filter(
+    (manga) => selected.includes(manga.id) && manga.scheduledPublishAt,
+  );
   return (
-    <Box
-      sx={{
-        ...shellSx,
-        p: { xs: 2, md: 2.5 },
-      }}
-    >
+    <Box sx={{ ...shellSx, ...mangaCollectionSx, overflow: "visible" }}>
       {cacheRefreshPending && (
         <CacheRefreshNotice
           onRefreshed={() => {
@@ -312,369 +354,485 @@ export default function MangaDataTable({
           }}
         />
       )}
-      {(
-        <Toolbar
+      <Box
+        sx={{
+          position: selecting ? "sticky" : "static",
+          top: { xs: 56, md: 8 },
+          zIndex: selecting ? 10 : "auto",
+          bgcolor: maggaColors.surface,
+          borderRadius: "12px 12px 0 0",
+        }}
+      >
+        <Box
           sx={{
-            mb: 1,
-            minHeight: "56px !important",
-            bgcolor: selected.length ? "rgba(251, 191, 36, 0.08)" : "transparent",
-            border: selected.length ? "1px solid rgba(251, 191, 36, 0.18)" : "1px solid transparent",
-            borderRadius: 1.5,
+            px: { xs: 1.5, sm: 2 },
+            py: 1,
+            minHeight: 60,
             display: "flex",
-            justifyContent: "space-between",
             alignItems: "center",
+            justifyContent: "space-between",
             flexWrap: "wrap",
             gap: 1,
           }}
         >
           <Typography
+            role="status"
+            sx={{ color: maggaColors.textSecondary, fontSize: "0.875rem" }}
+          >
+            {selecting
+              ? `เลือกแล้ว ${selected.length} เรื่อง · เฉพาะหน้านี้`
+              : "รายการมังงะ"}
+          </Typography>
+          <Button
+            disabled={bulkBusy || !mangas.length}
+            onClick={() => (selecting ? exitSelection() : setSelecting(true))}
+            sx={{ minHeight: 44 }}
+          >
+            {selecting ? "ยกเลิกการเลือก" : "เลือกรายการ"}
+          </Button>
+        </Box>
+        {selecting && (
+          <Box
             sx={{
-              color: "#fbbf24",
-              fontWeight: 600,
-              fontSize: "0.875rem",
-              letterSpacing: "0.02em",
+              px: 1.5,
+              py: 1,
+              bgcolor: maggaColors.archiveGoldSoft,
+              borderBottom: `1px solid ${maggaColors.border}`,
             }}
           >
-            {selected.length ? `เลือกแล้ว ${selected.length} รายการ` : `เลือกหลายรายการเฉพาะหน้านี้ · ${filteredMangas.length} รายการ`}
+            <Box
+              component="label"
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                width: "fit-content",
+                fontSize: "0.875rem",
+                minHeight: 44,
+              }}
+            >
+              <Checkbox
+                disabled={bulkBusy}
+                checked={!!mangas.length && selected.length === mangas.length}
+                indeterminate={
+                  !!selected.length && selected.length < mangas.length
+                }
+                onChange={handleSelectAll}
+                sx={{ width: 44, height: 44 }}
+              />
+              เลือกทั้งหมดในหน้านี้
+            </Box>
+            <Stack
+              direction="row"
+              spacing={0.5}
+              useFlexGap
+              sx={{ flexWrap: "wrap" }}
+            >
+              <Button
+                disabled={bulkBusy || !selected.length}
+                onClick={() => void runBulkAction("hide")}
+                sx={{ minHeight: 44 }}
+              >
+                ซ่อนที่เลือก
+              </Button>
+              <Button
+                disabled={bulkBusy || !selected.length}
+                onClick={() =>
+                  selectedScheduled.length
+                    ? setBulkConfirm("show")
+                    : void runBulkAction("show")
+                }
+                sx={{ minHeight: 44 }}
+              >
+                เผยแพร่ที่เลือก
+              </Button>
+              <Button
+                disabled={bulkBusy || !selected.length}
+                onClick={() => setBulkConfirm("delete")}
+                sx={{ minHeight: 44, color: maggaColors.dangerRedText }}
+              >
+                ลบที่เลือก
+              </Button>
+            </Stack>
+            {bulkBusy && (
+              <Typography role="status" sx={{ fontSize: "0.875rem" }}>
+                กำลังบันทึก กรุณารอสักครู่…
+              </Typography>
+            )}
+          </Box>
+        )}
+      </Box>
+      {!mangas.length ? (
+        <Box sx={{ p: 3, minHeight: 180, textAlign: "center" }}>
+          <Typography sx={{ fontWeight: 600 }}>ไม่พบมังงะในหน้านี้</Typography>
+          <Typography sx={{ color: maggaColors.textSecondary, mt: 1 }}>
+            ลองเปลี่ยนคำค้น ล้างตัวกรอง หรือกลับไปหน้าก่อนหน้า
           </Typography>
-          {selected.length > 0 && <Box sx={{ display: "flex", gap: 1, maxWidth: "100%", overflowX: "auto" }}>
-            <Button
-              size="small"
-              startIcon={<VisibilityOffIcon />}
-              disabled={bulkBusy}
-              onClick={() => handleBulkToggleVisibility(true)}
+        </Box>
+      ) : (
+        <>
+          <Box sx={mangaCompactSx}>
+            <MangaCompactList
+              mangas={mangas}
+              selecting={selecting}
+              selected={selected}
+              busy={bulkBusy}
+              onSelect={handleSelect}
+              onSettings={handleOpenSettings}
+              onDelete={handleOpenDeleteDialog}
+              onVisibility={requestVisibility}
+              onHistory={setHistoryManga}
+            />
+          </Box>
+          <TableContainer
+            sx={{
+              ...mangaWideSx,
+              borderTop: `1px solid ${maggaColors.border}`,
+              "& .MuiIconButton-root": { width: 44, height: 44 },
+            }}
+          >
+            <Table
               sx={{
-                color: "#d4d4d4",
-                borderRadius: 1.1,
-                fontWeight: 700,
-                textTransform: "none",
-              }}
-            >
-              ซ่อนทั้งหมด
-            </Button>
-            <Button
-              size="small"
-              startIcon={<VisibilityIcon />}
-              disabled={bulkBusy}
-              onClick={() => handleBulkToggleVisibility(false)}
-              sx={{
-                color: "#10b981",
-                borderRadius: 1.1,
-                fontWeight: 700,
-                textTransform: "none",
-              }}
-            >
-              แสดงทั้งหมด
-            </Button>
-            <Button
-              size="small"
-              startIcon={<DeleteIcon />}
-              disabled={bulkBusy}
-              onClick={handleBulkDelete}
-              sx={{
-                color: "#ef4444",
-                borderRadius: 1.1,
-                fontWeight: 700,
-                textTransform: "none",
-              }}
-            >
-              ลบทั้งหมด
-            </Button>
-          </Box>}
-        </Toolbar>
-      )}
-
-
-      <TableContainer
-        component={Paper}
-        sx={{
-          ...surfaceSx,
-          overflowX: "auto",
-          WebkitOverflowScrolling: "touch",
-        }}
-      >
-        <Table className="admin-work-table admin-manga-table" sx={mangaTableSx} aria-label="รายการมังงะ">
-          <colgroup>
-            {mangaColumnWidths.map((width, index) => <col key={index} style={{ width }} />)}
-          </colgroup>
-          <TableHead>
-            <TableRow
-              sx={{
-                bgcolor: "rgba(255,255,255,0.02)",
-                "& th": {
-                  borderBottom: "1px solid rgba(255,255,255,0.06)",
-                  py: 2,
-                  px: 2,
+                ...mangaTableSx,
+                "& th, & td": {
+                  px: 1,
+                  py: 1.5,
+                  borderBottom: `1px solid ${maggaColors.border}`,
                 },
               }}
+              aria-label="รายการมังงะ"
             >
-              <TableCell padding="checkbox">
-                <Checkbox
-                  indeterminate={
-                    selected.length > 0 &&
-                    selected.length < filteredMangas.length
-                  }
-                  checked={
-                    filteredMangas.length > 0 &&
-                    selected.length === filteredMangas.length
-                  }
-                  onChange={handleSelectAll}
-                  sx={{
-                    color: maggaColors.textMuted,
-                    "&.Mui-checked": { color: dashboardTokens.accent },
-                    "&.MuiCheckbox-indeterminate": {
-                      color: dashboardTokens.accent,
-                    },
-                  }}
-                  slotProps={{
-                    input: { "aria-label": "เลือกมังงะทั้งหมดในหน้านี้" },
-                  }}
-                />
-              </TableCell>
-              <TableCell
-                sx={{ color: "#a3a3a3", fontWeight: 600, width: "80px" }}
-              >
-                ปก
-              </TableCell>
-              <TableCell
-                sx={{ color: "#a3a3a3", fontWeight: 600, minWidth: "200px" }}
-              >
-                ชื่อเรื่อง
-              </TableCell>
-              <TableCell
-                sx={{ color: "#a3a3a3", fontWeight: 600, width: "120px" }}
-              >
-                หมวดหมู่
-              </TableCell>
-              <TableCell
-                sx={{ color: "#a3a3a3", fontWeight: 600, minWidth: "200px" }}
-              >
-                แท็ก
-              </TableCell>
-              <TableCell
-                sx={{ color: "#a3a3a3", fontWeight: 600, width: "100px" }}
-              >
-                สถานะ
-              </TableCell>
-              <TableCell
-                sx={{ color: "#a3a3a3", fontWeight: 600, width: "80px" }}
-              >
-                ยอดอ่าน
-              </TableCell>
-              <TableCell
-                align="right"
-                sx={{ color: "#a3a3a3", fontWeight: 600, width: "200px" }}
-              >
-                จัดการ
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredMangas.map((manga) => (
-              <TableRow
-                key={manga.id}
-                hover
-                sx={{
-                  "&:hover": { bgcolor: dashboardTokens.surfaceAlt },
-                  "& td": {
-                    borderBottom: `1px solid ${dashboardTokens.border}`,
-                    py: 2,
-                    px: 2,
-                  },
-                }}
-              >
-                <TableCell data-label="เลือก" padding="checkbox">
-                  <Checkbox
-                    slotProps={{input:{"aria-label":`เลือก ${manga.title}`}}}
-                    checked={selected.includes(manga.id)}
-                    onChange={() => handleSelect(manga.id)}
-                    sx={{
-                      color: maggaColors.textMuted,
-                      "&.Mui-checked": { color: dashboardTokens.accent },
-                    }}
-                  />
-                </TableCell>
-
-                <TableCell data-label="ปก">
-                  <Avatar
-                    src={manga.coverImage}
-                    alt={manga.title}
-                    variant="rounded"
-                    sx={{ width: 48, height: 64, borderRadius: `${maggaRadii.card}px` }}
-                  />
-                </TableCell>
-
-                <TableCell data-label="ชื่อเรื่อง">
-                  <Link
-                    href={`/${manga.slug || manga.id}`}
-                    prefetch={false}
-                    title={manga.title}
-                    style={{
-                      color: "#fafafa",
-                      textDecoration: "none",
-                      fontWeight: 500,
-                      display: "-webkit-box",
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: "vertical",
-                      overflow: "hidden",
-                    }}
+              <colgroup>
+                {mangaColumnWidths.map((width, index) => (
+                  <col key={index} style={{ width }} />
+                ))}
+              </colgroup>
+              <TableHead>
+                <TableRow>
+                  {[
+                    "เลือก",
+                    "ปก",
+                    "ชื่อเรื่อง",
+                    "หมวดหมู่",
+                    "แท็ก",
+                    "สถานะ",
+                    "ยอดอ่าน",
+                    "จัดการ",
+                  ].map((label) => (
+                    <TableCell
+                      key={label}
+                      sx={{ color: maggaColors.textSecondary, fontWeight: 600 }}
+                    >
+                      {label === "เลือก" ? (
+                        selecting ? (
+                          <Checkbox
+                            disabled={bulkBusy}
+                            checked={
+                              !!mangas.length &&
+                              selected.length === mangas.length
+                            }
+                            indeterminate={
+                              !!selected.length &&
+                              selected.length < mangas.length
+                            }
+                            onChange={handleSelectAll}
+                            slotProps={{
+                              input: {
+                                "aria-label": "เลือกมังงะทั้งหมดในหน้านี้",
+                              },
+                            }}
+                          />
+                        ) : null
+                      ) : (
+                        label
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {mangas.map((manga) => (
+                  <TableRow
+                    key={manga.id}
+                    hover
+                    selected={selected.includes(manga.id)}
                   >
-                    {manga.title}
-                  </Link>
-                </TableCell>
-
-                <TableCell data-label="หมวดหมู่">
-                  {manga.category ? (
-                    <Chip
-                      label={manga.category.name}
-                      size="small"
-                      sx={{
-                        bgcolor: "rgba(251,191,36,0.08)",
-                        color: "#fbbf24",
-                        border: "1px solid rgba(251,191,36,0.18)",
-                        fontSize: "0.75rem",
-                        height: 24,
-                        fontWeight: 600,
-                        maxWidth: "100%",
-                      }}
-                    />
-                  ) : (
-                    <Box component="span" sx={{ color: maggaColors.textSecondary }}>
-                      -
-                    </Box>
-                  )}
-                </TableCell>
-
-                <TableCell data-label="แท็ก">
-                  <Stack
-                    direction="row"
-                    spacing={0.5}
-                    sx={{
-                      flexWrap: "wrap",
-                      gap: 0.5,
-                    }}
-                  >
-                    {manga.tags.slice(0, 3).map((tag) => (
-                      <Chip
-                        key={tag.id}
-                        label={tag.name}
-                        title={tag.name}
-                        size="small"
+                    <TableCell>
+                      {selecting && (
+                        <Checkbox
+                          disabled={bulkBusy}
+                          checked={selected.includes(manga.id)}
+                          onChange={() => handleSelect(manga.id)}
+                          slotProps={{
+                            input: { "aria-label": `เลือก ${manga.title}` },
+                          }}
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Avatar
+                        src={manga.coverImage || undefined}
+                        alt=""
+                        variant="rounded"
                         sx={{
-                          ...getMetadataChipSx(tag.name),
-                          fontSize: "0.75rem",
-                          height: 24,
-                          fontWeight: 600,
-                          borderRadius: 0.75,
-                          maxWidth: 120,
+                          width: 48,
+                          height: 64,
+                          borderRadius: `${maggaRadii.card}px`,
                         }}
                       />
-                    ))}
-                    {manga.tags.length > 3 && (
-                      <Chip
-                        label={`+${manga.tags.length - 3}`}
-                        size="small"
+                    </TableCell>
+                    <TableCell>
+                      <Link
+                        href={`/${manga.slug || manga.id}`}
+                        prefetch={false}
+                        title={manga.title}
+                        style={{
+                          color: maggaColors.textPrimary,
+                          display: "block",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          textDecoration: "none",
+                          fontWeight: 500,
+                        }}
+                      >
+                        {manga.title}
+                      </Link>
+                      <Typography
+                        noWrap
                         sx={{
-                          bgcolor: maggaColors.surfaceElevated,
                           color: maggaColors.textSecondary,
                           fontSize: "0.75rem",
-                          height: 24,
                         }}
+                      >
+                        {manga.author?.name || "ไม่ระบุผู้แต่ง"}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography
+                        sx={{ overflowWrap: "anywhere", fontSize: "0.875rem" }}
+                      >
+                        {manga.category?.name || "ไม่ระบุ"}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Stack
+                        direction="row"
+                        useFlexGap
+                        spacing={0.5}
+                        sx={{ flexWrap: "wrap" }}
+                      >
+                        {manga.tags.slice(0, 3).map((tag) => (
+                          <Chip
+                            key={tag.id}
+                            label={tag.name}
+                            size="small"
+                            sx={{
+                              ...getMetadataChipSx(tag.name),
+                              maxWidth: "100%",
+                              height: "auto",
+                              minHeight: 24,
+                              fontSize: "0.75rem",
+                              "& .MuiChip-label": {
+                                lineHeight: 1.75,
+                                py: "1px",
+                              },
+                            }}
+                          />
+                        ))}
+                        {manga.tags.length > 3 && (
+                          <Button
+                            onClick={() => handleOpenSettings(manga)}
+                            sx={{ minHeight: 44, minWidth: 44 }}
+                          >
+                            +{manga.tags.length - 3}
+                          </Button>
+                        )}
+                      </Stack>
+                    </TableCell>
+                    <TableCell>
+                      <MangaStatus manga={manga} />
+                    </TableCell>
+                    <TableCell>
+                      <Typography
+                        sx={{
+                          color: maggaColors.textSecondary,
+                          fontSize: "0.75rem",
+                          fontVariantNumeric: "tabular-nums",
+                        }}
+                      >
+                        สะสม {manga.viewCount.toLocaleString()}
+                      </Typography>
+                      <MangaViewHistory
+                        id={manga.id}
+                        title={manga.title}
+                        initial={manga.viewHistory}
                       />
-                    )}
-                  </Stack>
-                </TableCell>
-
-                <TableCell data-label="สถานะ">
-                  <Chip
-                    label={manga.isHidden ? manga.scheduledPublishAt ? "ตั้งเวลาแล้ว" : "ซ่อน" : "เผยแพร่"}
-                    size="small"
-                    sx={{
-                      bgcolor: manga.isHidden && manga.scheduledPublishAt ? maggaColors.archiveGoldSoft : manga.isHidden
-                        ? "rgba(239,68,68,0.08)"
-                        : "rgba(34,197,94,0.08)",
-                      color: manga.isHidden && manga.scheduledPublishAt ? maggaColors.archiveGoldHover : manga.isHidden ? "#fca5a5" : "#4ade80",
-                      border: manga.isHidden
-                        ? "1px solid rgba(239,68,68,0.16)"
-                        : "1px solid rgba(34,197,94,0.16)",
-                      fontSize: "0.75rem",
-                      height: 24,
-                      fontWeight: 600,
-                    }}
-                  />
-                  {manga.isHidden && manga.scheduledPublishAt && <Typography sx={{ mt: 0.5, color: maggaColors.textSecondary, fontSize: "0.7rem", minHeight: 32 }}>
-                    {new Date(manga.scheduledPublishAt).toLocaleString("th-TH", { timeZone: manga.publicationTimeZone || "Asia/Bangkok" })}
-                    <br />{manga.publicationTimeZone || "Asia/Bangkok"}
-                  </Typography>}
-                </TableCell>
-
-                <TableCell data-label="ยอดอ่าน" sx={{ color: maggaColors.textSecondary, px: 1, py: 1 }}>
-                  <Box sx={{ width: "100%", maxWidth: 130, minWidth: 0, ml: "auto" }}>
-                    <Typography component="span" noWrap sx={{ display: "block", fontSize: "0.75rem", lineHeight: 1.75, fontVariantNumeric: "tabular-nums" }}>สะสม {manga.viewCount.toLocaleString()}</Typography>
-                    <MangaViewHistory id={manga.id} title={manga.title} initial={manga.viewHistory} />
-                  </Box>
-                </TableCell>
-
-                <TableCell data-label="จัดการ" align="right">
-                  <Stack
-                    direction="row"
-                    sx={{
-                      justifyContent: "flex-end",
-                      gap: 0.5,
-                      flexWrap: "nowrap",
-                    }}
-                  >
-                    <IconButton
-                      aria-label={`ตั้งค่า ${manga.title}`}
-                      disabled={bulkBusy}
-                      onClick={() => handleOpenSettings(manga)}
-                    >
-                      <SettingsIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      component={Link}
-                      prefetch={false}
-                      href={`/dashboard/admin/manga/${manga.id}/edit`}
-                      aria-label={`แก้ไข ${manga.title}`}
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    <AdminRowMenu
-                      title={manga.title}
-                      disabled={bulkBusy}
-                      actions={[
-                        {
-                          label: "เปิดหน้าเรื่อง",
-                          href: `/${manga.slug || manga.id}`,
-                          newTab: true,
-                        },
-                        {
-                          label: manga.isHidden ? "แสดงเรื่อง" : "ซ่อนเรื่อง",
-                          onClick: () =>
-                            void handleToggleVisibility(
-                              manga.id,
-                              manga.isHidden,
-                            ),
-                        },
-                        {
-                          label: "ลบเรื่อง",
-                          danger: true,
-                          onClick: () => handleOpenDeleteDialog(manga),
-                        },
-                      ]}
-                    />
-                  </Stack>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
+                    </TableCell>
+                    <TableCell>
+                      <Stack direction="row" sx={{ alignItems: "center" }}>
+                        <Button
+                          component={Link}
+                          href={`/dashboard/admin/manga/${manga.id}/edit`}
+                          prefetch={false}
+                          disabled={bulkBusy}
+                          aria-label={`แก้ไข ${manga.title}`}
+                          sx={{ minHeight: 44 }}
+                        >
+                          แก้ไข
+                        </Button>
+                        <AdminRowMenu
+                          title={manga.title}
+                          disabled={bulkBusy}
+                          actions={[
+                            {
+                              label: "เปิดหน้าเรื่อง",
+                              icon: <OpenInNewIcon fontSize="small" />,
+                              href: `/${manga.slug || manga.id}`,
+                              newTab: true,
+                            },
+                            {
+                              label: "ตั้งค่าด่วน",
+                              icon: <TuneIcon fontSize="small" />,
+                              onClick: () => handleOpenSettings(manga),
+                            },
+                            {
+                              label: "ดูสถิติ",
+                              icon: <QueryStatsIcon fontSize="small" />,
+                              onClick: () => setHistoryManga(manga),
+                            },
+                            {
+                              label: manga.isHidden
+                                ? "เผยแพร่เรื่อง"
+                                : "ซ่อนเรื่อง",
+                              icon: manga.isHidden ? (
+                                <VisibilityIcon fontSize="small" />
+                              ) : (
+                                <VisibilityOffIcon fontSize="small" />
+                              ),
+                              onClick: () => requestVisibility(manga),
+                            },
+                            {
+                              label: "ลบเรื่อง",
+                              icon: <DeleteOutlinedIcon fontSize="small" />,
+                              danger: true,
+                              onClick: () => handleOpenDeleteDialog(manga),
+                            },
+                          ]}
+                        />
+                      </Stack>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </>
+      )}
+      {historyManga && (
+        <HistoryDialog
+          id={historyManga.id}
+          title={historyManga.title}
+          close={() => setHistoryManga(null)}
+        />
+      )}
+      <Dialog
+        open={!!visibilityTarget}
+        onClose={() => {
+          if (!bulkBusy) setVisibilityTarget(null);
+        }}
+        aria-labelledby="publish-now-title"
+      >
+        <DialogTitle id="publish-now-title">เผยแพร่ทันที?</DialogTitle>
+        <DialogContent sx={{ overflowWrap: "anywhere" }}>
+          <Typography sx={{ overflowWrap: "anywhere" }}>
+            {visibilityTarget?.title}
+          </Typography>
+          <Typography sx={{ mt: 1 }}>
+            เรื่องนี้ตั้งเวลาเผยแพร่ไว้
+            การยืนยันจะยกเลิกกำหนดเวลาและเผยแพร่ทันที
+          </Typography>
+        </DialogContent>
+        <DialogActions
+          sx={{ flexWrap: "wrap", "& .MuiButton-root": { minHeight: 44 } }}
+        >
+          <Button disabled={bulkBusy} onClick={() => setVisibilityTarget(null)}>
+            ยกเลิก
+          </Button>
+          <Button
+            disabled={bulkBusy}
+            onClick={() => {
+              if (visibilityTarget)
+                void handleToggleVisibility(
+                  visibilityTarget.id,
+                  visibilityTarget.isHidden,
+                );
+            }}
+          >
+            เผยแพร่ทันที
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={!!bulkConfirm}
+        onClose={() => {
+          if (!bulkBusy) setBulkConfirm(null);
+        }}
+        aria-labelledby="bulk-confirm-title"
+      >
+        <DialogTitle id="bulk-confirm-title">
+          {bulkConfirm === "delete"
+            ? `ลบมังงะ ${selected.length} เรื่อง?`
+            : `เผยแพร่ทันที ${selected.length} เรื่อง?`}
+        </DialogTitle>
+        <DialogContent sx={{ overflowWrap: "anywhere" }}>
+          <Typography>
+            {bulkConfirm === "delete"
+              ? "การลบไม่สามารถยกเลิกได้ ตรวจสอบรายการก่อนยืนยัน"
+              : `จะยกเลิกกำหนดเวลาของ ${selectedScheduled.length} เรื่อง และเผยแพร่รายการที่เลือกทันที`}
+          </Typography>
+          <Box
+            component="ul"
+            sx={{
+              pl: 2.5,
+              maxHeight: 240,
+              overflow: "auto",
+              overflowWrap: "anywhere",
+            }}
+          >
+            {mangas
+              .filter((manga) => selected.includes(manga.id))
+              .map((manga) => (
+                <li key={manga.id}>{manga.title}</li>
+              ))}
+          </Box>
+        </DialogContent>
+        <DialogActions
+          sx={{ flexWrap: "wrap", "& .MuiButton-root": { minHeight: 44 } }}
+        >
+          <Button disabled={bulkBusy} onClick={() => setBulkConfirm(null)}>
+            ยกเลิก
+          </Button>
+          <Button
+            disabled={bulkBusy}
+            color={bulkConfirm === "delete" ? "error" : "primary"}
+            onClick={() => {
+              if (bulkConfirm) void runBulkAction(bulkConfirm);
+            }}
+          >
+            {bulkBusy
+              ? "กำลังบันทึก…"
+              : bulkConfirm === "delete"
+                ? "ยืนยันการลบ"
+                : "เผยแพร่ทันที"}
+          </Button>
+        </DialogActions>
+      </Dialog>
       {/* Quick Settings Dialog */}
       <Dialog
         open={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
+        onClose={() => {
+          if (!bulkBusy) setSettingsOpen(false);
+        }}
         maxWidth="sm"
         fullWidth
         slotProps={{
@@ -694,8 +852,19 @@ export default function MangaDataTable({
           }}
         >
           ตั้งค่าด่วน
+          <Typography
+            component="span"
+            sx={{
+              display: "block",
+              overflowWrap: "anywhere",
+              color: maggaColors.textSecondary,
+              fontSize: "0.875rem",
+            }}
+          >
+            {editingManga?.title}
+          </Typography>
         </DialogTitle>
-        <DialogContent>
+        <DialogContent sx={{ overflowWrap: "anywhere" }}>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <AdminOptionPicker
               kind="categories"
@@ -724,14 +893,23 @@ export default function MangaDataTable({
             />
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ p: 2.5, pt: 1 }}>
+        <DialogActions
+          sx={{
+            p: 2.5,
+            pt: 1,
+            flexWrap: "wrap",
+            "& .MuiButton-root": { minHeight: 44 },
+          }}
+        >
           <Button
+            disabled={bulkBusy}
             onClick={() => setSettingsOpen(false)}
             sx={{ color: "#a3a3a3", fontWeight: 500, textTransform: "none" }}
           >
             ยกเลิก
           </Button>
           <Button
+            disabled={bulkBusy}
             onClick={handleSaveSettings}
             variant="contained"
             sx={{
@@ -749,24 +927,30 @@ export default function MangaDataTable({
       {/* Delete Confirmation Dialog */}
       <Dialog
         open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
+        onClose={() => {
+          if (!bulkBusy) setDeleteDialogOpen(false);
+        }}
       >
         <DialogTitle>ยืนยันการลบ</DialogTitle>
-        <DialogContent>
+        <DialogContent sx={{ overflowWrap: "anywhere" }}>
           คุณต้องการลบมังงะ "{mangaToDelete?.title}" ใช่หรือไม่?
           <br />
           <Box component="span" sx={{ color: "#ef4444", fontWeight: 600 }}>
             การกระทำนี้ไม่สามารถยกเลิกได้
           </Box>
         </DialogContent>
-        <DialogActions>
+        <DialogActions
+          sx={{ flexWrap: "wrap", "& .MuiButton-root": { minHeight: 44 } }}
+        >
           <Button
+            disabled={bulkBusy}
             onClick={() => setDeleteDialogOpen(false)}
             sx={{ textTransform: "none" }}
           >
             ยกเลิก
           </Button>
           <Button
+            disabled={bulkBusy}
             onClick={handleDeleteConfirm}
             color="error"
             variant="contained"
