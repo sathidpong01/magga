@@ -61,6 +61,7 @@ it("stays dismissed on pending timers and focus but allows reopening from the fo
   Object.assign(window, { setInterval: schedule, clearInterval: mock() });
   const banner = CookieConsent();
   const cleanup = effects[0]();
+  expect(schedule).not.toHaveBeenCalled();
   expect(clickChoice(banner, "ปิดการตั้งค่าความเป็นส่วนตัว")).toBe(true);
   for (const callback of timers) callback();
   window.dispatchEvent(new Event("focus"));

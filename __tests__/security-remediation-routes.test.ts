@@ -14,7 +14,7 @@ const getSession = jest.fn(async (input: { query?: { disableCookieCache?: boolea
   return state.revoked ? null : { user: state.current };
 });
 const quota = jest.fn(async (_key: string) => ({ allowed: true, remaining: 1 }));
-const recordView = jest.fn(async () => ({ viewCount: 1 }));
+const recordView = jest.fn<typeof import("@/lib/manga-statistics").recordMangaView>(async () => ({ viewCount: 1, deduplicated: false }));
 const recordRating = jest.fn(async () => ({ averageRating: 5 }));
 mock.module("@/db", () => ({ db }));
 mock.module("@/lib/auth", () => ({ auth: { api: { getSession } } }));
@@ -106,10 +106,10 @@ it("statistics quotas ignore spoofed identity and fail closed without the Vercel
   expect(recordView).toHaveBeenCalledTimes(2); expect(recordRating).toHaveBeenCalledTimes(2);
 });
 
-it.each(["", `magga_consent=2.no.${Date.now()}`, "magga_consent=1.yes.1"])("view statistics skip quotas, writes and cookies without consent: %s", async cookie => {
+it.each(["", `magga_consent=2.no.${Date.now()}`, "magga_consent=1.yes.1"])("basic views count without visitor identity or cookies: %s", async cookie => {
   const response = await view(request({}, "POST", { cookie }), params);
-  expect(response.status).toBe(204);
+  expect(response.status).toBe(200);
   expect(response.headers.getSetCookie()).toEqual([]);
-  expect(quota).not.toHaveBeenCalled();
-  expect(recordView).not.toHaveBeenCalled();
+  expect(quota).toHaveBeenCalled();
+  expect(recordView).toHaveBeenCalledWith(expect.anything(), id, null, expect.any(String));
 });

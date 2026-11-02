@@ -12,20 +12,10 @@ export default function CookieConsent() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const savingRef = useRef(false);
-  const dismissed = useRef(false);
   const firstButton = useRef<HTMLButtonElement>(null);
   const opener = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>;
-    const check = () => {
-      clearTimeout(timer);
-      try {
-        if (!dismissed.current && localStorage.getItem("isAgeVerified") && consentFromCookies(document.cookie) === null) {
-          timer = setTimeout(() => { if (!dismissed.current) setVisible(true); }, 1500);
-        }
-      } catch { /* Settings remain available from the footer. */ }
-    };
     const open = () => {
       consumePrivacySettingsRequest();
       opener.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -33,18 +23,10 @@ export default function CookieConsent() {
       setError("");
       requestAnimationFrame(() => firstButton.current?.focus());
     };
-    check();
-    window.addEventListener("magga-age-verified", check);
     window.addEventListener(OPEN_PRIVACY_SETTINGS, open);
-    window.addEventListener("focus", check);
     if (consumePrivacySettingsRequest()) open();
-    const interval = window.setInterval(check, 60_000);
     return () => {
-      clearTimeout(timer);
-      clearInterval(interval);
-      window.removeEventListener("magga-age-verified", check);
       window.removeEventListener(OPEN_PRIVACY_SETTINGS, open);
-      window.removeEventListener("focus", check);
     };
   }, []);
 
@@ -92,7 +74,6 @@ export default function CookieConsent() {
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: 44, gap: 1 }}>
           <Typography id="privacy-choice-title" component="h2" variant="subtitle1" sx={{ fontWeight: 700 }}>ความเป็นส่วนตัวของคุณ</Typography>
           <IconButton aria-label="ปิดการตั้งค่าความเป็นส่วนตัว" disabled={saving} onClick={() => {
-            dismissed.current = true;
             setVisible(false);
             setError("");
             opener.current?.focus();
@@ -101,7 +82,7 @@ export default function CookieConsent() {
           </IconButton>
         </Box>
         <Typography id="privacy-choice-description" variant="body2" sx={{ mt: 1, color: maggaColors.textSecondary, lineHeight: 1.75 }}>
-          เว็บไซต์นี้ใช้คุกกี้จำเป็นเพื่อให้คุณเข้าใช้งานและคอมเมนต์ได้ คุณสามารถเลือกอนุญาตคุกกี้วัดผลเพื่อช่วยเราปรับปรุงเว็บเพิ่มเติมได้ หรือจะปฏิเสธก็ยังใช้งานได้ตามปกติครับ
+          เว็บไซต์ใช้คุกกี้จำเป็นสำหรับเข้าสู่ระบบและคอมเมนต์ ยอดอ่านพื้นฐานนับได้โดยไม่ใช้คุกกี้ระบุตัวผู้อ่าน ส่วนการวิเคราะห์การใช้งานและสถิติโฆษณาเพิ่มเติมจะทำงานเมื่อคุณอนุญาตเท่านั้น
         </Typography>
         <Link component={NextLink} href="/privacy" sx={{ display: "inline-flex", alignItems: "center", minHeight: 44, color: maggaColors.archiveGoldHover }}>อ่านนโยบายความเป็นส่วนตัว</Link>
         <Typography variant="caption" component="p" sx={{ color: maggaColors.textSecondary, mb: 1.5 }}>เปลี่ยนการตั้งค่าได้ที่ “ตั้งค่าความเป็นส่วนตัว” ท้ายเว็บ (บันทึกไว้ 180 วัน)</Typography>

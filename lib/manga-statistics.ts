@@ -20,7 +20,7 @@ export async function recordMangaRating(database: Pick<typeof db, "transaction">
   });
 }
 
-export async function recordMangaView(database: Pick<typeof db, "transaction">, id: string, viewerKey: string, eventKey?: string) {
+export async function recordMangaView(database: Pick<typeof db, "transaction">, id: string, viewerKey: string | null, eventKey?: string) {
   return database.transaction(async tx => {
     const [work] = await tx.select({ viewCount: manga.viewCount }).from(manga)
       .where(and(eq(manga.id, id), eq(manga.isHidden, false))).for("update");
@@ -28,7 +28,7 @@ export async function recordMangaView(database: Pick<typeof db, "transaction">, 
     const marker = (key: string) => tx.insert(mangaViews).values({ mangaId: id, ipHash: key, viewedAt: new Date() })
       .onConflictDoUpdate({ target: [mangaViews.mangaId, mangaViews.ipHash], set: { viewedAt: sql`NOW()` }, setWhere: sql`${mangaViews.viewedAt} < NOW() - INTERVAL '10 minutes'` })
       .returning({ viewerKey: mangaViews.ipHash });
-    const fresh = (await marker(viewerKey)).length > 0;
+    const fresh = viewerKey ? (await marker(viewerKey)).length > 0 : true;
     // Remember the recovered visitor cookie even when a lost-response retry is already counted.
     if (eventKey && !(await marker(eventKey)).length) return { viewCount: Number(work.viewCount), deduplicated: true };
     if (!fresh) return { viewCount: Number(work.viewCount), deduplicated: true };

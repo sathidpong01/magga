@@ -67,6 +67,22 @@ it("preserves callers with no request body", async () => {
   expect(await (await POST(request(), params)).json()).toEqual({ viewCount: 1, deduplicated: false });
 });
 
+it.each(["", `magga_consent=2.no.${Date.now()}`, "magga_consent=1.yes.1"])("counts basic reads without cookies or visitor markers: %s", async cookie => {
+  const opening = (openingId: string) => {
+    const input = request(JSON.stringify({ eventId: openingId }));
+    input.headers.set("cookie", `${cookie}; magga_vid=${"a".repeat(32)}`);
+    return input;
+  };
+  const first = await POST(opening(eventId), params);
+  expect(await first.json()).toEqual({ viewCount: 1, deduplicated: false });
+  expect(first.headers.getSetCookie()).toEqual([]);
+  const retry = await POST(opening(eventId), params);
+  expect(await retry.json()).toEqual({ viewCount: 1, deduplicated: true });
+  expect(retry.headers.getSetCookie()).toEqual([]);
+  expect(await (await POST(opening(crypto.randomUUID()), params)).json()).toEqual({ viewCount: 2, deduplicated: false });
+  expect((await pg.query("SELECT * FROM manga_views")).rows).toHaveLength(2);
+});
+
 it.each(['{"eventId":"invalid"}', "{", "null", "[]"])("rejects invalid event input before quota or writes: %s", async body => {
   expect((await POST(request(body), params)).status).toBe(400);
   expect(quota).not.toHaveBeenCalled();

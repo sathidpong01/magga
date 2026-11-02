@@ -82,7 +82,7 @@ it.each([400, 403, 404, 204, 429])("does not retry terminal HTTP %s or a long ra
   expect(fetcher).toHaveBeenCalledTimes(1);
 });
 
-it("waits for a visible tab and does not send without consent", () => {
+it("waits for a visible tab and counts without consent", () => {
   Object.assign(document, { visibilityState: "hidden" });
   mount();
   expect(fetcher).not.toHaveBeenCalled();
@@ -91,18 +91,17 @@ it("waits for a visible tab and does not send without consent", () => {
   Object.assign(document, { visibilityState: "visible" });
   document.cookie = "";
   document.dispatchEvent(new Event("visibilitychange"));
-  expect(fetcher).not.toHaveBeenCalled();
+  expect(fetcher).toHaveBeenCalledTimes(1);
   document.cookie = `magga_consent=2.yes.${Date.now()}`;
   document.dispatchEvent(new Event("visibilitychange"));
   expect(fetcher).toHaveBeenCalledTimes(1);
 });
 
-it.each(["unmount", "withdrawal"])("stops retries after %s", async reason => {
+it("stops retries after unmount", async () => {
   fetcher.mockResolvedValue(new Response(null, { status: 503 }));
   mount();
   await flush();
-  if (reason === "unmount") cleanup?.();
-  else document.cookie = "";
+  cleanup?.();
   jest.advanceTimersByTime(500);
   await flush();
   expect(fetcher).toHaveBeenCalledTimes(1);

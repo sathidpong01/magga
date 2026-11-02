@@ -1,7 +1,5 @@
 "use client";
 
-import { hasStatisticsConsent } from "@/lib/privacy-consent";
-import { useStatisticsConsent } from "@/lib/use-statistics-consent";
 import { deliverEvent } from "@/lib/event-transport";
 import { useState, useEffect, useRef } from "react";
 import {
@@ -39,7 +37,6 @@ export default function MangaViewRating({
   hideAverage = false,
   trackViewOnMount = false,
 }: MangaViewRatingProps) {
-  const statisticsAllowed = useStatisticsConsent();
   const [averageRating, setAverageRating] = useState(initialAverageRating);
   const [ratingCount, setRatingCount] = useState(initialRatingCount);
   const [userRating, setUserRating] = useState<number | null>(null);
@@ -76,13 +73,13 @@ export default function MangaViewRating({
 
   // Track a page view only from the designated instance and only once the tab is visible.
   useEffect(() => {
-    viewActive.current = statisticsAllowed && trackViewOnMount;
+    viewActive.current = trackViewOnMount;
     if (!viewActive.current) return;
 
     const postView = () => {
-      if (viewDelivery.current || !hasStatisticsConsent() || document.visibilityState !== "visible") return;
+      if (viewDelivery.current || document.visibilityState !== "visible") return;
       viewDelivery.current = deliverEvent(`/api/manga/${mangaId}/view`, { eventId: crypto.randomUUID() }, {
-        isCurrent: () => viewActive.current && hasStatisticsConsent(),
+        isCurrent: () => viewActive.current,
       });
     };
 
@@ -93,7 +90,7 @@ export default function MangaViewRating({
       viewActive.current = false;
       document.removeEventListener("visibilitychange", postView);
     };
-  }, [mangaId, trackViewOnMount, statisticsAllowed]);
+  }, [mangaId, trackViewOnMount]);
 
   // Load FingerprintJS and fetch existing rating
   useEffect(() => {

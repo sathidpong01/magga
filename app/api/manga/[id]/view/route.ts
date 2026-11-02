@@ -42,15 +42,13 @@ function withVisitorCookie(response: NextResponse, visitorId: string, shouldSetC
 /**
  * POST /api/manga/[id]/view
  * Increment read count with DB-level dedup (persists across serverless invocations).
- * Uses a stable first-party visitor cookie per visitor per manga (10-minute dedup window).
+ * Basic views use only a per-opening event ID; consenting readers also get 10-minute visitor dedup.
  */
 export async function POST(
   request: NextRequest,
   { params }: RouteParams
 ) {
-  if (consentFromCookies(request.headers.get("cookie")) !== true) {
-    return new NextResponse(null, { status: 204, headers: { "Cache-Control": "private, no-store" } });
-  }
+  const statisticsAllowed = consentFromCookies(request.headers.get("cookie")) === true;
   try {
     const { id } = await params;
     if (!z.uuid().safeParse(id).success) return NextResponse.json({ error: "Invalid manga ID" }, { status: 400 });
@@ -78,14 +76,13 @@ export async function POST(
         headers: { 'Cache-Control': 'private, no-store', 'Retry-After': String(Math.max(1, Math.ceil((quota.resetTime - Date.now()) / 1000))) },
       });
     }
-    const { viewerKey, visitorId, shouldSetCookie } = getViewerKey(request, id);
-    const eventKey = event.data.eventId
-      ? createHash('sha256').update(`event:${event.data.eventId}:${id}`).digest('hex').slice(0, 24)
-      : undefined;
-    const result = await recordMangaView(db, id, viewerKey, eventKey);
+    const identity = statisticsAllowed ? getViewerKey(request, id) : null;
+    const eventKey = createHash('sha256').update(`event:${event.data.eventId ?? createVisitorId()}:${id}`).digest('hex').slice(0, 24);
+    const result = await recordMangaView(db, id, identity?.viewerKey ?? null, eventKey);
     if (!result) return NextResponse.json({ error: "Manga not found" }, { status: 404 });
     console.info(JSON.stringify({ event: "manga_view", outcome: result.deduplicated ? "deduplicated" : "counted", mangaId: id, status: 200 }));
-    return withVisitorCookie(NextResponse.json(result, { headers: { "Cache-Control": "private, no-store" } }), visitorId, shouldSetCookie);
+    const response = NextResponse.json(result, { headers: { "Cache-Control": "private, no-store" } });
+    return identity ? withVisitorCookie(response, identity.visitorId, identity.shouldSetCookie) : response;
   } catch (error: unknown) {
     console.error(JSON.stringify({ event: "manga_view", outcome: "failed", reason: "storage_error", status: 500, error: error instanceof Error ? error.name : "UnknownError" }));
     return NextResponse.json(
