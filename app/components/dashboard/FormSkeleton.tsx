@@ -24,8 +24,11 @@ export function FormSkeleton({ mode="admin",editing=false }: { mode?: "admin"|"s
         </Stack>
       </DashboardSurface></Grid>
       <Grid size={{ xs: 12,lg: 8 }} sx={{ order: { xs: 2,lg: 1 } }}><DashboardSurface sx={{ height: "100%",minHeight: 600 }}>
-        <DashboardSectionTitle title="จัดภาพและลำดับหน้า" description="เพิ่มภาพหน้าอ่าน ตรวจภาพตัวอย่าง และเรียงลำดับก่อนบันทึก" />
-        <Stack spacing={2}>{field(44)}{field(220)}{field(44)}</Stack>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", minHeight: 44, mb: 1 }}>
+          <Typography variant="subtitle1" component="h2" sx={{ fontWeight: 700 }}>จัดลำดับหน้า</Typography>
+          <Skeleton variant="rounded" width={96} height={44} />
+        </Box>
+        <Stack spacing={2}>{field(220)}{field(44)}</Stack>
       </DashboardSurface></Grid>
     </Grid>
     <Box sx={{ mt: 3,minHeight: 64 }}>{field(64)}</Box>

@@ -37,6 +37,7 @@ Use this skill when:
 - Implementing UI components
 - Setting up authentication flows
 - Deploying to Vercel
+- Curating manga or author metadata via MCP: use the `magga-metadata-curation` skill
 
 ## Version Updates
 

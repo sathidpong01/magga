@@ -1776,11 +1776,6 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
             {/* Primary Column: Page Workspace */}
             <Grid size={{ xs: 12, lg: 8 }} sx={{ order: { xs: 2, lg: 1 } }}>
               <DashboardSurface sx={{ height: "100%" }}>
-                <DashboardSectionTitle
-                  title="จัดภาพและลำดับหน้า"
-                  description="เพิ่มภาพหน้าอ่าน ตรวจภาพตัวอย่าง และเรียงลำดับก่อนบันทึก"
-                />
-
                 {/* Pages */}
                 <Box
                   id="manga-pages-field"
@@ -1794,11 +1789,13 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "center",
-                      mb: 1.1,
+                      minHeight: 44,
+                      gap: 1,
+                      mb: 1,
                     }}
                   >
-                    <Typography variant="subtitle1" component="h3">
-                      หน้าอ่าน ({pageItems.length})
+                    <Typography variant="subtitle1" component="h2" sx={{ fontWeight: 700 }}>
+                      จัดลำดับหน้า · {pageItems.length}
                     </Typography>
                     <Button
                       size="small"
@@ -1824,11 +1821,10 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                       sx={{
                         display: "block",
                         color: dashboardTokens.textSoft,
-                        mb: 1.8,
+                        mb: 1.5,
                       }}
                     >
-                      ลากจากปุ่มย้าย หรือใช้ขึ้น/ลงและเลขหน้า ·
-                      กดรูปตาเพื่อดูภาพเต็ม
+                      ลากเพื่อเรียงหน้า หรือแก้เลขแล้วกด Enter
                     </Typography>
                   )}
 
@@ -1843,22 +1839,16 @@ export default function MangaForm({ manga, mode }: MangaFormProps) {
                     >
                       <Box
                         sx={{
-                          p: 1.4,
-                          borderRadius: 2.5,
-                          border: "1px solid rgba(255,255,255,0.08)",
-                          bgcolor: "rgba(255,255,255,0.02)",
                           display: "grid",
-                          gridTemplateColumns: {
-                            xs: "minmax(0,1fr)",
-                            sm: "repeat(auto-fill,minmax(min(100%,260px),1fr))",
-                          },
-                          gap: 1.6,
+                          gridTemplateColumns: "repeat(auto-fill,minmax(min(100%,192px),1fr))",
+                          gap: 1.5,
                           alignItems: "start",
                           maxHeight: {
                             xs: "none",
                             lg: "max(580px, calc(100dvh - 280px))",
                           },
                           overflowY: { xs: "visible", lg: "auto" },
+                          scrollbarGutter: { lg: "stable" },
                         }}
                       >
                         {pageItems.map((item, index) => (
