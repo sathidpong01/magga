@@ -1,6 +1,8 @@
 name: CI
 
 on:
+  push:
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -13,8 +15,11 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
           bun-version: '1.4.2'
@@ -26,6 +31,7 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     services:
       postgres:
         image: postgres:17.6
@@ -47,6 +53,8 @@ jobs:
       NEXT_TELEMETRY_DISABLED: '1'
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
           bun-version: '1.4.2'
@@ -65,3 +73,22 @@ jobs:
       - name: Verify disposable database schema
         run: bun --no-env-file scripts/disposable-schema-check.ts
       - run: bun run build
+
+  gate:
+    name: CI Gate
+    if: ${{ always() }}
+    needs: [checks, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require every check and the disposable database build to pass
+        shell: bash
+        env:
+          CHECKS_RESULT: ${{ needs.checks.result }}
+          BUILD_RESULT: ${{ needs.build.result }}
+        run: |
+          echo "Checks: $CHECKS_RESULT; build: $BUILD_RESULT"
+          if [ "$CHECKS_RESULT" != "success" ] || [ "$BUILD_RESULT" != "success" ]; then
+            echo "::error::All Linux/Windows checks and the build must succeed before production release."
+            exit 1
+          fi

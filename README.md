@@ -210,7 +210,9 @@ Scheduled manga publishing uses the admin's local time zone and server-side cloc
 
 Manga covers and pages share validated, retry-safe uploads. See [manga uploads](docs/manga-uploads.md) for supported images, API limits, migration and orphan cleanup.
 
-GitHub CI runs only through `workflow_dispatch`; pushes and pull requests do not trigger it automatically. Vercel Preview builds continue automatically for the experimental branch.
+GitHub CI runs automatically on every push and pull request; `workflow_dispatch` remains available for manual reruns. It checks Bun 1.4.2, lint, types, and tests on Linux and Windows, and builds against disposable PostgreSQL on Linux. The `CI Gate` job succeeds only when all checks and the build succeed; failed, skipped, or cancelled dependencies fail the gate.
+
+Vercel continues building from Git in parallel. In the Magga project's **Settings → Build and Deployment → Deployment Checks**, require the GitHub `CI Gate` check and keep automatic assignment of production domains enabled. Vercel then holds each production deployment until that commit's gate passes, leaving the previous production deployment live on failure. Fix the reported error and push a new commit to retry automatically; do not use Force Promote to bypass the gate. Preview builds remain available independently. The workflow and the Vercel setting are both required: automatic CI alone does not block a production release.
 
 ### 🚀 Performance Optimizations (2026-02-14 Major Update)
 
