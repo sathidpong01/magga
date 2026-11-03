@@ -127,6 +127,13 @@
       "when": 1793548800000,
       "tag": "0017_manga_upload_lifecycle",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793723401756,
+      "tag": "0018_preserve_manga_publication_date",
+      "breakpoints": true
     }
   ]
 }

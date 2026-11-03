@@ -1,8 +1,10 @@
-import { beforeEach, expect, it, mock } from "bun:test";
+import { afterEach, beforeEach, expect, it, jest, mock } from "bun:test";
 import { isValidElement, type ReactElement } from "react";
+import { restoreGlobals, stubGlobal } from "./helpers/globals";
 
 const state: unknown[] = [];
 const refs: { current: unknown }[] = [];
+const effects: Array<() => void | (() => void)> = [];
 let stateIndex = 0,
   refIndex = 0;
 const fetchMock = mock<
@@ -26,7 +28,7 @@ mock.module("react", () => ({
   },
   useRef: (initial: unknown) =>
     refs[refIndex++] ?? (refs[refIndex - 1] = { current: initial }),
-  useEffect: () => {},
+  useEffect: (effect: () => void | (() => void)) => { effects.push(effect); },
 }));
 mock.module("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 mock.module("@/lib/auth-fetch", () => ({ authFetch: fetchMock }));
@@ -81,7 +83,7 @@ function search(
     }
   }
 }
-function render(initialMangas = works) {
+function render(initialMangas: Parameters<typeof MangaDataTable>[0]["initialMangas"] = works) {
   stateIndex = 0;
   refIndex = 0;
   return MangaDataTable({ initialMangas });
@@ -109,11 +111,46 @@ function selectTwo() {
 }
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
 beforeEach(() => {
+  effects.length = 0;
   state.length = 0;
   refs.length = 0;
   fetchMock.mockClear();
   refresh.mockClear();
   showError.mockClear();
+});
+afterEach(() => { jest.useRealTimers(); restoreGlobals(); });
+
+it("refreshes scheduled status while visible, resumes on tab return, and cleans up", () => {
+  jest.useFakeTimers();
+  const page = Object.assign(new EventTarget(), { visibilityState: "visible" });
+  stubGlobal("document", page);
+  render([{ ...works[0], isHidden: true, scheduledPublishAt: "2099-01-01T00:00:00Z" }]);
+  const cleanups = effects.map(effect => effect());
+  try {
+    jest.advanceTimersByTime(15000);
+    expect(refresh).toHaveBeenCalledTimes(1);
+    page.visibilityState = "hidden";
+    jest.advanceTimersByTime(30000);
+    expect(refresh).toHaveBeenCalledTimes(1);
+    page.visibilityState = "visible";
+    page.dispatchEvent(new Event("visibilitychange"));
+    expect(refresh).toHaveBeenCalledTimes(2);
+  } finally { for (const cleanup of cleanups) cleanup?.(); }
+  jest.advanceTimersByTime(30000);
+  page.dispatchEvent(new Event("visibilitychange"));
+  expect(refresh).toHaveBeenCalledTimes(2);
+});
+
+it("does not poll when the list contains only published works or unscheduled drafts", () => {
+  jest.useFakeTimers();
+  stubGlobal("document", Object.assign(new EventTarget(), { visibilityState: "visible" }));
+  render([works[0], { ...works[1], isHidden: true }]);
+  const cleanups = effects.map(effect => effect());
+  try {
+    jest.advanceTimersByTime(60000);
+    document.dispatchEvent(new Event("visibilitychange"));
+    expect(refresh).not.toHaveBeenCalled();
+  } finally { for (const cleanup of cleanups) cleanup?.(); }
 });
 
 it("reviews bulk deletion before any request and cancelling retains the selection", () => {

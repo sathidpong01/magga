@@ -7,7 +7,10 @@ never applies an unconfirmed time entered in that dialog. Ordinary edits
 preserve the database's current schedule and visibility. Explicit visibility
 actions (including bulk show/hide) cancel the schedule. The admin list has a
 scheduled filter and displays each scheduled instant in its creator's time zone.
-User submissions retain the existing review flow.
+User submissions retain the existing review flow. While the visible admin list
+contains scheduled manga, it refreshes server status every 15 seconds and when
+the browser tab becomes visible again. It does not infer publication from the
+browser clock, and stops polling once no scheduled rows remain in that list.
 
 The date picker uses the admin browser's IANA time zone (shown beside the field),
 converts the chosen local minute to an absolute ISO instant, and stores it as
@@ -28,8 +31,12 @@ and can be retried with a later time.
 Scheduled rows stay `is_hidden=true`, so existing public list, reader, search,
 metadata, statistics, and comment access checks continue to hide them. The worker
 publishes up to 100 due rows atomically with row locks and `SKIP LOCKED`, then
-invalidates public caches. `created_at` is set to the scheduled release instant
-when a scheduled work first becomes visible, so it appears among new releases.
+invalidates public caches. `created_at` is set to the release instant only on
+first publication, so new scheduled works appear among new releases. The
+`publication_date_set` marker and database visibility trigger preserve that date
+on later hide/show, cancellation, or rescheduling, including manual and bulk
+publication. New drafts establish their date on first publication; new manga
+created directly as published keep their creation date.
 Due timestamps remain until invalidation succeeds. Failed or interrupted runs
 are retried, including when publication committed but cache invalidation failed.
 Acknowledgements match the original timestamp and cannot clear a replacement
@@ -41,6 +48,12 @@ schedule. Retries do not reset the release date.
    Drizzle migration workflow before deploying the application. It adds two
    nullable columns, a paired-null constraint, and a partial index. Existing rows
    retain their visibility. A disposable SQL-engine test executes this migration.
+   Also apply `0018_preserve_manga_publication_date.sql` before deploying this
+   fix. It adds the publication-date marker and trigger. Existing rows, including
+   hidden rows whose publication history is unknown, retain their current dates
+   and ordering. It does not repair dates overwritten by older workers; those
+   require a separately verified original date. Schema-push environments must
+   also install the trigger; adding the column alone is insufficient.
 2. Set a strong `CRON_SECRET` in the target application's server environment.
 3. Deploy the application and configure a caller to request
    `GET /api/cron/publish-manga` every minute with

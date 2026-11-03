@@ -5,7 +5,6 @@ import type { PgDatabase, PgQueryResultHKT } from "drizzle-orm/pg-core";
 export async function publishScheduledManga(database: Pick<PgDatabase<PgQueryResultHKT>, "update">, invalidate: (slugs: string[]) => boolean) {
   const rows = await database.update(manga).set({
     isHidden: false,
-    createdAt: sql`CASE WHEN is_hidden THEN scheduled_publish_at ELSE created_at END`,
     updatedAt: sql`CASE WHEN is_hidden THEN now() ELSE updated_at END`,
   }).where(sql`id IN (
       SELECT id FROM ${manga}

@@ -89,6 +89,18 @@ export default function MangaDataTable({ initialMangas }: MangaDataTableProps) {
   useEffect(() => {
     setMangas(initialMangas);
   }, [initialMangas]);
+  useEffect(() => {
+    if (!initialMangas.some(manga => manga.isHidden && manga.scheduledPublishAt)) return;
+    const refreshScheduled = () => {
+      if (document.visibilityState === "visible" && !mutationInFlight.current) router.refresh();
+    };
+    const timer = setInterval(refreshScheduled, 15000);
+    document.addEventListener("visibilitychange", refreshScheduled);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", refreshScheduled);
+    };
+  }, [initialMangas, router]);
 
   const [selected, setSelected] = useState<string[]>([]);
   const [selecting, setSelecting] = useState(false);

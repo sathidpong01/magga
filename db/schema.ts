@@ -288,6 +288,7 @@ export const manga = pgTable("manga", {
 	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
 	isHidden: boolean("is_hidden").default(false).notNull(),
+	publicationDateSet: boolean("publication_date_set").default(false).notNull(),
 	scheduledPublishAt: timestamp("scheduled_publish_at", { withTimezone: true, mode: 'string' }),
 	publicationTimeZone: text("publication_time_zone"),
 	// You can use { mode: "bigint" } if numbers are exceeding js number limitations
