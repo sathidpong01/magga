@@ -34,7 +34,7 @@ export default function ReaderStartButton({
             : "smooth",
         });
       }}
-      sx={{ minHeight: 44, mt: 1, mb: 1 }}
+      sx={{ minHeight: 44, minWidth: `${13 + String(totalPages).length}ch`, whiteSpace: "nowrap", mt: 1, mb: 1 }}
     >
       {savedPage > 0 ? `อ่านต่อหน้า ${savedPage + 1}` : "เริ่มอ่าน"}
     </Button>

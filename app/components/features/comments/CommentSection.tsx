@@ -13,6 +13,7 @@ import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutlined";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CommentBox from "./CommentBox";
 import CommentList, { type PublicComment } from "./CommentList";
+import { commentSectionSx } from "./CommentSectionPlaceholder";
 
 interface CommentSectionProps {
   mangaId: string;
@@ -142,7 +143,7 @@ export default function CommentSection({
   };
 
   return (
-    <Box>
+    <Box sx={commentSectionSx}>
       {/* Header - seamless, no box */}
       <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 3 }}>
         <ChatBubbleOutlineIcon sx={{ color: "text.secondary" }} />

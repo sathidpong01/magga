@@ -22,9 +22,10 @@ export interface MangaWithDetails {
 interface MangaCardProps {
   manga: MangaWithDetails;
   priority?: boolean;
+  imageSizes?: string;
 }
 
-const MangaCard = ({ manga, priority = false }: MangaCardProps) => {
+const MangaCard = ({ manga, priority = false, imageSizes }: MangaCardProps) => {
   return (
     <Box
       sx={{
@@ -75,7 +76,7 @@ const MangaCard = ({ manga, priority = false }: MangaCardProps) => {
             src={manga.coverImage}
             alt={`Cover of ${manga.title}`}
             fill
-            sizes="(max-width: 600px) 45vw, (max-width: 960px) 30vw, 20vw"
+            sizes={imageSizes ?? "(max-width: 600px) 45vw, (max-width: 960px) 30vw, 20vw"}
             style={{
               objectFit: "cover",
               transition: "transform 0.4s cubic-bezier(0.4, 0, 0.2, 1)",

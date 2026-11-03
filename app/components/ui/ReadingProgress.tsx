@@ -212,11 +212,18 @@ export default function ReadingProgress({
         >
           <Typography
             variant="caption"
-            sx={{ color: maggaColors.archiveGoldHover, fontWeight: 600 }}
+            sx={{
+              color: maggaColors.archiveGoldHover,
+              fontWeight: 600,
+              width: `${8 + String(totalPages).length * 2}ch`,
+              flexShrink: 0,
+              whiteSpace: "nowrap",
+              fontVariantNumeric: "tabular-nums",
+            }}
           >
             หน้า {currentPage + 1}/{totalPages}
           </Typography>
-          <Box sx={{ flex: 1, mx: 2, maxWidth: 200 }}>
+          <Box sx={{ flex: 1, minWidth: 0, mx: 2, maxWidth: 200 }}>
             <LinearProgress
               aria-label="ความคืบหน้าการอ่าน"
               variant="determinate"
@@ -236,6 +243,11 @@ export default function ReadingProgress({
             variant="caption"
             sx={{
               color: "text.secondary",
+              width: "5ch",
+              flexShrink: 0,
+              textAlign: "right",
+              whiteSpace: "nowrap",
+              fontVariantNumeric: "tabular-nums",
             }}
           >
             {Math.round(progress)}%

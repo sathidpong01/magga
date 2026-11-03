@@ -48,3 +48,18 @@ export function normalizeMangaPages(input: unknown): MangaPageRecord[] {
 export function extractMangaPageUrls(input: unknown): string[] {
   return normalizeMangaPages(input).map((page) => page.url);
 }
+
+/** Reuse upload metadata without fetching images or changing stored legacy pages. */
+export function withMangaPageDimensions(
+  pages: MangaPageRecord[],
+  dimensions: MangaPageRecord[],
+): MangaPageRecord[] {
+  const byUrl = new Map(dimensions
+    .filter((page) => toPositiveNumber(page.width) && toPositiveNumber(page.height))
+    .map((page) => [page.url, page]));
+  return pages.map((page) => {
+    if (page.width && page.height) return page;
+    const known = byUrl.get(page.url);
+    return known ? { ...page, width: known.width, height: known.height } : page;
+  });
+}

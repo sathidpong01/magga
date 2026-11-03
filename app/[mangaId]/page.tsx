@@ -5,9 +5,10 @@ import {
   manga as mangaTable,
   mangaContributors as mangaContributorsTable,
   mangaTags as mangaTagsTable,
+  mangaUploads,
   tags as tagsTable,
 } from "@/db/schema";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, isNull } from "drizzle-orm";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
@@ -29,7 +30,7 @@ import ShareButton from "@/app/components/ui/ShareButton";
 import ReaderStartButton from "@/app/components/ui/ReaderStartButton";
 import RelatedManga from "@/app/components/features/manga/RelatedManga";
 import { getSiteUrl } from "@/lib/site-url";
-import { normalizeMangaPages } from "@/lib/manga-pages";
+import { normalizeMangaPages, withMangaPageDimensions } from "@/lib/manga-pages";
 import SocialLinkIcon from "@/app/components/ui/SocialLinkIcon";
 import { authorSocialLinks } from "@/lib/author-social-links";
 
@@ -92,7 +93,9 @@ const getMangaBySlug = cache(async (slug: string) => {
       }
     }
 
-    const [authorRows, contributorRows, categoryRows, tagRows] =
+    const pages = normalizeMangaPages(manga.pages);
+    const missingDimensions = [...new Set(pages.filter((page) => !page.width || !page.height).map((page) => page.url))];
+    const [authorRows, contributorRows, categoryRows, tagRows, dimensionRows] =
       await Promise.all([
         manga.authorId
           ? db
@@ -137,10 +140,22 @@ const getMangaBySlug = cache(async (slug: string) => {
           .from(mangaTagsTable)
           .innerJoin(tagsTable, eq(tagsTable.id, mangaTagsTable.tagId))
           .where(eq(mangaTagsTable.mangaId, manga.id)),
+        missingDimensions.length
+          ? db.select({ url: mangaUploads.url, width: mangaUploads.width, height: mangaUploads.height })
+              .from(mangaUploads)
+              .where(and(
+                inArray(mangaUploads.url, missingDimensions),
+                eq(mangaUploads.state, "ready"),
+                isNull(mangaUploads.removedAt),
+                gt(mangaUploads.width, 0),
+                gt(mangaUploads.height, 0),
+              ))
+          : Promise.resolve([]),
       ]);
 
     return {
       ...manga,
+      pages: withMangaPageDimensions(pages, dimensionRows),
       author: authorRows[0] ?? null,
       contributors: contributorRows,
       category: categoryRows[0] ?? null,
@@ -514,7 +529,7 @@ export default async function MangaPage({ params }: MangaPageProps) {
           pages={pages}
         />
       </Container>
-      <Container maxWidth="lg">
+      <Container maxWidth="lg" sx={{ px: { xs: 0, lg: 3 } }}>
         <Box
           sx={{
             display: "flex",
@@ -523,12 +538,12 @@ export default async function MangaPage({ params }: MangaPageProps) {
             mt: 4,
           }}
         >
-          <Box sx={{ width: "100%", maxWidth: "1000px" }}>
+          <Box sx={{ width: "100%", maxWidth: maggaLayout.reader.maxWidth, px: { xs: 2, sm: 3, lg: 0 } }}>
             <AdContainer placement="manga-end" />
           </Box>
         </Box>
         {!manga.isHidden && (
-          <Box sx={{ mt: 3, maxWidth: "800px", mx: "auto" }}>
+          <Box sx={{ mt: 3, maxWidth: "800px", mx: "auto", px: { xs: 2, sm: 3, lg: 0 } }}>
             <MangaViewRating
               key={manga.id + ":rating"}
               mangaId={manga.id}
@@ -536,11 +551,15 @@ export default async function MangaPage({ params }: MangaPageProps) {
               initialAverageRating={manga.averageRating}
               initialRatingCount={Number(manga.ratingCount)}
             />
-            <RelatedManga key={manga.id} mangaId={manga.id} />
           </Box>
         )}
         {!manga.isHidden && (
-          <Box sx={{ mt: 4, maxWidth: "800px", mx: "auto" }}>
+          <Box sx={{ width: "100%", maxWidth: maggaLayout.reader.maxWidth, mx: "auto", px: { xs: 2, sm: 3, lg: 0 } }}>
+            <RelatedManga mangaId={manga.id} />
+          </Box>
+        )}
+        {!manga.isHidden && (
+          <Box sx={{ mt: 4, maxWidth: "800px", mx: "auto", px: { xs: 2, sm: 3, lg: 0 } }}>
             <Suspense fallback={<CommentSectionSkeleton />}>
               <CommentSection mangaId={manga.id} />
             </Suspense>
