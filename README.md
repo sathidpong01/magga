@@ -214,6 +214,8 @@ GitHub CI runs automatically on every push and pull request; `workflow_dispatch`
 
 Vercel continues building from Git in parallel. In the Magga project's **Settings → Build and Deployment → Deployment Checks**, require the GitHub `CI Gate` check and keep automatic assignment of production domains enabled. Vercel then holds each production deployment until that commit's gate passes, leaving the previous production deployment live on failure. Fix the reported error and push a new commit to retry automatically; do not use Force Promote to bypass the gate. Preview builds remain available independently. The workflow and the Vercel setting are both required: automatic CI alone does not block a production release.
 
+See [CI release gate operations](docs/ci-release-gate.md) for failure recovery and maintenance.
+
 ### 🚀 Performance Optimizations (2026-02-14 Major Update)
 
 **🔥 Critical Performance Fixes (FCP/LCP):**
