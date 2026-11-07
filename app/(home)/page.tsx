@@ -15,6 +15,10 @@ import { maggaColors } from "@/lib/design-tokens";
 import { getPublicAds } from "@/lib/advertisements-server";
 import { EMPTY_CATEGORY_ID, normalizeHomeFilters } from "@/lib/manga-query";
 import ContinueReading from "@/app/components/ui/ContinueReading";
+import { connection } from "next/server";
+import PollSummary from "@/app/components/features/polls/PollSummary";
+import { pollDatabase } from "@/lib/polls/database";
+import { listPolls } from "@/lib/polls/service";
 
 const SearchFilters = dynamic(
   () => import("@/app/components/features/search/SearchFilters"),
@@ -77,10 +81,11 @@ export default async function Home({ searchParams }: Props) {
 }
 
 async function HomeContent({ params }: { params: ReturnType<typeof normalizeHomeFilters> }) {
+  await connection();
   const { search, category: categoryName, tags: tagNames, sort, author } = params;
 
   // Fetch Categories, Tags, Grid Ads, and Author Profile in parallel with resilient fallbacks
-  const [categories, tags, gridAds, authorProfile] = await Promise.all([
+  const [categories, tags, gridAds, authorProfile, featuredPolls] = await Promise.all([
     getCategories().catch((err) => {
       console.error("Failed to load categories:", err);
       return [];
@@ -99,6 +104,10 @@ async function HomeContent({ params }: { params: ReturnType<typeof normalizeHome
           return null;
         })
       : Promise.resolve(null),
+    listPolls(pollDatabase, false, true).catch((error) => {
+      console.error("Unable to load homepage poll", error);
+      return [];
+    }),
   ]);
 
   // Resolve category name → UUID for DB query
@@ -116,6 +125,7 @@ async function HomeContent({ params }: { params: ReturnType<typeof normalizeHome
   return (
     <Container maxWidth="xl">
       <Box sx={{ my: 1 }}>
+        <PollSummary poll={featuredPolls[0] ?? null} compact />
         {authorProfile && <AuthorHeaderCard author={authorProfile} />}
         {!authorProfile && (
           <Box sx={{ mb: 1.5 }}>

@@ -134,6 +134,13 @@
       "when": 1793723401756,
       "tag": "0018_preserve_manga_publication_date",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1794034320799,
+      "tag": "0019_community_polls",
+      "breakpoints": true
     }
   ]
 }

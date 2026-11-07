@@ -7,7 +7,8 @@ type SchemaQuery = (sql: string, parameters?: string[]) => Promise<{ rows: Recor
 export async function verifyDisposableSchema(query: SchemaQuery) {
   const requiredTables = ['private.comment_guests', 'private.comment_guest_sessions',
     'private.comment_rate_limits', 'private.comment_assets', 'private.comment_reports',
-    'private.comment_moderation_events', 'public.comments', 'public.advertisement_events', 'public.manga_uploads'];
+    'private.comment_moderation_events', 'public.comments', 'public.advertisement_events', 'public.manga_uploads',
+    'private.polls', 'private.poll_ballots', 'private.poll_claims', 'private.poll_assets'];
   for (const table of requiredTables) {
     const result = await query('SELECT to_regclass($1)::text AS relation', [table]);
     if (!result.rows[0]?.relation) throw new Error(`Disposable schema incomplete: ${table}.`);

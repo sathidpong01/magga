@@ -188,6 +188,16 @@ Scope route loading placeholders to the content they represent. Homepage and adm
 
 ## Do's and Don'ts
 
+### Community polls
+
+Public polls reuse the charcoal surfaces, Archive Gold, Ekkamai Vibe, and 3:4 image anatomy. Keep option labels below the artwork on one line and provide a separate full-image link. Selection uses a visible radio/checkbox and gold border; color alone is not sufficient. Results use compact ranked rows with thumbnails, exact counts, percentages, and horizontal bars. Multi-choice percentages use ballots as their denominator.
+
+The homepage shows one compact community-poll section above the manga heading and search. It contains the question, optional count, deadline, participation action, and link to all polls. Only a published, public, currently open poll with homepage visibility enabled qualifies. With no eligible poll, render nothing, including no wrapper, margin, heading, skeleton, or reserved height. Do not add a hero, carousel, or decorative banner.
+
+Keep poll screens compact. The creation form collapses secondary rules by default, hides optional description and manga search until requested, and uses dense option rows. Put supporting explanations in focusable/touch-accessible tooltips. Mobile preview is opt-in. Public voting uses 3:4 thumbnails in compact mobile rows and denser image columns on wide screens; image expansion remains a separate labelled control. Results use compact thumbnail rows.
+
+Poll creation and management extend the existing dashboard shell. Use a full-page form with grouped fields, a desktop side preview, explicit state transitions, and inline confirmation before publication, closure, or archiving. Lock question/choices and voting rules once ballots exist. Provide mobile layouts, labelled reorder buttons, visible errors, draft-save status, and an audit history.
+
 ### Do
 
 - Preserve the current owner-approved design while improving usability.

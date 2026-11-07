@@ -15,6 +15,7 @@ import CampaignIcon from "@mui/icons-material/Campaign";
 import CategoryIcon from "@mui/icons-material/Category";
 import PersonIcon from "@mui/icons-material/Person";
 import PeopleIcon from "@mui/icons-material/People";
+import HowToVoteIcon from "@mui/icons-material/HowToVote";
 
 export default function UnifiedDashboardSidebar() {
   const { data: session } = useSession();
@@ -71,6 +72,7 @@ export default function UnifiedDashboardSidebar() {
             href: "/dashboard/admin/comments",
             icon: <CommentIcon />,
           },
+          { text: "จัดการโพล", href: "/dashboard/admin/polls", icon: <HowToVoteIcon /> },
           {
             text: "โฆษณา",
             href: "/dashboard/admin/advertisements",

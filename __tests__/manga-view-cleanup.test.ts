@@ -6,6 +6,7 @@ import type { SQL } from "drizzle-orm";
 const pg = new PGlite();
 const database = drizzle(pg);
 mock.module("@/lib/storage/manga-uploads", () => ({ cleanupMangaUploads: async () => 0 }));
+mock.module("@/lib/polls/cleanup", () => ({ cleanupPolls: async () => 0 }));
 mock.module("@/lib/storage", () => ({ getDefaultStorageAdapter: () => ({}) }));
 mock.module("@/db", () => ({ db: {
   execute: async (query: SQL) => (await database.execute(query)).rows,

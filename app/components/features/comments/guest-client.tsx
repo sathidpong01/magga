@@ -42,10 +42,12 @@ export function GuestVerification({
   siteKey,
   onToken,
   requested=0,
+  action="comment",
 }: {
   siteKey: string | null;
   onToken: (token: string | null) => void;
   requested?:number;
+  action?: "comment" | "poll_vote";
 }) {
   const host = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(false);
@@ -65,7 +67,7 @@ export function GuestVerification({
         if (cancelled || !host.current || !window.turnstile) return;
         widget = window.turnstile.render(host.current, {
           sitekey: siteKey,
-          action: "comment",
+          action,
           theme: "dark",
           size: "compact",
           callback: (token: string) => tokenCallback.current(token),
@@ -81,7 +83,7 @@ export function GuestVerification({
       cancelled = true;
       if (widget) window.turnstile?.remove(widget);
     };
-  }, [active, siteKey, attempt]);
+  }, [active, siteKey, attempt, action]);
   const start = useCallback(() => {
     setError("");
     setActive(true);
@@ -91,12 +93,12 @@ export function GuestVerification({
     <Box sx={{ minHeight: 44, mt: 1 }}>
       {!active && (
         <Button onClick={start} sx={{ minHeight: 44 }}>
-          ยืนยันเพื่อใช้งาน
+          {action === "poll_vote" ? "ยืนยันก่อนโหวต" : "ยืนยันเพื่อใช้งาน"}
         </Button>
       )}
       {active && !siteKey && (
         <Typography color="error" role="alert">
-          ระบบยืนยันยังไม่พร้อม ข้อความและรูปของคุณยังอยู่ กรุณาลองใหม่ภายหลัง
+          {action === "poll_vote" ? "ระบบยืนยันยังไม่พร้อม ตัวเลือกของคุณยังอยู่ กรุณาลองใหม่ภายหลัง" : "ระบบยืนยันยังไม่พร้อม ข้อความและรูปของคุณยังอยู่ กรุณาลองใหม่ภายหลัง"}
         </Typography>
       )}
       <Box ref={host} />

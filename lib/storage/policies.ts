@@ -30,6 +30,17 @@ function sanitizeFileName(name: string): string {
 }
 
 export const ASSET_POLICIES: Record<AssetKind, AssetPolicy> = {
+  "poll-image": {
+    maxBytes: 3 * 1024 * 1024,
+    allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"],
+    async process(file, context) {
+      if (context.kind !== "poll-image") throw new Error("Invalid poll image context");
+      const { buffer } = await readValidatedImageFile(file, { maxBytes: this.maxBytes, allowedMimeTypes: this.allowedMimeTypes });
+      const { data, info } = await sharp(buffer, { limitInputPixels: 20_000_000, failOn: "warning" }).timeout({ seconds: 10 })
+        .rotate().resize(1600, 1600, { fit: "inside", withoutEnlargement: true }).webp({ quality: 85 }).toBuffer({ resolveWithObject: true });
+      return { data: new Uint8Array(data), contentType: "image/webp", key: `polls/${sanitizeObjectKeySegment(context.userId, "admin")}/${randomUUID()}.webp`, width: info.width, height: info.height };
+    },
+  },
   "manga-page": {
     maxBytes: MANGA_IMAGE_MAX_BYTES,
     allowedMimeTypes: MANGA_IMAGE_TYPES,

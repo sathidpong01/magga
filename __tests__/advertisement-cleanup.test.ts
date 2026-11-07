@@ -8,6 +8,7 @@ mock.module("@/db", () => ({ db: {
 } }));
 mock.module("@/lib/storage", () => ({ deleteAssets: mocks.storageDelete, getDefaultStorageAdapter: () => ({}) }));
 mock.module("@/lib/storage/manga-uploads", () => ({ cleanupMangaUploads: async () => 0 }));
+mock.module("@/lib/polls/cleanup", () => ({ cleanupPolls: async () => 0 }));
 const { GET } = await import("@/app/api/cron/cleanup/route");
 
 const originalSecret = process.env.CRON_SECRET;

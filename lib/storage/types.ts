@@ -2,13 +2,16 @@ export type AssetKind =
   | "manga-page"
   | "comment-image"
   | "avatar"
-  | "advertisement";
+  | "advertisement"
+  | "poll-image";
+// Poll images use the same storage seam with a dedicated validation policy.
 
 export type StoreAssetContext =
   | { kind: "manga-page"; mangaId: string }
   | { kind: "comment-image"; userId: string }
   | { kind: "avatar"; userId: string }
-  | { kind: "advertisement" };
+  | { kind: "advertisement" }
+  | { kind: "poll-image"; userId: string };
 
 export interface StoredAsset {
   url: string;

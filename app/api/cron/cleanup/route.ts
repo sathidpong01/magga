@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { cleanupPolls } from "@/lib/polls/cleanup";
+import { pollDatabase } from "@/lib/polls/database";
 import { db } from "@/db";
 import { loginAttempts as loginAttemptsTable, mangaSubmissions as submissionsTable, advertisementEvents, mangaViews } from "@/db/schema";
 import { lt, eq, and, sql, count } from "drizzle-orm";
@@ -76,11 +78,13 @@ export async function GET(req: Request) {
     results.submissionsDeferred = Number(deferred?.count ?? 0);
 
     results.r2FilesDeleted = await cleanupMangaUploads(db, getDefaultStorageAdapter());
+    const pollFilesDeleted = await cleanupPolls(pollDatabase, getDefaultStorageAdapter());
 
     return NextResponse.json({ 
       success: true,
       timestamp: new Date().toISOString(),
-      ...results
+      ...results,
+      pollFilesDeleted,
     });
 
   } catch (error) {
