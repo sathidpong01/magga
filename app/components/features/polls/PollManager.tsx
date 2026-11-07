@@ -2,7 +2,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  Alert,
   Box,
   Button,
   Chip,
@@ -12,6 +11,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
+import { useToast } from "@/app/contexts/ToastContext";
 import AddIcon from "@mui/icons-material/Add";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { authFetch } from "@/lib/auth-fetch";
@@ -33,7 +33,7 @@ export default function PollManager() {
   const [state, setState] = useState("");
   const [sort, setSort] = useState("newest");
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const { showError } = useToast();
   useEffect(() => {
     const timer = setTimeout(() => {
       setQuery(search);
@@ -44,7 +44,7 @@ export default function PollManager() {
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
-    setError("");
+
     void (async () => {
       try {
         const response = await authFetch(
@@ -56,13 +56,13 @@ export default function PollManager() {
         setPolls(body);
       } catch (cause) {
         if (!controller.signal.aborted)
-          setError(cause instanceof Error ? cause.message : "โหลดโพลไม่ได้");
+          showError(cause instanceof Error ? cause.message : "โหลดโพลไม่ได้");
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
     })();
     return () => controller.abort();
-  }, [query, page, reload, state, sort]);
+  }, [query, page, reload, state, sort, showError]);
   return (
     <Box>
       <Box
@@ -152,11 +152,6 @@ export default function PollManager() {
           <MenuItem value="votes">จำนวนบัตรโหวต</MenuItem>
         </TextField>
       </Box>
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
       {loading ? (
         <Stack spacing={1}>
           {[0, 1, 2, 3].map((key) => (

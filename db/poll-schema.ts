@@ -32,6 +32,7 @@ export const polls = privateSchema
         .default("after_vote")
         .notNull(),
       security: text().default("standard").notNull(),
+      requireCaptcha: boolean("require_captcha").default(true).notNull(),
       minChoices: integer("min_choices").default(1).notNull(),
       maxChoices: integer("max_choices").default(1).notNull(),
       allowChange: boolean("allow_change").default(false).notNull(),

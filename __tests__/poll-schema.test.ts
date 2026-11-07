@@ -34,9 +34,16 @@ it("keeps preview poll writes separate from production polls in the same Postgre
     await pg.exec(
       "CREATE ROLE anon; CREATE ROLE authenticated; CREATE TABLE public.manga(id uuid PRIMARY KEY,cover_image text,is_hidden boolean DEFAULT false);",
     );
-    const migration = await Bun.file(
-      new URL("../db/migrations/0019_community_polls.sql", import.meta.url),
-    ).text();
+    const migration =
+      (await Bun.file(
+        new URL("../db/migrations/0019_community_polls.sql", import.meta.url),
+      ).text()) +
+      (await Bun.file(
+        new URL(
+          "../db/migrations/0020_poll_captcha_settings.sql",
+          import.meta.url,
+        ),
+      ).text());
     await pg.exec(migration);
     await pg.exec(migration.replace(/\bprivate\b/g, "preview_polls_test"));
     const database = (schema: string): PollDatabase => ({
@@ -60,6 +67,7 @@ it("keeps preview poll writes separate from production polls in the same Postgre
       visibility: "public" as const,
       resultsVisibility: "public" as const,
       security: "standard" as const,
+      requireCaptcha: true,
       minChoices: 1,
       maxChoices: 1,
       allowChange: false,

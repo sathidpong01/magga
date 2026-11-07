@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   Alert,
+  Autocomplete,
   Accordion,
   AccordionDetails,
   AccordionSummary,
@@ -23,6 +24,8 @@ import ArrowDownwardIcon from "@mui/icons-material/ArrowDownward";
 import DeleteOutlineIcon from "@mui/icons-material/Delete";
 import AddIcon from "@mui/icons-material/Add";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import { useToast } from "@/app/contexts/ToastContext";
+import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
 import PollHelp from "./PollHelp";
 import { maggaColors, maggaRadii } from "@/lib/design-tokens";
 import { authFetch } from "@/lib/auth-fetch";
@@ -51,6 +54,7 @@ function initialInput(poll?: AdminPoll): PollInput {
         visibility: poll.visibility,
         resultsVisibility: poll.resultsVisibility,
         security: poll.security,
+        requireCaptcha: poll.requireCaptcha,
         minChoices: poll.minChoices,
         maxChoices: poll.maxChoices,
         allowChange: poll.allowChange,
@@ -73,6 +77,7 @@ function initialInput(poll?: AdminPoll): PollInput {
         visibility: "public",
         resultsVisibility: "after_vote",
         security: "standard",
+        requireCaptcha: true,
         minChoices: 1,
         maxChoices: 1,
         allowChange: false,
@@ -94,6 +99,7 @@ export default function PollForm({
   onDirtyChange?: (dirty: boolean) => void;
 }) {
   const router = useRouter();
+  const { showError } = useToast();
   const [input, setInput] = useState(() => initialInput(initial));
   const [options, setOptions] = useState<Option[]>(
     () => initial?.options ?? input.options,
@@ -108,12 +114,15 @@ export default function PollForm({
   const [dirty, setDirty] = useState(false);
   const [mangaSearch, setMangaSearch] = useState("");
   const [manga, setManga] = useState<Manga[]>([]);
-  const [searchError, setSearchError] = useState("");
+
   const [showDescription, setShowDescription] = useState(
     Boolean(initial?.description),
   );
   const [showMangaSearch, setShowMangaSearch] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  useEffect(() => {
+    if (message) showError(message);
+  }, [message, showError]);
   const version = useRef(initial?.version ?? 0);
   const activeSave = useRef(false);
   useEffect(() => {
@@ -134,6 +143,7 @@ export default function PollForm({
   const archived = initial?.status === "archived";
   const edit = <K extends keyof PollInput>(key: K, value: PollInput[K]) => {
     setInput((old) => ({ ...old, [key]: value }));
+    setMessage("");
     setDirty(true);
     setSaved("");
   };
@@ -302,17 +312,15 @@ export default function PollForm({
         );
         if (!response.ok) throw new Error();
         setManga(await response.json());
-        setSearchError("");
       } catch {
-        if (!controller.signal.aborted)
-          setSearchError("ค้นหาไม่ได้ กรุณาลองใหม่");
+        if (!controller.signal.aborted) showError("ค้นหาไม่ได้ กรุณาลองใหม่");
       }
     }, 350);
     return () => {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [mangaSearch]);
+  }, [mangaSearch, showError]);
   useEffect(() => {
     const beforeUnload = (event: BeforeUnloadEvent) => {
       if (dirty || uploading) event.preventDefault();
@@ -344,11 +352,6 @@ export default function PollForm({
       }}
     >
       <Box sx={{ minWidth: 0 }}>
-        {message && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {message}
-          </Alert>
-        )}
         {locked && (
           <Alert severity="info" sx={{ mb: 1 }}>
             มีบัตรโหวตแล้ว ล็อกคำถามและกติกา{" "}
@@ -398,6 +401,7 @@ export default function PollForm({
               <Button
                 component="label"
                 disabled={locked || Boolean(uploading)}
+                sx={{ width: 104, flexShrink: 0 }}
                 size="small"
               >
                 {uploading === "cover" ? "กำลังอัปโหลด…" : "ภาพประกอบ"}
@@ -412,17 +416,34 @@ export default function PollForm({
                   }}
                 />
               </Button>
-              {cover && (
-                <Button
-                  disabled={locked}
-                  onClick={() => {
-                    edit("coverAssetId", null);
-                    setCover(null);
-                  }}
-                >
-                  นำภาพออก
-                </Button>
-              )}
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  position: "relative",
+                  flexShrink: 0,
+                }}
+              >
+                {cover && (
+                  <Image
+                    src={cover}
+                    alt="ภาพประกอบ"
+                    fill
+                    sizes="32px"
+                    style={{ objectFit: "contain" }}
+                  />
+                )}
+              </Box>
+              <Button
+                disabled={locked || !cover}
+                sx={{ minWidth: 84 }}
+                onClick={() => {
+                  edit("coverAssetId", null);
+                  setCover(null);
+                }}
+              >
+                นำภาพออก
+              </Button>
             </Stack>
           </Box>
           <Box sx={sectionSx}>
@@ -501,20 +522,12 @@ export default function PollForm({
                       minWidth: 0,
                       display: "grid",
                       gridTemplateColumns: {
-                        xs: option.imageUrl
-                          ? "40px minmax(0,1fr)"
-                          : "minmax(0,1fr)",
-                        md: option.imageUrl
-                          ? "40px minmax(0,1fr) auto"
-                          : "minmax(0,1fr) auto",
+                        xs: "40px minmax(0,1fr)",
+                        md: "40px minmax(0,1fr) auto",
                       },
                       gridTemplateAreas: {
-                        xs: option.imageUrl
-                          ? '"image input" "image controls"'
-                          : '"input" "controls"',
-                        md: option.imageUrl
-                          ? '"image input controls"'
-                          : '"input controls"',
+                        xs: '"image input" "image controls"',
+                        md: '"image input controls"',
                       },
                       gap: 0.5,
                       alignItems: "center",
@@ -552,6 +565,12 @@ export default function PollForm({
                         component="label"
                         size="small"
                         disabled={locked || Boolean(uploading)}
+                        sx={{
+                          width: 84,
+                          flexShrink: 0,
+                          whiteSpace: "nowrap",
+                          minHeight: 44,
+                        }}
                       >
                         {uploading === option.id
                           ? "กำลังอัปโหลด…"
@@ -569,21 +588,20 @@ export default function PollForm({
                           }}
                         />
                       </Button>
-                      {option.imageUrl && (
-                        <Button
-                          size="small"
-                          disabled={locked}
-                          onClick={() =>
-                            optionChange(index, {
-                              assetId: null,
-                              mangaId: null,
-                              imageUrl: null,
-                            })
-                          }
-                        >
-                          นำรูปออก
-                        </Button>
-                      )}
+                      <IconButton
+                        size="small"
+                        aria-label={`นำรูปตัวเลือก ${index + 1} ออก`}
+                        disabled={locked || !option.imageUrl}
+                        onClick={() =>
+                          optionChange(index, {
+                            assetId: null,
+                            mangaId: null,
+                            imageUrl: null,
+                          })
+                        }
+                      >
+                        <DeleteOutlineIcon sx={{ fontSize: 16 }} />
+                      </IconButton>
                       <IconButton
                         aria-label={`เลื่อนตัวเลือก ${index + 1} ขึ้น`}
                         disabled={locked || index === 0}
@@ -615,15 +633,19 @@ export default function PollForm({
                         <DeleteOutlineIcon fontSize="small" />
                       </IconButton>
                     </Box>
-                    {option.imageUrl && (
-                      <Box
-                        sx={{
-                          position: "relative",
-                          width: 40,
-                          height: 54,
-                          gridArea: "image",
-                        }}
-                      >
+                    <Box
+                      sx={{
+                        position: "relative",
+                        width: 40,
+                        height: 54,
+                        gridArea: "image",
+                        bgcolor: maggaColors.surfaceElevated,
+                        borderRadius: 1,
+                        display: "grid",
+                        placeItems: "center",
+                      }}
+                    >
+                      {option.imageUrl ? (
                         <Image
                           src={option.imageUrl}
                           alt={`รูปตัวเลือกที่ ${index + 1}`}
@@ -631,8 +653,12 @@ export default function PollForm({
                           sizes="40px"
                           style={{ objectFit: "contain" }}
                         />
-                      </Box>
-                    )}
+                      ) : (
+                        <ImageOutlinedIcon
+                          sx={{ fontSize: 18, color: maggaColors.textMuted }}
+                        />
+                      )}
+                    </Box>
                   </Box>
                 </Box>
               ))}
@@ -658,56 +684,45 @@ export default function PollForm({
             )}
             {!locked && showMangaSearch && (
               <Box sx={{ mt: 1 }}>
-                <TextField
-                  label="เพิ่มจากมังงะในระบบ"
-                  placeholder="ค้นหาชื่ออย่างน้อย 2 ตัวอักษร"
-                  value={mangaSearch}
-                  onChange={(e) => setMangaSearch(e.target.value)}
-                  fullWidth
-                  size="small"
-                />
-                {searchError && (
-                  <Typography color="error">{searchError}</Typography>
-                )}
-                {manga.map((item) => (
-                  <Box
-                    key={item.id}
-                    sx={{
-                      display: "flex",
-                      gap: 1,
-                      alignItems: "center",
-                      py: 0.75,
-                    }}
-                  >
-                    <Typography
-                      variant="body2"
-                      sx={{ flex: 1, minWidth: 0, overflowWrap: "anywhere" }}
-                    >
-                      {item.title}
-                    </Typography>
-                    <Button
+                <Autocomplete<Manga>
+                  options={manga}
+                  value={null}
+                  inputValue={mangaSearch}
+                  onInputChange={(_, value) => setMangaSearch(value)}
+                  getOptionLabel={(item) => item.title}
+                  isOptionEqualToValue={(a, b) => a.id === b.id}
+                  filterOptions={(items) => items}
+                  disabled={options.length >= 30}
+                  noOptionsText={
+                    mangaSearch.trim().length < 2
+                      ? "พิมพ์อย่างน้อย 2 ตัวอักษร"
+                      : "ไม่พบมังงะ"
+                  }
+                  onChange={(_, item) => {
+                    if (!item) return;
+                    setOptions((old) => [
+                      ...old.filter(
+                        (o) => o.label.trim() || o.assetId || o.mangaId,
+                      ),
+                      {
+                        ...newOption(),
+                        label: item.title.slice(0, 120),
+                        mangaId: item.id,
+                        imageUrl: item.coverImage,
+                      },
+                    ]);
+                    setDirty(true);
+                    setMangaSearch("");
+                  }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="เพิ่มจากมังงะในระบบ"
+                      placeholder="ค้นหาชื่ออย่างน้อย 2 ตัวอักษร"
                       size="small"
-                      disabled={options.length >= 30}
-                      onClick={() => {
-                        setOptions((old) => [
-                          ...old.filter(
-                            (o) => o.label.trim() || o.assetId || o.mangaId,
-                          ),
-                          {
-                            ...newOption(),
-                            label: item.title.slice(0, 120),
-                            mangaId: item.id,
-                            imageUrl: item.coverImage,
-                          },
-                        ]);
-                        setDirty(true);
-                        setMangaSearch("");
-                      }}
-                    >
-                      เพิ่ม
-                    </Button>
-                  </Box>
-                ))}
+                    />
+                  )}
+                />
               </Box>
             )}
           </Box>
@@ -777,6 +792,9 @@ export default function PollForm({
                 />
                 <TextField
                   select
+                  slotProps={{
+                    select: { MenuProps: { disableScrollLock: true } },
+                  }}
                   label="การป้องกันโหวตซ้ำ"
                   value={input.security}
                   onChange={(e) =>
@@ -784,14 +802,15 @@ export default function PollForm({
                   }
                   disabled={locked}
                 >
-                  <MenuItem value="standard">
-                    มาตรฐาน: ผู้เยี่ยมชม + CAPTCHA
-                  </MenuItem>
+                  <MenuItem value="standard">มาตรฐาน: จดจำผู้เยี่ยมชม</MenuItem>
                   <MenuItem value="ip">เข้มงวด: หนึ่งบัตรต่อ IP</MenuItem>
                   <MenuItem value="members">เฉพาะสมาชิกที่เข้าสู่ระบบ</MenuItem>
                 </TextField>
                 <TextField
                   select
+                  slotProps={{
+                    select: { MenuProps: { disableScrollLock: true } },
+                  }}
                   label="เปิดเผยผลโหวต"
                   value={input.resultsVisibility}
                   onChange={(e) =>
@@ -809,6 +828,9 @@ export default function PollForm({
                 </TextField>
                 <TextField
                   select
+                  slotProps={{
+                    select: { MenuProps: { disableScrollLock: true } },
+                  }}
                   label="การเข้าถึงโพล"
                   value={input.visibility}
                   onChange={(e) =>
@@ -830,6 +852,20 @@ export default function PollForm({
                 </Alert>
               )}
               <Stack sx={{ mt: 0.5 }}>
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={input.requireCaptcha}
+                        onChange={(e) =>
+                          edit("requireCaptcha", e.target.checked)
+                        }
+                      />
+                    }
+                    label="ยืนยันผู้โหวตด้วย CAPTCHA"
+                  />
+                  <PollHelp text="แนะนำให้เปิดเมื่อใช้งานจริง ต้องตั้งค่า Turnstile ก่อน หากปิด ระบบยังจดจำสิทธิ์โหวตและจำกัดความถี่ แต่ต้านบอตได้น้อยลง แก้การตั้งค่านี้ได้แม้มีคนโหวตแล้ว" />
+                </Box>
                 <FormControlLabel
                   control={
                     <Checkbox
@@ -922,7 +958,13 @@ export default function PollForm({
             </Box>
           </Box>
           <Box
-            sx={{ display: "flex", gap: 1.5, alignItems: "center", py: 1.5 }}
+            sx={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: 1,
+              alignItems: "center",
+              py: 1.5,
+            }}
           >
             <Button
               type="submit"
@@ -930,6 +972,8 @@ export default function PollForm({
               disabled={saving || Boolean(uploading)}
               sx={{
                 minHeight: 44,
+                minWidth: 156,
+                flexShrink: 0,
                 bgcolor: maggaColors.archiveGold,
                 color: maggaColors.background,
                 "&:hover": { bgcolor: maggaColors.archiveGoldHover },
@@ -948,7 +992,18 @@ export default function PollForm({
             >
               {showPreview ? "ซ่อนตัวอย่าง" : "ดูตัวอย่าง"}
             </Button>
-            <Typography variant="caption" role="status" color="text.secondary">
+            <Typography
+              variant="caption"
+              role="status"
+              color="text.secondary"
+              sx={{
+                minHeight: 40,
+                width: 164,
+                flexShrink: 0,
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
               {saving
                 ? "กำลังบันทึก…"
                 : saved ||
@@ -966,6 +1021,7 @@ export default function PollForm({
         sx={{
           position: { lg: "sticky" },
           display: { xs: showPreview ? "block" : "none", lg: "block" },
+          height: 480,
           maxHeight: { lg: "calc(100vh - 96px)" },
           overflowY: "auto",
           top: 24,
@@ -985,19 +1041,48 @@ export default function PollForm({
         <Typography
           variant="h6"
           component="h2"
-          sx={{ overflowWrap: "anywhere" }}
+          title={input.title}
+          sx={{
+            overflowWrap: "anywhere",
+            height: 60,
+            lineHeight: "30px",
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}
         >
           {input.title || "ชื่อโพลของคุณ"}
         </Typography>
         <Typography
           variant="body2"
           color="text.secondary"
-          sx={{ mt: 0.5, whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}
+          sx={{
+            mt: 0.5,
+            height: 48,
+            lineHeight: "24px",
+            whiteSpace: "pre-wrap",
+            overflowWrap: "anywhere",
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}
         >
           {input.description}
         </Typography>
-        {cover && (
-          <Box sx={{ position: "relative", height: 130, mt: 1 }}>
+        <Box
+          sx={{
+            position: "relative",
+            height: 96,
+            mt: 1,
+            bgcolor: maggaColors.surfaceElevated,
+            borderRadius: 1,
+            display: "grid",
+            placeItems: "center",
+          }}
+        >
+          {cover ? (
             <Image
               src={cover}
               alt="ตัวอย่างภาพประกอบ"
@@ -1005,8 +1090,10 @@ export default function PollForm({
               sizes="270px"
               style={{ objectFit: "contain" }}
             />
-          </Box>
-        )}
+          ) : (
+            <ImageOutlinedIcon sx={{ color: maggaColors.textMuted }} />
+          )}
+        </Box>
         <Divider sx={{ my: 2 }} />
         <Typography variant="caption" color="text.secondary">
           เลือกได้สูงสุด {input.maxChoices} ข้อ
@@ -1021,15 +1108,15 @@ export default function PollForm({
         >
           {options.map((option, index) => (
             <Box key={option.id} sx={{ minWidth: 0 }}>
-              {option.imageUrl && (
-                <Box
-                  sx={{
-                    aspectRatio: "3 / 4",
-                    position: "relative",
-                    bgcolor: maggaColors.surfaceElevated,
-                    borderRadius: `${maggaRadii.card}px`,
-                  }}
-                >
+              <Box
+                sx={{
+                  aspectRatio: "3 / 4",
+                  position: "relative",
+                  bgcolor: maggaColors.surfaceElevated,
+                  borderRadius: `${maggaRadii.card}px`,
+                }}
+              >
+                {option.imageUrl && (
                   <Image
                     src={option.imageUrl}
                     alt=""
@@ -1037,8 +1124,8 @@ export default function PollForm({
                     sizes="120px"
                     style={{ objectFit: "contain" }}
                   />
-                </Box>
-              )}
+                )}
+              </Box>
               <Typography
                 variant="caption"
                 title={option.label}

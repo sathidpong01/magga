@@ -18,6 +18,7 @@ import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import { authFetch } from "@/lib/auth-fetch";
 import { maggaColors } from "@/lib/design-tokens";
 import { pollStateLabels, type AdminPoll } from "@/lib/polls/types";
+import { useToast } from "@/app/contexts/ToastContext";
 import PollForm from "./PollForm";
 import PollResults from "./PollResults";
 
@@ -56,14 +57,14 @@ const actionLabels: Record<string, string> = {
 };
 export default function PollWorkspace({ initial }: { initial: AdminPoll }) {
   const router = useRouter();
+  const { showError, showSuccess } = useToast();
   const [poll, setPoll] = useState(initial);
   const [tab, setTab] = useState(initial.status === "draft" ? 0 : 1);
   const [activity, setActivity] = useState<Activity | null>(null);
   const [page, setPage] = useState(1);
   const [busy, setBusy] = useState(false);
   const [dirty, setDirty] = useState(false);
-  const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
+
   const [confirm, setConfirm] = useState<string | null>(null);
   const [ballot, setBallot] = useState("");
   const [reason, setReason] = useState("");
@@ -79,9 +80,9 @@ export default function PollWorkspace({ initial }: { initial: AdminPoll }) {
   }, [initial.id, page]);
   useEffect(() => {
     void refresh().catch((cause) =>
-      setError(cause instanceof Error ? cause.message : "โหลดข้อมูลไม่ได้"),
+      showError(cause instanceof Error ? cause.message : "โหลดข้อมูลไม่ได้"),
     );
-  }, [refresh]);
+  }, [refresh, showError]);
   useEffect(() => {
     if (tab === 0 || poll.state === "closed" || poll.state === "archived")
       return;
@@ -92,8 +93,7 @@ export default function PollWorkspace({ initial }: { initial: AdminPoll }) {
   }, [refresh, tab, poll.state]);
   async function action(command: string) {
     setBusy(true);
-    setError("");
-    setNotice("");
+
     try {
       const response = await authFetch(`/api/admin/polls/${poll.id}`, {
         method: "POST",
@@ -104,10 +104,10 @@ export default function PollWorkspace({ initial }: { initial: AdminPoll }) {
       if (!response.ok) throw new Error(body.error);
       setPoll(body);
       setConfirm(null);
-      setNotice("อัปเดตสถานะโพลแล้ว");
+      showSuccess("อัปเดตสถานะโพลแล้ว");
       await refresh();
     } catch (cause) {
-      setError(
+      showError(
         cause instanceof Error ? cause.message : "เปลี่ยนสถานะไม่สำเร็จ",
       );
     } finally {
@@ -116,7 +116,7 @@ export default function PollWorkspace({ initial }: { initial: AdminPoll }) {
   }
   async function duplicate() {
     setBusy(true);
-    setError("");
+
     try {
       const response = await authFetch(`/api/admin/polls/${poll.id}`, {
         method: "POST",
@@ -127,7 +127,7 @@ export default function PollWorkspace({ initial }: { initial: AdminPoll }) {
       if (!response.ok) throw new Error(body.error);
       router.push(`/dashboard/admin/polls/${body.id}`);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "ทำสำเนาไม่สำเร็จ");
+      showError(cause instanceof Error ? cause.message : "ทำสำเนาไม่สำเร็จ");
     } finally {
       setBusy(false);
     }
@@ -136,7 +136,7 @@ export default function PollWorkspace({ initial }: { initial: AdminPoll }) {
     const selected = activity?.ballots.find((item) => item.id === ballot);
     if (!selected) return;
     setBusy(true);
-    setError("");
+
     try {
       const response = await authFetch(`/api/admin/polls/${poll.id}`, {
         method: "POST",
@@ -151,10 +151,10 @@ export default function PollWorkspace({ initial }: { initial: AdminPoll }) {
       if (!response.ok) throw new Error(body.error);
       setReason("");
       setBallot("");
-      setNotice("บันทึกผลการตรวจสอบแล้ว");
+      showSuccess("บันทึกผลการตรวจสอบแล้ว");
       await refresh();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "บันทึกไม่สำเร็จ");
+      showError(cause instanceof Error ? cause.message : "บันทึกไม่สำเร็จ");
     } finally {
       setBusy(false);
     }
@@ -185,6 +185,12 @@ export default function PollWorkspace({ initial }: { initial: AdminPoll }) {
             fontSize: { xs: "1.5rem", sm: "1.8rem" },
             flex: "1 1 260px",
             overflowWrap: "anywhere",
+            height: { xs: 76, sm: 92 },
+            lineHeight: 1.6,
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
           }}
         >
           {poll.title}
@@ -267,15 +273,13 @@ export default function PollWorkspace({ initial }: { initial: AdminPoll }) {
           ดาวน์โหลด CSV
         </Button>
       </Box>
-      {dirty && (
-        <Typography
-          variant="caption"
-          color="text.secondary"
-          sx={{ display: "block", mb: 1 }}
-        >
-          บันทึกการแก้ไขก่อนเปลี่ยนสถานะโพล
-        </Typography>
-      )}
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        sx={{ display: "block", mb: 1 }}
+      >
+        {dirty ? "บันทึกการแก้ไขก่อนเปลี่ยนสถานะโพล" : "\u00a0"}
+      </Typography>
       {confirm && (
         <Alert
           severity={confirm === "close" ? "warning" : "info"}
@@ -294,16 +298,6 @@ export default function PollWorkspace({ initial }: { initial: AdminPoll }) {
           <Button onClick={() => setConfirm(null)} disabled={busy}>
             ยกเลิก
           </Button>
-        </Alert>
-      )}
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-      {notice && (
-        <Alert severity="success" role="status" sx={{ mb: 2 }}>
-          {notice}
         </Alert>
       )}
       <Tabs
@@ -338,7 +332,7 @@ export default function PollWorkspace({ initial }: { initial: AdminPoll }) {
             </Typography>
             <Button
               onClick={() =>
-                void refresh().catch((cause) => setError(String(cause)))
+                void refresh().catch((cause) => showError(String(cause)))
               }
             >
               อัปเดตผล

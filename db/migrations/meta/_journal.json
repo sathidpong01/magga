@@ -141,6 +141,13 @@
       "when": 1794034320799,
       "tag": "0019_community_polls",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1794040103961,
+      "tag": "0020_poll_captcha_settings",
+      "breakpoints": true
     }
   ]
 }

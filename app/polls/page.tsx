@@ -34,7 +34,17 @@ export default async function PollsPage({
       <Typography sx={{ color: maggaColors.textSecondary, mb: 3, mt: 1 }}>
         ร่วมโหวตเลือกสิ่งที่อยากเห็นบน Magga
       </Typography>
-      <Box sx={{ display: "grid", gap: 1.5 }}>
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: {
+            xs: "1fr",
+            sm: "repeat(2,minmax(0,1fr))",
+            md: "repeat(3,minmax(0,1fr))",
+          },
+          gap: 1.5,
+        }}
+      >
         {polls.map((poll) => (
           <PollSummary key={poll.id} poll={poll} />
         ))}

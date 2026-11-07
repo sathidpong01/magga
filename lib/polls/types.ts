@@ -23,6 +23,7 @@ export interface PollInput {
   visibility: PollVisibility;
   resultsVisibility: ResultsVisibility;
   security: PollSecurity;
+  requireCaptcha: boolean;
   minChoices: number;
   maxChoices: number;
   allowChange: boolean;
@@ -46,6 +47,7 @@ export interface PublicPoll {
   visibility: PollVisibility;
   resultsVisibility: ResultsVisibility;
   security: PollSecurity;
+  requireCaptcha: boolean;
   minChoices: number;
   maxChoices: number;
   allowChange: boolean;

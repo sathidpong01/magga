@@ -16,7 +16,7 @@ import { getPublicAds } from "@/lib/advertisements-server";
 import { EMPTY_CATEGORY_ID, normalizeHomeFilters } from "@/lib/manga-query";
 import ContinueReading from "@/app/components/ui/ContinueReading";
 import { connection } from "next/server";
-import PollSummary from "@/app/components/features/polls/PollSummary";
+import PollRail from "@/app/components/features/polls/PollRail";
 import { pollDatabase } from "@/lib/polls/database";
 import { listPolls } from "@/lib/polls/service";
 
@@ -125,7 +125,7 @@ async function HomeContent({ params }: { params: ReturnType<typeof normalizeHome
   return (
     <Container maxWidth="xl">
       <Box sx={{ my: 1 }}>
-        <PollSummary poll={featuredPolls[0] ?? null} compact />
+        <PollRail polls={featuredPolls} />
         {authorProfile && <AuthorHeaderCard author={authorProfile} />}
         {!authorProfile && (
           <Box sx={{ mb: 1.5 }}>

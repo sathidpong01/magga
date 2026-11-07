@@ -59,6 +59,7 @@ function input(overrides: Partial<PollInput> = {}): PollInput {
     visibility: "public",
     resultsVisibility: "after_vote",
     security: "standard",
+    requireCaptcha: true,
     minChoices: 1,
     maxChoices: 1,
     allowChange: false,
@@ -93,6 +94,14 @@ beforeAll(async () => {
       new URL("../db/migrations/0019_community_polls.sql", import.meta.url),
     ).text(),
   );
+  await pg.exec(
+    await Bun.file(
+      new URL(
+        "../db/migrations/0020_poll_captcha_settings.sql",
+        import.meta.url,
+      ),
+    ).text(),
+  );
 }, 30000);
 beforeEach(async () => {
   challengeCalls = 0;
@@ -101,6 +110,102 @@ beforeEach(async () => {
   );
 });
 afterAll(() => pg.close());
+
+it("allows an administrator to disable CAPTCHA while preserving duplicate and IP checks", async () => {
+  const poll = await published({ requireCaptcha: false, security: "ip" });
+  const actor = voter();
+  await cast(poll, actor);
+  expect(challengeCalls).toBe(0);
+  expect((await getPublicPoll(database, poll.id, actor)).hasVoted).toBe(true);
+  await expect(cast(poll, actor)).rejects.toThrow("คุณโหวตในโพลนี้แล้ว");
+  await expect(cast(poll, voter())).rejects.toThrow(
+    "เครือข่ายนี้ใช้สิทธิ์โหวตแล้ว",
+  );
+  expect(challengeCalls).toBe(0);
+});
+
+it("keeps CAPTCHA enabled for old creation payloads and rejects failed verification", async () => {
+  const payload = input();
+  const { requireCaptcha: _omitted, ...legacy } = payload;
+  expect(parsePollInput(legacy).requireCaptcha).toBe(true);
+  const poll = await published();
+  await expect(
+    vote(
+      database,
+      poll.id,
+      voter(),
+      { requestId: randomUUID(), choices: [poll.options[0].id] },
+      async () => {
+        throw new Error("verification failed");
+      },
+    ),
+  ).rejects.toThrow("verification failed");
+  expect((await getAdminPoll(database, poll.id)).total).toBe(0);
+});
+
+it("rechecks CAPTCHA policy under the vote lock when an administrator enables it", async () => {
+  const poll = await published({ requireCaptcha: false });
+  const racing: PollDatabase = {
+    ...database,
+    transaction: async (work) => {
+      await database.query(
+        "UPDATE private.polls SET require_captcha=true WHERE id=$1",
+        [poll.id],
+      );
+      return database.transaction(work);
+    },
+  };
+  await expect(
+    vote(
+      racing,
+      poll.id,
+      voter(),
+      { requestId: randomUUID(), choices: [poll.options[0].id] },
+      verify,
+    ),
+  ).rejects.toThrow("กรุณายืนยันว่าคุณไม่ใช่บอต");
+  expect((await getAdminPoll(database, poll.id)).total).toBe(0);
+});
+
+it("can disable CAPTCHA on existing voted polls without changing their answers", async () => {
+  const poll = await published();
+  await cast(poll, voter());
+  const changed = await updatePoll(
+    database,
+    poll.id,
+    admin,
+    { ...poll, requireCaptcha: false },
+    poll.version,
+  );
+  expect(changed.requireCaptcha).toBe(false);
+  await cast(changed, voter());
+  expect(challengeCalls).toBe(1);
+  expect((await getAdminPoll(database, poll.id)).total).toBe(2);
+});
+
+it("retains member-only rules without CAPTCHA and rejects a client-supplied bypass flag", async () => {
+  const poll = await published({ requireCaptcha: false, security: "members" });
+  await expect(cast(poll, voter())).rejects.toThrow(
+    "สมาชิกที่เข้าสู่ระบบเท่านั้น",
+  );
+  expect(() =>
+    parseVote({
+      requestId: randomUUID(),
+      choices: [poll.options[0].id],
+      requireCaptcha: false,
+    }),
+  ).toThrow();
+  expect((await getAdminPoll(database, poll.id)).total).toBe(0);
+});
+
+it("returns multiple eligible homepage polls in pinned order with a bounded rail", async () => {
+  const pinned = await published({ pinned: true });
+  for (let index = 0; index < 8; index++)
+    await published({ title: `โพล ${index}` });
+  const rail = await listPolls(database, false, true);
+  expect(rail.length).toBe(8);
+  expect(rail[0].id).toBe(pinned.id);
+});
 
 it("keeps drafts, future, unlisted, paused, closed and opted-out polls off the homepage", async () => {
   const draft = await createPoll(database, admin, input());

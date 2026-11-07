@@ -378,7 +378,7 @@ export default function CollapsibleSidebar({
           <Box
             sx={{
               display: "flex",
-              minHeight: 40,
+              minHeight: 44,
               alignItems: "center",
               gap: 1.5,
               mb: 1.25,
@@ -398,6 +398,7 @@ export default function CollapsibleSidebar({
                 <Typography
                   component="span"
                   sx={{
+                    display: "block", lineHeight: "22px",
                     fontSize: "0.85rem",
                     fontWeight: 600,
                     color: dashboardTokens.text,
@@ -410,7 +411,7 @@ export default function CollapsibleSidebar({
                 </Typography>
                 <Typography
                   sx={{
-                    fontSize: "0.75rem",
+                    fontSize: "0.75rem", lineHeight: "22px",
                     color: dashboardTokens.textMuted,
                     whiteSpace: "nowrap",
                     overflow: "hidden",

@@ -7,7 +7,7 @@ import {
   useCallback,
   ReactNode,
 } from "react";
-import { Snackbar, Alert, AlertColor } from "@mui/material";
+import { Snackbar, Alert, AlertColor, Portal } from "@mui/material";
 
 interface Toast {
   id: string;
@@ -28,10 +28,17 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const showToast = useCallback((message: string, severity: AlertColor) => {
+    if (!message) return;
     const id = `toast-${Date.now()}-${Math.random()}`;
     const newToast = { id, message, severity };
 
-    setToasts((prev) => [...prev, newToast]);
+    setToasts((prev) =>
+      prev.some(
+        (toast) => toast.message === message && toast.severity === severity,
+      )
+        ? prev
+        : [...prev.slice(-2), newToast],
+    );
 
     // Auto-dismiss after 4 seconds
     setTimeout(() => {
@@ -41,19 +48,19 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 
   const showSuccess = useCallback(
     (message: string) => showToast(message, "success"),
-    [showToast]
+    [showToast],
   );
   const showError = useCallback(
     (message: string) => showToast(message, "error"),
-    [showToast]
+    [showToast],
   );
   const showInfo = useCallback(
     (message: string) => showToast(message, "info"),
-    [showToast]
+    [showToast],
   );
   const showWarning = useCallback(
     (message: string) => showToast(message, "warning"),
-    [showToast]
+    [showToast],
   );
 
   const handleClose = (id: string) => {
@@ -65,54 +72,58 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       value={{ showSuccess, showError, showInfo, showWarning }}
     >
       {children}
-      {toasts.map((toast, index) => (
-        <Snackbar
-          key={toast.id}
-          open={true}
-          autoHideDuration={4000}
-          onClose={() => handleClose(toast.id)}
-          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-          sx={{
-            bottom: { xs: 16 + index * 70, md: 24 + index * 70 }, // Stack toasts
-            right: { xs: 16, md: 24 },
-          }}
-        >
-          <Alert
+      <Portal>
+        {toasts.map((toast, index) => (
+          <Snackbar
+            key={toast.id}
+            open={true}
+            autoHideDuration={4000}
             onClose={() => handleClose(toast.id)}
-            severity={toast.severity}
-            variant="filled"
+            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
             sx={{
-              width: "100%",
-              minWidth: 300,
-              boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
-              "& .MuiAlert-icon": { fontSize: 24 },
-              // Custom colors for better contrast
-              ...(toast.severity === "success" && {
-                bgcolor: "#10b981",
-                color: "#fff",
-                "& .MuiAlert-icon": { color: "#fff" },
-              }),
-              ...(toast.severity === "error" && {
-                bgcolor: "#ef4444",
-                color: "#fff",
-                "& .MuiAlert-icon": { color: "#fff" },
-              }),
-              ...(toast.severity === "warning" && {
-                bgcolor: "#f59e0b",
-                color: "#fff",
-                "& .MuiAlert-icon": { color: "#fff" },
-              }),
-              ...(toast.severity === "info" && {
-                bgcolor: "#3b82f6",
-                color: "#fff",
-                "& .MuiAlert-icon": { color: "#fff" },
-              }),
+              bottom: { xs: 16 + index * 70, md: 24 + index * 70 }, // Stack toasts
+              right: { xs: 16, md: 24 },
             }}
           >
-            {toast.message}
-          </Alert>
-        </Snackbar>
-      ))}
+            <Alert
+              onClose={() => handleClose(toast.id)}
+              severity={toast.severity}
+              variant="filled"
+              sx={{
+                width: "100%",
+                minWidth: { xs: 0, sm: 300 },
+                maxWidth: { xs: "calc(100vw - 32px)", sm: 440 },
+                overflowWrap: "anywhere",
+                boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
+                "& .MuiAlert-icon": { fontSize: 24 },
+                // Custom colors for better contrast
+                ...(toast.severity === "success" && {
+                  bgcolor: "#10b981",
+                  color: "#fff",
+                  "& .MuiAlert-icon": { color: "#fff" },
+                }),
+                ...(toast.severity === "error" && {
+                  bgcolor: "#ef4444",
+                  color: "#fff",
+                  "& .MuiAlert-icon": { color: "#fff" },
+                }),
+                ...(toast.severity === "warning" && {
+                  bgcolor: "#f59e0b",
+                  color: "#fff",
+                  "& .MuiAlert-icon": { color: "#fff" },
+                }),
+                ...(toast.severity === "info" && {
+                  bgcolor: "#3b82f6",
+                  color: "#fff",
+                  "& .MuiAlert-icon": { color: "#fff" },
+                }),
+              }}
+            >
+              {toast.message}
+            </Alert>
+          </Snackbar>
+        ))}
+      </Portal>
     </ToastContext.Provider>
   );
 }

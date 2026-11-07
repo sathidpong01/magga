@@ -30,7 +30,7 @@ export interface Voter {
   secret: string;
 }
 const projection = `p.id,p.title,p.description,p.status,p.visibility,p.results_visibility AS "resultsVisibility",p.security,p.cover_asset_id AS "coverAssetId",(SELECT url FROM private.poll_assets WHERE id=p.cover_asset_id) AS "coverImageUrl",
- p.min_choices AS "minChoices",p.max_choices AS "maxChoices",p.allow_change AS "allowChange",p.show_count AS "showCount",
+ p.require_captcha AS "requireCaptcha",p.min_choices AS "minChoices",p.max_choices AS "maxChoices",p.allow_change AS "allowChange",p.show_count AS "showCount",
  p.show_on_home AS "showOnHome",p.pinned,p.starts_at::text AS "startsAt",p.ends_at::text AS "endsAt",p.creator_id AS "creatorId",
  p.published_at::text AS "publishedAt",p.version,p.created_at::text AS "createdAt",clock_timestamp()::text AS "serverNow",
  (SELECT count(*)::int FROM private.poll_ballots b WHERE b.poll_id=p.id AND b.status='counted') AS total,
@@ -121,6 +121,7 @@ function publicView(
     visibility: row.visibility,
     resultsVisibility: row.resultsVisibility,
     security: row.security,
+    requireCaptcha: row.requireCaptcha,
     minChoices: row.minChoices,
     maxChoices: row.maxChoices,
     allowChange: row.allowChange,
@@ -202,7 +203,7 @@ export async function listPolls(
     `SELECT ${projection} FROM private.polls p WHERE ${where} ${filter} ORDER BY ${order} LIMIT $2 OFFSET $3`,
     [
       search.slice(0, 160),
-      featured ? 1 : 20,
+      featured ? 8 : 20,
       (page - 1) * 20,
       admin ? state : "",
     ],
@@ -302,8 +303,8 @@ export async function createPoll(
 ) {
   return database.transaction(async (tx) => {
     const [{ id }] = await tx.query<{ id: string }>(
-      `INSERT INTO private.polls(title,description,creator_id,visibility,results_visibility,security,min_choices,max_choices,allow_change,show_count,show_on_home,pinned,starts_at,ends_at)
-      VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING id`,
+      `INSERT INTO private.polls(title,description,creator_id,visibility,results_visibility,security,min_choices,max_choices,allow_change,show_count,show_on_home,pinned,starts_at,ends_at,require_captcha)
+      VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING id`,
       [
         input.title,
         input.description,
@@ -319,6 +320,7 @@ export async function createPoll(
         input.pinned,
         input.startsAt,
         input.endsAt,
+        input.requireCaptcha ?? true,
       ],
     );
     await attachOptions(tx, id, actor, input, reusedAssets);
@@ -385,7 +387,7 @@ export async function updatePoll(
       throw new PollError("โพลปิดแล้ว เปลี่ยนช่วงเวลาไม่ได้ กรุณาทำสำเนา", 409);
     await attachOptions(tx, id, actor, input);
     await tx.query(
-      `UPDATE private.polls SET title=$2,description=$3,visibility=$4,results_visibility=$5,security=$6,min_choices=$7,max_choices=$8,allow_change=$9,show_count=$10,show_on_home=$11,pinned=$12,starts_at=$13,ends_at=$14,version=version+1,updated_at=clock_timestamp() WHERE id=$1`,
+      `UPDATE private.polls SET title=$2,description=$3,visibility=$4,results_visibility=$5,security=$6,min_choices=$7,max_choices=$8,allow_change=$9,show_count=$10,show_on_home=$11,pinned=$12,starts_at=$13,ends_at=$14,require_captcha=$15,version=version+1,updated_at=clock_timestamp() WHERE id=$1`,
       [
         id,
         input.title,
@@ -401,6 +403,7 @@ export async function updatePoll(
         input.pinned,
         input.startsAt,
         input.endsAt,
+        input.requireCaptcha ?? true,
       ],
     );
     await audit(tx, id, actor, "update", `เวอร์ชัน ${version + 1}`);
@@ -475,13 +478,28 @@ export async function vote(
   };
   const retry = await findRetry(database);
   if (retry) return { ballotId: retry.ballot_id, replayed: true };
-  await verify(); // Never hold database locks while waiting on the challenge provider.
+  const [policy] = await database.query<{ requireCaptcha: boolean }>(
+    'SELECT require_captcha AS "requireCaptcha" FROM private.polls WHERE id=$1',
+    [id],
+  );
+  if (!policy) throw new PollError("ไม่พบโพล", 404, "NOT_FOUND");
+  let verified = false;
+  if (policy.requireCaptcha) {
+    await verify(); // Never hold database locks while waiting on the challenge provider.
+    verified = true;
+  }
   return database.transaction(async (tx) => {
     // A short row lock serializes changes with closing, editing, and competing votes.
     await tx.query("SELECT id FROM private.polls WHERE id=$1 FOR UPDATE", [id]);
     const repeated = await findRetry(tx);
     if (repeated) return { ballotId: repeated.ballot_id, replayed: true };
     const row = await load(tx, id);
+    if (row.requireCaptcha && !verified)
+      throw new PollError(
+        "กรุณายืนยันว่าคุณไม่ใช่บอตก่อนส่งโหวต",
+        403,
+        "VERIFICATION_REQUIRED",
+      );
     if (getPollState(row, Date.parse(row.serverNow)) !== "open")
       throw new PollError(
         "โพลนี้ยังไม่เปิดหรือปิดรับโหวตแล้ว",
@@ -574,6 +592,7 @@ export async function duplicatePoll(
       visibility: source.visibility,
       resultsVisibility: source.resultsVisibility,
       security: source.security,
+      requireCaptcha: source.requireCaptcha,
       minChoices: source.minChoices,
       maxChoices: source.maxChoices,
       allowChange: source.allowChange,

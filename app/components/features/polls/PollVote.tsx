@@ -17,6 +17,7 @@ import {
 } from "@mui/material";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import { useToast } from "@/app/contexts/ToastContext";
 import PollHelp from "./PollHelp";
 import { maggaColors, maggaRadii } from "@/lib/design-tokens";
 import {
@@ -48,6 +49,7 @@ export default function PollVote({
   initial: PublicPoll;
   resultsOnly?: boolean;
 }) {
+  const { showError, showSuccess } = useToast();
   const [poll, setPoll] = useState(initial);
   const [choices, setChoices] = useState(initial.selections);
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
@@ -57,8 +59,7 @@ export default function PollVote({
   const [siteKey, setSiteKey] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [challenge, setChallenge] = useState(0);
-  const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
+
   const [now, setNow] = useState(Date.parse(initial.serverNow));
   const offset = useRef(Date.parse(initial.serverNow) - Date.now());
   const pending = useRef<{ key: string; payload: string } | null>(null);
@@ -77,7 +78,6 @@ export default function PollVote({
     return fresh;
   }, [initial.id]);
   const identify = useCallback(async () => {
-    setError("");
     try {
       const response = await fetch(`/api/polls/${initial.id}/identity`, {
         method: "POST",
@@ -89,16 +89,16 @@ export default function PollVote({
       setReady(true);
       await refresh();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "ระบบยังไม่พร้อม");
+      showError(cause instanceof Error ? cause.message : "ระบบยังไม่พร้อม");
     }
-  }, [initial.id, refresh]);
+  }, [initial.id, refresh, showError]);
   useEffect(() => {
     void identify();
   }, [identify]);
   useEffect(() => {
     const clock = window.setInterval(
       () => setNow(Date.now() + offset.current),
-      1000,
+      15000,
     );
     let failures = 0;
     let timeout: ReturnType<typeof setTimeout>;
@@ -133,7 +133,6 @@ export default function PollVote({
       : poll.state;
   const canVote = state === "open" && (!poll.hasVoted || poll.allowChange);
   function toggle(id: string) {
-    setError("");
     setChoices((old) =>
       poll.maxChoices === 1
         ? [id]
@@ -147,20 +146,19 @@ export default function PollVote({
   async function submit() {
     if (sending.current) return;
     if (choices.length < poll.minChoices || choices.length > poll.maxChoices) {
-      setError(
+      showError(
         `กรุณาเลือก ${poll.minChoices === poll.maxChoices ? poll.maxChoices : `${poll.minChoices}–${poll.maxChoices}`} ข้อ`,
       );
       return;
     }
-    if (!token) {
-      setError("กรุณายืนยันว่าคุณไม่ใช่บอตก่อนส่งโหวต");
+    if (poll.requireCaptcha && !token) {
+      showError("กรุณายืนยันว่าคุณไม่ใช่บอตก่อนส่งโหวต");
       setChallenge((value) => value + 1);
       return;
     }
     sending.current = true;
     setBusy(true);
-    setError("");
-    setNotice("");
+
     const payload = JSON.stringify([...choices].sort());
     if (pending.current?.payload !== payload)
       pending.current = { key: crypto.randomUUID(), payload };
@@ -171,7 +169,7 @@ export default function PollVote({
         body: JSON.stringify({
           choices,
           requestId: pending.current.key,
-          token,
+          ...(poll.requireCaptcha && token ? { token } : {}),
         }),
         signal: AbortSignal.timeout(15000),
       });
@@ -182,7 +180,7 @@ export default function PollVote({
           body.error + (seconds ? ` (ลองใหม่ใน ${seconds} วินาที)` : ""),
         );
       }
-      setNotice("บันทึกโหวตของคุณแล้ว");
+      showSuccess("บันทึกโหวตของคุณแล้ว");
       setResults(true);
       const fresh = await refresh();
       setChoices(fresh.selections);
@@ -194,17 +192,17 @@ export default function PollVote({
           fresh.hasVoted &&
           JSON.stringify([...fresh.selections].sort()) === payload
         ) {
-          setNotice("ตรวจสอบแล้ว บันทึกโหวตของคุณเรียบร้อย");
+          showSuccess("ตรวจสอบแล้ว บันทึกโหวตของคุณเรียบร้อย");
           setResults(true);
           pending.current = null;
         } else
-          setError(
+          showError(
             cause instanceof Error
               ? cause.message
               : "ยังยืนยันผลการส่งไม่ได้ กรุณาลองใหม่",
           );
       } catch {
-        setError(
+        showError(
           "ยังยืนยันผลการส่งไม่ได้ กรุณาลองใหม่ ระบบจะตรวจคำขอเดิมก่อนเพิ่มคะแนน",
         );
       }
@@ -220,9 +218,9 @@ export default function PollVote({
       await navigator.clipboard.writeText(
         `${window.location.origin}/polls/${poll.id}`,
       );
-      setNotice("คัดลอกลิงก์โพลแล้ว");
+      showSuccess("คัดลอกลิงก์โพลแล้ว");
     } catch {
-      setError("คัดลอกไม่ได้ กรุณาคัดลอกลิงก์จากแถบที่อยู่");
+      showError("คัดลอกไม่ได้ กรุณาคัดลอกลิงก์จากแถบที่อยู่");
     }
   }
   return (
@@ -236,408 +234,497 @@ export default function PollVote({
         </Link>
         <Typography variant="body2">โหวต</Typography>
       </Breadcrumbs>
-      <Stack direction="row" spacing={1} sx={{ alignItems: "center", mb: 1 }}>
-        <Chip label={pollStateLabels[state]} size="small" variant="outlined" />
-        <Typography variant="caption" color="text.secondary">
-          {poll.maxChoices === 1
-            ? "เลือกได้ 1 ข้อ"
-            : `เลือกได้ ${poll.minChoices}–${poll.maxChoices} ข้อ`}
-        </Typography>
-      </Stack>
-      <Typography
-        component="h1"
-        variant="h4"
+      <Box
+        component="article"
         sx={{
-          fontWeight: 700,
-          fontSize: { xs: "1.35rem", sm: "1.7rem" },
-          overflowWrap: "anywhere",
+          bgcolor: maggaColors.surface,
+          border: `1px solid ${maggaColors.border}`,
+          borderRadius: `${maggaRadii.card}px`,
+          overflow: "hidden",
         }}
       >
-        {poll.title}
-      </Typography>
-      {poll.description && (
-        <Box>
-          <Typography
-            variant="body2"
-            sx={{
-              whiteSpace: "pre-wrap",
-              overflowWrap: "anywhere",
-              color: maggaColors.textSecondary,
-              mt: 0.5,
-              maxWidth: "70ch",
-              ...(!descriptionExpanded
-                ? {
-                    display: "-webkit-box",
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: "vertical",
-                    overflow: "hidden",
-                  }
-                : {}),
-            }}
-          >
-            {poll.description}
-          </Typography>
-          {poll.description.length > 120 && (
-            <Button
-              size="small"
-              onClick={() => setDescriptionExpanded((value) => !value)}
+        <Box
+          component="header"
+          sx={{
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "minmax(0,1fr)",
+              sm: "minmax(0,1fr) 220px",
+            },
+            gap: 2,
+            p: { xs: 2, sm: 2.5 },
+            borderBottom: `1px solid ${maggaColors.border}`,
+          }}
+        >
+          <Box sx={{ minWidth: 0 }}>
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{ alignItems: "center", mb: 1.25 }}
             >
-              {descriptionExpanded ? "ย่อรายละเอียด" : "อ่านรายละเอียด"}
-            </Button>
-          )}
-        </Box>
-      )}
-      {poll.coverImageUrl && (
-        <Box sx={{ position: "relative", height: { xs: 120, sm: 160 }, mt: 1 }}>
-          <Image
-            src={poll.coverImageUrl}
-            alt="ภาพประกอบโพล"
-            fill
-            sizes="(max-width: 600px) 90vw, 960px"
-            style={{ objectFit: "contain", objectPosition: "left center" }}
-          />
-        </Box>
-      )}
-      <Typography
-        variant="caption"
-        color="text.secondary"
-        sx={{ mt: 0.5, display: "block" }}
-      >
-        {state === "scheduled"
-          ? `เปิด ${date(poll.startsAt)}`
-          : `ปิด ${date(poll.endsAt)}`}
-        <PollHelp
-          text={`เปิด ${date(poll.startsAt)} · ปิด ${date(poll.endsAt)} ตามเวลาไทย (UTC+7)`}
-        />
-      </Typography>
-      <Box
-        sx={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: 2,
-          mt: 0.5,
-          mb: 1,
-          minHeight: 24,
-        }}
-      >
-        <Typography
-          variant="body2"
-          sx={{ color: maggaColors.archiveGoldHover }}
-        >
-          {state === "open"
-            ? remaining(poll.endsAt, now)
-            : pollStateLabels[state]}
-        </Typography>
-        {poll.total !== null && (!results || !poll.resultsAllowed) && (
-          <Typography variant="body2" color="text.secondary">
-            {poll.total.toLocaleString("th-TH")} บัตรโหวต
-          </Typography>
-        )}
-      </Box>
-      {poll.security === "ip" && (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          โพลนี้จำกัดหนึ่งบัตรต่อ IP ผู้ที่ใช้ Wi-Fi
-          หรือเครือข่ายเดียวกันอาจใช้สิทธิ์ร่วมกัน
-        </Alert>
-      )}
-      {poll.security === "members" && (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          โพลนี้รับเฉพาะสมาชิกที่เข้าสู่ระบบ{" "}
-          <Link
-            href={`/auth/signin?callbackUrl=${encodeURIComponent(`/polls/${poll.id}`)}`}
-          >
-            เข้าสู่ระบบ
-          </Link>
-        </Alert>
-      )}
-      {notice && (
-        <Alert severity="success" role="status" sx={{ mb: 2 }}>
-          {notice}
-        </Alert>
-      )}
-      {error && (
-        <Alert severity="error" role="alert" sx={{ mb: 2 }}>
-          {error}
-          {!ready && <Button onClick={() => void identify()}>ลองใหม่</Button>}
-        </Alert>
-      )}
-      <Box
-        sx={{
-          display: "flex",
-          borderBottom: `1px solid ${maggaColors.border}`,
-          mb: 1.5,
-        }}
-      >
-        <Button
-          onClick={() => setResults(false)}
-          aria-pressed={!results}
-          sx={{
-            color: !results
-              ? maggaColors.archiveGoldHover
-              : maggaColors.textSecondary,
-            minHeight: 44,
-          }}
-        >
-          ร่วมโหวต
-        </Button>
-        <Button
-          onClick={() => setResults(true)}
-          aria-pressed={results}
-          sx={{
-            color: results
-              ? maggaColors.archiveGoldHover
-              : maggaColors.textSecondary,
-            minHeight: 44,
-          }}
-        >
-          ผลโหวต
-        </Button>
-        <Button
-          onClick={() => void share()}
-          startIcon={<ContentCopyIcon />}
-          sx={{ ml: "auto", color: maggaColors.textSecondary }}
-        >
-          แชร์
-        </Button>
-      </Box>
-      {results ? (
-        <PollResults poll={poll} />
-      ) : (
-        <>
-          {poll.hasVoted && (
+              <Chip
+                label={pollStateLabels[state]}
+                size="small"
+                variant="outlined"
+              />
+              <Typography variant="caption" color="text.secondary">
+                {poll.maxChoices === 1
+                  ? "เลือกได้ 1 ข้อ"
+                  : `เลือกได้ ${poll.minChoices}–${poll.maxChoices} ข้อ`}
+              </Typography>
+            </Stack>
             <Typography
-              role="status"
+              component="h1"
+              variant="h4"
               sx={{
-                mb: 1,
-                color: maggaColors.textSecondary,
-                fontSize: "0.85rem",
+                fontWeight: 700,
+                fontSize: { xs: "1.4rem", sm: "1.8rem" },
+                lineHeight: 1.6,
+                overflowWrap: "anywhere",
               }}
             >
-              {poll.allowChange
-                ? "คุณโหวตแล้ว สามารถเปลี่ยนคำตอบก่อนปิดโพลได้"
-                : "คุณโหวตในโพลนี้แล้ว"}
+              {poll.title}
             </Typography>
-          )}
-          <Box
-            component="fieldset"
-            disabled={!canVote || busy}
-            sx={{ border: 0, p: 0, m: 0, minWidth: 0 }}
-          >
-            <Box
-              component="legend"
-              sx={{
-                position: "absolute",
-                width: "1px",
-                height: "1px",
-                overflow: "hidden",
-                clipPath: "inset(50%)",
-              }}
-            >
-              {poll.maxChoices === 1
-                ? "เลือกคำตอบของคุณ"
-                : `เลือกคำตอบของคุณ (${choices.length}/${poll.maxChoices})`}
-            </Box>
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: poll.options.some((o) => o.imageUrl)
-                  ? {
-                      xs: "1fr",
-                      sm: "repeat(3,minmax(0,1fr))",
-                      md: "repeat(4,minmax(0,1fr))",
-                      lg: "repeat(6,minmax(0,1fr))",
-                    }
-                  : "1fr",
-                gap: { xs: 1, sm: 1.5 },
-              }}
-            >
-              {poll.options.map((option) => (
-                <Box key={option.id} sx={{ minWidth: 0, position: "relative" }}>
-                  <Box
-                    component="label"
-                    sx={{
-                      display: { xs: "flex", sm: "block" },
-                      alignItems: "center",
-                      cursor: canVote ? "pointer" : "default",
-                      p: option.imageUrl ? 0 : 0.5,
-                      border: `1px solid ${choices.includes(option.id) ? maggaColors.archiveGold : maggaColors.border}`,
-                      borderRadius: `${maggaRadii.card}px`,
-                      bgcolor: choices.includes(option.id)
-                        ? maggaColors.archiveGoldSoft
-                        : maggaColors.surface,
-                      overflow: "hidden",
-                      "&:focus-within": {
-                        outline: `2px solid ${maggaColors.archiveGoldHover}`,
-                        outlineOffset: 3,
-                      },
-                    }}
-                  >
-                    {option.imageUrl && (
-                      <Box
-                        sx={{
-                          aspectRatio: "3 / 4",
-                          width: { xs: 48, sm: "100%" },
-                          height: { xs: 64, sm: "auto" },
-                          flexShrink: 0,
-                          position: "relative",
-                          bgcolor: maggaColors.surfaceElevated,
-                        }}
-                      >
-                        <Image
-                          src={option.imageUrl}
-                          alt={option.label}
-                          fill
-                          sizes="(max-width: 600px) 48px, (max-width: 900px) 28vw, 180px"
-                          style={{ objectFit: "contain" }}
-                        />
-                      </Box>
-                    )}
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        minHeight: 44,
-                        flex: 1,
-                        minWidth: 0,
-                        pr: { xs: option.imageUrl ? 5 : 1, sm: 0.5 },
-                      }}
-                    >
-                      {poll.maxChoices === 1 ? (
-                        <Radio
-                          name="poll-choice"
-                          checked={choices.includes(option.id)}
-                          onChange={() => toggle(option.id)}
-                          value={option.id}
-                          slotProps={{ input: { "aria-label": option.label } }}
-                          sx={{
-                            color: maggaColors.textSecondary,
-                            "&.Mui-checked": {
-                              color: maggaColors.archiveGoldHover,
-                            },
-                          }}
-                        />
-                      ) : (
-                        <Checkbox
-                          checked={choices.includes(option.id)}
-                          onChange={() => toggle(option.id)}
-                          value={option.id}
-                          disabled={
-                            !choices.includes(option.id) &&
-                            choices.length >= poll.maxChoices
-                          }
-                          slotProps={{ input: { "aria-label": option.label } }}
-                          sx={{
-                            color: maggaColors.textSecondary,
-                            "&.Mui-checked": {
-                              color: maggaColors.archiveGoldHover,
-                            },
-                          }}
-                        />
-                      )}
-                      <Typography
-                        title={option.label}
-                        sx={{
-                          minWidth: 0,
-                          fontSize: "0.85rem",
-                          lineHeight: 1.75,
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        }}
-                      >
-                        {option.label}
-                      </Typography>
-                    </Box>
-                  </Box>
-                  {option.imageUrl && (
-                    <Tooltip title="ดูภาพใหญ่" enterTouchDelay={0}>
-                      <IconButton
-                        component="a"
-                        href={option.imageUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        size="small"
-                        aria-label={`ดูภาพใหญ่ ${option.label}`}
-                        sx={{
-                          color: maggaColors.textSecondary,
-                          position: "absolute",
-                          top: { xs: 10, sm: 4 },
-                          right: 4,
-                          bgcolor: maggaColors.surface,
-                          width: { xs: 44, sm: 28 },
-                          height: { xs: 44, sm: 28 },
-                          "&:hover": { bgcolor: maggaColors.surfaceElevated },
-                        }}
-                      >
-                        <OpenInNewIcon sx={{ fontSize: 16 }} />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                </Box>
-              ))}
-            </Box>
-          </Box>
-          {canVote && (
-            <Box sx={{ mt: 1.5 }}>
-              <Box sx={{ display: "flex", alignItems: "center" }}>
-                <Typography variant="caption" color="text.secondary">
-                  ไม่เปิดเผยชื่อผู้โหวต
-                </Typography>
-                <PollHelp text="ใช้ cookie เพื่อจดจำสิทธิ์โหวตและป้องกันสแปม การปฏิเสธ analytics ไม่ตัดสิทธิ์โหวต" />
-              </Box>
-              <Box
-                sx={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: 1,
-                  alignItems: "center",
-                }}
-              >
-                {ready && (
-                  <GuestVerification
-                    siteKey={siteKey}
-                    onToken={setToken}
-                    action="poll_vote"
-                    requested={challenge}
-                  />
-                )}
-                <Button
-                  variant="contained"
-                  onClick={() => void submit()}
-                  disabled={busy || !ready || !choices.length}
+            {poll.description && (
+              <Box>
+                <Typography
+                  variant="body2"
                   sx={{
+                    whiteSpace: "pre-wrap",
+                    overflowWrap: "anywhere",
+                    color: maggaColors.textSecondary,
                     mt: 0.5,
-                    minHeight: 44,
-                    px: 3,
-                    bgcolor: maggaColors.archiveGold,
-                    color: maggaColors.background,
-                    "&:hover": { bgcolor: maggaColors.archiveGoldHover },
+                    maxWidth: "70ch",
+                    ...(!descriptionExpanded
+                      ? {
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                        }
+                      : {}),
                   }}
                 >
-                  {busy
-                    ? "กำลังบันทึก…"
-                    : poll.hasVoted
-                      ? "บันทึกคำตอบใหม่"
-                      : "ยืนยันการโหวต"}
-                </Button>
+                  {poll.description}
+                </Typography>
+                {poll.description.length > 120 && (
+                  <Button
+                    size="small"
+                    onClick={() => setDescriptionExpanded((value) => !value)}
+                  >
+                    {descriptionExpanded ? "ย่อรายละเอียด" : "อ่านรายละเอียด"}
+                  </Button>
+                )}
               </Box>
+            )}
+            {poll.coverImageUrl && (
+              <Box
+                sx={{
+                  position: "relative",
+                  height: { xs: 120, sm: 160 },
+                  mt: 1,
+                }}
+              >
+                <Image
+                  src={poll.coverImageUrl}
+                  alt="ภาพประกอบโพล"
+                  fill
+                  sizes="(max-width: 600px) 90vw, 960px"
+                  style={{
+                    objectFit: "contain",
+                    objectPosition: "left center",
+                  }}
+                />
+              </Box>
+            )}
+          </Box>
+          <Box
+            sx={{
+              minWidth: 0,
+              alignSelf: "center",
+              borderLeft: { sm: `1px solid ${maggaColors.border}` },
+              pl: { sm: 2.5 },
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: "flex", alignItems: "center", minHeight: 32 }}
+            >
+              {state === "scheduled"
+                ? `เปิด ${date(poll.startsAt)}`
+                : `ปิด ${date(poll.endsAt)}`}
+              <PollHelp
+                text={`เปิด ${date(poll.startsAt)} · ปิด ${date(poll.endsAt)} ตามเวลาไทย (UTC+7)`}
+              />
+            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "row", sm: "column" },
+                justifyContent: { xs: "space-between", sm: "flex-start" },
+                gap: 0.5,
+                mt: 0.5,
+                mb: 1,
+                minHeight: 24,
+              }}
+            >
+              <Typography
+                variant="body2"
+                sx={{ color: maggaColors.archiveGoldHover }}
+              >
+                {state === "open"
+                  ? remaining(poll.endsAt, now)
+                  : pollStateLabels[state]}
+              </Typography>
+              {poll.total !== null && (
+                <Typography variant="body2" color="text.secondary">
+                  {poll.total.toLocaleString("th-TH")} บัตรโหวต
+                </Typography>
+              )}
             </Box>
+          </Box>
+        </Box>
+        <Box sx={{ p: { xs: 1.5, sm: 2.5 } }}>
+          {poll.security === "ip" && (
+            <Alert severity="info" sx={{ mb: 2 }}>
+              โพลนี้จำกัดหนึ่งบัตรต่อ IP ผู้ที่ใช้ Wi-Fi
+              หรือเครือข่ายเดียวกันอาจใช้สิทธิ์ร่วมกัน
+            </Alert>
           )}
-        </>
-      )}
-      <Tooltip
-        title="อัปเดตประมาณทุก 15 วินาทีขณะเปิดหน้านี้"
-        enterTouchDelay={0}
-      >
-        <Typography
-          tabIndex={0}
-          variant="caption"
-          color="text.secondary"
-          sx={{ display: "block", mt: 1.5 }}
-        >
-          อัปเดต {date(poll.serverNow)}
-        </Typography>
-      </Tooltip>
+          {poll.security === "members" && (
+            <Alert severity="info" sx={{ mb: 2 }}>
+              โพลนี้รับเฉพาะสมาชิกที่เข้าสู่ระบบ{" "}
+              <Link
+                href={`/auth/signin?callbackUrl=${encodeURIComponent(`/polls/${poll.id}`)}`}
+              >
+                เข้าสู่ระบบ
+              </Link>
+            </Alert>
+          )}
+          <Box
+            sx={{
+              display: "flex",
+              borderBottom: `1px solid ${maggaColors.border}`,
+              mb: 1.5,
+            }}
+          >
+            <Button
+              onClick={() => setResults(false)}
+              aria-pressed={!results}
+              sx={{
+                color: !results
+                  ? maggaColors.archiveGoldHover
+                  : maggaColors.textSecondary,
+                minHeight: 44,
+              }}
+            >
+              ร่วมโหวต
+            </Button>
+            <Button
+              onClick={() => setResults(true)}
+              aria-pressed={results}
+              sx={{
+                color: results
+                  ? maggaColors.archiveGoldHover
+                  : maggaColors.textSecondary,
+                minHeight: 44,
+              }}
+            >
+              ผลโหวต
+            </Button>
+            <Button
+              onClick={() => void share()}
+              startIcon={<ContentCopyIcon />}
+              sx={{ ml: "auto", color: maggaColors.textSecondary }}
+            >
+              แชร์
+            </Button>
+          </Box>
+          {results ? (
+            <PollResults poll={poll} />
+          ) : (
+            <>
+              {poll.hasVoted && (
+                <Typography
+                  role="status"
+                  sx={{
+                    mb: 1,
+                    color: maggaColors.textSecondary,
+                    fontSize: "0.85rem",
+                  }}
+                >
+                  {poll.allowChange
+                    ? "คุณโหวตแล้ว สามารถเปลี่ยนคำตอบก่อนปิดโพลได้"
+                    : "คุณโหวตในโพลนี้แล้ว"}
+                </Typography>
+              )}
+              <Box
+                component="fieldset"
+                disabled={!canVote || busy}
+                sx={{ border: 0, p: 0, m: 0, minWidth: 0 }}
+              >
+                <Box
+                  component="legend"
+                  sx={{
+                    position: "absolute",
+                    width: "1px",
+                    height: "1px",
+                    overflow: "hidden",
+                    clipPath: "inset(50%)",
+                  }}
+                >
+                  {poll.maxChoices === 1
+                    ? "เลือกคำตอบของคุณ"
+                    : `เลือกคำตอบของคุณ (${choices.length}/${poll.maxChoices})`}
+                </Box>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: poll.options.some((o) => o.imageUrl)
+                      ? {
+                          xs: "1fr",
+                          sm: "repeat(3,minmax(0,1fr))",
+                          md: "repeat(4,minmax(0,1fr))",
+                          lg: "repeat(6,minmax(0,1fr))",
+                        }
+                      : "1fr",
+                    gap: { xs: 1, sm: 1.5 },
+                  }}
+                >
+                  {poll.options.map((option) => (
+                    <Box
+                      key={option.id}
+                      sx={{ minWidth: 0, position: "relative" }}
+                    >
+                      <Box
+                        component="label"
+                        sx={{
+                          display: { xs: "flex", sm: "block" },
+                          alignItems: "center",
+                          cursor: canVote ? "pointer" : "default",
+                          p: option.imageUrl ? 0 : 0.5,
+                          border: `1px solid ${choices.includes(option.id) ? maggaColors.archiveGold : maggaColors.border}`,
+                          borderRadius: `${maggaRadii.card}px`,
+                          bgcolor: choices.includes(option.id)
+                            ? maggaColors.archiveGoldSoft
+                            : maggaColors.surface,
+                          overflow: "hidden",
+                          "&:focus-within": {
+                            outline: `2px solid ${maggaColors.archiveGoldHover}`,
+                            outlineOffset: 3,
+                          },
+                        }}
+                      >
+                        {option.imageUrl && (
+                          <Box
+                            sx={{
+                              aspectRatio: "3 / 4",
+                              width: { xs: 48, sm: "100%" },
+                              height: { xs: 64, sm: "auto" },
+                              flexShrink: 0,
+                              position: "relative",
+                              bgcolor: maggaColors.surfaceElevated,
+                            }}
+                          >
+                            <Image
+                              src={option.imageUrl}
+                              alt={option.label}
+                              fill
+                              sizes="(max-width: 600px) 48px, (max-width: 900px) 28vw, 180px"
+                              style={{ objectFit: "contain" }}
+                            />
+                          </Box>
+                        )}
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            minHeight: 44,
+                            flex: 1,
+                            minWidth: 0,
+                            pr: { xs: option.imageUrl ? 5 : 1, sm: 0.5 },
+                          }}
+                        >
+                          {poll.maxChoices === 1 ? (
+                            <Radio
+                              name="poll-choice"
+                              checked={choices.includes(option.id)}
+                              onChange={() => toggle(option.id)}
+                              value={option.id}
+                              slotProps={{
+                                input: { "aria-label": option.label },
+                              }}
+                              sx={{
+                                color: maggaColors.textSecondary,
+                                "&.Mui-checked": {
+                                  color: maggaColors.archiveGoldHover,
+                                },
+                              }}
+                            />
+                          ) : (
+                            <Checkbox
+                              checked={choices.includes(option.id)}
+                              onChange={() => toggle(option.id)}
+                              value={option.id}
+                              disabled={
+                                !choices.includes(option.id) &&
+                                choices.length >= poll.maxChoices
+                              }
+                              slotProps={{
+                                input: { "aria-label": option.label },
+                              }}
+                              sx={{
+                                color: maggaColors.textSecondary,
+                                "&.Mui-checked": {
+                                  color: maggaColors.archiveGoldHover,
+                                },
+                              }}
+                            />
+                          )}
+                          <Typography
+                            title={option.label}
+                            sx={{
+                              minWidth: 0,
+                              fontSize: "0.85rem",
+                              lineHeight: 1.75,
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {option.label}
+                          </Typography>
+                        </Box>
+                      </Box>
+                      {option.imageUrl && (
+                        <Tooltip title="ดูภาพใหญ่" enterTouchDelay={0}>
+                          <IconButton
+                            component="a"
+                            href={option.imageUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            size="small"
+                            aria-label={`ดูภาพใหญ่ ${option.label}`}
+                            sx={{
+                              color: maggaColors.textSecondary,
+                              position: "absolute",
+                              top: { xs: 10, sm: 4 },
+                              right: 4,
+                              bgcolor: maggaColors.surface,
+                              width: { xs: 44, sm: 28 },
+                              height: { xs: 44, sm: 28 },
+                              "&:hover": {
+                                bgcolor: maggaColors.surfaceElevated,
+                              },
+                            }}
+                          >
+                            <OpenInNewIcon sx={{ fontSize: 16 }} />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+              {canVote && (
+                <Box
+                  sx={{
+                    mt: 1.5,
+                    display: "flex",
+                    flexWrap: "wrap",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 1,
+                  }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <Typography variant="caption" color="text.secondary">
+                      ไม่เปิดเผยชื่อผู้โหวต
+                    </Typography>
+                    <PollHelp text="ใช้ cookie เพื่อจดจำสิทธิ์โหวตและป้องกันสแปม การปฏิเสธ analytics ไม่ตัดสิทธิ์โหวต" />
+                  </Box>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: 1,
+                      alignItems: "center",
+                    }}
+                  >
+                    {poll.requireCaptcha && (
+                      <Box sx={{ minHeight: 164, width: 168, flexShrink: 0 }}>
+                        {ready && siteKey ? (
+                          <GuestVerification
+                            siteKey={siteKey}
+                            onToken={setToken}
+                            action="poll_vote"
+                            requested={challenge}
+                          />
+                        ) : (
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ display: "block", py: 1 }}
+                          >
+                            {ready
+                              ? "ระบบยืนยันไม่พร้อม กรุณาติดต่อผู้ดูแล"
+                              : "กำลังเตรียมระบบยืนยัน…"}
+                          </Typography>
+                        )}
+                      </Box>
+                    )}
+                    {!ready && (
+                      <Button size="small" onClick={() => void identify()}>
+                        ลองเชื่อมต่อใหม่
+                      </Button>
+                    )}
+                    <Button
+                      variant="contained"
+                      onClick={() => void submit()}
+                      disabled={
+                        busy ||
+                        !ready ||
+                        !choices.length ||
+                        (poll.requireCaptcha && !siteKey)
+                      }
+                      sx={{
+                        ml: "auto",
+                        minWidth: 160,
+                        minHeight: 44,
+                        px: 3,
+                        bgcolor: maggaColors.archiveGold,
+                        color: maggaColors.background,
+                        "&:hover": { bgcolor: maggaColors.archiveGoldHover },
+                      }}
+                    >
+                      {busy
+                        ? "กำลังบันทึก…"
+                        : poll.hasVoted
+                          ? "บันทึกคำตอบใหม่"
+                          : "ยืนยันการโหวต"}
+                    </Button>
+                  </Box>
+                </Box>
+              )}
+            </>
+          )}
+          <Tooltip
+            title="อัปเดตประมาณทุก 15 วินาทีขณะเปิดหน้านี้"
+            enterTouchDelay={0}
+          >
+            <Typography
+              tabIndex={0}
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: "block", mt: 1.5 }}
+            >
+              อัปเดต {date(poll.serverNow)}
+            </Typography>
+          </Tooltip>
+        </Box>
+      </Box>
     </Box>
   );
 }

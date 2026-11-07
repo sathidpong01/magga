@@ -9,6 +9,7 @@ const schema = z
     visibility: z.enum(["public", "unlisted"]),
     resultsVisibility: z.enum(["public", "after_vote", "after_close", "admin"]),
     security: z.enum(["standard", "ip", "members"]),
+    requireCaptcha: z.boolean().default(true),
     minChoices: z.number().int().min(1).max(30),
     maxChoices: z.number().int().min(1).max(30),
     allowChange: z.boolean(),

@@ -96,6 +96,7 @@ config.local.ts
 !db/migrations/0017_manga_upload_lifecycle.sql
 !db/migrations/0018_preserve_manga_publication_date.sql
 !db/migrations/0019_community_polls.sql
+!db/migrations/0020_poll_captcha_settings.sql
 
 # Browser verification artifacts (may contain fixture identifiers)
 .playwright-cli/
