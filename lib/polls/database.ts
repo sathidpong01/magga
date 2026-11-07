@@ -1,5 +1,6 @@
 import { sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
+import { pollSchema, scopePollSql } from "./schema";
 
 export interface PollExecutor {
   query<T = Record<string, unknown>>(
@@ -27,7 +28,9 @@ function bind(text: string, parameters: unknown[] = []): SQL {
 function executor(execute: (query: SQL) => Promise<unknown>): PollExecutor {
   return {
     async query<T>(text: string, parameters?: unknown[]) {
-      const result = await execute(bind(text, parameters));
+      const result = await execute(
+        bind(scopePollSql(text, pollSchema()), parameters),
+      );
       return result as T[];
     },
   };

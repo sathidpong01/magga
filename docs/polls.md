@@ -13,6 +13,12 @@
 
 ## กติกา
 
+### Preview ที่แยกข้อมูลโพล
+
+ตั้ง `POLL_DATABASE_SCHEMA=preview_polls_community` เฉพาะ branch Preview เพื่อใช้ตารางโพลชุดแยกในฐานข้อมูลเดิม ค่าเริ่มต้น `private` ยังคงใช้สำหรับ production ชื่อ schema อนุญาตเฉพาะ `private` หรือ `preview_polls_` ตามด้วยตัวอักษรเล็ก ตัวเลข และ underscore การสร้าง schema ทดสอบต้องใช้ migration `0019` ที่แทน namespace `private` ด้วยชื่อ Preview เท่านั้น อย่ารัน migration ต้นฉบับลง production เพื่อเปิด Preview
+
+การแยกนี้ครอบคลุมตารางโพลทั้งหมด รวมถึงบัตร session rate limit รูป และ audit ส่วนบัญชีและมังงะยังใช้ฐานข้อมูลที่ Preview เดิมตั้งไว้ จึงควรใช้บัญชีแอดมินเดิมและหลีกเลี่ยงการแก้ข้อมูลมังงะ/บัญชีระหว่างทดสอบ Preview หากต้องการแยกทั้งเว็บไซต์ ต้องใช้ฐานข้อมูล Preview แยกทั้งชุด
+
 - หนึ่งตัวตนมีหนึ่งบัตรต่อโพล เลือกหลายข้อยังเป็นหนึ่งบัตร
 - ไม่มี fingerprint หรือ analytics identifier เป็นหลักฐานหลัก ผู้ไม่ยอมรับ analytics ยังโหวตได้
 - Guest token สุ่มเก็บใน HttpOnly, SameSite=Lax cookie (Secure และ `__Host-` ใน production) อายุ 180 วัน ฝั่งฐานข้อมูลเก็บ SHA-256 ของ token
