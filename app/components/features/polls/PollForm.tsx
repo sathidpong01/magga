@@ -29,6 +29,7 @@ import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
 import PollHelp from "./PollHelp";
 import { maggaColors, maggaRadii } from "@/lib/design-tokens";
 import { authFetch } from "@/lib/auth-fetch";
+import { PollDraftImages } from "@/lib/polls/draft-images";
 import { parsePollInput } from "@/lib/polls/validation";
 import { fromBangkokInput, toBangkokInput } from "@/lib/polls/time";
 import {
@@ -104,6 +105,16 @@ export default function PollForm({
   const [options, setOptions] = useState<Option[]>(
     () => initial?.options ?? input.options,
   );
+  const [images] = useState(() => new PollDraftImages());
+  const saveController = useRef<AbortController | null>(null);
+  const pendingImages = images.pending;
+  useEffect(
+    () => () => {
+      saveController.current?.abort();
+      images.clear();
+    },
+    [images],
+  );
   const [cover, setCover] = useState(initial?.coverImageUrl ?? null);
   const [start, setStart] = useState(toBangkokInput(input.startsAt));
   const [end, setEnd] = useState(toBangkokInput(input.endsAt));
@@ -125,6 +136,7 @@ export default function PollForm({
   }, [message, showError]);
   const version = useRef(initial?.version ?? 0);
   const activeSave = useRef(false);
+  const activeImageSave = useRef(false);
   useEffect(() => {
     if (!initial || dirty || activeSave.current) return;
     version.current = initial.version;
@@ -135,19 +147,21 @@ export default function PollForm({
     setEnd(toBangkokInput(initial.endsAt));
   }, [initial, dirty]);
   useEffect(() => {
-    onDirtyChange?.(dirty || Boolean(uploading) || saving);
-  }, [dirty, uploading, saving, onDirtyChange]);
+    onDirtyChange?.(dirty || pendingImages || Boolean(uploading) || saving);
+  }, [dirty, pendingImages, uploading, saving, onDirtyChange]);
   const locked = Boolean(
     initial && (initial.total ?? 0) + initial.excluded > 0,
   );
   const archived = initial?.status === "archived";
   const edit = <K extends keyof PollInput>(key: K, value: PollInput[K]) => {
+    if (activeImageSave.current) return;
     setInput((old) => ({ ...old, [key]: value }));
     setMessage("");
     setDirty(true);
     setSaved("");
   };
   function optionChange(index: number, update: Partial<Option>) {
+    if (activeImageSave.current) return;
     setOptions((old) =>
       old.map((o, i) => (i === index ? { ...o, ...update } : o)),
     );
@@ -155,6 +169,7 @@ export default function PollForm({
     setSaved("");
   }
   function move(index: number, change: number) {
+    if (activeImageSave.current) return;
     setOptions((old) => {
       const next = [...old];
       [next[index], next[index + change]] = [next[index + change], next[index]];
@@ -163,7 +178,7 @@ export default function PollForm({
     setDirty(true);
   }
   function dropOption(source: string, target: string) {
-    if (locked || source === target) return;
+    if (locked || activeImageSave.current || source === target) return;
     setOptions((old) => {
       const from = old.findIndex((o) => o.id === source);
       const to = old.findIndex((o) => o.id === target);
@@ -175,43 +190,45 @@ export default function PollForm({
     });
     setDirty(true);
   }
-  async function upload(file: File, target: string) {
-    setUploading(target);
-    setMessage("");
+  function selectImage(file: File, target: string) {
+    if (activeImageSave.current || locked || archived) return;
     try {
-      if (file.size > 3 * 1024 * 1024)
-        throw new Error("รูปภาพต้องมีขนาดไม่เกิน 3 MB");
-      const body = new FormData();
-      body.append("file", file);
-      const response = await authFetch("/api/admin/polls/upload", {
-        method: "POST",
-        body,
-      });
-      const asset = await response.json();
-      if (!response.ok) throw new Error(asset.error);
+      const preview = images.select(target, file);
       if (target === "cover") {
-        edit("coverAssetId", asset.id);
-        setCover(asset.url);
+        edit("coverAssetId", null);
+        setCover(preview);
       } else {
         setOptions((old) =>
           old.map((option) =>
             option.id === target
-              ? {
-                  ...option,
-                  assetId: asset.id,
-                  mangaId: null,
-                  imageUrl: asset.url,
-                }
+              ? { ...option, assetId: null, mangaId: null, imageUrl: preview }
               : option,
           ),
         );
         setDirty(true);
+        setSaved("");
       }
+      setMessage("");
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "อัปโหลดไม่สำเร็จ");
-    } finally {
-      setUploading(null);
+      setMessage(
+        error instanceof Error ? error.message : "เลือกรูปภาพไม่สำเร็จ",
+      );
     }
+  }
+  async function upload(file: File, target: string, signal: AbortSignal) {
+    setUploading(target);
+    const body = new FormData();
+    body.append("file", file);
+    const response = await authFetch("/api/admin/polls/upload", {
+      method: "POST",
+      body,
+      signal: AbortSignal.any([signal, AbortSignal.timeout(60000)]),
+    });
+    const asset = await response.json();
+    if (!response.ok) throw new Error(asset.error || "อัปโหลดไม่สำเร็จ");
+    if (typeof asset.id !== "string" || typeof asset.url !== "string")
+      throw new Error("ข้อมูลรูปภาพไม่ถูกต้อง กรุณาลองใหม่");
+    return { id: asset.id, url: asset.url };
   }
   const formValue = (): PollInput =>
     parsePollInput({
@@ -236,7 +253,7 @@ export default function PollForm({
     current.current = { formValue, onSaved, dirty };
   });
   async function save(automatic = false) {
-    if (activeSave.current) return;
+    if (activeSave.current || (automatic && images.pending)) return;
     let value: PollInput;
     try {
       value = current.current.formValue();
@@ -246,17 +263,26 @@ export default function PollForm({
       return;
     }
     activeSave.current = true;
+    activeImageSave.current = images.pending;
     setSaving(true);
     setMessage("");
     const snapshot = JSON.stringify(value);
+    const imageRevision = images.revision;
+    const controller = new AbortController();
+    saveController.current = controller;
     try {
+      const prepared = await images.prepare(value, (file, target) =>
+        upload(file, target, controller.signal),
+      );
+      controller.signal.throwIfAborted();
       const response = await authFetch(
         initial ? `/api/admin/polls/${initial.id}` : "/api/admin/polls",
         {
           method: initial ? "PUT" : "POST",
           headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
           body: JSON.stringify(
-            initial ? { input: value, version: version.current } : value,
+            initial ? { input: prepared, version: version.current } : prepared,
           ),
         },
       );
@@ -265,20 +291,30 @@ export default function PollForm({
       version.current = poll.version;
       let unchanged = false;
       try {
-        unchanged = JSON.stringify(current.current.formValue()) === snapshot;
+        unchanged =
+          JSON.stringify(current.current.formValue()) === snapshot &&
+          images.revision === imageRevision;
       } catch {
         /* Still editing an incomplete field. */
       }
       if (unchanged) {
+        setInput(initialInput(poll));
+        setOptions(poll.options);
+        setCover(poll.coverImageUrl);
+        images.clear();
         setDirty(false);
         setSaved("บันทึกแล้ว");
       }
       current.current.onSaved?.(poll);
       if (!initial) router.replace(`/dashboard/admin/polls/${poll.id}`);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "บันทึกไม่สำเร็จ");
+      if (!controller.signal.aborted)
+        setMessage(error instanceof Error ? error.message : "บันทึกไม่สำเร็จ");
     } finally {
       activeSave.current = false;
+      activeImageSave.current = false;
+      saveController.current = null;
+      setUploading(null);
       setSaving(false);
     }
   }
@@ -291,13 +327,24 @@ export default function PollForm({
       !initial ||
       initial.status !== "draft" ||
       !dirty ||
+      pendingImages ||
       uploading ||
       message
     )
       return;
     const timer = setTimeout(() => void saveRef.current(true), 1800);
     return () => clearTimeout(timer);
-  }, [initial, input, options, start, end, dirty, uploading, message]);
+  }, [
+    initial,
+    input,
+    options,
+    start,
+    end,
+    dirty,
+    pendingImages,
+    uploading,
+    message,
+  ]);
   useEffect(() => {
     if (mangaSearch.trim().length < 2) {
       setManga([]);
@@ -360,7 +407,7 @@ export default function PollForm({
         )}
         <Box
           component="fieldset"
-          disabled={Boolean(archived)}
+          disabled={Boolean(archived) || Boolean(uploading)}
           sx={{ border: 0, m: 0, p: 0, minWidth: 0 }}
         >
           <Box sx={sectionSx}>
@@ -411,7 +458,7 @@ export default function PollForm({
                   accept="image/jpeg,image/png,image/webp"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
-                    if (file) void upload(file, "cover");
+                    if (file) selectImage(file, "cover");
                     e.target.value = "";
                   }}
                 />
@@ -438,6 +485,7 @@ export default function PollForm({
                 disabled={locked || !cover}
                 sx={{ minWidth: 84 }}
                 onClick={() => {
+                  images.remove("cover");
                   edit("coverAssetId", null);
                   setCover(null);
                 }}
@@ -455,7 +503,7 @@ export default function PollForm({
               >
                 ตัวเลือก ({options.length})
               </Typography>
-              <PollHelp text="เพิ่มได้ 2–30 ตัวเลือก ใช้ข้อความ รูป JPEG/PNG/WebP ไม่เกิน 3 MB หรือปกมังงะในระบบ ลากจุดด้านซ้ายหรือใช้ปุ่มขึ้นลงเพื่อจัดลำดับ" />
+              <PollHelp text="เพิ่มได้ 2–30 ตัวเลือก รูป JPEG/PNG/WebP ไม่เกิน 3 MB แสดงตัวอย่างในเครื่องก่อน อัปโหลดเมื่อกดบันทึกเองเท่านั้น ลากหรือใช้ปุ่มขึ้นลงเพื่อจัดลำดับ" />
             </Box>
             <Stack spacing={1}>
               {options.map((option, index) => (
@@ -583,7 +631,7 @@ export default function PollForm({
                           accept="image/jpeg,image/png,image/webp"
                           onChange={(e) => {
                             const file = e.target.files?.[0];
-                            if (file) void upload(file, option.id);
+                            if (file) selectImage(file, option.id);
                             e.target.value = "";
                           }}
                         />
@@ -592,13 +640,14 @@ export default function PollForm({
                         size="small"
                         aria-label={`นำรูปตัวเลือก ${index + 1} ออก`}
                         disabled={locked || !option.imageUrl}
-                        onClick={() =>
+                        onClick={() => {
+                          images.remove(option.id);
                           optionChange(index, {
                             assetId: null,
                             mangaId: null,
                             imageUrl: null,
-                          })
-                        }
+                          });
+                        }}
                       >
                         <DeleteOutlineIcon sx={{ fontSize: 16 }} />
                       </IconButton>
@@ -622,6 +671,7 @@ export default function PollForm({
                         aria-label={`ลบตัวเลือก ${index + 1}`}
                         disabled={locked || options.length <= 2}
                         onClick={() => {
+                          images.remove(option.id);
                           setOptions((old) =>
                             old.filter((o) => o.id !== option.id),
                           );
@@ -702,7 +752,11 @@ export default function PollForm({
                     if (!item) return;
                     setOptions((old) => [
                       ...old.filter(
-                        (o) => o.label.trim() || o.assetId || o.mangaId,
+                        (o) =>
+                          o.label.trim() ||
+                          o.assetId ||
+                          o.mangaId ||
+                          o.imageUrl,
                       ),
                       {
                         ...newOption(),
@@ -1007,11 +1061,13 @@ export default function PollForm({
               {saving
                 ? "กำลังบันทึก…"
                 : saved ||
-                  (dirty
-                    ? "มีการแก้ไขที่ยังไม่บันทึก"
-                    : initial?.status === "draft"
-                      ? "บันทึกฉบับร่างอัตโนมัติ"
-                      : "")}
+                  (pendingImages
+                    ? "รูปใหม่รอกดบันทึก"
+                    : dirty
+                      ? "มีการแก้ไขที่ยังไม่บันทึก"
+                      : initial?.status === "draft"
+                        ? "บันทึกฉบับร่างอัตโนมัติ"
+                        : "")}
             </Typography>
           </Box>
         </Box>
