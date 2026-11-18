@@ -61,6 +61,8 @@ describe("manga reader with per-image comments paused", () => {
     expect(images[0]).toContain('data-preload="true"');
     expect(images[1]).toContain('loading="lazy"');
     expect(images.every((image) => image.includes('data-unoptimized="true"'))).toBe(true);
+    expect(images.every((image) => image.includes('draggable="false"') && image.includes('data-magga-protected-image=""'))).toBe(true);
+    expect(html).toContain('data-magga-reader=""');
     expect(html).toContain('data-reader-progress="2"');
     expect(html).not.toContain("ความคิดเห็น");
     expect(html).not.toContain("340px");
@@ -87,6 +89,17 @@ describe("manga reader with per-image comments paused", () => {
     expect(html).toContain('width="900"');
     expect(html).toContain('height="1273"');
     expect(html).toContain('alt="Page 1 of Legacy"');
+    expect(html).toContain('draggable="false"');
     expect(html).not.toContain("ความคิดเห็น");
+  });
+
+  it("keeps pages readable in WebViews without IntersectionObserver", () => {
+    stubGlobal("IntersectionObserver", undefined);
+    const html = renderToStaticMarkup(createElement(MangaReader, {
+      mangaId: "limited", mangaTitle: "Limited WebView", pages: ["/mcp-test-cover.svg"],
+    }));
+    expect(html).toContain('src="/mcp-test-cover.svg"');
+    expect(() => effects.forEach(effect => effect())).not.toThrow();
+    expect(observe).not.toHaveBeenCalled();
   });
 });

@@ -65,6 +65,8 @@ export default function MangaReader({
 
   // Track current page with IntersectionObserver
   useEffect(() => {
+    // Limited WebViews can still display the server-rendered pages.
+    if (typeof IntersectionObserver === "undefined") return;
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -89,7 +91,7 @@ export default function MangaReader({
   }, [pages.length]);
 
   return (
-    <Box sx={{ position: "relative" }}>
+    <Box data-magga-reader="" sx={{ position: "relative" }}>
       {/* Reading Progress Indicator */}
       <ReadingProgress
         mangaId={mangaId}
@@ -192,6 +194,8 @@ const ReaderPage = forwardRef<HTMLDivElement, ReaderPageProps>(
           />
           <Image
             key={`${pageData.url}:${attempt}`}
+            data-magga-protected-image=""
+            draggable={false}
             ref={imageRef}
             src={pageData.url}
             alt={`Page ${imageIndex + 1} of ${mangaTitle}`}

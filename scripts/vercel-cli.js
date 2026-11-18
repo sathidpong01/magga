@@ -9,7 +9,7 @@ function resolveVercelCli() {
   try {
     const installed = JSON.parse(readFileSync(path.join(directory, 'node_modules', 'vercel', 'package.json'), 'utf8'));
     if (installed.version !== expected) throw new Error('Version mismatch');
-    return path.join(directory, 'node_modules', 'vercel', 'dist', 'index.js');
+    return path.join(directory, 'node_modules', 'vercel', 'dist', 'vc.js');
   } catch {
     throw new Error('Install the pinned Vercel tool first: bun install --cwd tools/vercel --frozen-lockfile');
   }

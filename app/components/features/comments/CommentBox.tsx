@@ -16,7 +16,7 @@ import {
 import ImageIcon from "@mui/icons-material/Image";
 import EmojiEmotionsIcon from "@mui/icons-material/EmojiEmotions";
 import dynamic from "next/dynamic";
-import { Theme } from "emoji-picker-react";
+import { EmojiStyle, Theme } from "emoji-picker-react";
 const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
 import CloseIcon from "@mui/icons-material/Close";
 import { maggaColors, maggaRadii } from "@/lib/design-tokens";
@@ -295,6 +295,7 @@ export default function CommentBox({
       >
         <EmojiPicker
           theme={Theme.DARK}
+          emojiStyle={EmojiStyle.APPLE}
           width="100%"
           height="100%"
           onEmojiClick={(data) => {

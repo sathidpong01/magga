@@ -51,6 +51,8 @@ if (isDisposableDatabase) {
 // PGlite's socket multiplexer shares unnamed statement state; disposable browser
 // verification must serialize queries through one application connection.
 const client = postgres(connectionString, { 
+  // Preserve v3 parameter/date inference while upgrading the connection layer.
+  infer: true,
   prepare: false, 
   max: isBuild || isLocalMcp || isDisposableDatabase ? 1 : isServerless ? 3 : 10,
   idle_timeout: isBuild ? 1 : isServerless ? 15 : 20,

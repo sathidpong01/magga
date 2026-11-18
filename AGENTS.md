@@ -19,7 +19,7 @@ Every agent change must update the project version before completion.
 
 ## Development Workflow
 
-- Use Bun 1.4.2 locally and in CI. Install with `bun install --frozen-lockfile`; use `bun run` for project scripts and local CLIs.
+- Use the Bun version pinned in `.bun-version` locally and in CI. Install with `bun install --frozen-lockfile`; use `bun run` for project scripts and local CLIs.
 - Read the relevant project files before editing; prefer existing patterns over new abstractions.
 - Keep changes scoped to the requested task.
 - Run focused validation after changes. Use `bun run lint`, `bun run typecheck`, and `bun run test` when feasible; add `bun run build` for release-sensitive or framework/package updates.

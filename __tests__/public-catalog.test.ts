@@ -40,7 +40,7 @@ await client.exec(`
   CREATE TABLE tags (id uuid PRIMARY KEY, name text NOT NULL);
   CREATE TABLE authors (id uuid PRIMARY KEY, name text NOT NULL, profile_url text, social_links text);
   CREATE TABLE manga (
-    id uuid PRIMARY KEY, slug text NOT NULL, title text NOT NULL, description text,
+    id uuid PRIMARY KEY, slug text NOT NULL, title text NOT NULL, description text, pages jsonb NOT NULL DEFAULT '[]',
     cover_image text NOT NULL DEFAULT 'https://example.test/cover.webp', view_count integer NOT NULL DEFAULT 0,
     average_rating real NOT NULL DEFAULT 0, category_id uuid, author_id uuid, author_name text,
     is_hidden boolean NOT NULL DEFAULT false, created_at timestamp NOT NULL DEFAULT '2026-01-01',
@@ -65,6 +65,20 @@ beforeEach(async () => {
 afterAll(() => client.close());
 
 describe("public catalog SQL and cache dependencies", () => {
+  it("keeps full reader image lists out of public card responses", async () => {
+    const pageUrl = "https://media.example.test/reader-page-not-a-cover.webp";
+    await client.query("UPDATE manga SET pages=$1::jsonb", [JSON.stringify([pageUrl])]);
+    const response = await listGET(new Request("http://localhost/api/manga/list?pageSize=24"));
+    const cards = [
+      ...(await response.json()).mangas,
+      ...await getPublicMangaCardsByIds([id(1)]),
+      ...await getRelatedManga(id(1)) ?? [],
+    ];
+    expect(cards.length).toBeGreaterThan(0);
+    for (const card of cards) expect(card).not.toHaveProperty("pages");
+    expect(JSON.stringify(cards)).not.toContain(pageUrl);
+  });
+
   it("bounds taxonomy batches and uses stable continuation without hidden works",async()=>{
     for(let i=10;i<=29;i++){
       await client.query("INSERT INTO manga(id,slug,title,category_id) VALUES($1,$2,'extra',$3)",[id(i),`extra-${i}`,id(100)]);

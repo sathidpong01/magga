@@ -25,7 +25,7 @@ Every agent change must update the project version before completion.
 
 ## Development Workflow
 
-- Use Bun 1.4.2 locally and in CI. Install with `bun install --frozen-lockfile`; use `bun run` for project scripts and local CLIs.
+- Use the Bun version pinned in `.bun-version` locally and in CI. Install with `bun install --frozen-lockfile`; use `bun run` for project scripts and local CLIs.
 - Read the relevant project files before editing; prefer existing patterns over new abstractions.
 - Keep changes scoped to the requested task.
 - Run focused validation after changes. Use `bun run lint`, `bun run typecheck`, and `bun run test` when feasible; add `bun run build` for release-sensitive or framework/package updates.
@@ -219,7 +219,7 @@ React and Next.js performance optimization guidelines from Vercel Engineering. T
 
 ## Project Tests
 
-Use Bun 1.4.2's native test runner and import test APIs from `bun:test`. Tests live in `__tests__/`, configured by `bunfig.toml`. Use `mock`, `mock.module`, and `spyOn` from `bun:test` for mocks; follow existing suites for cleanup and environment setup.
+Use the pinned Bun runtime's native test runner and import test APIs from `bun:test`. Tests live in `__tests__/`, configured by `bunfig.toml`. Use `mock`, `mock.module`, and `spyOn` from `bun:test` for mocks; follow existing suites for cleanup and environment setup.
 
 - `bun run test`: run all suites with per-file isolation (`bun test --isolate`).
 - `bun run test ./__tests__/example.test.ts`: run a focused test file with the same isolation.

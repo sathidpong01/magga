@@ -15,14 +15,18 @@ export default function AgeVerificationModal() {
 
   useEffect(() => {
     // Check if user has already verified
-    const isVerified = localStorage.getItem("isAgeVerified");
-    if (!isVerified) {
+    try {
+      const isVerified = localStorage.getItem("isAgeVerified");
+      if (!isVerified) setOpen(true);
+    } catch {
+      // Private/in-app browsers may block storage. Still require confirmation.
       setOpen(true);
     }
   }, []);
 
   const handleVerify = () => {
-    localStorage.setItem("isAgeVerified", "true");
+    try { localStorage.setItem("isAgeVerified", "true"); }
+    catch { /* Confirmation remains valid for this mounted page session. */ }
     window.dispatchEvent(new Event("magga-age-verified"));
     setOpen(false);
   };

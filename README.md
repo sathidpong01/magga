@@ -130,7 +130,7 @@ cd magga
 
 ### 2. ติดตั้ง Dependencies
 
-Install [Bun 1.4.2](https://bun.com/docs/installation) before running project commands. The committed `bun.lock` is the dependency source of truth; a clean checkout uses a frozen install.
+Install [Bun](https://bun.com/docs/installation) at the version pinned in `.bun-version` before running project commands. The committed `bun.lock` is the dependency source of truth; a clean checkout uses a frozen install.
 
 ```bash
 bun install --frozen-lockfile
@@ -185,7 +185,7 @@ bun run dev
 
 โปรเจกต์นี้ได้รับการ optimize พิเศษสำหรับ Vercel deployment เพื่อประสิทธิภาพสูงสุด:
 
-Deployment uses `framework: "nextjs"`, `bunVersion: "1.4.x"`, `bun install --frozen-lockfile`, and `bun run build` in `vercel.json`. Vercel manages Bun patch versions; local development and CI pin 1.4.2. The [Vercel Bun runtime](https://vercel.com/docs/functions/runtimes/bun) is currently in beta.
+Deployment uses `framework: "nextjs"`, `bunVersion: "1.4.x"`, `bun install --frozen-lockfile`, and `bun run build` in `vercel.json`. Vercel manages Bun patch versions; local development and CI use `.bun-version` (currently 1.4.4). The [Vercel Bun runtime](https://vercel.com/docs/functions/runtimes/bun) is currently in beta.
 
 Vercel CLI is optional tooling with its own pinned dependency tree in `tools/vercel/`. Normal web builds and Git-based Vercel deployments do not need it. For manual CLI commands or a real `env:sync` operation, install it separately:
 
@@ -210,7 +210,7 @@ Scheduled manga publishing uses the admin's local time zone and server-side cloc
 
 Manga covers and pages share validated, retry-safe uploads. See [manga uploads](docs/manga-uploads.md) for supported images, API limits, migration and orphan cleanup.
 
-GitHub CI runs automatically on every push and pull request; `workflow_dispatch` remains available for manual reruns. It checks Bun 1.4.2, lint, types, and tests on Linux and Windows, and builds against disposable PostgreSQL on Linux. The `CI Gate` job succeeds only when all checks and the build succeed; failed, skipped, or cancelled dependencies fail the gate.
+GitHub CI runs automatically on every push and pull request; `workflow_dispatch` remains available for manual reruns. It checks the pinned Bun runtime, lint, types, and tests on Linux and Windows, and builds against disposable PostgreSQL on Linux. The `CI Gate` job succeeds only when all checks and the build succeed; failed, skipped, or cancelled dependencies fail the gate.
 
 Vercel continues building from Git in parallel. In the Magga project's **Settings → Build and Deployment → Deployment Checks**, require the GitHub `CI Gate` check and keep automatic assignment of production domains enabled. Vercel then holds each production deployment until that commit's gate passes, leaving the previous production deployment live on failure. Fix the reported error and push a new commit to retry automatically; do not use Force Promote to bypass the gate. Preview builds remain available independently. The workflow and the Vercel setting are both required: automatic CI alone does not block a production release.
 
