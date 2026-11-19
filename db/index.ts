@@ -54,6 +54,9 @@ const client = postgres(connectionString, {
   // Preserve v3 parameter/date inference while upgrading the connection layer.
   infer: true,
   prepare: false, 
+  // Supavisor transaction pooling cannot pipeline queries on one connection.
+  // Keep parallel reads across the existing pool, with one query per socket.
+  max_pipeline: 1,
   max: isBuild || isLocalMcp || isDisposableDatabase ? 1 : isServerless ? 3 : 10,
   idle_timeout: isBuild ? 1 : isServerless ? 15 : 20,
   connect_timeout: isServerless ? 15 : 10,
